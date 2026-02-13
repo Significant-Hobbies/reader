@@ -10,6 +10,15 @@ import { AppearanceToolbar } from './AppearanceToolbar';
 import { Navbar } from './Navbar';
 import { NotesAIChat } from './NotesAIChat';
 import { ArticleTagEditor } from './ArticleTagEditor';
+import { ArticleSummary } from './ArticleSummary';
+import {
+  AI_CONFIG_STORAGE_KEY,
+  AIConfig,
+  DEFAULT_AI_CONFIG,
+  isLocalCLIEnabled,
+  normalizeAvailableAIProvider,
+  getDefaultModelForProvider,
+} from '../lib/ai-config';
 
 const ANNOTATABLE_SELECTOR = [
   'p',
@@ -46,6 +55,30 @@ type SelectionActionMenuState = {
   anchor?: Note['anchor'];
 };
 
+const loadAIConfig = (allowLocalProviders: boolean): AIConfig => {
+  if (typeof window === 'undefined') return DEFAULT_AI_CONFIG;
+
+  try {
+    const raw = window.localStorage.getItem(AI_CONFIG_STORAGE_KEY);
+    if (!raw) return DEFAULT_AI_CONFIG;
+
+    const parsed = JSON.parse(raw) as Partial<AIConfig>;
+    const provider = normalizeAvailableAIProvider(parsed.provider, allowLocalProviders);
+    const model =
+      typeof parsed.model === 'string' && parsed.model.trim()
+        ? parsed.model.trim()
+        : getDefaultModelForProvider(provider);
+
+    return {
+      provider,
+      model,
+      apiKey: typeof parsed.apiKey === 'string' ? parsed.apiKey : '',
+    };
+  } catch {
+    return DEFAULT_AI_CONFIG;
+  }
+};
+
 export default function ReaderClient({ articleId }: { articleId: string }) {
   const id = articleId;
   const router = useRouter();
@@ -57,6 +90,8 @@ export default function ReaderClient({ articleId }: { articleId: string }) {
   const [isTitleEditing, setIsTitleEditing] = useState(false);
   const [selectionMenu, setSelectionMenu] = useState<SelectionActionMenuState | null>(null);
   const [queuedAIPrompt, setQueuedAIPrompt] = useState<string | null>(null);
+  const [allowLocalProviders] = useState(() => isLocalCLIEnabled());
+  const [aiConfig, setAIConfig] = useState<AIConfig>(() => loadAIConfig(isLocalCLIEnabled()));
 
   // Layout State
   const [leftPanelWidth, setLeftPanelWidth] = useState(66.66);
@@ -638,6 +673,15 @@ export default function ReaderClient({ articleId }: { articleId: string }) {
     return grouped;
   }, [notes]);
 
+  const handleSummarySaved = useCallback(
+    (summary: string, keyPoints: string[]) => {
+      queryClient.setQueryData<Article>(['article', id], (prev) =>
+        prev ? { ...prev, aiSummary: summary, keyPoints } : prev
+      );
+    },
+    [id, queryClient]
+  );
+
   if (isArticleLoading) {
     return (
       <div className="flex h-screen items-center justify-center bg-gray-900">
@@ -753,6 +797,22 @@ export default function ReaderClient({ articleId }: { articleId: string }) {
             onContextMenu={handleSelectionContextMenu}
           >
             <div className="relative min-h-full">
+              {/* AI Summary Section */}
+              <div className="max-w-3xl mx-auto px-8 pt-8">
+                <ArticleSummary
+                  articleId={article.id}
+                  articleContent={article.content}
+                  articleTitle={article.title}
+                  initialSummary={article.aiSummary}
+                  initialKeyPoints={article.keyPoints}
+                  provider={aiConfig.provider}
+                  model={aiConfig.model}
+                  apiKey={aiConfig.apiKey}
+                  theme={settings.theme}
+                  onSummarySaved={handleSummarySaved}
+                />
+              </div>
+
               <ReaderView
                 content={article.content}
                 title={article.title}

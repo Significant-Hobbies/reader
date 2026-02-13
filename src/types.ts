@@ -15,6 +15,8 @@ export interface AIChatMessage {
   content: string;
 }
 
+export type SummaryLength = 'short' | 'medium' | 'long';
+
 export interface Article {
   id: string;
   url: string;
@@ -23,6 +25,8 @@ export interface Article {
   content: string;
   notes?: Note[];
   aiChat?: AIChatMessage[];
+  aiSummary?: string;
+  keyPoints?: string[];
   notesCount?: number;
   userId?: string;
   projectId?: string;

@@ -213,6 +213,8 @@ export async function fetchArticleById(id: string, userId: string): Promise<Arti
     content: data.content,
     notes: data.notes ?? [],
     aiChat: normalizeAIChatMessages(data.aiChat),
+    aiSummary: typeof data.aiSummary === 'string' ? data.aiSummary : undefined,
+    keyPoints: Array.isArray(data.keyPoints) ? data.keyPoints : undefined,
     projectId: data.projectId || defaultProjectId(userId),
     status,
     tags: normalizeTags(data.tags),
