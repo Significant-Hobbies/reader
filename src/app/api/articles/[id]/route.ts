@@ -5,6 +5,7 @@ import {
   fetchArticleById,
   normalizeAIChatMessages,
   normalizeNotes,
+  sanitizePlainText,
   sanitizeTitle,
   verifyArticleOwnership,
 } from '../../../../lib/articles-service';
@@ -21,6 +22,17 @@ const LOCAL_ONLY_AI_SETTINGS_FIELDS = new Set([
   'systemPrompt',
   'aiConfig',
 ]);
+
+const normalizeKeyPoints = (payload: unknown): string[] | null => {
+  if (!Array.isArray(payload)) return null;
+
+  const normalized = payload
+    .map((point) => sanitizePlainText(point).slice(0, 500))
+    .filter((point) => point.length > 0)
+    .slice(0, 10); // Max 10 key points
+
+  return normalized.length > 0 ? normalized : null;
+};
 
 export async function GET(request: Request, { params }: { params: Promise<{ id: string }> }) {
   try {
@@ -73,7 +85,7 @@ export async function PUT(request: Request, { params }: { params: Promise<{ id: 
       );
     }
 
-    const { notes, aiChat, title, status, projectId } = payload;
+    const { notes, aiChat, title, status, projectId, aiSummary, keyPoints } = payload;
 
     const docRef = db.collection('annotations').doc(id);
     const updateData: Record<string, unknown> = {
@@ -104,6 +116,16 @@ export async function PUT(request: Request, { params }: { params: Promise<{ id: 
 
     if (typeof projectId === 'string' && projectId.trim()) {
       updateData.projectId = projectId.trim();
+    }
+
+    if (typeof aiSummary === 'string') {
+      const trimmedSummary = sanitizePlainText(aiSummary).slice(0, 5000);
+      updateData.aiSummary = trimmedSummary.length > 0 ? trimmedSummary : null;
+    }
+
+    if (keyPoints !== undefined) {
+      const normalizedKeyPoints = normalizeKeyPoints(keyPoints);
+      updateData.keyPoints = normalizedKeyPoints;
     }
 
     await docRef.update(updateData);
