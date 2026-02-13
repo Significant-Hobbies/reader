@@ -12,8 +12,8 @@ Web Annotator solves this by providing a personal research library where you can
 
 - **Clean Article Extraction**: Save articles from any URL using Mozilla Readability
 - **Rich Annotations**: Add contextual notes with optional DOM anchoring
-- **Selection Actions**: Right-click selected article text to quickly `Add note` or `Ask AI`
-- **AI-Powered Chat**: Ask questions about your articles and notes using BYOK providers (OpenAI, Anthropic, Gemini, Gateway) or local CLI mode, with chat history persisted per article
+- **Selection Actions**: After selecting text (mouse up) or selection + right-click, quickly choose `Add note` or `Ask AI`
+- **AI-Powered Chat**: Ask questions about your articles and notes using BYOK providers (OpenAI, Anthropic, Gemini, Gateway) or local CLI mode, with chat history persisted per article and assistant replies rendered as markdown
 - **Project Organization**: Group related articles into projects
 - **Customizable Reader**: Adjust theme (light/dark/sepia), font family (sans/serif/mono), and text size
 - **Reading Progress**: Track which articles you're reading or have completed

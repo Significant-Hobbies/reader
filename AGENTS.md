@@ -30,8 +30,8 @@ Web Annotator is a Next.js-based application that captures readable snapshots of
 - Firebase Authentication (Google Sign-In)
 - Article storage in Firestore with per-user isolation
 - Contextual annotations with optional DOM anchoring
-- Text selection context menu actions (`Add note`, `Ask AI`)
-- AI chat persisted per article in Firestore (`annotations.aiChat`)
+- Text selection actions menu on selection end (mouse up) or selection + right-click (`Add note`, `Ask AI`)
+- AI chat persisted per article in Firestore (`annotations.aiChat`) with markdown-rendered assistant responses
 - Project-based organization
 - Customizable reader appearance (theme, font, size)
 - Reading progress tracking (in_progress, read)
@@ -223,6 +223,12 @@ export interface Note {
   anchor?: NoteAnchor; // Optional DOM anchor
 }
 
+// Persisted AI chat message
+export interface AIChatMessage {
+  role: 'user' | 'assistant';
+  content: string;
+}
+
 // Full article with content
 export interface Article {
   id: string; // Firestore document ID
@@ -231,6 +237,7 @@ export interface Article {
   byline?: string | null; // Author attribution
   content: string; // Sanitized HTML content
   notes?: Note[]; // User annotations
+  aiChat?: AIChatMessage[]; // Per-article AI conversation history
   notesCount?: number; // Denormalized count
   userId?: string; // Owner (for per-user isolation)
   projectId?: string; // Project assignment
@@ -277,6 +284,7 @@ export type FontFamily = 'sans' | 'serif' | 'mono';
   byline: string | null,
   content: string,              // Pre-sanitized HTML
   notes: Note[],
+  aiChat: AIChatMessage[],      // Per-article AI chat history
   notesCount: number,
   userId: string,               // Index for queries
   projectId: string,
