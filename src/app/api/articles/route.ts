@@ -26,13 +26,13 @@ export async function POST(request: Request) {
     }
 
     const body = await request.json();
-    const { url, title, byline, content, projectId } = body || {};
+    const { url, title, byline, content, projectId, tags } = body || {};
 
     if (!url || !content) {
       return NextResponse.json({ error: 'URL and content are required' }, { status: 400 });
     }
 
-    const id = await createArticleRecord({ url, title, byline, content, projectId, userId });
+    const id = await createArticleRecord({ url, title, byline, content, projectId, tags, userId });
     return NextResponse.json({ id });
   } catch (error) {
     console.error('Error creating article:', error);

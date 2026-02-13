@@ -9,6 +9,7 @@ import { ReaderView, getThemeClasses } from './ReaderView';
 import { AppearanceToolbar } from './AppearanceToolbar';
 import { Navbar } from './Navbar';
 import { NotesAIChat } from './NotesAIChat';
+import { ArticleTagEditor } from './ArticleTagEditor';
 
 const ANNOTATABLE_SELECTOR = [
   'p',
@@ -51,7 +52,7 @@ export default function ReaderClient({ articleId }: { articleId: string }) {
   const queryClient = useQueryClient();
 
   const [notes, setNotes] = useState<Note[]>([]);
-  const [activeSidebarTab, setActiveSidebarTab] = useState<'notes' | 'ai'>('notes');
+  const [activeSidebarTab, setActiveSidebarTab] = useState<'notes' | 'ai' | 'tags'>('notes');
   const [titleDraft, setTitleDraft] = useState('');
   const [isTitleEditing, setIsTitleEditing] = useState(false);
   const [selectionMenu, setSelectionMenu] = useState<SelectionActionMenuState | null>(null);
@@ -792,7 +793,7 @@ export default function ReaderClient({ articleId }: { articleId: string }) {
           <div className="w-1 h-8 bg-gray-600 rounded-full group-hover:bg-white" />
         </div>
 
-        {/* RIGHT PANEL: Notes */}
+        {/* RIGHT PANEL: Notes & Tags */}
         <div
           className="h-full bg-gray-900/70 backdrop-blur flex flex-col shadow-2xl z-20 border border-gray-800 rounded-2xl"
           style={{ width: `${100 - leftPanelWidth}%` }}
@@ -802,9 +803,11 @@ export default function ReaderClient({ articleId }: { articleId: string }) {
             <p className="text-sm text-gray-500">
               {activeSidebarTab === 'notes'
                 ? `${notes.length} notes added`
-                : 'Ask AI using your article and notes context'}
+                : activeSidebarTab === 'ai'
+                  ? 'Ask AI using your article and notes context'
+                  : 'Organize with tags'}
             </p>
-            <div className="mt-3 grid grid-cols-2 gap-2">
+            <div className="mt-3 grid grid-cols-3 gap-2">
               <button
                 type="button"
                 onClick={() => setActiveSidebarTab('notes')}
@@ -826,6 +829,17 @@ export default function ReaderClient({ articleId }: { articleId: string }) {
                 }`}
               >
                 AI Chat
+              </button>
+              <button
+                type="button"
+                onClick={() => setActiveSidebarTab('tags')}
+                className={`rounded-lg border px-3 py-2 text-sm font-medium transition-colors ${
+                  activeSidebarTab === 'tags'
+                    ? 'border-blue-500/50 bg-blue-500/20 text-blue-200'
+                    : 'border-gray-700 bg-gray-800/70 text-gray-300 hover:bg-gray-700'
+                }`}
+              >
+                Tags
               </button>
             </div>
           </div>
@@ -850,13 +864,17 @@ export default function ReaderClient({ articleId }: { articleId: string }) {
                 />
               ))}
             </div>
-          ) : (
+          ) : activeSidebarTab === 'ai' ? (
             <NotesAIChat
               article={article}
               notes={notes}
               queuedPrompt={queuedAIPrompt}
               onQueuedPromptHandled={() => setQueuedAIPrompt(null)}
             />
+          ) : (
+            <div className="flex-grow overflow-y-auto p-4">
+              <ArticleTagEditor article={article} />
+            </div>
           )}
         </div>
         {typeof document !== 'undefined' && selectionMenu
@@ -1038,7 +1056,7 @@ const NoteCard = memo(({ note, index, onScrollTo, onDelete, onChange }: NoteCard
       </div>
       {note.anchor?.textPreview && (
         <p className="text-xs text-gray-500 mb-3 italic overflow-hidden text-ellipsis whitespace-nowrap">
-          “{note.anchor.textPreview}”
+          "{note.anchor.textPreview}"
         </p>
       )}
       {isEditing ? (

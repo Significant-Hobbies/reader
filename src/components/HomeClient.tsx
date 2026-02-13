@@ -28,8 +28,9 @@ import {
 } from './ui/dialog';
 import { Label } from './ui/label';
 import { Badge } from './ui/badge';
-import { MoreVertical } from 'lucide-react';
+import { MoreVertical, X } from 'lucide-react';
 import { Navbar } from './Navbar';
+import { getTagColor } from '../lib/tag-utils';
 
 export default function HomeClient() {
   const [url, setUrl] = useState('');
@@ -37,6 +38,7 @@ export default function HomeClient() {
   const [activeToolbarId, setActiveToolbarId] = useState<string | null>(null);
   const [pendingDeleteId, setPendingDeleteId] = useState<string | null>(null);
   const [selectedProjectId, setSelectedProjectId] = useState<string>('all');
+  const [selectedTag, setSelectedTag] = useState<string | null>(null);
   const [newProjectName, setNewProjectName] = useState('');
   const [isProjectModalOpen, setIsProjectModalOpen] = useState(false);
 
@@ -74,6 +76,20 @@ export default function HomeClient() {
         throw err;
       }
       return response.json();
+    },
+  });
+
+  const {
+    data: allTags = [],
+  } = useQuery<string[]>({
+    queryKey: ['tags'],
+    queryFn: async () => {
+      const response = await fetch('/api/tags', { cache: 'no-store' });
+      if (!response.ok) {
+        throw new Error('Failed to fetch tags');
+      }
+      const data = await response.json();
+      return data.tags;
     },
   });
 
@@ -115,6 +131,7 @@ export default function HomeClient() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['articles'] });
+      queryClient.invalidateQueries({ queryKey: ['tags'] });
     },
   });
 
@@ -129,6 +146,7 @@ export default function HomeClient() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['articles'] });
+      queryClient.invalidateQueries({ queryKey: ['tags'] });
     },
     onSettled: () => {
       setDeletingId(null);
@@ -257,10 +275,13 @@ export default function HomeClient() {
     setPendingDeleteId(null);
   };
 
-  const filteredArticles =
-    selectedProjectId === 'all'
-      ? articles
-      : articles.filter((article) => article.projectId === selectedProjectId);
+  const filteredArticles = articles
+    .filter((article) =>
+      selectedProjectId === 'all' ? true : article.projectId === selectedProjectId
+    )
+    .filter((article) =>
+      selectedTag ? article.tags?.includes(selectedTag) : true
+    );
 
   const projectOptions = [{ id: 'all', name: 'All projects' }, ...(projects || [])];
   const moveTargets = (projects || []).filter((p) => p.id !== 'all');
@@ -356,6 +377,40 @@ export default function HomeClient() {
             </div>
           </div>
 
+          {allTags.length > 0 && (
+            <div className="bg-gray-900/70 border border-gray-800 rounded-xl p-4 shadow-lg backdrop-blur">
+              <div className="flex items-center gap-2 mb-3">
+                <span className="text-xs uppercase tracking-wide text-gray-500">Filter by tag</span>
+                {selectedTag && (
+                  <button
+                    onClick={() => setSelectedTag(null)}
+                    className="text-xs text-blue-400 hover:text-blue-300 transition-colors"
+                  >
+                    Clear filter
+                  </button>
+                )}
+              </div>
+              <div className="flex flex-wrap gap-2">
+                {allTags.map((tag) => (
+                  <button
+                    key={tag}
+                    onClick={() => setSelectedTag(selectedTag === tag ? null : tag)}
+                    className={`inline-flex items-center rounded-full border px-3 py-1.5 text-xs font-semibold transition-all ${
+                      selectedTag === tag
+                        ? 'ring-2 ring-blue-500 ring-offset-2 ring-offset-gray-950'
+                        : ''
+                    } ${getTagColor(tag)} hover:opacity-80`}
+                  >
+                    {tag}
+                    {selectedTag === tag && (
+                      <X className="ml-1 h-3 w-3" />
+                    )}
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
+
           <div className="bg-gray-900/80 p-6 rounded-2xl shadow-2xl border border-gray-800 mb-8 backdrop-blur">
             <h2 className="text-lg font-semibold text-white mb-4">Add New Article</h2>
             <form onSubmit={handleImport} className="flex flex-col gap-4 md:flex-row">
@@ -403,6 +458,19 @@ export default function HomeClient() {
                   <p className="text-gray-300 text-lg mb-4">Your library is empty.</p>
                   <p className="text-gray-500">Enter a URL above to get started.</p>
                 </div>
+              ) : filteredArticles.length === 0 ? (
+                <div className="col-span-full text-center py-16 bg-gray-800 rounded-2xl border border-gray-700 border-dashed">
+                  <p className="text-gray-300 text-lg mb-4">No articles match your filters.</p>
+                  <button
+                    onClick={() => {
+                      setSelectedProjectId('all');
+                      setSelectedTag(null);
+                    }}
+                    className="text-blue-400 hover:text-blue-300 transition-colors"
+                  >
+                    Clear all filters
+                  </button>
+                </div>
               ) : (
                 filteredArticles.map((article) => {
                   const projectName =
@@ -441,6 +509,22 @@ export default function HomeClient() {
                                 {article.status === 'read' ? 'Read' : 'In Progress'}
                               </Badge>
                             </div>
+                            {article.tags && article.tags.length > 0 && (
+                              <div className="flex flex-wrap gap-1.5 mt-3">
+                                {article.tags.map((tag) => (
+                                  <button
+                                    key={tag}
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      setSelectedTag(tag);
+                                    }}
+                                    className={`inline-flex items-center rounded-full border px-2 py-0.5 text-xs font-semibold transition-colors ${getTagColor(tag)} hover:opacity-80`}
+                                  >
+                                    {tag}
+                                  </button>
+                                ))}
+                              </div>
+                            )}
                           </div>
                           <DropdownMenu
                             open={activeToolbarId === article.id}

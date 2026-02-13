@@ -100,6 +100,20 @@ const normalizeStatus = (status: unknown): ArticleStatus => {
   return status === 'read' ? 'read' : 'in_progress';
 };
 
+export function normalizeTags(payload: unknown): string[] {
+  if (!Array.isArray(payload)) return [];
+  return payload
+    .map((tag) => {
+      if (typeof tag !== 'string') return null;
+      const sanitized = sanitizePlainText(tag).toLowerCase();
+      if (!sanitized || sanitized.length > 50) return null;
+      return sanitized;
+    })
+    .filter((tag): tag is string => Boolean(tag))
+    .filter((tag, index, array) => array.indexOf(tag) === index) // Remove duplicates
+    .slice(0, 20); // Max 20 tags per article
+}
+
 export async function fetchArticleSummaries(
   userId: string,
   projectId?: string
@@ -128,6 +142,7 @@ export async function fetchArticleSummaries(
       byline: data.byline,
       projectId: data.projectId || defaultProjectId(userId),
       status,
+      tags: normalizeTags(data.tags),
       notesCount:
         typeof data.notesCount === 'number'
           ? data.notesCount
@@ -159,6 +174,7 @@ export async function fetchArticleById(id: string, userId: string): Promise<Arti
     aiChat: normalizeAIChatMessages(data.aiChat),
     projectId: data.projectId || defaultProjectId(userId),
     status,
+    tags: normalizeTags(data.tags),
     notesCount:
       typeof data.notesCount === 'number'
         ? data.notesCount
@@ -218,6 +234,7 @@ export function sanitizeArticlePayload(payload: {
   byline?: string;
   content: string;
   projectId?: string;
+  tags?: string[];
   userId: string;
 }) {
   const sanitizedUrl = sanitizePlainText(payload.url);
@@ -233,6 +250,7 @@ export function sanitizeArticlePayload(payload: {
     byline: sanitizePlainText(payload.byline || ''),
     content: sanitizeHTML(payload.content),
     projectId: sanitizePlainText(payload.projectId || defProjectId) || defProjectId,
+    tags: normalizeTags(payload.tags),
     userId: payload.userId,
   };
 }
@@ -243,6 +261,7 @@ export async function createArticleRecord(payload: {
   byline?: string;
   content: string;
   projectId?: string;
+  tags?: string[];
   userId: string;
 }) {
   const sanitized = sanitizeArticlePayload(payload);
@@ -366,4 +385,21 @@ export async function verifyArticleOwnership(articleId: string, userId: string):
   // Allow legacy docs (no userId)
   if (data.userId && data.userId !== userId) return false;
   return true;
+}
+
+export async function fetchAllTags(userId: string): Promise<string[]> {
+  const snapshot = await db
+    .collection('annotations')
+    .where('userId', '==', userId)
+    .select('tags')
+    .get();
+
+  const tagsSet = new Set<string>();
+  snapshot.docs.forEach((doc) => {
+    const data = doc.data();
+    const tags = normalizeTags(data.tags);
+    tags.forEach((tag) => tagsSet.add(tag));
+  });
+
+  return Array.from(tagsSet).sort();
 }

@@ -5,6 +5,7 @@ import {
   fetchArticleById,
   normalizeAIChatMessages,
   normalizeNotes,
+  normalizeTags,
   sanitizeTitle,
   verifyArticleOwnership,
 } from '../../../../lib/articles-service';
@@ -73,7 +74,7 @@ export async function PUT(request: Request, { params }: { params: Promise<{ id: 
       );
     }
 
-    const { notes, aiChat, title, status, projectId } = payload;
+    const { notes, aiChat, title, status, projectId, tags } = payload;
 
     const docRef = db.collection('annotations').doc(id);
     const updateData: Record<string, unknown> = {
@@ -104,6 +105,10 @@ export async function PUT(request: Request, { params }: { params: Promise<{ id: 
 
     if (typeof projectId === 'string' && projectId.trim()) {
       updateData.projectId = projectId.trim();
+    }
+
+    if (tags !== undefined) {
+      updateData.tags = normalizeTags(tags);
     }
 
     await docRef.update(updateData);
