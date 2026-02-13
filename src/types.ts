@@ -53,3 +53,23 @@ export interface Project {
   createdAt?: string;
   updatedAt?: string;
 }
+
+export interface SearchSnippet {
+  field: string;
+  text: string;
+}
+
+export interface SearchResult {
+  id: string;
+  url: string;
+  title: string;
+  byline?: string | null;
+  projectId?: string;
+  status?: ArticleStatus;
+  notesCount: number;
+  createdAt?: string;
+  updatedAt?: string;
+  matchedFields: string[];
+  snippets: SearchSnippet[];
+  relevanceScore: number;
+}

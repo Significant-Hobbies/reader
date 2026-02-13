@@ -367,3 +367,235 @@ export async function verifyArticleOwnership(articleId: string, userId: string):
   if (data.userId && data.userId !== userId) return false;
   return true;
 }
+
+export interface SearchResult {
+  id: string;
+  url: string;
+  title: string;
+  byline?: string | null;
+  projectId?: string;
+  status?: ArticleStatus;
+  notesCount: number;
+  createdAt?: string;
+  updatedAt?: string;
+  matchedFields: string[];
+  snippets: {
+    field: string;
+    text: string;
+  }[];
+  relevanceScore: number;
+}
+
+function stripHtmlTags(html: string): string {
+  return sanitizePlainText(html);
+}
+
+function highlightSearchTerms(text: string, query: string): string {
+  if (!query.trim()) return text;
+
+  const terms = query.toLowerCase().split(/\s+/).filter(t => t.length > 0);
+  let result = text;
+
+  terms.forEach(term => {
+    const regex = new RegExp(`(${term})`, 'gi');
+    result = result.replace(regex, '**$1**');
+  });
+
+  return result;
+}
+
+function getSnippet(text: string, query: string, maxLength = 150): string {
+  const lowerText = text.toLowerCase();
+  const lowerQuery = query.toLowerCase();
+  const terms = lowerQuery.split(/\s+/).filter(t => t.length > 0);
+
+  let bestIndex = -1;
+  for (const term of terms) {
+    const index = lowerText.indexOf(term);
+    if (index !== -1) {
+      bestIndex = index;
+      break;
+    }
+  }
+
+  if (bestIndex === -1) {
+    return text.slice(0, maxLength) + (text.length > maxLength ? '...' : '');
+  }
+
+  const start = Math.max(0, bestIndex - 50);
+  const end = Math.min(text.length, bestIndex + maxLength - 50);
+
+  let snippet = text.slice(start, end);
+  if (start > 0) snippet = '...' + snippet;
+  if (end < text.length) snippet = snippet + '...';
+
+  return highlightSearchTerms(snippet, query);
+}
+
+function calculateRelevance(
+  query: string,
+  title: string,
+  content: string,
+  notes: Note[],
+  aiChat: AIChatMessage[]
+): number {
+  const lowerQuery = query.toLowerCase();
+  const terms = lowerQuery.split(/\s+/).filter(t => t.length > 0);
+
+  let score = 0;
+
+  const lowerTitle = title.toLowerCase();
+  terms.forEach(term => {
+    if (lowerTitle.includes(term)) score += 10;
+  });
+
+  const lowerContent = stripHtmlTags(content).toLowerCase();
+  terms.forEach(term => {
+    const matches = (lowerContent.match(new RegExp(term, 'gi')) || []).length;
+    score += matches * 2;
+  });
+
+  notes.forEach(note => {
+    const lowerNote = note.text.toLowerCase();
+    terms.forEach(term => {
+      if (lowerNote.includes(term)) score += 5;
+    });
+  });
+
+  aiChat.forEach(message => {
+    const lowerMessage = message.content.toLowerCase();
+    terms.forEach(term => {
+      if (lowerMessage.includes(term)) score += 3;
+    });
+  });
+
+  return score;
+}
+
+function matchesQuery(
+  query: string,
+  title: string,
+  content: string,
+  notes: Note[],
+  aiChat: AIChatMessage[]
+): boolean {
+  const lowerQuery = query.toLowerCase();
+  const terms = lowerQuery.split(/\s+/).filter(t => t.length > 0);
+
+  if (terms.length === 0) return false;
+
+  const lowerTitle = title.toLowerCase();
+  const lowerContent = stripHtmlTags(content).toLowerCase();
+  const notesText = notes.map(n => n.text.toLowerCase()).join(' ');
+  const chatText = aiChat.map(m => m.content.toLowerCase()).join(' ');
+
+  return terms.every(term =>
+    lowerTitle.includes(term) ||
+    lowerContent.includes(term) ||
+    notesText.includes(term) ||
+    chatText.includes(term)
+  );
+}
+
+export async function searchArticles(
+  userId: string,
+  query: string,
+  projectId?: string
+): Promise<SearchResult[]> {
+  const sanitizedQuery = sanitizePlainText(query);
+  if (!sanitizedQuery || sanitizedQuery.length < 2) {
+    return [];
+  }
+
+  let dbQuery = db
+    .collection('annotations')
+    .where('userId', '==', userId);
+
+  if (projectId && projectId !== 'all') {
+    dbQuery = dbQuery.where('projectId', '==', projectId);
+  }
+
+  const snapshot = await dbQuery.get();
+
+  const results: SearchResult[] = [];
+
+  snapshot.docs.forEach((doc) => {
+    const data = doc.data();
+    const title = data.title || data.url || '';
+    const content = data.content || '';
+    const notes: Note[] = Array.isArray(data.notes) ? data.notes : [];
+    const aiChat: AIChatMessage[] = normalizeAIChatMessages(data.aiChat);
+
+    if (!matchesQuery(sanitizedQuery, title, content, notes, aiChat)) {
+      return;
+    }
+
+    const matchedFields: string[] = [];
+    const snippets: { field: string; text: string }[] = [];
+
+    const lowerQuery = sanitizedQuery.toLowerCase();
+    if (title.toLowerCase().includes(lowerQuery)) {
+      matchedFields.push('title');
+      snippets.push({
+        field: 'title',
+        text: highlightSearchTerms(title, sanitizedQuery),
+      });
+    }
+
+    const plainContent = stripHtmlTags(content);
+    if (plainContent.toLowerCase().includes(lowerQuery)) {
+      matchedFields.push('content');
+      snippets.push({
+        field: 'content',
+        text: getSnippet(plainContent, sanitizedQuery),
+      });
+    }
+
+    const matchingNotes = notes.filter(note =>
+      note.text.toLowerCase().includes(lowerQuery)
+    );
+    if (matchingNotes.length > 0) {
+      matchedFields.push('notes');
+      snippets.push({
+        field: 'notes',
+        text: getSnippet(matchingNotes[0].text, sanitizedQuery, 100),
+      });
+    }
+
+    const matchingChat = aiChat.filter(msg =>
+      msg.content.toLowerCase().includes(lowerQuery)
+    );
+    if (matchingChat.length > 0) {
+      matchedFields.push('aiChat');
+      snippets.push({
+        field: 'aiChat',
+        text: getSnippet(matchingChat[0].content, sanitizedQuery, 100),
+      });
+    }
+
+    const relevanceScore = calculateRelevance(sanitizedQuery, title, content, notes, aiChat);
+
+    const status = normalizeStatus(data.status);
+    results.push({
+      id: doc.id,
+      url: data.url,
+      title: title,
+      byline: data.byline,
+      projectId: data.projectId || defaultProjectId(userId),
+      status,
+      notesCount:
+        typeof data.notesCount === 'number'
+          ? data.notesCount
+          : notes.length,
+      createdAt: data.createdAt?.toDate().toISOString(),
+      updatedAt: data.updatedAt?.toDate().toISOString(),
+      matchedFields,
+      snippets,
+      relevanceScore,
+    });
+  });
+
+  results.sort((a, b) => b.relevanceScore - a.relevanceScore);
+
+  return results;
+}
