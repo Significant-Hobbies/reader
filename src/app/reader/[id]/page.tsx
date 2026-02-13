@@ -2,6 +2,7 @@ import { redirect } from 'next/navigation';
 import { dehydrate } from '@tanstack/react-query';
 import { notFound } from 'next/navigation';
 import ReaderClient from '../../../components/ReaderClient';
+import PDFReaderClient from '../../../components/PDFReaderClient';
 import { fetchArticleById } from '../../../lib/articles-service';
 import { ReactQueryHydrate } from '../../../components/ReactQueryHydrate';
 import { getQueryClient } from '../../../lib/get-query-client';
@@ -25,9 +26,15 @@ export default async function ReaderPage({ params }: { params: Promise<{ id: str
 
   queryClient.setQueryData(['article', id], article);
 
+  const isPDF = article.type === 'pdf';
+
   return (
     <ReactQueryHydrate state={dehydrate(queryClient)}>
-      <ReaderClient articleId={id} />
+      {isPDF ? (
+        <PDFReaderClient articleId={id} />
+      ) : (
+        <ReaderClient articleId={id} />
+      )}
     </ReactQueryHydrate>
   );
 }
