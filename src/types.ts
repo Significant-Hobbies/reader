@@ -28,6 +28,7 @@ export interface Article {
   projectId?: string;
   status?: ArticleStatus;
   tags?: string[];
+  readingTimeMinutes?: number;
   createdAt?: string;
   updatedAt?: string;
 }

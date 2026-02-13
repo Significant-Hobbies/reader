@@ -757,6 +757,7 @@ export default function ReaderClient({ articleId }: { articleId: string }) {
                 content={article.content}
                 title={article.title}
                 byline={article.byline}
+                readingTimeMinutes={article.readingTimeMinutes}
                 settings={settings}
                 contentRef={contentRef}
               />
@@ -1056,7 +1057,7 @@ const NoteCard = memo(({ note, index, onScrollTo, onDelete, onChange }: NoteCard
       </div>
       {note.anchor?.textPreview && (
         <p className="text-xs text-gray-500 mb-3 italic overflow-hidden text-ellipsis whitespace-nowrap">
-          "{note.anchor.textPreview}"
+          &ldquo;{note.anchor.textPreview}&rdquo;
         </p>
       )}
       {isEditing ? (

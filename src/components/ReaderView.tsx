@@ -1,5 +1,7 @@
 import { memo, RefObject } from 'react';
+import { Clock } from 'lucide-react';
 import { ReaderSettings, Theme, FontFamily, FontSize } from '../types';
+import { formatReadingTime } from '../lib/articles-service';
 
 // --- Helper: Style Generators ---
 export const getThemeClasses = (theme: Theme) => {
@@ -47,12 +49,14 @@ const ReaderViewComponent = ({
   content,
   title,
   byline,
+  readingTimeMinutes,
   settings,
   contentRef,
 }: {
   content: string;
   title: string;
   byline?: string | null;
+  readingTimeMinutes?: number;
   settings: ReaderSettings;
   contentRef?: RefObject<HTMLDivElement | null>;
 }) => {
@@ -70,12 +74,24 @@ const ReaderViewComponent = ({
         >
           {title}
         </h1>
-        {byline && (
-          <p
-            className={`mb-8 italic ${settings.theme === 'dark' ? 'text-gray-400' : 'text-gray-600'}`}
-          >
-            {byline}
-          </p>
+        {(byline || readingTimeMinutes) && (
+          <div className="mb-8 space-y-2">
+            {byline && (
+              <p
+                className={`italic ${settings.theme === 'dark' ? 'text-gray-400' : 'text-gray-600'}`}
+              >
+                {byline}
+              </p>
+            )}
+            {readingTimeMinutes && (
+              <div
+                className={`flex items-center gap-1.5 text-sm ${settings.theme === 'dark' ? 'text-gray-400' : 'text-gray-600'}`}
+              >
+                <Clock className="h-4 w-4" />
+                <span>{formatReadingTime(readingTimeMinutes)}</span>
+              </div>
+            )}
+          </div>
         )}
         <div
           suppressHydrationWarning

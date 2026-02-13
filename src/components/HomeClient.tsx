@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useRouter } from 'next/navigation';
 import { formatDate } from '../lib/utils';
+import { formatReadingTime } from '../lib/articles-service';
 import { ArticleSummary, ArticleStatus, Project } from '../types';
 import { Button } from './ui/button';
 import { Input } from './ui/input';
@@ -28,7 +29,7 @@ import {
 } from './ui/dialog';
 import { Label } from './ui/label';
 import { Badge } from './ui/badge';
-import { MoreVertical, X } from 'lucide-react';
+import { MoreVertical, X, Clock } from 'lucide-react';
 import { Navbar } from './Navbar';
 import { getTagColor } from '../lib/tag-utils';
 
@@ -79,9 +80,7 @@ export default function HomeClient() {
     },
   });
 
-  const {
-    data: allTags = [],
-  } = useQuery<string[]>({
+  const { data: allTags = [] } = useQuery<string[]>({
     queryKey: ['tags'],
     queryFn: async () => {
       const response = await fetch('/api/tags', { cache: 'no-store' });
@@ -279,9 +278,7 @@ export default function HomeClient() {
     .filter((article) =>
       selectedProjectId === 'all' ? true : article.projectId === selectedProjectId
     )
-    .filter((article) =>
-      selectedTag ? article.tags?.includes(selectedTag) : true
-    );
+    .filter((article) => (selectedTag ? article.tags?.includes(selectedTag) : true));
 
   const projectOptions = [{ id: 'all', name: 'All projects' }, ...(projects || [])];
   const moveTargets = (projects || []).filter((p) => p.id !== 'all');
@@ -402,9 +399,7 @@ export default function HomeClient() {
                     } ${getTagColor(tag)} hover:opacity-80`}
                   >
                     {tag}
-                    {selectedTag === tag && (
-                      <X className="ml-1 h-3 w-3" />
-                    )}
+                    {selectedTag === tag && <X className="ml-1 h-3 w-3" />}
                   </button>
                 ))}
               </div>
@@ -508,6 +503,12 @@ export default function HomeClient() {
                               >
                                 {article.status === 'read' ? 'Read' : 'In Progress'}
                               </Badge>
+                              {article.readingTimeMinutes && (
+                                <Badge variant="blue" className="flex items-center gap-1">
+                                  <Clock className="h-3 w-3" />
+                                  {formatReadingTime(article.readingTimeMinutes)}
+                                </Badge>
+                              )}
                             </div>
                             {article.tags && article.tags.length > 0 && (
                               <div className="flex flex-wrap gap-1.5 mt-3">
