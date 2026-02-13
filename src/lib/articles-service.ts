@@ -100,6 +100,45 @@ const normalizeStatus = (status: unknown): ArticleStatus => {
   return status === 'read' ? 'read' : 'in_progress';
 };
 
+/**
+ * Calculate reading time in minutes from HTML content
+ * Uses 225 words per minute as the standard reading speed
+ */
+export function calculateReadingTime(htmlContent: string): number {
+  // Strip HTML tags to get plain text
+  const plainText = sanitizePlainText(htmlContent);
+
+  // Count words (split by whitespace and filter out empty strings)
+  const words = plainText.split(/\s+/).filter(word => word.length > 0);
+  const wordCount = words.length;
+
+  // Calculate reading time (225 words per minute)
+  const WORDS_PER_MINUTE = 225;
+  const minutes = wordCount / WORDS_PER_MINUTE;
+
+  // Round to nearest minute, minimum 1 minute for any content
+  return Math.max(1, Math.round(minutes));
+}
+
+/**
+ * Format reading time for display
+ */
+export function formatReadingTime(minutes?: number): string {
+  if (!minutes || minutes < 1) return '< 1 min read';
+
+  // For articles over 60 minutes, show hours
+  if (minutes >= 60) {
+    const hours = Math.floor(minutes / 60);
+    const remainingMinutes = minutes % 60;
+    if (remainingMinutes === 0) {
+      return `${hours} hr read`;
+    }
+    return `${hours} hr ${remainingMinutes} min read`;
+  }
+
+  return `${minutes} min read`;
+}
+
 export async function fetchArticleSummaries(
   userId: string,
   projectId?: string
@@ -128,6 +167,7 @@ export async function fetchArticleSummaries(
       byline: data.byline,
       projectId: data.projectId || defaultProjectId(userId),
       status,
+      readingTimeMinutes: typeof data.readingTimeMinutes === 'number' ? data.readingTimeMinutes : undefined,
       notesCount:
         typeof data.notesCount === 'number'
           ? data.notesCount
@@ -159,6 +199,7 @@ export async function fetchArticleById(id: string, userId: string): Promise<Arti
     aiChat: normalizeAIChatMessages(data.aiChat),
     projectId: data.projectId || defaultProjectId(userId),
     status,
+    readingTimeMinutes: typeof data.readingTimeMinutes === 'number' ? data.readingTimeMinutes : undefined,
     notesCount:
       typeof data.notesCount === 'number'
         ? data.notesCount
@@ -246,6 +287,10 @@ export async function createArticleRecord(payload: {
   userId: string;
 }) {
   const sanitized = sanitizeArticlePayload(payload);
+
+  // Calculate reading time from content
+  const readingTimeMinutes = calculateReadingTime(sanitized.content);
+
   const now = Timestamp.now();
   const docRef = await db.collection('annotations').add({
     ...sanitized,
@@ -253,6 +298,7 @@ export async function createArticleRecord(payload: {
     aiChat: [],
     notesCount: 0,
     status: 'in_progress',
+    readingTimeMinutes,
     createdAt: now,
     updatedAt: now,
   });

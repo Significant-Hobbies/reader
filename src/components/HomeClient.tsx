@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useRouter } from 'next/navigation';
 import { formatDate } from '../lib/utils';
+import { formatReadingTime } from '../lib/articles-service';
 import { ArticleSummary, ArticleStatus, Project } from '../types';
 import { Button } from './ui/button';
 import { Input } from './ui/input';
@@ -28,7 +29,7 @@ import {
 } from './ui/dialog';
 import { Label } from './ui/label';
 import { Badge } from './ui/badge';
-import { MoreVertical } from 'lucide-react';
+import { MoreVertical, Clock } from 'lucide-react';
 import { Navbar } from './Navbar';
 
 export default function HomeClient() {
@@ -440,6 +441,12 @@ export default function HomeClient() {
                               >
                                 {article.status === 'read' ? 'Read' : 'In Progress'}
                               </Badge>
+                              {article.readingTimeMinutes && (
+                                <Badge variant="blue" className="flex items-center gap-1">
+                                  <Clock className="h-3 w-3" />
+                                  {formatReadingTime(article.readingTimeMinutes)}
+                                </Badge>
+                              )}
                             </div>
                           </div>
                           <DropdownMenu

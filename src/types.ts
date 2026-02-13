@@ -27,6 +27,7 @@ export interface Article {
   userId?: string;
   projectId?: string;
   status?: ArticleStatus;
+  readingTimeMinutes?: number;
   createdAt?: string;
   updatedAt?: string;
 }
