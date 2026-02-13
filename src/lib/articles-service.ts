@@ -2,7 +2,7 @@ import { Timestamp } from 'firebase-admin/firestore';
 import sanitizeHtml from 'sanitize-html';
 import type { IOptions } from 'sanitize-html';
 import { db } from './firebase-admin';
-import { Article, ArticleStatus, ArticleSummary, Note, Project } from '../types';
+import { AIChatMessage, Article, ArticleStatus, ArticleSummary, Note, Project } from '../types';
 
 const baseAllowedAttributes = sanitizeHtml.defaults.allowedAttributes ?? {};
 const plainTextSanitizeOptions: IOptions = {
@@ -51,6 +51,14 @@ type NoteAnchorInput = {
   textPreview?: unknown;
 };
 
+type AIChatMessageInput = {
+  role?: unknown;
+  content?: unknown;
+};
+
+const MAX_AI_CHAT_MESSAGES = 80;
+const MAX_AI_CHAT_MESSAGE_LENGTH = 4000;
+
 const isNoteInput = (value: unknown): value is NoteInput => {
   if (typeof value !== 'object' || value === null) return false;
   const id = (value as { id?: unknown }).id;
@@ -58,6 +66,9 @@ const isNoteInput = (value: unknown): value is NoteInput => {
 };
 
 const isNoteAnchorInput = (value: unknown): value is NoteAnchorInput =>
+  typeof value === 'object' && value !== null;
+
+const isAIChatMessageInput = (value: unknown): value is AIChatMessageInput =>
   typeof value === 'object' && value !== null;
 
 const normalizeAnchor = (anchor: NoteAnchorInput) => {
@@ -145,6 +156,7 @@ export async function fetchArticleById(id: string, userId: string): Promise<Arti
     byline: data.byline,
     content: data.content,
     notes: data.notes ?? [],
+    aiChat: normalizeAIChatMessages(data.aiChat),
     projectId: data.projectId || defaultProjectId(userId),
     status,
     notesCount:
@@ -178,6 +190,26 @@ export function normalizeNotes(payload: unknown): Note[] {
       return normalizedNote;
     })
     .filter(Boolean) as Note[];
+}
+
+export function normalizeAIChatMessages(payload: unknown): AIChatMessage[] {
+  if (!Array.isArray(payload)) return [];
+
+  return payload
+    .map((message) => {
+      if (!isAIChatMessageInput(message)) return null;
+      if (message.role !== 'user' && message.role !== 'assistant') return null;
+
+      const content = sanitizePlainText(message.content).slice(0, MAX_AI_CHAT_MESSAGE_LENGTH);
+      if (!content) return null;
+
+      return {
+        role: message.role,
+        content,
+      } as AIChatMessage;
+    })
+    .filter((message): message is AIChatMessage => Boolean(message))
+    .slice(-MAX_AI_CHAT_MESSAGES);
 }
 
 export function sanitizeArticlePayload(payload: {
@@ -218,6 +250,7 @@ export async function createArticleRecord(payload: {
   const docRef = await db.collection('annotations').add({
     ...sanitized,
     notes: [],
+    aiChat: [],
     notesCount: 0,
     status: 'in_progress',
     createdAt: now,

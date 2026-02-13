@@ -30,6 +30,8 @@ Web Annotator is a Next.js-based application that captures readable snapshots of
 - Firebase Authentication (Google Sign-In)
 - Article storage in Firestore with per-user isolation
 - Contextual annotations with optional DOM anchoring
+- Text selection context menu actions (`Add note`, `Ask AI`)
+- AI chat persisted per article in Firestore (`annotations.aiChat`)
 - Project-based organization
 - Customizable reader appearance (theme, font, size)
 - Reading progress tracking (in_progress, read)
@@ -1376,7 +1378,9 @@ Located in `.github/workflows/`:
 
 ```bash
 # Development
-npm run dev              # Start dev server (http://localhost:3000)
+npm run dev              # Start Next.js app + local cli-bridge
+npm run dev:app          # Start only Next.js app (http://127.0.0.1:3000)
+npm run cli-bridge       # Start only local cli-bridge (http://127.0.0.1:3456)
 npm run build            # Build for production
 npm run start            # Start production server
 
@@ -1408,8 +1412,9 @@ NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID
 NEXT_PUBLIC_FIREBASE_APP_ID
 
 # Server (Node.js)
-FIREBASE_SERVICE_ACCOUNT_PATH      # Local dev (path to JSON)
-FIREBASE_SERVICE_ACCOUNT_KEY       # Vercel (base64 encoded)
+FIREBASE_SERVICE_ACCOUNT_KEY       # Base64-encoded service account JSON
+AI_GATEWAY_API_KEY                 # Optional server-side fallback for Vercel AI Gateway
+CLI_BRIDGE_URL                     # Optional local cli-bridge base URL
 ```
 
 ### Key Firestore Queries

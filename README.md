@@ -12,7 +12,8 @@ Web Annotator solves this by providing a personal research library where you can
 
 - **Clean Article Extraction**: Save articles from any URL using Mozilla Readability
 - **Rich Annotations**: Add contextual notes with optional DOM anchoring
-- **AI-Powered Chat**: Ask questions about your articles and notes using BYOK providers (OpenAI, Anthropic, Gemini, Gateway) or local CLI mode
+- **Selection Actions**: Right-click selected article text to quickly `Add note` or `Ask AI`
+- **AI-Powered Chat**: Ask questions about your articles and notes using BYOK providers (OpenAI, Anthropic, Gemini, Gateway) or local CLI mode, with chat history persisted per article
 - **Project Organization**: Group related articles into projects
 - **Customizable Reader**: Adjust theme (light/dark/sepia), font family (sans/serif/mono), and text size
 - **Reading Progress**: Track which articles you're reading or have completed
@@ -69,7 +70,7 @@ graph TB
 
 - **Frontend**: Next.js 16, React 19, TypeScript, Tailwind CSS
 - **Backend**: Firebase (Authentication + Firestore)
-- **AI Integration**: BYOK chat providers + local CLI bridge support
+- **AI Integration**: Vercel AI SDK + AI Gateway (preferred), BYOK chat providers, local CLI bridge support
 - **Deployment**: Optimized for Vercel
 
 ## Getting Started
@@ -94,7 +95,15 @@ graph TB
    - Enable Google Sign-In in Authentication settings
    - Create a Firestore database
    - Download your service account JSON from Project Settings > Service Accounts
-   - Save it as `firebase-service-account.json` in the project root
+   - Convert the service account JSON to base64 (use this same value for local and Vercel):
+
+   ```bash
+   # macOS
+   base64 firebase-service-account.json | tr -d '\n'
+
+   # Linux
+   base64 -w0 firebase-service-account.json
+   ```
 
 3. Configure environment variables:
 
@@ -111,7 +120,7 @@ graph TB
    NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET=your_project.appspot.com
    NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID=your_sender_id
    NEXT_PUBLIC_FIREBASE_APP_ID=your_app_id
-   FIREBASE_SERVICE_ACCOUNT_PATH=./firebase-service-account.json
+   FIREBASE_SERVICE_ACCOUNT_KEY=your_base64_service_account_json
    CLI_BRIDGE_URL=http://127.0.0.1:3456  # Optional: for local AI mode
    ```
 
@@ -121,10 +130,12 @@ graph TB
    npm run dev
    ```
 
-   Or with local AI CLI bridge:
+   `npm run dev` starts both the Next.js app and local `cli-bridge`.
+   Local CLI providers are shown only in development mode.
+   If you only want the app server:
 
    ```bash
-   npm run dev:with-cli
+   npm run dev:app
    ```
 
 5. Open [http://localhost:3000](http://localhost:3000)
@@ -132,8 +143,10 @@ graph TB
 ### Development Commands
 
 ```bash
-npm run dev          # Start development server
-npm run dev:with-cli # Start with local AI CLI bridge
+npm run dev          # Start Next.js + local AI CLI bridge
+npm run dev:app      # Start only Next.js app
+npm run cli-bridge   # Start only local AI CLI bridge
+npm run dev:with-cli # Alias for npm run dev
 npm run build        # Build for production
 npm run start        # Start production server
 npm run lint         # Run ESLint
@@ -147,18 +160,13 @@ npm run type-check   # Check TypeScript types
 
 1. Push your code to GitHub
 2. Import the project in Vercel
-3. Add environment variables:
-   - All `NEXT_PUBLIC_*` variables from your `.env.local`
-   - `FIREBASE_SERVICE_ACCOUNT_KEY` (base64-encoded service account JSON)
-
-Encode your service account:
+3. Add the same Firebase environment variables used locally:
+   - All `NEXT_PUBLIC_FIREBASE_*` variables
+   - `FIREBASE_SERVICE_ACCOUNT_KEY` (same base64 value as local)
+4. Keep local and Vercel configs in sync by pulling from Vercel when needed:
 
 ```bash
-# macOS
-base64 firebase-service-account.json | tr -d '\n'
-
-# Linux
-base64 -w0 firebase-service-account.json
+vercel env pull .env.local --environment=production
 ```
 
 ## Project Structure

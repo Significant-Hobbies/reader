@@ -30,6 +30,7 @@ export function Navbar() {
           <DropdownMenuTrigger asChild>
             <button className="rounded-full overflow-hidden h-8 w-8 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 focus:ring-offset-gray-950">
               {user.photoURL ? (
+                // eslint-disable-next-line @next/next/no-img-element
                 <img
                   src={user.photoURL}
                   alt=""

@@ -1,11 +1,12 @@
 import * as admin from 'firebase-admin';
 import { cookies } from 'next/headers';
-import './firebase-admin';
+import { ensureFirebaseAdmin } from './firebase-admin';
 
 const SESSION_COOKIE_NAME = '__session';
 
 export async function getAuthenticatedUserId(): Promise<string | null> {
   try {
+    ensureFirebaseAdmin();
     const cookieStore = await cookies();
     const sessionCookie = cookieStore.get(SESSION_COOKIE_NAME)?.value;
     if (!sessionCookie) return null;

@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useRouter } from 'next/navigation';
 import { formatDate } from '../lib/utils';
@@ -29,7 +29,6 @@ import {
 import { Label } from './ui/label';
 import { Badge } from './ui/badge';
 import { MoreVertical } from 'lucide-react';
-import { useAuth } from './AuthProvider';
 import { Navbar } from './Navbar';
 
 export default function HomeClient() {
@@ -43,7 +42,6 @@ export default function HomeClient() {
 
   const router = useRouter();
   const queryClient = useQueryClient();
-  const { user, logout } = useAuth();
 
   const {
     data: articles = [],

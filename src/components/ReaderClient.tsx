@@ -8,6 +8,7 @@ import { Article, Note, ReaderSettings } from '../types';
 import { ReaderView, getThemeClasses } from './ReaderView';
 import { AppearanceToolbar } from './AppearanceToolbar';
 import { Navbar } from './Navbar';
+import { NotesAIChat } from './NotesAIChat';
 
 const ANNOTATABLE_SELECTOR = [
   'p',
@@ -35,6 +36,14 @@ const ANNOTATABLE_SELECTOR = [
 ].join(', ');
 
 const SCROLL_OFFSET = 80;
+const MAX_SELECTION_MENU_TEXT = 600;
+
+type SelectionActionMenuState = {
+  x: number;
+  y: number;
+  text: string;
+  anchor?: Note['anchor'];
+};
 
 export default function ReaderClient({ articleId }: { articleId: string }) {
   const id = articleId;
@@ -42,9 +51,11 @@ export default function ReaderClient({ articleId }: { articleId: string }) {
   const queryClient = useQueryClient();
 
   const [notes, setNotes] = useState<Note[]>([]);
-  const [isAnnotating, setIsAnnotating] = useState(false);
+  const [activeSidebarTab, setActiveSidebarTab] = useState<'notes' | 'ai'>('notes');
   const [titleDraft, setTitleDraft] = useState('');
   const [isTitleEditing, setIsTitleEditing] = useState(false);
+  const [selectionMenu, setSelectionMenu] = useState<SelectionActionMenuState | null>(null);
+  const [queuedAIPrompt, setQueuedAIPrompt] = useState<string | null>(null);
 
   // Layout State
   const [leftPanelWidth, setLeftPanelWidth] = useState(66.66);
@@ -223,6 +234,33 @@ export default function ReaderClient({ articleId }: { articleId: string }) {
     refreshAnnotationTargets();
   }, [notes, refreshAnnotationTargets]);
 
+  useEffect(() => {
+    const dismissSelectionMenu = (event?: Event) => {
+      const target = event?.target;
+      if (target instanceof Element && target.closest('[data-selection-actions-menu="true"]')) {
+        return;
+      }
+      setSelectionMenu(null);
+    };
+    const dismissOnEscape = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') {
+        setSelectionMenu(null);
+      }
+    };
+
+    window.addEventListener('scroll', dismissSelectionMenu, true);
+    window.addEventListener('resize', dismissSelectionMenu);
+    window.addEventListener('mousedown', dismissSelectionMenu);
+    window.addEventListener('keydown', dismissOnEscape);
+
+    return () => {
+      window.removeEventListener('scroll', dismissSelectionMenu, true);
+      window.removeEventListener('resize', dismissSelectionMenu);
+      window.removeEventListener('mousedown', dismissSelectionMenu);
+      window.removeEventListener('keydown', dismissOnEscape);
+    };
+  }, []);
+
   // Resizing Logic
   useEffect(() => {
     const handleMouseMove = (e: MouseEvent) => {
@@ -254,41 +292,6 @@ export default function ReaderClient({ articleId }: { articleId: string }) {
     document.body.style.cursor = 'col-resize';
     document.body.style.userSelect = 'none';
   };
-
-  const getAnchorElementFromEvent = useCallback(
-    (event: React.MouseEvent<HTMLDivElement>) => {
-      if (!contentRef.current) return null;
-
-      if (!annotatableElementsRef.current.length) {
-        refreshAnnotationTargets();
-      }
-
-      const directTarget = (event.target as HTMLElement | null)?.closest?.(
-        '[data-note-anchor-index]'
-      ) as HTMLElement | null;
-
-      if (directTarget && contentRef.current.contains(directTarget)) {
-        return directTarget;
-      }
-
-      const { clientX, clientY } = event;
-      let closest: { element: HTMLElement; distance: number } | null = null;
-
-      for (const element of annotatableElementsRef.current) {
-        const rect = element.getBoundingClientRect();
-        const dx = Math.max(rect.left - clientX, 0, clientX - rect.right);
-        const dy = Math.max(rect.top - clientY, 0, clientY - rect.bottom);
-        const distance = Math.sqrt(dx * dx + dy * dy);
-
-        if (!closest || distance < closest.distance) {
-          closest = { element, distance };
-        }
-      }
-
-      return closest?.element ?? null;
-    },
-    [refreshAnnotationTargets]
-  );
 
   const getAnchorElementFromPoint = useCallback(
     (clientX: number, clientY: number) => {
@@ -333,31 +336,107 @@ export default function ReaderClient({ articleId }: { articleId: string }) {
     };
   }, []);
 
-  const handleContentClick = useCallback(
-    (e: React.MouseEvent<HTMLDivElement>) => {
-      if (!isAnnotating) return;
+  const createNote = useCallback((text = '', anchor?: Note['anchor']) => {
+    nextNoteIdRef.current += 1;
+    const noteId = nextNoteIdRef.current;
+    const newNote: Note = {
+      id: noteId,
+      text,
+      anchor,
+    };
+    setNotes((prev) => [...prev, newNote]);
+  }, []);
 
-      const anchorElement = getAnchorElementFromEvent(e);
-      if (!anchorElement) {
-        setIsAnnotating(false);
-        return;
+  const openSelectionActionsMenu = useCallback(
+    (clientX: number, clientY: number) => {
+      const selection = window.getSelection();
+      if (!selection || selection.isCollapsed || selection.rangeCount === 0) {
+        setSelectionMenu(null);
+        return false;
       }
 
-      const anchorPayload = buildAnchorPayload(anchorElement);
+      const range = selection.getRangeAt(0);
+      const commonNode =
+        range.commonAncestorContainer.nodeType === Node.ELEMENT_NODE
+          ? (range.commonAncestorContainer as Element)
+          : range.commonAncestorContainer.parentElement;
 
-      nextNoteIdRef.current += 1;
-      const noteId = nextNoteIdRef.current;
-      const newNote: Note = {
-        id: noteId,
-        text: '',
+      if (!commonNode || !contentRef.current?.contains(commonNode)) {
+        setSelectionMenu(null);
+        return false;
+      }
+
+      const selectedText = selection
+        .toString()
+        .replace(/\s+/g, ' ')
+        .trim()
+        .slice(0, MAX_SELECTION_MENU_TEXT);
+      if (!selectedText) {
+        setSelectionMenu(null);
+        return false;
+      }
+
+      let x = clientX;
+      let y = clientY;
+      if (!Number.isFinite(x) || !Number.isFinite(y) || (x <= 0 && y <= 0)) {
+        const rect = range.getBoundingClientRect();
+        x = rect.right;
+        y = rect.bottom;
+      }
+
+      const anchorElement =
+        getAnchorElementFromPoint(x, y) ||
+        (commonNode.closest?.('[data-note-anchor-index]') as HTMLElement | null);
+
+      const anchorPayload = anchorElement
+        ? {
+            ...buildAnchorPayload(anchorElement),
+            textPreview: selectedText.slice(0, 200),
+          }
+        : undefined;
+
+      setSelectionMenu({
+        x,
+        y,
+        text: selectedText,
         anchor: anchorPayload,
-      };
-
-      setNotes((prev) => [...prev, newNote]);
-      setIsAnnotating(false);
+      });
+      return true;
     },
-    [buildAnchorPayload, getAnchorElementFromEvent, isAnnotating]
+    [buildAnchorPayload, getAnchorElementFromPoint]
   );
+
+  const handleSelectionMouseUp = useCallback(
+    (event: React.MouseEvent<HTMLDivElement>) => {
+      if (event.button !== 0) return;
+      openSelectionActionsMenu(event.clientX, event.clientY);
+    },
+    [openSelectionActionsMenu]
+  );
+
+  const handleSelectionContextMenu = useCallback(
+    (event: React.MouseEvent<HTMLDivElement>) => {
+      const opened = openSelectionActionsMenu(event.clientX, event.clientY);
+      if (opened) {
+        event.preventDefault();
+      }
+    },
+    [openSelectionActionsMenu]
+  );
+
+  const addNoteFromSelection = useCallback(() => {
+    if (!selectionMenu) return;
+    createNote(selectionMenu.text, selectionMenu.anchor);
+    setSelectionMenu(null);
+  }, [createNote, selectionMenu]);
+
+  const askAIFromSelection = useCallback(() => {
+    if (!selectionMenu) return;
+    const prompt = `Explain this selected excerpt in context:\n\n"${selectionMenu.text}"`;
+    setActiveSidebarTab('ai');
+    setQueuedAIPrompt(prompt);
+    setSelectionMenu(null);
+  }, [selectionMenu]);
 
   const handleNoteChange = useCallback((id: number, text: string) => {
     setNotes((prev) => prev.map((n) => (n.id === id ? { ...n, text } : n)));
@@ -662,25 +741,15 @@ export default function ReaderClient({ articleId }: { articleId: string }) {
               >
                 {isNotesSaving ? 'Saving...' : 'Saved'}
               </span>
-
-              <button
-                onClick={() => setIsAnnotating(!isAnnotating)}
-                className={`px-4 py-2 rounded-lg font-medium transition-colors border ${
-                  isAnnotating
-                    ? 'bg-yellow-500/20 text-yellow-300 border-yellow-500/50'
-                    : 'bg-gray-800 text-gray-300 hover:bg-gray-700 border-gray-700'
-                }`}
-              >
-                {isAnnotating ? 'Click to Place Note' : '+ Add Note'}
-              </button>
             </div>
           </div>
 
           {/* Article Content */}
           <div
             ref={snapshotContainerRef}
-            className={`flex-grow overflow-y-auto relative scroll-smooth ${isAnnotating ? 'cursor-crosshair' : ''} ${getThemeClasses(settings.theme)}`}
-            onClick={handleContentClick}
+            className={`flex-grow overflow-y-auto relative scroll-smooth ${getThemeClasses(settings.theme)}`}
+            onMouseUp={handleSelectionMouseUp}
+            onContextMenu={handleSelectionContextMenu}
           >
             <div className="relative min-h-full">
               <ReaderView
@@ -710,11 +779,6 @@ export default function ReaderClient({ articleId }: { articleId: string }) {
                   />
                 );
               })}
-
-              {/* Annotation Overlay */}
-              {isAnnotating && (
-                <div className="absolute inset-0 bg-blue-500/10 z-10 pointer-events-none" />
-              )}
             </div>
           </div>
         </div>
@@ -734,32 +798,95 @@ export default function ReaderClient({ articleId }: { articleId: string }) {
           style={{ width: `${100 - leftPanelWidth}%` }}
         >
           <div className="p-4 border-b border-gray-800 bg-gray-900/80">
-            <h2 className="text-lg font-semibold text-gray-100">Notes</h2>
-            <p className="text-sm text-gray-500">{notes.length} notes added</p>
+            <h2 className="text-lg font-semibold text-gray-100">Sidebar</h2>
+            <p className="text-sm text-gray-500">
+              {activeSidebarTab === 'notes'
+                ? `${notes.length} notes added`
+                : 'Ask AI using your article and notes context'}
+            </p>
+            <div className="mt-3 grid grid-cols-2 gap-2">
+              <button
+                type="button"
+                onClick={() => setActiveSidebarTab('notes')}
+                className={`rounded-lg border px-3 py-2 text-sm font-medium transition-colors ${
+                  activeSidebarTab === 'notes'
+                    ? 'border-blue-500/50 bg-blue-500/20 text-blue-200'
+                    : 'border-gray-700 bg-gray-800/70 text-gray-300 hover:bg-gray-700'
+                }`}
+              >
+                Notes
+              </button>
+              <button
+                type="button"
+                onClick={() => setActiveSidebarTab('ai')}
+                className={`rounded-lg border px-3 py-2 text-sm font-medium transition-colors ${
+                  activeSidebarTab === 'ai'
+                    ? 'border-blue-500/50 bg-blue-500/20 text-blue-200'
+                    : 'border-gray-700 bg-gray-800/70 text-gray-300 hover:bg-gray-700'
+                }`}
+              >
+                AI Chat
+              </button>
+            </div>
           </div>
 
-          <div className="flex-grow overflow-y-auto p-4 space-y-4">
-            {notes.length === 0 && (
-              <div className="text-center text-gray-500 mt-10">
-                <p>No notes yet.</p>
-                <p className="text-sm">
-                  Click &quot;+ Add Note&quot; and select an area on the left.
-                </p>
-              </div>
-            )}
+          {activeSidebarTab === 'notes' ? (
+            <div className="flex-grow overflow-y-auto p-4 space-y-4">
+              {notes.length === 0 && (
+                <div className="text-center text-gray-500 mt-10">
+                  <p>No notes yet.</p>
+                  <p className="text-sm">Select text, then use Add note from the actions menu.</p>
+                </div>
+              )}
 
-            {notes.map((note, index) => (
-              <NoteCard
-                key={note.id}
-                note={note}
-                index={index}
-                onScrollTo={scrollToNote}
-                onDelete={handleDeleteNote}
-                onChange={handleNoteChange}
-              />
-            ))}
-          </div>
+              {notes.map((note, index) => (
+                <NoteCard
+                  key={note.id}
+                  note={note}
+                  index={index}
+                  onScrollTo={scrollToNote}
+                  onDelete={handleDeleteNote}
+                  onChange={handleNoteChange}
+                />
+              ))}
+            </div>
+          ) : (
+            <NotesAIChat
+              article={article}
+              notes={notes}
+              queuedPrompt={queuedAIPrompt}
+              onQueuedPromptHandled={() => setQueuedAIPrompt(null)}
+            />
+          )}
         </div>
+        {typeof document !== 'undefined' && selectionMenu
+          ? createPortal(
+              <div
+                data-selection-actions-menu="true"
+                className="fixed z-[120] min-w-[180px] rounded-xl border border-gray-700 bg-gray-950/95 p-1 shadow-2xl backdrop-blur"
+                style={{
+                  left: Math.min(selectionMenu.x, window.innerWidth - 200),
+                  top: Math.min(selectionMenu.y, window.innerHeight - 120),
+                }}
+              >
+                <button
+                  type="button"
+                  onClick={addNoteFromSelection}
+                  className="block w-full rounded-lg px-3 py-2 text-left text-sm text-gray-100 transition-colors hover:bg-gray-800"
+                >
+                  Add note
+                </button>
+                <button
+                  type="button"
+                  onClick={askAIFromSelection}
+                  className="block w-full rounded-lg px-3 py-2 text-left text-sm text-gray-100 transition-colors hover:bg-gray-800"
+                >
+                  Ask AI
+                </button>
+              </div>,
+              document.body
+            )
+          : null}
         {typeof document !== 'undefined' && activeTooltip
           ? createPortal(
               <div

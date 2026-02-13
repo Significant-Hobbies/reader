@@ -10,6 +10,11 @@ export interface Note {
   anchor?: NoteAnchor;
 }
 
+export interface AIChatMessage {
+  role: 'user' | 'assistant';
+  content: string;
+}
+
 export interface Article {
   id: string;
   url: string;
@@ -17,6 +22,7 @@ export interface Article {
   byline?: string | null;
   content: string;
   notes?: Note[];
+  aiChat?: AIChatMessage[];
   notesCount?: number;
   userId?: string;
   projectId?: string;

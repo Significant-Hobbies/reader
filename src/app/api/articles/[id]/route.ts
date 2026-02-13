@@ -3,6 +3,7 @@ import { Timestamp } from 'firebase-admin/firestore';
 import { db } from '../../../../lib/firebase-admin';
 import {
   fetchArticleById,
+  normalizeAIChatMessages,
   normalizeNotes,
   sanitizeTitle,
   verifyArticleOwnership,
@@ -12,6 +13,14 @@ import { getAuthenticatedUserId } from '../../../../lib/auth-api';
 
 const normalizeStatus = (status: unknown): ArticleStatus | null =>
   status === 'read' || status === 'in_progress' ? status : null;
+
+const LOCAL_ONLY_AI_SETTINGS_FIELDS = new Set([
+  'provider',
+  'model',
+  'apiKey',
+  'systemPrompt',
+  'aiConfig',
+]);
 
 export async function GET(request: Request, { params }: { params: Promise<{ id: string }> }) {
   try {
@@ -47,7 +56,24 @@ export async function PUT(request: Request, { params }: { params: Promise<{ id: 
     }
 
     const body = await request.json();
-    const { notes, title, status, projectId } = body || {};
+    if (typeof body !== 'object' || body === null) {
+      return NextResponse.json({ error: 'Invalid request body' }, { status: 400 });
+    }
+
+    const payload = body as Record<string, unknown>;
+    const localOnlyField = Object.keys(payload).find((key) =>
+      LOCAL_ONLY_AI_SETTINGS_FIELDS.has(key)
+    );
+    if (localOnlyField) {
+      return NextResponse.json(
+        {
+          error: `${localOnlyField} is local-only and must not be sent to article persistence.`,
+        },
+        { status: 400 }
+      );
+    }
+
+    const { notes, aiChat, title, status, projectId } = payload;
 
     const docRef = db.collection('annotations').doc(id);
     const updateData: Record<string, unknown> = {
@@ -58,6 +84,10 @@ export async function PUT(request: Request, { params }: { params: Promise<{ id: 
       const normalized = normalizeNotes(notes);
       updateData.notes = normalized;
       updateData.notesCount = normalized.length;
+    }
+
+    if (aiChat !== undefined) {
+      updateData.aiChat = normalizeAIChatMessages(aiChat);
     }
 
     if (typeof title === 'string') {
