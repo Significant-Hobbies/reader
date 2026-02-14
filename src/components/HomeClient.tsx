@@ -650,11 +650,16 @@ export default function HomeClient() {
                           </div>
                           <DropdownMenu
                             open={activeToolbarId === article.id}
-                            onOpenChange={(open) => setActiveToolbarId(open ? article.id : null)}
+                            onOpenChange={(open) => {
+                              setActiveToolbarId(open ? article.id : null);
+                            }}
                           >
                             <DropdownMenuTrigger asChild>
                               <button
-                                onClick={(e) => e.stopPropagation()}
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  e.preventDefault();
+                                }}
                                 aria-label="Article actions"
                                 className="p-1.5 rounded-lg text-gray-500 hover:text-white hover:bg-gray-800 transition-colors"
                               >
