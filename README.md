@@ -10,13 +10,31 @@ Web Annotator solves this by providing a personal research library where you can
 
 ## Features
 
+### Content Management
+
 - **Clean Article Extraction**: Save articles from any URL using Mozilla Readability
+- **PDF Support**: Upload, view, and annotate PDF documents with text extraction
 - **Rich Annotations**: Add contextual notes with optional DOM anchoring
 - **Selection Actions**: After selecting text (mouse up) or selection + right-click, quickly choose `Add note` or `Ask AI`
-- **AI-Powered Chat**: Ask questions about your articles and notes using BYOK providers (OpenAI, Anthropic, Gemini, Gateway) or local CLI mode, with chat history persisted per article and assistant replies rendered as markdown
+- **Reading Time Estimates**: Auto-calculated reading time displayed for every article
+
+### Organization & Discovery
+
+- **Tags System**: Multi-tag articles with color-coded badges, autocomplete, and filtering
+- **Full-Text Search**: Search across article content, notes, and AI chat history with Cmd/Ctrl+K shortcut
 - **Project Organization**: Group related articles into projects
-- **Customizable Reader**: Adjust theme (light/dark/sepia), font family (sans/serif/mono), and text size
 - **Reading Progress**: Track which articles you're reading or have completed
+
+### AI-Powered Features
+
+- **AI Chat**: Ask questions about your articles and notes using BYOK providers (OpenAI, Anthropic, Gemini, Gateway) or local CLI mode
+- **Auto-Summaries**: Generate intelligent summaries with one click (short/medium/long options)
+- **Key Points Extraction**: Automatically extract 3-5 key takeaways from any article
+- **Chat History**: Persistent per-article conversations rendered as markdown
+
+### Customization
+
+- **Customizable Reader**: Adjust theme (light/dark/sepia), font family (sans/serif/mono), and text size
 - **Secure & Private**: Google Sign-In authentication with per-user data isolation
 
 ## Architecture
@@ -35,6 +53,9 @@ graph TB
         API --> Projects[/api/projects]
         API --> Auth[/api/auth]
         API --> AI[/api/ai]
+        API --> Search[/api/search]
+        API --> Tags[/api/tags]
+        API --> PDF[/api/pdf]
         API --> Snapshot[/api/snapshot]
     end
 
@@ -69,8 +90,9 @@ graph TB
 ### Tech Stack
 
 - **Frontend**: Next.js 16, React 19, TypeScript, Tailwind CSS
-- **Backend**: Firebase (Authentication + Firestore)
+- **Backend**: Firebase (Authentication + Firestore + Storage)
 - **AI Integration**: Vercel AI SDK + AI Gateway (preferred), BYOK chat providers, local CLI bridge support
+- **PDF Processing**: react-pdf, pdfjs-dist, pdf-parse for viewing and text extraction
 - **Deployment**: Optimized for Vercel
 
 ## Getting Started
