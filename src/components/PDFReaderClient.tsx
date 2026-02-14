@@ -144,12 +144,7 @@ export default function PDFReaderClient({ articleId }: { articleId: string }) {
                 </div>
               </div>
             ) : (
-              <NotesAIChat
-                articleId={id}
-                aiChat={article.aiChat ?? []}
-                textContent={article.extractedText || article.content}
-                queuedPrompt={null}
-              />
+              <NotesAIChat article={article} notes={[]} queuedPrompt={null} />
             )}
           </div>
         </div>

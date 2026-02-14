@@ -4,7 +4,7 @@ import { useState, useRef } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useRouter } from 'next/navigation';
 import { formatDate } from '../lib/utils';
-import { formatReadingTime } from '../lib/articles-service';
+import { formatReadingTime } from '../lib/reading-time-utils';
 import { ArticleSummary, ArticleStatus, Project } from '../types';
 import { Button } from './ui/button';
 import { Input } from './ui/input';

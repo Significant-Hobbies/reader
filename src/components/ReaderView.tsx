@@ -1,7 +1,7 @@
 import { memo, RefObject } from 'react';
 import { Clock } from 'lucide-react';
 import { ReaderSettings, Theme, FontFamily, FontSize } from '../types';
-import { formatReadingTime } from '../lib/articles-service';
+import { formatReadingTime } from '../lib/reading-time-utils';
 
 // --- Helper: Style Generators ---
 export const getThemeClasses = (theme: Theme) => {
