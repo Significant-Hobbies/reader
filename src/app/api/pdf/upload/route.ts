@@ -16,6 +16,23 @@ export async function POST(request: NextRequest) {
     const file = formData.get('file') as File;
     const projectId = formData.get('projectId') as string | null;
 
+    // Get listIds from FormData (sent as JSON string)
+    const listIdsString = formData.get('listIds') as string | null;
+    let listIds: string[] = [];
+    if (listIdsString) {
+      try {
+        const parsed = JSON.parse(listIdsString);
+        if (Array.isArray(parsed)) {
+          listIds = parsed;
+        }
+      } catch (error) {
+        console.error('Failed to parse listIds:', error);
+      }
+    }
+
+    // Get category from FormData
+    const category = formData.get('category') as string | null;
+
     if (!file) {
       return NextResponse.json({ error: 'No file provided' }, { status: 400 });
     }
@@ -76,6 +93,8 @@ export async function POST(request: NextRequest) {
         pageCount: extraction.pageCount,
         fileSize: buffer.length,
       },
+      listIds,
+      category: category || undefined,
     });
 
     return NextResponse.json({

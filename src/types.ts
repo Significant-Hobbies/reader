@@ -30,7 +30,7 @@ export interface Article {
   keyPoints?: string[];
   notesCount?: number;
   userId?: string;
-  projectId?: string;
+  projectId?: string; // DEPRECATED: Keep for migration compatibility, use listIds instead
   status?: ArticleStatus;
   tags?: string[];
   readingTimeMinutes?: number;
@@ -43,6 +43,9 @@ export interface Article {
     pageCount?: number;
     fileSize?: number;
   };
+  // NEW FIELDS:
+  listIds?: string[]; // Array of list IDs this article belongs to
+  category?: string; // Optional single category (e.g., "Research", "Tutorial", "Blog Post")
 }
 
 export type ArticleSummary = Omit<Article, 'content' | 'notes'> & {
@@ -68,6 +71,17 @@ export interface Project {
   updatedAt?: string;
 }
 
+export interface List {
+  id: string;
+  name: string;
+  userId: string;
+  color?: string; // For custom lists, e.g., "blue", "pink", "cyan"
+  icon?: 'heart' | 'clock' | 'dot'; // heart=Favourites, clock=Read Later, dot=custom
+  isDefault?: boolean; // true for Read Later and Favourites
+  createdAt?: string;
+  updatedAt?: string;
+}
+
 export interface SearchSnippet {
   field: string;
   text: string;
@@ -78,7 +92,7 @@ export interface SearchResult {
   url: string;
   title: string;
   byline?: string | null;
-  projectId?: string;
+  projectId?: string; // DEPRECATED: Keep for migration compatibility
   status?: ArticleStatus;
   notesCount: number;
   createdAt?: string;
@@ -86,4 +100,6 @@ export interface SearchResult {
   matchedFields: string[];
   snippets: SearchSnippet[];
   relevanceScore: number;
+  listIds?: string[]; // Array of list IDs this article belongs to
+  category?: string; // Optional single category
 }

@@ -155,14 +155,21 @@ export function formatReadingTime(minutes?: number): string {
 
 export async function fetchArticleSummaries(
   userId: string,
-  projectId?: string
+  projectId?: string,
+  listId?: string
 ): Promise<ArticleSummary[]> {
   let query = db
     .collection('annotations')
     .where('userId', '==', userId)
     .orderBy('createdAt', 'desc');
 
-  if (projectId && projectId !== 'all') {
+  // Support filtering by listId (new system) or projectId (legacy)
+  if (listId && listId !== 'all') {
+    query = db
+      .collection('annotations')
+      .where('userId', '==', userId)
+      .where('listIds', 'array-contains', listId);
+  } else if (projectId && projectId !== 'all') {
     query = db
       .collection('annotations')
       .where('userId', '==', userId)
@@ -195,6 +202,8 @@ export async function fetchArticleSummaries(
             : 0,
       createdAt: data.createdAt?.toDate().toISOString(),
       updatedAt: data.updatedAt?.toDate().toISOString(),
+      listIds: Array.isArray(data.listIds) ? data.listIds : [],
+      category: typeof data.category === 'string' ? data.category : undefined,
     };
   });
 }
@@ -235,6 +244,8 @@ export async function fetchArticleById(id: string, userId: string): Promise<Arti
           : 0,
     createdAt: data.createdAt?.toDate().toISOString(),
     updatedAt: data.updatedAt?.toDate().toISOString(),
+    listIds: Array.isArray(data.listIds) ? data.listIds : [],
+    category: typeof data.category === 'string' ? data.category : undefined,
   };
 }
 
@@ -295,6 +306,8 @@ export function sanitizeArticlePayload(payload: {
     pageCount?: number;
     fileSize?: number;
   };
+  listIds?: string[];
+  category?: string;
 }) {
   const sanitizedUrl = sanitizePlainText(payload.url);
   if (!sanitizedUrl) {
@@ -302,6 +315,16 @@ export function sanitizeArticlePayload(payload: {
   }
 
   const defProjectId = defaultProjectId(payload.userId);
+
+  // Sanitize category (max 50 characters)
+  const category = payload.category
+    ? sanitizePlainText(payload.category.trim()).slice(0, 50)
+    : undefined;
+
+  // Ensure listIds is an array of strings
+  const listIds = Array.isArray(payload.listIds)
+    ? payload.listIds.filter((id) => typeof id === 'string' && id.trim().length > 0)
+    : [];
 
   const base = {
     url: sanitizedUrl,
@@ -312,6 +335,8 @@ export function sanitizeArticlePayload(payload: {
     tags: normalizeTags(payload.tags),
     userId: payload.userId,
     type: payload.type || 'article',
+    listIds,
+    category,
   };
 
   if (payload.type === 'pdf') {
@@ -341,6 +366,8 @@ export async function createArticleRecord(payload: {
     pageCount?: number;
     fileSize?: number;
   };
+  listIds?: string[];
+  category?: string;
 }) {
   const sanitized = sanitizeArticlePayload(payload);
 
@@ -503,6 +530,8 @@ export interface SearchResult {
     text: string;
   }[];
   relevanceScore: number;
+  listIds?: string[];
+  category?: string;
 }
 
 function stripHtmlTags(html: string): string {
@@ -706,6 +735,8 @@ export async function searchArticles(
       matchedFields,
       snippets,
       relevanceScore,
+      listIds: Array.isArray(data.listIds) ? data.listIds : [],
+      category: typeof data.category === 'string' ? data.category : undefined,
     });
   });
 

@@ -56,7 +56,9 @@
       "Bash(git -C /Users/sarthakagrawal/Desktop/web-annotator/.worktrees/.worktrees/pdf commit -m \"$\\(cat <<''EOF''\nfeat\\(pdf\\): add PDF upload and viewing support\n\n- Add PDF type and metadata fields to Article type\n- Create /api/pdf/upload endpoint for PDF file uploads\n- Implement PDF text extraction using pdf-parse\n- Add PDFViewer component with page navigation and zoom\n- Create PDFReaderClient for dedicated PDF reading experience\n- Support drag-and-drop PDF upload in HomeClient\n- Store PDFs in Firebase Storage with 10MB limit\n- Extract metadata \\(page count, title, author\\)\n- Display PDF icons and page counts in UI\n- Enable AI chat with extracted PDF text\n\nCo-Authored-By: Claude Sonnet 4.5 <noreply@anthropic.com>\nEOF\n\\)\")",
       "Bash(grep:*)",
       "Bash(npm run type-check:*)",
-      "Bash(vercel:*)"
+      "Bash(vercel:*)",
+      "Bash(git submodule status:*)",
+      "Bash(node -e:*)"
     ]
   }
 }

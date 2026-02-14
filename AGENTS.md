@@ -101,7 +101,7 @@ Evolution: Playwright → linkedom
 - Content sanitized on ingestion (API), not on render (client)
 - Plain text sanitization for user inputs
 - Ownership verification on all data operations
-- Middleware-enforced authentication
+- Proxy-enforced authentication
 - **Pattern Origin**: Commit `433bd4c`
 
 ---
@@ -155,7 +155,7 @@ Evolution: Playwright → linkedom
 │   │   ├── firebase.ts                # Firebase client initialization
 │   │   ├── get-query-client.ts        # React Query client factory
 │   │   └── utils.ts                   # Shared utilities (cn, etc.)
-│   ├── middleware.ts                  # Next.js middleware (auth check)
+│   ├── proxy.ts                       # Next.js proxy (auth check)
 │   └── types.ts                       # TypeScript type definitions
 ├── public/                            # Static assets
 ├── scripts/
@@ -185,7 +185,7 @@ Evolution: Playwright → linkedom
 
 - `/src/types.ts` - Core type definitions
 - `/src/lib/articles-service.ts` - All data operations
-- `/src/middleware.ts` - Authentication enforcement
+- `/src/proxy.ts` - Authentication enforcement
 - `package.json` - Dependencies and scripts
 
 **Frequently Modified**:
@@ -1096,7 +1096,7 @@ export async function myOperation() {
 
 ### Authentication & Authorization
 
-**Middleware** (`/src/middleware.ts`):
+**Proxy** (`/src/proxy.ts`):
 
 - Checks `__session` cookie on ALL routes except `/login` and `/api/auth/session`
 - Redirects to `/login` if unauthenticated
@@ -1479,6 +1479,7 @@ docs: update AGENTS.md with new API patterns
 
 ## Version History
 
+- **2026-02-14**: Updated middleware references to proxy following Next.js 16 migration
 - **2026-02-13**: Created AGENTS.md from CLAUDE.md with comprehensive agent-focused content
 - **Previous**: CLAUDE.md maintained as development guide
 

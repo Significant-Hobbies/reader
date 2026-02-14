@@ -10,7 +10,8 @@ export async function GET(request: NextRequest) {
     }
 
     const projectId = request.nextUrl.searchParams.get('projectId') || undefined;
-    const articles = await fetchArticleSummaries(userId, projectId || undefined);
+    const listId = request.nextUrl.searchParams.get('listId') || undefined;
+    const articles = await fetchArticleSummaries(userId, projectId, listId);
     return NextResponse.json(articles);
   } catch (error) {
     console.error('Error fetching articles:', error);
@@ -26,13 +27,23 @@ export async function POST(request: Request) {
     }
 
     const body = await request.json();
-    const { url, title, byline, content, projectId, tags } = body || {};
+    const { url, title, byline, content, projectId, tags, listIds, category } = body || {};
 
     if (!url || !content) {
       return NextResponse.json({ error: 'URL and content are required' }, { status: 400 });
     }
 
-    const id = await createArticleRecord({ url, title, byline, content, projectId, tags, userId });
+    const id = await createArticleRecord({
+      url,
+      title,
+      byline,
+      content,
+      projectId,
+      tags,
+      userId,
+      listIds,
+      category,
+    });
     return NextResponse.json({ id });
   } catch (error) {
     console.error('Error creating article:', error);
