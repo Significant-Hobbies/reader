@@ -184,6 +184,9 @@ export async function fetchArticleSummaries(
       tags: normalizeTags(data.tags),
       readingTimeMinutes:
         typeof data.readingTimeMinutes === 'number' ? data.readingTimeMinutes : undefined,
+      type: data.type || 'article',
+      pdfUrl: data.pdfUrl,
+      pdfMetadata: data.pdfMetadata,
       notesCount:
         typeof data.notesCount === 'number'
           ? data.notesCount
@@ -220,6 +223,10 @@ export async function fetchArticleById(id: string, userId: string): Promise<Arti
     tags: normalizeTags(data.tags),
     readingTimeMinutes:
       typeof data.readingTimeMinutes === 'number' ? data.readingTimeMinutes : undefined,
+    type: data.type || 'article',
+    pdfUrl: data.pdfUrl,
+    extractedText: data.extractedText,
+    pdfMetadata: data.pdfMetadata,
     notesCount:
       typeof data.notesCount === 'number'
         ? data.notesCount
@@ -281,6 +288,13 @@ export function sanitizeArticlePayload(payload: {
   projectId?: string;
   tags?: string[];
   userId: string;
+  type?: 'article' | 'pdf';
+  pdfUrl?: string;
+  extractedText?: string;
+  pdfMetadata?: {
+    pageCount?: number;
+    fileSize?: number;
+  };
 }) {
   const sanitizedUrl = sanitizePlainText(payload.url);
   if (!sanitizedUrl) {
@@ -289,7 +303,7 @@ export function sanitizeArticlePayload(payload: {
 
   const defProjectId = defaultProjectId(payload.userId);
 
-  return {
+  const base = {
     url: sanitizedUrl,
     title: sanitizeTitle(payload.title, sanitizedUrl),
     byline: sanitizePlainText(payload.byline || ''),
@@ -297,7 +311,19 @@ export function sanitizeArticlePayload(payload: {
     projectId: sanitizePlainText(payload.projectId || defProjectId) || defProjectId,
     tags: normalizeTags(payload.tags),
     userId: payload.userId,
+    type: payload.type || 'article',
   };
+
+  if (payload.type === 'pdf') {
+    return {
+      ...base,
+      pdfUrl: payload.pdfUrl,
+      extractedText: payload.extractedText,
+      pdfMetadata: payload.pdfMetadata,
+    };
+  }
+
+  return base;
 }
 
 export async function createArticleRecord(payload: {
@@ -308,6 +334,13 @@ export async function createArticleRecord(payload: {
   projectId?: string;
   tags?: string[];
   userId: string;
+  type?: 'article' | 'pdf';
+  pdfUrl?: string;
+  extractedText?: string;
+  pdfMetadata?: {
+    pageCount?: number;
+    fileSize?: number;
+  };
 }) {
   const sanitized = sanitizeArticlePayload(payload);
 

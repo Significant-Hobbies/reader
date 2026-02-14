@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useRouter } from 'next/navigation';
 import { formatDate } from '../lib/utils';
@@ -29,7 +29,7 @@ import {
 } from './ui/dialog';
 import { Label } from './ui/label';
 import { Badge } from './ui/badge';
-import { MoreVertical, X, Clock } from 'lucide-react';
+import { MoreVertical, X, Clock, FileText, Upload } from 'lucide-react';
 import { Navbar } from './Navbar';
 import { getTagColor } from '../lib/tag-utils';
 
@@ -42,6 +42,8 @@ export default function HomeClient() {
   const [selectedTag, setSelectedTag] = useState<string | null>(null);
   const [newProjectName, setNewProjectName] = useState('');
   const [isProjectModalOpen, setIsProjectModalOpen] = useState(false);
+  const [uploadProgress, setUploadProgress] = useState<number | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const router = useRouter();
   const queryClient = useQueryClient();
@@ -134,6 +136,39 @@ export default function HomeClient() {
     },
   });
 
+  const pdfUploadMutation = useMutation({
+    mutationFn: async (file: File) => {
+      const formData = new FormData();
+      formData.append('file', file);
+      if (selectedProjectId !== 'all') {
+        formData.append('projectId', selectedProjectId);
+      }
+
+      setUploadProgress(0);
+
+      const response = await fetch('/api/pdf/upload', {
+        method: 'POST',
+        body: formData,
+      });
+
+      setUploadProgress(null);
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.error || 'Failed to upload PDF');
+      }
+
+      const data = await response.json();
+      return data.id as string;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['articles'] });
+      if (fileInputRef.current) {
+        fileInputRef.current.value = '';
+      }
+    },
+  });
+
   const deleteMutation = useMutation({
     mutationFn: async (articleId: string) => {
       const response = await fetch(`/api/articles/${articleId}`, {
@@ -167,7 +202,31 @@ export default function HomeClient() {
     }
   };
 
-  const isImporting = importMutation.isPending;
+  const handlePDFUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    if (file.type !== 'application/pdf') {
+      alert('Please select a PDF file');
+      return;
+    }
+
+    if (file.size > 10 * 1024 * 1024) {
+      alert('PDF file size must be less than 10MB');
+      return;
+    }
+
+    try {
+      const newArticleId = await pdfUploadMutation.mutateAsync(file);
+      router.push(`/reader/${newArticleId}`);
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'Failed to upload PDF';
+      console.error(error);
+      alert(message);
+    }
+  };
+
+  const isImporting = importMutation.isPending || pdfUploadMutation.isPending;
 
   const toggleStatus = useMutation({
     mutationFn: async ({ id, status }: { id: string; status: ArticleStatus }) => {
@@ -291,7 +350,7 @@ export default function HomeClient() {
           <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4">
             <div>
               <h1 className="text-3xl font-bold text-white">My Library</h1>
-              <p className="text-gray-400 mt-1">Manage your annotated articles</p>
+              <p className="text-gray-400 mt-1">Manage your annotated articles and PDFs</p>
             </div>
 
             <div className="w-full md:w-auto bg-gray-900/70 border border-gray-800 rounded-xl p-4 shadow-lg backdrop-blur">
@@ -407,33 +466,84 @@ export default function HomeClient() {
           )}
 
           <div className="bg-gray-900/80 p-6 rounded-2xl shadow-2xl border border-gray-800 mb-8 backdrop-blur">
-            <h2 className="text-lg font-semibold text-white mb-4">Add New Article</h2>
-            <form onSubmit={handleImport} className="flex flex-col gap-4 md:flex-row">
-              <Input
-                type="text"
-                value={url}
-                onChange={(e) => setUrl(e.target.value)}
-                placeholder="Enter website URL (e.g. https://example.com/article)"
-                className="flex-grow"
+            <h2 className="text-lg font-semibold text-white mb-4">Add New Content</h2>
+
+            <form onSubmit={handleImport} className="flex flex-col gap-4 mb-4">
+              <div className="flex flex-col md:flex-row gap-4">
+                <Input
+                  type="text"
+                  value={url}
+                  onChange={(e) => setUrl(e.target.value)}
+                  placeholder="Enter website URL (e.g. https://example.com/article)"
+                  className="flex-grow"
+                  disabled={isImporting}
+                />
+                <Button
+                  type="submit"
+                  className="px-6 py-3 font-medium flex items-center gap-2 whitespace-nowrap"
+                  disabled={isImporting}
+                >
+                  {importMutation.isPending ? (
+                    <>
+                      <div className="animate-spin h-4 w-4 border-2 border-white border-t-transparent rounded-full"></div>
+                      Importing...
+                    </>
+                  ) : (
+                    <>
+                      <span>+</span> Import URL
+                    </>
+                  )}
+                </Button>
+              </div>
+            </form>
+
+            <div className="relative">
+              <div className="absolute inset-0 flex items-center">
+                <div className="w-full border-t border-gray-700"></div>
+              </div>
+              <div className="relative flex justify-center text-sm">
+                <span className="px-2 bg-gray-900/80 text-gray-500">or</span>
+              </div>
+            </div>
+
+            <div className="mt-4">
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept=".pdf,application/pdf"
+                onChange={handlePDFUpload}
+                className="hidden"
+                id="pdf-upload"
                 disabled={isImporting}
               />
-              <Button
-                type="submit"
-                className="px-6 py-3 font-medium flex items-center gap-2 whitespace-nowrap"
-                disabled={isImporting}
-              >
-                {isImporting ? (
-                  <>
-                    <div className="animate-spin h-4 w-4 border-2 border-white border-t-transparent rounded-full"></div>
-                    Importing...
-                  </>
-                ) : (
-                  <>
-                    <span>+</span> Import
-                  </>
-                )}
-              </Button>
-            </form>
+              <label htmlFor="pdf-upload">
+                <Button
+                  type="button"
+                  variant="outline"
+                  className="w-full"
+                  disabled={isImporting}
+                  onClick={() => fileInputRef.current?.click()}
+                  asChild
+                >
+                  <div className="cursor-pointer">
+                    {pdfUploadMutation.isPending ? (
+                      <>
+                        <div className="animate-spin h-4 w-4 border-2 border-white border-t-transparent rounded-full mr-2"></div>
+                        Uploading PDF...
+                        {uploadProgress !== null && (
+                          <span className="ml-2">({uploadProgress}%)</span>
+                        )}
+                      </>
+                    ) : (
+                      <>
+                        <Upload className="h-4 w-4 mr-2" />
+                        Upload PDF
+                      </>
+                    )}
+                  </div>
+                </Button>
+              </label>
+            </div>
           </div>
 
           {articlesError && (
@@ -451,7 +561,7 @@ export default function HomeClient() {
               {articles.length === 0 ? (
                 <div className="col-span-full text-center py-16 bg-gray-800 rounded-2xl border border-gray-700 border-dashed">
                   <p className="text-gray-300 text-lg mb-4">Your library is empty.</p>
-                  <p className="text-gray-500">Enter a URL above to get started.</p>
+                  <p className="text-gray-500">Import a URL or upload a PDF to get started.</p>
                 </div>
               ) : filteredArticles.length === 0 ? (
                 <div className="col-span-full text-center py-16 bg-gray-800 rounded-2xl border border-gray-700 border-dashed">
@@ -473,6 +583,7 @@ export default function HomeClient() {
                   const nextStatus: ArticleStatus =
                     article.status === 'read' ? 'in_progress' : 'read';
                   const displayTitle = article.title || article.url;
+                  const isPDF = article.type === 'pdf';
                   return (
                     <div
                       key={article.id}
@@ -482,16 +593,21 @@ export default function HomeClient() {
                       <div className="p-6 flex-1 flex flex-col gap-3">
                         <div className="flex items-start gap-2">
                           <div className="flex-1 pr-2 min-w-0">
-                            <h2
-                              className="text-xl font-semibold text-white line-clamp-2 break-words pr-6 group-hover:text-blue-300 transition-colors"
-                              title={displayTitle}
-                            >
-                              {displayTitle}
-                            </h2>
+                            <div className="flex items-center gap-2 mb-2">
+                              <h2
+                                className="text-xl font-semibold text-white line-clamp-2 break-words group-hover:text-blue-300 transition-colors flex-1"
+                                title={displayTitle}
+                              >
+                                {displayTitle}
+                              </h2>
+                              {isPDF && (
+                                <FileText className="h-5 w-5 text-blue-400 flex-shrink-0" />
+                              )}
+                            </div>
                             <p className="text-sm text-gray-400 truncate" title={article.url}>
-                              {article.url}
+                              {isPDF ? 'PDF Document' : article.url}
                             </p>
-                            <div className="flex items-center gap-2 mt-2 text-xs text-gray-300">
+                            <div className="flex items-center gap-2 mt-2 text-xs text-gray-300 flex-wrap">
                               <Badge variant="default">{projectName}</Badge>
                               <Badge
                                 variant={article.status === 'read' ? 'success' : 'warning'}
@@ -507,6 +623,11 @@ export default function HomeClient() {
                                 <Badge variant="blue" className="flex items-center gap-1">
                                   <Clock className="h-3 w-3" />
                                   {formatReadingTime(article.readingTimeMinutes)}
+                                </Badge>
+                              )}
+                              {article.type === 'pdf' && article.pdfMetadata?.pageCount && (
+                                <Badge variant="secondary">
+                                  {article.pdfMetadata.pageCount} pages
                                 </Badge>
                               )}
                             </div>
@@ -614,14 +735,16 @@ export default function HomeClient() {
           />
           <div className="relative bg-gray-900 border border-gray-700 rounded-2xl shadow-2xl w-full max-w-md mx-4 p-6 space-y-4">
             <div>
-              <h3 className="text-xl font-semibold text-white">Delete article?</h3>
+              <h3 className="text-xl font-semibold text-white">
+                Delete {articlePendingDelete.type === 'pdf' ? 'PDF' : 'article'}?
+              </h3>
               <p className="text-sm text-gray-400 mt-2">
                 {articlePendingDelete.title || articlePendingDelete.url}
               </p>
             </div>
             <p className="text-sm text-gray-500">
-              This removes the article and all of its notes permanently. This action cannot be
-              undone.
+              This removes the {articlePendingDelete.type === 'pdf' ? 'PDF' : 'article'} and all of
+              its notes permanently. This action cannot be undone.
             </p>
             <div className="flex justify-end gap-3">
               <button

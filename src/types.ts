@@ -2,6 +2,7 @@ export interface NoteAnchor {
   elementIndex: number;
   tagName?: string;
   textPreview?: string;
+  pageNumber?: number; // For PDF annotations
 }
 
 export interface Note {
@@ -35,6 +36,13 @@ export interface Article {
   readingTimeMinutes?: number;
   createdAt?: string;
   updatedAt?: string;
+  type?: 'article' | 'pdf';
+  pdfUrl?: string;
+  extractedText?: string;
+  pdfMetadata?: {
+    pageCount?: number;
+    fileSize?: number;
+  };
 }
 
 export type ArticleSummary = Omit<Article, 'content' | 'notes'> & {
