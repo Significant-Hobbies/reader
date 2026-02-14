@@ -1,5 +1,8 @@
 # Web Annotator
 
+![AI Generated](https://ai-percentage-pin.vercel.app/api/ai-percentage?value=80)
+![AI PRs Welcome](https://ai-percentage-pin.vercel.app/api/ai-prs?welcome=yes)
+
 A modern web application for capturing and annotating articles with a distraction-free reading experience.
 
 ## Problem
