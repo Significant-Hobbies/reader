@@ -15,8 +15,6 @@ export function Navbar() {
   const { user, logout } = useAuth();
   const router = useRouter();
 
-  if (!user) return null;
-
   return (
     <nav className="sticky top-0 z-40 bg-gray-950/80 backdrop-blur border-b border-gray-800">
       <div className="max-w-6xl mx-auto flex items-center justify-between gap-4 px-6 py-3">
@@ -27,39 +25,41 @@ export function Navbar() {
           Web Annotator
         </Link>
 
-        <div className="flex-1 max-w-2xl">
-          <SearchBar />
-        </div>
+        <div className="flex-1 max-w-2xl">{user && <SearchBar />}</div>
 
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <button className="rounded-full overflow-hidden h-8 w-8 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 focus:ring-offset-gray-950 flex-shrink-0">
-              {user.photoURL ? (
-                // eslint-disable-next-line @next/next/no-img-element
-                <img
-                  src={user.photoURL}
-                  alt=""
-                  className="h-8 w-8 rounded-full object-cover"
-                  referrerPolicy="no-referrer"
-                />
-              ) : (
-                <div className="h-8 w-8 rounded-full bg-gray-700 flex items-center justify-center text-sm font-medium text-gray-300">
-                  {(user.email?.[0] ?? '?').toUpperCase()}
-                </div>
-              )}
-            </button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="end">
-            <DropdownMenuItem
-              onSelect={async () => {
-                await logout();
-                router.push('/login');
-              }}
-            >
-              Sign out
-            </DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
+        {user ? (
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <button className="rounded-full overflow-hidden h-8 w-8 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 focus:ring-offset-gray-950 flex-shrink-0">
+                {user.photoURL ? (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img
+                    src={user.photoURL}
+                    alt=""
+                    className="h-8 w-8 rounded-full object-cover"
+                    referrerPolicy="no-referrer"
+                  />
+                ) : (
+                  <div className="h-8 w-8 rounded-full bg-gray-700 flex items-center justify-center text-sm font-medium text-gray-300">
+                    {(user.email?.[0] ?? '?').toUpperCase()}
+                  </div>
+                )}
+              </button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              <DropdownMenuItem
+                onSelect={async () => {
+                  await logout();
+                  router.push('/login');
+                }}
+              >
+                Sign out
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        ) : (
+          <div className="h-8 w-8 rounded-full bg-gray-700/50 animate-pulse flex-shrink-0" />
+        )}
       </div>
     </nav>
   );
