@@ -37,9 +37,73 @@ interface ModelDiscoveryResponse {
 
 const MAX_SAVED_MESSAGES = 80;
 const SAVE_DEBOUNCE_MS = 750;
+const GENERIC_ERROR_MESSAGE = 'Something went wrong. Please try again.';
 
 const serializeMessages = (messages: AIChatMessage[]) =>
   JSON.stringify(messages.map((message) => [message.role, message.content]));
+
+const toCompactErrorMessage = (error: unknown) => {
+  const message = error instanceof Error ? error.message : typeof error === 'string' ? error : '';
+  return message.replace(/\s+/g, ' ').trim().slice(0, 260);
+};
+
+const toUserFacingError = (
+  error: unknown,
+  provider: AIProvider,
+  context: 'chat' | 'persist' | 'models'
+): { message: string; openSettings: boolean } => {
+  const raw = toCompactErrorMessage(error);
+  const lower = raw.toLowerCase();
+
+  // Missing or invalid API key
+  if (
+    lower.includes('api key') ||
+    lower.includes('apikey') ||
+    lower.includes('unauthorized') ||
+    lower.includes('401')
+  ) {
+    return {
+      message: `No API key found for ${PROVIDER_LABELS[provider]}. Add one in settings.`,
+      openSettings: true,
+    };
+  }
+
+  // Rate limit
+  if (
+    lower.includes('rate limit') ||
+    lower.includes('429') ||
+    lower.includes('too many requests')
+  ) {
+    return {
+      message: `Rate limited by ${PROVIDER_LABELS[provider]}. Wait a moment and try again.`,
+      openSettings: false,
+    };
+  }
+
+  // Network / connection errors
+  if (lower.includes('fetch') || lower.includes('network') || lower.includes('econnrefused')) {
+    if (context === 'persist')
+      return {
+        message: 'Could not save chat history. Will retry automatically.',
+        openSettings: false,
+      };
+    return {
+      message: `Could not reach ${PROVIDER_LABELS[provider]}. Check your connection.`,
+      openSettings: false,
+    };
+  }
+
+  // Context-specific fallbacks
+  if (context === 'persist')
+    return { message: 'Failed to save chat history.', openSettings: false };
+  if (context === 'models')
+    return {
+      message: `Could not load models for ${PROVIDER_LABELS[provider]}.`,
+      openSettings: true,
+    };
+
+  return { message: raw || GENERIC_ERROR_MESSAGE, openSettings: false };
+};
 
 const includeSelectedModel = (selectedModel: string, modelIds: string[]) => {
   if (!selectedModel) return modelIds;
@@ -159,7 +223,9 @@ export function NotesAIChat({
       return response;
     },
     onError: (streamError) => {
-      setError(streamError instanceof Error ? streamError.message : 'AI request failed');
+      const feedback = toUserFacingError(streamError, config.provider, 'chat');
+      setError(feedback.message);
+      if (feedback.openSettings) setShowSettings(true);
       pendingHistoryRef.current = null;
     },
     onFinish: (_prompt, finalCompletion) => {
@@ -263,7 +329,8 @@ export function NotesAIChat({
           lastPersistedMessagesRef.current = serializedPayload;
         })
         .catch((persistError) => {
-          setError(persistError instanceof Error ? persistError.message : 'Failed to save chat');
+          const feedback = toUserFacingError(persistError, config.provider, 'persist');
+          setError(feedback.message);
         });
     }, SAVE_DEBOUNCE_MS);
 
@@ -346,7 +413,9 @@ export function NotesAIChat({
         if (controller.signal.aborted) return;
 
         setModelSource('fallback');
-        setModelError(fetchError instanceof Error ? fetchError.message : 'Failed to fetch models');
+        const feedback = toUserFacingError(fetchError, config.provider, 'models');
+        setModelError(feedback.message);
+        if (feedback.openSettings) setShowSettings(true);
 
         const fallbackModels = FALLBACK_MODELS[config.provider] ?? [
           getDefaultModelForProvider(config.provider),
@@ -414,7 +483,9 @@ export function NotesAIChat({
         });
       } catch (streamError) {
         if ((streamError as { name?: string })?.name !== 'AbortError') {
-          setError(streamError instanceof Error ? streamError.message : 'AI request failed');
+          const feedback = toUserFacingError(streamError, config.provider, 'chat');
+          setError(feedback.message);
+          if (feedback.openSettings) setShowSettings(true);
         }
         pendingHistoryRef.current = null;
       }
@@ -610,7 +681,11 @@ export function NotesAIChat({
       </div>
 
       <div className="border-t border-gray-800 bg-gray-900/70 p-3">
-        {error && <p className="mb-2 text-xs text-red-400">{error}</p>}
+        {error && (
+          <p className="mb-2 rounded-lg border border-red-500/30 bg-red-500/10 px-3 py-2 text-xs text-red-200">
+            {error}
+          </p>
+        )}
         <div className="flex items-end gap-2">
           <textarea
             value={input}
