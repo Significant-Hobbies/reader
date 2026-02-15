@@ -1,7 +1,7 @@
 'use client';
 
 import { memo, useState, useCallback } from 'react';
-import { Handle, Position, NodeProps, useReactFlow } from '@xyflow/react';
+import { Handle, Position, NodeProps, useReactFlow, NodeResizer } from '@xyflow/react';
 
 const NOTE_COLORS: Record<string, { bg: string; border: string; text: string }> = {
   yellow: { bg: 'bg-yellow-300/90', border: 'border-yellow-400', text: 'text-yellow-950' },
@@ -43,10 +43,18 @@ function NoteNodeComponent({ id, data, selected }: NodeProps) {
 
   return (
     <div
-      className={`w-52 rounded-lg border-2 shadow-lg ${colors.bg} ${colors.border} ${
+      className={`min-w-[10rem] rounded-lg border-2 shadow-lg ${colors.bg} ${colors.border} ${
         selected ? 'ring-2 ring-blue-500 ring-offset-2 ring-offset-gray-950' : ''
       }`}
+      style={{ width: '100%', height: '100%' }}
     >
+      <NodeResizer
+        isVisible={!!selected}
+        minWidth={160}
+        minHeight={80}
+        lineClassName="!border-blue-500"
+        handleClassName="!w-2 !h-2 !bg-blue-500 !border-blue-500"
+      />
       <Handle type="target" position={Position.Top} className="!bg-gray-600 !w-2 !h-2" />
 
       {selected && (

@@ -1,7 +1,7 @@
 'use client';
 
 import { memo, useState, useCallback, useRef, useEffect, useMemo } from 'react';
-import { Handle, Position, NodeProps, useReactFlow } from '@xyflow/react';
+import { Handle, Position, NodeProps, useReactFlow, NodeResizer } from '@xyflow/react';
 import { useCompletion } from '@ai-sdk/react';
 import { Bot, Send, Square, Trash2 } from 'lucide-react';
 import ReactMarkdown from 'react-markdown';
@@ -142,11 +142,18 @@ function AIChatNodeComponent({ id, data, selected }: NodeProps) {
 
   return (
     <div
-      className={`flex w-80 flex-col rounded-xl border bg-gray-900/95 shadow-lg ${
+      className={`flex min-w-[16rem] flex-col rounded-xl border bg-gray-900/95 shadow-lg ${
         selected ? 'border-blue-500 ring-2 ring-blue-500/30' : 'border-gray-700'
       }`}
-      style={{ maxHeight: 400 }}
+      style={{ width: '100%', height: '100%', minHeight: 200 }}
     >
+      <NodeResizer
+        isVisible={!!selected}
+        minWidth={260}
+        minHeight={200}
+        lineClassName="!border-blue-500"
+        handleClassName="!w-2 !h-2 !bg-blue-500 !border-blue-500"
+      />
       <Handle type="target" position={Position.Top} className="!bg-gray-500 !w-2 !h-2" />
 
       <div className="flex items-center justify-between border-b border-gray-800 px-3 py-2">
@@ -167,7 +174,7 @@ function AIChatNodeComponent({ id, data, selected }: NodeProps) {
         )}
       </div>
 
-      <div className="flex-1 overflow-y-auto p-2" style={{ maxHeight: 280 }}>
+      <div className="flex-1 overflow-y-auto p-2">
         {messages.length === 0 ? (
           <p className="px-2 py-4 text-center text-xs text-gray-600">Ask anything...</p>
         ) : (

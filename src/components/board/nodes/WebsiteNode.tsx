@@ -1,7 +1,7 @@
 'use client';
 
 import { memo } from 'react';
-import { Handle, Position, NodeProps } from '@xyflow/react';
+import { Handle, Position, NodeProps, NodeResizer } from '@xyflow/react';
 import { ExternalLink } from 'lucide-react';
 
 type WebsiteData = {
@@ -25,12 +25,20 @@ function WebsiteNodeComponent({ data, selected }: NodeProps) {
 
   return (
     <div
-      className={`w-64 rounded-xl border bg-gray-900/95 shadow-lg transition-shadow ${
+      className={`min-w-[12rem] rounded-xl border bg-gray-900/95 shadow-lg transition-shadow ${
         selected
           ? 'border-blue-500 ring-2 ring-blue-500/30'
           : 'border-gray-700 hover:border-gray-600'
       }`}
+      style={{ width: '100%', height: '100%' }}
     >
+      <NodeResizer
+        isVisible={!!selected}
+        minWidth={200}
+        minHeight={80}
+        lineClassName="!border-blue-500"
+        handleClassName="!w-2 !h-2 !bg-blue-500 !border-blue-500"
+      />
       <Handle type="target" position={Position.Top} className="!bg-gray-500 !w-2 !h-2" />
 
       <div className="border-b border-gray-800 px-3 py-2">

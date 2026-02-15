@@ -23,6 +23,7 @@ import '@xyflow/react/dist/style.css';
 import { NoteNode } from './nodes/NoteNode';
 import { WebsiteNode } from './nodes/WebsiteNode';
 import { AIChatNode } from './nodes/AIChatNode';
+import { IframeNode } from './nodes/IframeNode';
 import { LabeledEdge } from './edges/LabeledEdge';
 import { BoardToolbar } from './BoardToolbar';
 import { AddWebsiteDialog } from './AddWebsiteDialog';
@@ -37,6 +38,7 @@ const nodeTypes: NodeTypes = {
   note: NoteNode,
   website: WebsiteNode,
   aiChat: AIChatNode,
+  iframe: IframeNode,
 };
 
 const edgeTypes: EdgeTypes = {
@@ -138,6 +140,22 @@ function BoardCanvas({ board }: BoardCanvasClientProps) {
     setNodes((nds) => [...nds, newNode]);
   }, [nextId, getViewportCenter, setNodes]);
 
+  const addIframeNode = useCallback(
+    (data: { url: string; title?: string }) => {
+      const position = getViewportCenter();
+      const newNode: Node = {
+        id: nextId('iframe'),
+        type: 'iframe',
+        position,
+        data,
+        width: 500,
+        height: 400,
+      };
+      setNodes((nds) => [...nds, newNode]);
+    },
+    [nextId, getViewportCenter, setNodes]
+  );
+
   const defaultEdgeOptions = useMemo(() => ({ type: 'labeled' }), []);
 
   return (
@@ -166,6 +184,7 @@ function BoardCanvas({ board }: BoardCanvasClientProps) {
             if (node.type === 'note') return '#fde047';
             if (node.type === 'website') return '#60a5fa';
             if (node.type === 'aiChat') return '#a78bfa';
+            if (node.type === 'iframe') return '#34d399';
             return '#6b7280';
           }}
           className="!bg-gray-900 !border-gray-700"
@@ -184,6 +203,7 @@ function BoardCanvas({ board }: BoardCanvasClientProps) {
         open={showWebsiteDialog}
         onClose={() => setShowWebsiteDialog(false)}
         onAdd={addWebsiteNode}
+        onAddIframe={addIframeNode}
       />
     </div>
   );

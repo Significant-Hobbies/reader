@@ -373,8 +373,13 @@ export default function HomeClient() {
             <h3 className="text-sm font-medium text-gray-400 uppercase tracking-wide">Lists</h3>
             <Dialog open={isListModalOpen} onOpenChange={setIsListModalOpen}>
               <DialogTrigger asChild>
-                <Button size="sm" variant="ghost" className="h-6 w-6 p-0">
-                  <Plus className="h-4 w-4" />
+                <Button
+                  size="sm"
+                  variant="outline"
+                  className="h-7 gap-1 px-2 text-xs text-gray-300 border-gray-700 hover:bg-gray-800"
+                >
+                  <Plus className="h-3.5 w-3.5" />
+                  New
                 </Button>
               </DialogTrigger>
               <DialogContent>
@@ -625,16 +630,18 @@ export default function HomeClient() {
                                 {isPDF ? 'PDF Document' : article.url}
                               </p>
                               <div className="flex items-center gap-2 mt-2 text-xs text-gray-300 flex-wrap">
-                                <Badge
-                                  variant={article.status === 'read' ? 'success' : 'warning'}
-                                  className="cursor-pointer"
-                                  onClick={(e) => {
-                                    e.stopPropagation();
-                                    toggleStatus.mutate({ id: article.id, status: nextStatus });
-                                  }}
-                                >
-                                  {article.status === 'read' ? 'Read' : 'In Progress'}
-                                </Badge>
+                                {article.status === 'read' && (
+                                  <Badge
+                                    variant="success"
+                                    className="cursor-pointer"
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      toggleStatus.mutate({ id: article.id, status: nextStatus });
+                                    }}
+                                  >
+                                    Read
+                                  </Badge>
+                                )}
                                 {article.readingTimeMinutes && (
                                   <Badge variant="blue" className="flex items-center gap-1">
                                     <Clock className="h-3 w-3" />

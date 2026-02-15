@@ -7,10 +7,12 @@ interface AddWebsiteDialogProps {
   open: boolean;
   onClose: () => void;
   onAdd: (data: { url: string; title: string; excerpt: string; favicon?: string }) => void;
+  onAddIframe: (data: { url: string; title?: string }) => void;
 }
 
-export function AddWebsiteDialog({ open, onClose, onAdd }: AddWebsiteDialogProps) {
+export function AddWebsiteDialog({ open, onClose, onAdd, onAddIframe }: AddWebsiteDialogProps) {
   const [url, setUrl] = useState('');
+  const [mode, setMode] = useState<'card' | 'iframe'>('card');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -18,8 +20,19 @@ export function AddWebsiteDialog({ open, onClose, onAdd }: AddWebsiteDialogProps
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    const trimmedUrl = url.trim();
+    let trimmedUrl = url.trim();
     if (!trimmedUrl) return;
+
+    if (!/^https?:\/\//i.test(trimmedUrl)) {
+      trimmedUrl = `https://${trimmedUrl}`;
+    }
+
+    if (mode === 'iframe') {
+      onAddIframe({ url: trimmedUrl });
+      setUrl('');
+      onClose();
+      return;
+    }
 
     setLoading(true);
     setError(null);
@@ -30,14 +43,12 @@ export function AddWebsiteDialog({ open, onClose, onAdd }: AddWebsiteDialogProps
 
       const { snapshot } = await response.json();
 
-      // Extract excerpt from content (strip HTML via regex to avoid innerHTML XSS)
       const plainText = (snapshot.content || '')
         .replace(/<[^>]+>/g, ' ')
         .replace(/\s+/g, ' ')
         .trim();
       const excerpt = plainText.slice(0, 300).trim();
 
-      // Try to get favicon
       let favicon: string | undefined;
       try {
         const urlObj = new URL(trimmedUrl);
@@ -80,10 +91,37 @@ export function AddWebsiteDialog({ open, onClose, onAdd }: AddWebsiteDialogProps
             type="url"
             value={url}
             onChange={(e) => setUrl(e.target.value)}
-            placeholder="https://example.com/article"
+            placeholder="https://example.com"
             autoFocus
             className="mb-3 h-10 w-full rounded-lg border border-gray-700 bg-gray-950 px-3 text-sm text-gray-100 placeholder:text-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
           />
+
+          <div className="mb-3 flex gap-2">
+            <button
+              type="button"
+              onClick={() => setMode('card')}
+              className={`flex-1 rounded-lg px-3 py-2 text-xs font-medium transition-colors ${
+                mode === 'card'
+                  ? 'bg-blue-600 text-white'
+                  : 'border border-gray-700 text-gray-400 hover:text-gray-200'
+              }`}
+            >
+              Save as Card
+              <span className="block text-[10px] opacity-70 mt-0.5">Extract title & excerpt</span>
+            </button>
+            <button
+              type="button"
+              onClick={() => setMode('iframe')}
+              className={`flex-1 rounded-lg px-3 py-2 text-xs font-medium transition-colors ${
+                mode === 'iframe'
+                  ? 'bg-blue-600 text-white'
+                  : 'border border-gray-700 text-gray-400 hover:text-gray-200'
+              }`}
+            >
+              Embed as Iframe
+              <span className="block text-[10px] opacity-70 mt-0.5">Live preview on canvas</span>
+            </button>
+          </div>
 
           {error && <p className="mb-3 text-xs text-red-400">{error}</p>}
 

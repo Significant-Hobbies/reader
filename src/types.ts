@@ -101,11 +101,16 @@ export interface AIChatNodeData {
   contextLabel?: string;
 }
 
+export interface IframeNodeData {
+  url: string;
+  title?: string;
+}
+
 export interface BoardNode {
   id: string;
-  type: 'website' | 'note' | 'aiChat';
+  type: 'website' | 'note' | 'aiChat' | 'iframe';
   position: { x: number; y: number };
-  data: WebsiteNodeData | NoteNodeData | AIChatNodeData;
+  data: WebsiteNodeData | NoteNodeData | AIChatNodeData | IframeNodeData;
   width?: number;
   height?: number;
 }

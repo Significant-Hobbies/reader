@@ -73,7 +73,7 @@ export function BoardListClient() {
             <button
               key={board.id}
               onClick={() => router.push(`/board/${board.id}`)}
-              className="group relative rounded-xl border border-gray-800 bg-gray-900/60 p-5 text-left transition-all hover:border-gray-700 hover:bg-gray-900/80"
+              className="group relative rounded-xl border border-gray-700 bg-gray-800/60 p-5 text-left transition-all hover:border-blue-500/50 hover:bg-gray-800/80 shadow-md"
             >
               <div className="mb-2 flex items-center justify-between">
                 <Layout className="h-5 w-5 text-blue-400" />
