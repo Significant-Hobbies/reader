@@ -1,6 +1,6 @@
 'use client';
 
-import { memo, useState } from 'react';
+import { memo, useState, useMemo } from 'react';
 import { Handle, Position, NodeProps, NodeResizer } from '@xyflow/react';
 import { ExternalLink, Globe, AlertTriangle } from 'lucide-react';
 
@@ -13,13 +13,16 @@ function IframeNodeComponent({ data, selected }: NodeProps) {
   const nodeData = data as unknown as IframeData;
   const [loadError, setLoadError] = useState(false);
 
-  const hostname = (() => {
+  const hostname = useMemo(() => {
     try {
       return new URL(nodeData.url).hostname;
     } catch {
       return nodeData.url;
     }
-  })();
+  }, [nodeData.url]);
+
+  // Route through server-side proxy to strip X-Frame-Options / CSP headers
+  const proxiedUrl = `/api/proxy?url=${encodeURIComponent(nodeData.url)}`;
 
   return (
     <div
@@ -57,7 +60,7 @@ function IframeNodeComponent({ data, selected }: NodeProps) {
         {loadError ? (
           <div className="flex flex-col items-center justify-center h-full gap-2 p-4 text-center">
             <AlertTriangle className="h-6 w-6 text-yellow-500" />
-            <p className="text-xs text-gray-400">This site blocks iframe embedding.</p>
+            <p className="text-xs text-gray-400">Failed to load this site.</p>
             <a
               href={nodeData.url}
               target="_blank"
@@ -70,7 +73,7 @@ function IframeNodeComponent({ data, selected }: NodeProps) {
           </div>
         ) : (
           <iframe
-            src={nodeData.url}
+            src={proxiedUrl}
             title={nodeData.title || hostname}
             className="w-full h-full border-0 bg-white"
             sandbox="allow-scripts allow-same-origin allow-popups allow-forms"
