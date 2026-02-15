@@ -82,6 +82,56 @@ export interface List {
   updatedAt?: string;
 }
 
+// Board types
+export interface WebsiteNodeData {
+  url: string;
+  title: string;
+  excerpt: string;
+  favicon?: string;
+  articleId?: string;
+}
+
+export interface NoteNodeData {
+  text: string;
+  color: string;
+}
+
+export interface AIChatNodeData {
+  messages: AIChatMessage[];
+  contextLabel?: string;
+}
+
+export interface BoardNode {
+  id: string;
+  type: 'website' | 'note' | 'aiChat';
+  position: { x: number; y: number };
+  data: WebsiteNodeData | NoteNodeData | AIChatNodeData;
+  width?: number;
+  height?: number;
+}
+
+export interface BoardEdge {
+  id: string;
+  source: string;
+  target: string;
+  label?: string;
+  style?: 'solid' | 'dashed';
+}
+
+export interface Board {
+  id: string;
+  userId: string;
+  name: string;
+  nodes: BoardNode[];
+  edges: BoardEdge[];
+  createdAt?: string;
+  updatedAt?: string;
+}
+
+export type BoardSummary = Pick<Board, 'id' | 'name' | 'createdAt' | 'updatedAt'> & {
+  nodeCount: number;
+};
+
 export interface SearchSnippet {
   field: string;
   text: string;

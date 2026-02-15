@@ -79,6 +79,38 @@ body {
   }
 }
 
+/* React Flow Dark Theme */
+.board-canvas .react-flow__pane {
+  cursor: grab;
+}
+.board-canvas .react-flow__pane:active {
+  cursor: grabbing;
+}
+.board-canvas .react-flow__node {
+  cursor: pointer;
+}
+.board-canvas .react-flow__node.selected {
+  z-index: 10 !important;
+}
+.board-canvas .react-flow__edge-path {
+  stroke: #4b5563;
+}
+.board-canvas .react-flow__edge.selected .react-flow__edge-path {
+  stroke: #3b82f6;
+}
+.board-canvas .react-flow__connection-path {
+  stroke: #6b7280;
+  stroke-dasharray: 5 5;
+}
+.board-canvas .react-flow__handle {
+  opacity: 0;
+  transition: opacity 150ms;
+}
+.board-canvas .react-flow__node:hover .react-flow__handle,
+.board-canvas .react-flow__node.selected .react-flow__handle {
+  opacity: 1;
+}
+
 .annotation-target {
   position: relative;
 }

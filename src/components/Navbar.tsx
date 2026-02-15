@@ -25,7 +25,17 @@ export function Navbar() {
           Web Annotator
         </Link>
 
-        <div className="flex-1 max-w-2xl">{user && <SearchBar />}</div>
+        <div className="flex items-center gap-4 flex-1 max-w-2xl">
+          {user && (
+            <Link
+              href="/board"
+              className="text-sm text-gray-400 hover:text-white transition-colors whitespace-nowrap"
+            >
+              Boards
+            </Link>
+          )}
+          {user && <SearchBar />}
+        </div>
 
         {user ? (
           <DropdownMenu>
