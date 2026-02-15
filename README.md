@@ -51,15 +51,15 @@ graph TB
     end
 
     subgraph "API Layer"
-        API[Next.js API Routes]
-        API --> Articles[/api/articles]
-        API --> Projects[/api/projects]
-        API --> Auth[/api/auth]
-        API --> AI[/api/ai]
-        API --> Search[/api/search]
-        API --> Tags[/api/tags]
-        API --> PDF[/api/pdf]
-        API --> Snapshot[/api/snapshot]
+        API["Next.js API Routes"]
+        API --> Articles["articles"]
+        API --> Projects["projects"]
+        API --> Auth["auth"]
+        API --> AI["ai"]
+        API --> Search["search"]
+        API --> Tags["tags"]
+        API --> PDF["pdf"]
+        API --> Snapshot["snapshot"]
     end
 
     subgraph "Backend Services"
@@ -86,7 +86,7 @@ graph TB
     classDef external fill:#f59e0b,stroke:#d97706,color:#fff
 
     class UI,Styling,State frontend
-    class API,Articles,Projects,Auth,AI,Snapshot,Firebase,FireAuth,Firestore backend
+    class API,Articles,Projects,Auth,AI,Search,Tags,PDF,Snapshot,Firebase,FireAuth,Firestore backend
     class External,Readability,AIProviders,OpenAI,Anthropic,Gemini,Gateway,CLIBridge external
 ```
 
