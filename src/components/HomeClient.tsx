@@ -43,7 +43,6 @@ export default function HomeClient() {
   const [newListName, setNewListName] = useState('');
   const [isListModalOpen, setIsListModalOpen] = useState(false);
   const [showAddArticleDialog, setShowAddArticleDialog] = useState(false);
-  const [uploadProgress, setUploadProgress] = useState<number | null>(null);
 
   const router = useRouter();
   const queryClient = useQueryClient();
@@ -136,27 +135,45 @@ export default function HomeClient() {
 
   const pdfUploadMutation = useMutation({
     mutationFn: async ({ file, category }: { file: File; category?: string }) => {
-      const formData = new FormData();
-      formData.append('file', file);
-      if (selectedListId !== 'all') {
-        formData.append('listIds', JSON.stringify([selectedListId]));
-      }
-      if (category) {
-        formData.append('category', category);
+      // Extract text client-side using pdfjs-dist
+      const pdfjsLib = await import('pdfjs-dist');
+      pdfjsLib.GlobalWorkerOptions.workerSrc = '/pdf.worker.min.mjs';
+
+      const arrayBuffer = await file.arrayBuffer();
+      const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
+
+      const pages: string[] = [];
+      for (let i = 1; i <= pdf.numPages; i++) {
+        const page = await pdf.getPage(i);
+        const textContent = await page.getTextContent();
+        const pageText = textContent.items.map((item) => ('str' in item ? item.str : '')).join(' ');
+        pages.push(pageText);
       }
 
-      setUploadProgress(0);
+      const extractedText = pages.join('\n\n');
+      const metadata = await pdf.getMetadata().catch(() => null);
+      const info = metadata?.info as Record<string, unknown> | undefined;
+      const title =
+        (typeof info?.Title === 'string' ? info.Title : '') || file.name.replace('.pdf', '');
 
-      const response = await fetch('/api/pdf/upload', {
+      // Save as article via existing API (no server upload needed)
+      const response = await fetch('/api/articles', {
         method: 'POST',
-        body: formData,
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          url: `pdf://${file.name}`,
+          title,
+          content: extractedText,
+          type: 'pdf',
+          extractedText,
+          pdfMetadata: { pageCount: pdf.numPages, fileSize: file.size },
+          listIds: selectedListId !== 'all' ? [selectedListId] : [],
+          category,
+        }),
       });
 
-      setUploadProgress(null);
-
       if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}));
-        throw new Error(errorData.error || 'Failed to upload PDF');
+        throw new Error('Failed to save PDF article');
       }
 
       const data = await response.json();
@@ -187,13 +204,23 @@ export default function HomeClient() {
   });
 
   const handleUrlSubmit = async (url: string, category?: string) => {
-    const newArticleId = await importMutation.mutateAsync({ url, category });
-    router.push(`/reader/${newArticleId}`);
+    try {
+      const newArticleId = await importMutation.mutateAsync({ url, category });
+      router.push(`/reader/${newArticleId}`);
+    } catch (error) {
+      console.error('Import failed:', error);
+      throw error; // Re-throw so AddArticleDialog can display it
+    }
   };
 
   const handlePDFUpload = async (file: File, category?: string) => {
-    const newArticleId = await pdfUploadMutation.mutateAsync({ file, category });
-    router.push(`/reader/${newArticleId}`);
+    try {
+      const newArticleId = await pdfUploadMutation.mutateAsync({ file, category });
+      router.push(`/reader/${newArticleId}`);
+    } catch (error) {
+      console.error('PDF processing failed:', error);
+      throw error; // Re-throw so AddArticleDialog can display it
+    }
   };
 
   const isImporting = importMutation.isPending || pdfUploadMutation.isPending;
@@ -780,7 +807,6 @@ export default function HomeClient() {
         onSubmitUrl={handleUrlSubmit}
         onUploadPDF={handlePDFUpload}
         isSubmitting={isImporting}
-        uploadProgress={uploadProgress}
       />
 
       {articlePendingDelete && (

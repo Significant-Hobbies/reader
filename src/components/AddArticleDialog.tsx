@@ -6,7 +6,7 @@ import { Button } from './ui/button';
 import { Input } from './ui/input';
 import { Label } from './ui/label';
 import { SUGGESTED_CATEGORIES } from '@/lib/category-utils';
-import { Upload, Link as LinkIcon } from 'lucide-react';
+import { Upload, Link as LinkIcon, FileText, Loader2 } from 'lucide-react';
 
 interface AddArticleDialogProps {
   open: boolean;
@@ -23,52 +23,59 @@ export function AddArticleDialog({
   onSubmitUrl,
   onUploadPDF,
   isSubmitting = false,
-  uploadProgress = null,
 }: AddArticleDialogProps) {
   const [tab, setTab] = useState<'url' | 'pdf'>('url');
   const [url, setUrl] = useState('');
   const [category, setCategory] = useState('');
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [error, setError] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const handleUrlSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!url || isSubmitting) return;
+    setError(null);
 
     try {
       await onSubmitUrl(url, category || undefined);
-      // Reset form
       setUrl('');
       setCategory('');
-    } catch (error) {
-      // Error handling is done by parent component
-      console.error('Error submitting URL:', error);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to import article');
     }
   };
 
-  const handlePDFUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
+    setError(null);
 
     if (file.type !== 'application/pdf') {
-      alert('Please select a PDF file');
+      setError('Please select a PDF file');
       return;
     }
 
     if (file.size > 10 * 1024 * 1024) {
-      alert('PDF file size must be less than 10MB');
+      setError('PDF file size must be less than 10MB');
       return;
     }
 
+    setSelectedFile(file);
+  };
+
+  const handlePDFSubmit = async () => {
+    if (!selectedFile || isSubmitting) return;
+    setError(null);
+
     try {
-      await onUploadPDF(file, category || undefined);
-      // Reset form
+      await onUploadPDF(selectedFile, category || undefined);
       setCategory('');
+      setSelectedFile(null);
       if (fileInputRef.current) {
         fileInputRef.current.value = '';
       }
-    } catch (error) {
-      // Error handling is done by parent component
-      console.error('Error uploading PDF:', error);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to process PDF');
     }
   };
 
@@ -76,9 +83,10 @@ export function AddArticleDialog({
     if (!isSubmitting) {
       onOpenChange(newOpen);
       if (!newOpen) {
-        // Reset form when closing
         setUrl('');
         setCategory('');
+        setSelectedFile(null);
+        setError(null);
         setTab('url');
         if (fileInputRef.current) {
           fileInputRef.current.value = '';
@@ -98,7 +106,10 @@ export function AddArticleDialog({
         {/* Tabs */}
         <div className="flex gap-2 border-b border-gray-700">
           <button
-            onClick={() => setTab('url')}
+            onClick={() => {
+              setTab('url');
+              setError(null);
+            }}
             className={`flex items-center gap-2 px-4 py-2 text-sm font-medium transition-colors ${
               tab === 'url'
                 ? 'border-b-2 border-blue-500 text-blue-400'
@@ -109,7 +120,10 @@ export function AddArticleDialog({
             Import URL
           </button>
           <button
-            onClick={() => setTab('pdf')}
+            onClick={() => {
+              setTab('pdf');
+              setError(null);
+            }}
             className={`flex items-center gap-2 px-4 py-2 text-sm font-medium transition-colors ${
               tab === 'pdf'
                 ? 'border-b-2 border-blue-500 text-blue-400'
@@ -121,9 +135,15 @@ export function AddArticleDialog({
           </button>
         </div>
 
+        {error && (
+          <div className="rounded-lg border border-red-800 bg-red-950/80 px-3 py-2 text-sm text-red-300">
+            {error}
+          </div>
+        )}
+
         {/* URL Import Tab */}
         {tab === 'url' && (
-          <form onSubmit={handleUrlSubmit} className="space-y-4 pt-4">
+          <form onSubmit={handleUrlSubmit} className="space-y-4 pt-2">
             <div className="space-y-2">
               <Label htmlFor="url">Article URL</Label>
               <Input
@@ -153,9 +173,6 @@ export function AddArticleDialog({
                   <option key={cat} value={cat} />
                 ))}
               </datalist>
-              <p className="text-xs text-gray-500">
-                Add a category to organize your content (e.g., Research, Tutorial, Blog Post)
-              </p>
             </div>
 
             <div className="flex justify-end gap-2 pt-2">
@@ -168,7 +185,13 @@ export function AddArticleDialog({
                 Cancel
               </Button>
               <Button type="submit" disabled={!url || isSubmitting}>
-                {isSubmitting ? 'Importing...' : 'Import'}
+                {isSubmitting ? (
+                  <>
+                    <Loader2 className="h-4 w-4 animate-spin mr-2" /> Importing...
+                  </>
+                ) : (
+                  'Import'
+                )}
               </Button>
             </div>
           </form>
@@ -176,7 +199,7 @@ export function AddArticleDialog({
 
         {/* PDF Upload Tab */}
         {tab === 'pdf' && (
-          <div className="space-y-4 pt-4">
+          <div className="space-y-4 pt-2">
             <div className="space-y-2">
               <Label htmlFor="category-pdf">Category (optional)</Label>
               <Input
@@ -197,34 +220,28 @@ export function AddArticleDialog({
 
             <div className="space-y-2">
               <Label htmlFor="pdf-file">PDF File</Label>
-              <div className="flex items-center gap-2">
-                <Input
-                  id="pdf-file"
-                  ref={fileInputRef}
-                  type="file"
-                  accept="application/pdf"
-                  onChange={handlePDFUpload}
-                  disabled={isSubmitting}
-                  className="cursor-pointer"
-                />
-              </div>
-              <p className="text-xs text-gray-500">Maximum file size: 10MB</p>
+              <Input
+                id="pdf-file"
+                ref={fileInputRef}
+                type="file"
+                accept="application/pdf"
+                onChange={handleFileSelect}
+                disabled={isSubmitting}
+                className="cursor-pointer"
+              />
+              {selectedFile && (
+                <div className="flex items-center gap-2 rounded-lg border border-gray-700 bg-gray-900/60 px-3 py-2">
+                  <FileText className="h-4 w-4 text-blue-400" />
+                  <span className="text-sm text-gray-300 truncate flex-1">{selectedFile.name}</span>
+                  <span className="text-xs text-gray-500">
+                    {(selectedFile.size / 1024 / 1024).toFixed(1)} MB
+                  </span>
+                </div>
+              )}
+              <p className="text-xs text-gray-500">
+                Maximum file size: 10MB. Text is extracted in your browser.
+              </p>
             </div>
-
-            {uploadProgress !== null && (
-              <div className="space-y-2">
-                <div className="flex justify-between text-sm text-gray-400">
-                  <span>Uploading...</span>
-                  <span>{uploadProgress}%</span>
-                </div>
-                <div className="h-2 w-full overflow-hidden rounded-full bg-gray-700">
-                  <div
-                    className="h-full bg-blue-500 transition-all duration-300"
-                    style={{ width: `${uploadProgress}%` }}
-                  />
-                </div>
-              </div>
-            )}
 
             <div className="flex justify-end gap-2 pt-2">
               <Button
@@ -233,7 +250,21 @@ export function AddArticleDialog({
                 onClick={() => handleOpenChange(false)}
                 disabled={isSubmitting}
               >
-                Close
+                Cancel
+              </Button>
+              <Button
+                onClick={() => void handlePDFSubmit()}
+                disabled={!selectedFile || isSubmitting}
+              >
+                {isSubmitting ? (
+                  <>
+                    <Loader2 className="h-4 w-4 animate-spin mr-2" /> Processing...
+                  </>
+                ) : (
+                  <>
+                    <Upload className="h-4 w-4 mr-2" /> Upload
+                  </>
+                )}
               </Button>
             </div>
           </div>

@@ -23,6 +23,14 @@
         { "fieldPath": "userId", "order": "ASCENDING" },
         { "fieldPath": "projectId", "order": "ASCENDING" }
       ]
+    },
+    {
+      "collectionGroup": "boards",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "userId", "order": "ASCENDING" },
+        { "fieldPath": "updatedAt", "order": "DESCENDING" }
+      ]
     }
   ],
   "fieldOverrides": []
