@@ -13,7 +13,11 @@ jobs:
     steps:
       - uses: actions/checkout@v3
       - name: Run AI Reviewer
-        uses: sarthakagrawal927/code-reviewer-action@v1 # <--- This is the action
+        uses: sarthakagrawal927/code-reviewer-action@v0
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
-          # openai_api_key: ${{ secrets.OPENAI_API_KEY }} # Optional for now
+          ai_base_url: ${{ secrets.AI_BASE_URL }}
+          ai_api_key: ${{ secrets.AI_API_KEY }}
+          model: 'gpt-4o-mini'
+          max_inline_findings: '5'
+          min_inline_severity: 'medium'
