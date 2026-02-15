@@ -26,29 +26,27 @@ function sanitizeBoardNode(node: unknown): BoardNode | null {
   const y = Number(pos?.y ?? 0);
   if (!Number.isFinite(x) || !Number.isFinite(y)) return null;
 
-  const base = {
+  const base: Record<string, unknown> = {
     id,
     type,
     position: { x, y },
-    width: typeof n.width === 'number' && Number.isFinite(n.width) ? n.width : undefined,
-    height: typeof n.height === 'number' && Number.isFinite(n.height) ? n.height : undefined,
   };
+  if (typeof n.width === 'number' && Number.isFinite(n.width)) base.width = n.width;
+  if (typeof n.height === 'number' && Number.isFinite(n.height)) base.height = n.height;
 
   const data = n.data as Record<string, unknown> | undefined;
   if (!data || typeof data !== 'object') return null;
 
   if (type === 'website') {
-    return {
-      ...base,
-      type: 'website',
-      data: {
-        url: sanitizePlainText(data.url).slice(0, 2048),
-        title: sanitizeTitle(data.title, 'Untitled'),
-        excerpt: sanitizePlainText(data.excerpt).slice(0, 500),
-        favicon: typeof data.favicon === 'string' ? data.favicon.slice(0, 2048) : undefined,
-        articleId: typeof data.articleId === 'string' ? data.articleId.trim() : undefined,
-      },
+    const websiteData: Record<string, unknown> = {
+      url: sanitizePlainText(data.url).slice(0, 2048),
+      title: sanitizeTitle(data.title, 'Untitled'),
+      excerpt: sanitizePlainText(data.excerpt).slice(0, 500),
     };
+    if (typeof data.favicon === 'string') websiteData.favicon = data.favicon.slice(0, 2048);
+    if (typeof data.articleId === 'string' && data.articleId.trim())
+      websiteData.articleId = data.articleId.trim();
+    return { ...base, type: 'website', data: websiteData } as unknown as BoardNode;
   }
 
   if (type === 'note') {
@@ -59,18 +57,15 @@ function sanitizeBoardNode(node: unknown): BoardNode | null {
         text: sanitizePlainText(data.text).slice(0, MAX_NOTE_TEXT_LENGTH),
         color: typeof data.color === 'string' ? data.color.slice(0, 20) : 'yellow',
       },
-    };
+    } as unknown as BoardNode;
   }
 
   if (type === 'iframe') {
-    return {
-      ...base,
-      type: 'iframe',
-      data: {
-        url: sanitizePlainText(data.url).slice(0, 2048),
-        title: typeof data.title === 'string' ? sanitizeTitle(data.title, '') : undefined,
-      },
+    const iframeData: Record<string, unknown> = {
+      url: sanitizePlainText(data.url).slice(0, 2048),
     };
+    if (typeof data.title === 'string') iframeData.title = sanitizeTitle(data.title, '');
+    return { ...base, type: 'iframe', data: iframeData } as unknown as BoardNode;
   }
 
   // aiChat
@@ -87,17 +82,12 @@ function sanitizeBoardNode(node: unknown): BoardNode | null {
     .filter((m): m is AIChatMessage => m !== null)
     .slice(-MAX_AI_MESSAGES_PER_NODE);
 
-  return {
-    ...base,
-    type: 'aiChat',
-    data: {
-      messages: sanitizedMessages,
-      contextLabel:
-        typeof data.contextLabel === 'string'
-          ? sanitizePlainText(data.contextLabel).slice(0, 200)
-          : undefined,
-    },
-  };
+  const chatData: Record<string, unknown> = { messages: sanitizedMessages };
+  if (typeof data.contextLabel === 'string') {
+    chatData.contextLabel = sanitizePlainText(data.contextLabel).slice(0, 200);
+  }
+
+  return { ...base, type: 'aiChat', data: chatData } as unknown as BoardNode;
 }
 
 function sanitizeBoardEdge(edge: unknown): BoardEdge | null {
@@ -109,13 +99,14 @@ function sanitizeBoardEdge(edge: unknown): BoardEdge | null {
   const target = typeof e.target === 'string' ? e.target.trim() : '';
   if (!id || !source || !target) return null;
 
-  return {
+  const result: Record<string, unknown> = {
     id,
     source,
     target,
-    label: typeof e.label === 'string' ? sanitizePlainText(e.label).slice(0, 200) : undefined,
     style: e.style === 'dashed' ? 'dashed' : 'solid',
   };
+  if (typeof e.label === 'string') result.label = sanitizePlainText(e.label).slice(0, 200);
+  return result as unknown as BoardEdge;
 }
 
 export function sanitizeNodes(nodes: unknown): BoardNode[] {

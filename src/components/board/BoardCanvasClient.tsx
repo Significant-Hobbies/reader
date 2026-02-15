@@ -66,7 +66,32 @@ function hydrateEdges(board: Board): Edge[] {
   }));
 }
 
+function useSuppressBrowserZoom() {
+  useEffect(() => {
+    // Prevent Ctrl+scroll (browser zoom) — React Flow handles canvas zoom itself
+    const onWheel = (e: WheelEvent) => {
+      if (e.ctrlKey || e.metaKey) e.preventDefault();
+    };
+    // Prevent Ctrl+Plus/Minus browser zoom
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (
+        (e.ctrlKey || e.metaKey) &&
+        (e.key === '+' || e.key === '-' || e.key === '=' || e.key === '0')
+      ) {
+        e.preventDefault();
+      }
+    };
+    document.addEventListener('wheel', onWheel, { passive: false });
+    document.addEventListener('keydown', onKeyDown);
+    return () => {
+      document.removeEventListener('wheel', onWheel);
+      document.removeEventListener('keydown', onKeyDown);
+    };
+  }, []);
+}
+
 function BoardCanvas({ board }: BoardCanvasClientProps) {
+  useSuppressBrowserZoom();
   const [nodes, setNodes, onNodesChange] = useNodesState(hydrateNodes(board));
   const [edges, setEdges, onEdgesChange] = useEdgesState(hydrateEdges(board));
   const [showWebsiteDialog, setShowWebsiteDialog] = useState(false);
