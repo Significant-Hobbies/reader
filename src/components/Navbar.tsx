@@ -12,7 +12,7 @@ import {
 import { SearchBar } from './SearchBar';
 
 export function Navbar() {
-  const { user, logout } = useAuth();
+  const { user, loading, logout } = useAuth();
   const router = useRouter();
 
   return (
@@ -26,15 +26,13 @@ export function Navbar() {
         </Link>
 
         <div className="flex items-center gap-4 flex-1 max-w-2xl">
-          {user && (
-            <Link
-              href="/board"
-              className="text-sm text-gray-400 hover:text-white transition-colors whitespace-nowrap"
-            >
-              Boards
-            </Link>
-          )}
-          {user && <SearchBar />}
+          <Link
+            href="/board"
+            className="text-sm text-gray-400 hover:text-white transition-colors whitespace-nowrap"
+          >
+            Boards
+          </Link>
+          <SearchBar />
         </div>
 
         {user ? (
@@ -67,9 +65,9 @@ export function Navbar() {
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
-        ) : (
+        ) : loading ? (
           <div className="h-8 w-8 rounded-full bg-gray-700/50 animate-pulse flex-shrink-0" />
-        )}
+        ) : null}
       </div>
     </nav>
   );

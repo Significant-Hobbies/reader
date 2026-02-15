@@ -7,7 +7,7 @@ import { useBoardList, useCreateBoard, useDeleteBoard } from './hooks/useBoardDa
 
 export function BoardListClient() {
   const router = useRouter();
-  const { data: boards, isLoading } = useBoardList();
+  const { data: boards } = useBoardList();
   const createBoard = useCreateBoard();
   const deleteBoard = useDeleteBoard();
   const [newBoardName, setNewBoardName] = useState('');
@@ -23,14 +23,6 @@ export function BoardListClient() {
     e.stopPropagation();
     deleteBoard.mutate(id);
   };
-
-  if (isLoading) {
-    return (
-      <div className="flex items-center justify-center py-20">
-        <Loader2 className="h-6 w-6 animate-spin text-gray-400" />
-      </div>
-    );
-  }
 
   return (
     <div className="mx-auto max-w-5xl px-6 py-8">
