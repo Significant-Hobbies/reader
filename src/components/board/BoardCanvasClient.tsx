@@ -70,8 +70,26 @@ function BoardCanvas({ board }: BoardCanvasClientProps) {
   const [nodes, setNodes, onNodesChange] = useNodesState(hydrateNodes(board));
   const [edges, setEdges, onEdgesChange] = useEdgesState(hydrateEdges(board));
   const [showWebsiteDialog, setShowWebsiteDialog] = useState(false);
+  const [boardName, setBoardName] = useState(board.name);
   const { debouncedSave, saveStatus } = useBoardAutoSave(board.id);
   const { screenToFlowPosition } = useReactFlow();
+
+  const saveBoardName = useCallback(
+    async (name: string) => {
+      const trimmed = name.trim() || 'Untitled Board';
+      setBoardName(trimmed);
+      try {
+        await fetch(`/api/boards/${board.id}`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ name: trimmed }),
+        });
+      } catch {
+        // silent fail for name save
+      }
+    },
+    [board.id]
+  );
 
   const [initialId] = useState(() => Date.now());
   const nodeIdCounter = useRef(initialId);
@@ -193,6 +211,8 @@ function BoardCanvas({ board }: BoardCanvasClientProps) {
       </ReactFlow>
 
       <BoardToolbar
+        boardName={boardName}
+        onBoardNameChange={saveBoardName}
         onAddNote={addNoteNode}
         onAddWebsite={() => setShowWebsiteDialog(true)}
         onAddAIChat={addAIChatNode}

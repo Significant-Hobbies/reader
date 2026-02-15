@@ -1,8 +1,8 @@
 'use client';
 
-import { memo } from 'react';
+import { memo, useState } from 'react';
 import { Handle, Position, NodeProps, NodeResizer } from '@xyflow/react';
-import { ExternalLink, Globe } from 'lucide-react';
+import { ExternalLink, Globe, AlertTriangle } from 'lucide-react';
 
 type IframeData = {
   url: string;
@@ -11,6 +11,7 @@ type IframeData = {
 
 function IframeNodeComponent({ data, selected }: NodeProps) {
   const nodeData = data as unknown as IframeData;
+  const [loadError, setLoadError] = useState(false);
 
   const hostname = (() => {
     try {
@@ -52,14 +53,31 @@ function IframeNodeComponent({ data, selected }: NodeProps) {
         </a>
       </div>
 
-      <div className="flex-1 overflow-hidden">
-        <iframe
-          src={nodeData.url}
-          title={nodeData.title || hostname}
-          className="w-full h-full border-0 bg-white"
-          sandbox="allow-scripts allow-same-origin allow-popups allow-forms"
-          loading="lazy"
-        />
+      <div className="flex-1 overflow-hidden relative">
+        {loadError ? (
+          <div className="flex flex-col items-center justify-center h-full gap-2 p-4 text-center">
+            <AlertTriangle className="h-6 w-6 text-yellow-500" />
+            <p className="text-xs text-gray-400">This site blocks iframe embedding.</p>
+            <a
+              href={nodeData.url}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-xs text-blue-400 hover:text-blue-300 underline"
+              onClick={(e) => e.stopPropagation()}
+            >
+              Open in new tab
+            </a>
+          </div>
+        ) : (
+          <iframe
+            src={nodeData.url}
+            title={nodeData.title || hostname}
+            className="w-full h-full border-0 bg-white"
+            sandbox="allow-scripts allow-same-origin allow-popups allow-forms"
+            loading="lazy"
+            onError={() => setLoadError(true)}
+          />
+        )}
       </div>
 
       <Handle type="source" position={Position.Bottom} className="!bg-gray-500 !w-2 !h-2" />
