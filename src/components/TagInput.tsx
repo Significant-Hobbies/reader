@@ -17,7 +17,7 @@ export function TagInput({
   suggestions,
   onChange,
   placeholder = 'Add tags...',
-  maxTags = 20
+  maxTags = 20,
 }: TagInputProps) {
   const [inputValue, setInputValue] = useState('');
   const [showSuggestions, setShowSuggestions] = useState(false);
@@ -27,10 +27,7 @@ export function TagInput({
 
   const filteredSuggestions = inputValue.trim()
     ? suggestions
-        .filter((s) =>
-          s.toLowerCase().includes(inputValue.toLowerCase()) &&
-          !tags.includes(s)
-        )
+        .filter((s) => s.toLowerCase().includes(inputValue.toLowerCase()) && !tags.includes(s))
         .slice(0, 10)
     : [];
 
@@ -71,14 +68,10 @@ export function TagInput({
       removeTag(tags[tags.length - 1]);
     } else if (e.key === 'ArrowDown' && showSuggestions) {
       e.preventDefault();
-      setSelectedIndex((prev) =>
-        prev < filteredSuggestions.length - 1 ? prev + 1 : 0
-      );
+      setSelectedIndex((prev) => (prev < filteredSuggestions.length - 1 ? prev + 1 : 0));
     } else if (e.key === 'ArrowUp' && showSuggestions) {
       e.preventDefault();
-      setSelectedIndex((prev) =>
-        prev > 0 ? prev - 1 : filteredSuggestions.length - 1
-      );
+      setSelectedIndex((prev) => (prev > 0 ? prev - 1 : filteredSuggestions.length - 1));
     } else if (e.key === 'Escape') {
       setShowSuggestions(false);
     }
@@ -145,9 +138,7 @@ export function TagInput({
       )}
 
       {tags.length >= maxTags && (
-        <p className="text-xs text-gray-500 mt-1">
-          Maximum {maxTags} tags reached
-        </p>
+        <p className="text-xs text-gray-500 mt-1">Maximum {maxTags} tags reached</p>
       )}
     </div>
   );
