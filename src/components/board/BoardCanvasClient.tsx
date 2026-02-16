@@ -81,11 +81,12 @@ function useSuppressBrowserZoom() {
         e.preventDefault();
       }
     };
-    document.addEventListener('wheel', onWheel, { passive: false });
-    document.addEventListener('keydown', onKeyDown);
+    // Use capture phase so this fires before any node-level handlers
+    document.addEventListener('wheel', onWheel, { passive: false, capture: true });
+    document.addEventListener('keydown', onKeyDown, { capture: true });
     return () => {
-      document.removeEventListener('wheel', onWheel);
-      document.removeEventListener('keydown', onKeyDown);
+      document.removeEventListener('wheel', onWheel, { capture: true });
+      document.removeEventListener('keydown', onKeyDown, { capture: true });
     };
   }, []);
 }
@@ -159,7 +160,13 @@ function BoardCanvas({ board }: BoardCanvasClientProps) {
   }, [nextId, getViewportCenter, setNodes]);
 
   const addWebsiteNode = useCallback(
-    (data: { url: string; title: string; excerpt: string; favicon?: string }) => {
+    (data: {
+      url: string;
+      title: string;
+      excerpt: string;
+      favicon?: string;
+      articleId?: string;
+    }) => {
       const position = getViewportCenter();
       const newNode: Node = {
         id: nextId('web'),

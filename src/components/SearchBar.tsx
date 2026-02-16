@@ -56,6 +56,17 @@ export function SearchBar() {
     }
   }, []);
 
+  const handleResultClick = useCallback(
+    (articleId: string) => {
+      setIsOpen(false);
+      setQuery('');
+      setResults([]);
+      setSelectedIndex(-1);
+      router.push(`/reader/${articleId}`);
+    },
+    [router]
+  );
+
   useEffect(() => {
     const timeoutId = setTimeout(() => {
       performSearch(query);
@@ -111,21 +122,13 @@ export function SearchBar() {
 
     document.addEventListener('keydown', handleKeyDown);
     return () => document.removeEventListener('keydown', handleKeyDown);
-  }, [isOpen, results, selectedIndex]);
+  }, [isOpen, results, selectedIndex, handleResultClick]);
 
   const handleClear = () => {
     setQuery('');
     setResults([]);
     setIsOpen(false);
     setSelectedIndex(-1);
-  };
-
-  const handleResultClick = (articleId: string) => {
-    setIsOpen(false);
-    setQuery('');
-    setResults([]);
-    setSelectedIndex(-1);
-    router.push(`/reader/${articleId}`);
   };
 
   const renderSnippet = (text: string) => {

@@ -1,5 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { createArticleRecord, fetchArticleSummaries } from '../../../lib/articles-service';
+import {
+  createArticleRecord,
+  fetchArticleSummaries,
+  findArticleByUrl,
+} from '../../../lib/articles-service';
 import { getAuthenticatedUserId } from '../../../lib/auth-api';
 
 export async function GET(request: NextRequest) {
@@ -31,6 +35,12 @@ export async function POST(request: Request) {
 
     if (!url || !content) {
       return NextResponse.json({ error: 'URL and content are required' }, { status: 400 });
+    }
+
+    // Dedup: reuse existing article for this URL if one exists
+    const existingId = await findArticleByUrl(url, userId);
+    if (existingId) {
+      return NextResponse.json({ id: existingId, existing: true });
     }
 
     const id = await createArticleRecord({
