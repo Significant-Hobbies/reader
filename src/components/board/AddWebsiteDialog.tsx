@@ -6,7 +6,13 @@ import { X, Loader2 } from 'lucide-react';
 interface AddWebsiteDialogProps {
   open: boolean;
   onClose: () => void;
-  onAdd: (data: { url: string; title: string; excerpt: string; favicon?: string }) => void;
+  onAdd: (data: {
+    url: string;
+    title: string;
+    excerpt: string;
+    favicon?: string;
+    articleId?: string;
+  }) => void;
   onAddIframe: (data: { url: string; title?: string }) => void;
 }
 
@@ -57,11 +63,33 @@ export function AddWebsiteDialog({ open, onClose, onAdd, onAddIframe }: AddWebsi
         // ignore
       }
 
+      // Create (or find existing) article so it appears in the main articles list
+      let articleId: string | undefined;
+      try {
+        const articleRes = await fetch('/api/articles', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            url: trimmedUrl,
+            title: snapshot.title || trimmedUrl,
+            byline: snapshot.byline,
+            content: snapshot.content || '',
+          }),
+        });
+        if (articleRes.ok) {
+          const articleData = await articleRes.json();
+          articleId = articleData.id;
+        }
+      } catch {
+        // Article creation failed — still add the card without articleId
+      }
+
       onAdd({
         url: trimmedUrl,
         title: snapshot.title || trimmedUrl,
         excerpt,
         favicon,
+        articleId,
       });
 
       setUrl('');

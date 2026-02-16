@@ -351,6 +351,16 @@ export function sanitizeArticlePayload(payload: {
   return base;
 }
 
+export async function findArticleByUrl(url: string, userId: string): Promise<string | null> {
+  const snapshot = await db
+    .collection('annotations')
+    .where('userId', '==', userId)
+    .where('url', '==', url)
+    .limit(1)
+    .get();
+  return snapshot.empty ? null : snapshot.docs[0].id;
+}
+
 export async function createArticleRecord(payload: {
   url: string;
   title?: string;

@@ -335,7 +335,7 @@ export function NotesAIChat({
     }, SAVE_DEBOUNCE_MS);
 
     return () => clearTimeout(timeoutId);
-  }, [messages, persistMessagesToServer]);
+  }, [messages, persistMessagesToServer, config.provider]);
 
   useEffect(
     () => () => {

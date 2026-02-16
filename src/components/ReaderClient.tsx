@@ -90,8 +90,7 @@ export default function ReaderClient({ articleId }: { articleId: string }) {
   const [isTitleEditing, setIsTitleEditing] = useState(false);
   const [selectionMenu, setSelectionMenu] = useState<SelectionActionMenuState | null>(null);
   const [queuedAIPrompt, setQueuedAIPrompt] = useState<string | null>(null);
-  const [allowLocalProviders] = useState(() => isLocalCLIEnabled());
-  const [aiConfig, setAIConfig] = useState<AIConfig>(() => loadAIConfig(isLocalCLIEnabled()));
+  const [aiConfig] = useState<AIConfig>(() => loadAIConfig(isLocalCLIEnabled()));
 
   // Layout State
   const [leftPanelWidth, setLeftPanelWidth] = useState(66.66);

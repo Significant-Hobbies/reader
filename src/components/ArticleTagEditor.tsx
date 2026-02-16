@@ -14,9 +14,7 @@ export function ArticleTagEditor({ article }: ArticleTagEditorProps) {
   const queryClient = useQueryClient();
   const [localTags, setLocalTags] = useState<string[]>(article.tags || []);
 
-  const {
-    data: allTagsSuggestions = [],
-  } = useQuery<string[]>({
+  const { data: allTagsSuggestions = [] } = useQuery<string[]>({
     queryKey: ['tags'],
     queryFn: async () => {
       const response = await fetch('/api/tags', { cache: 'no-store' });
@@ -53,8 +51,7 @@ export function ArticleTagEditor({ article }: ArticleTagEditorProps) {
   useEffect(() => {
     const currentTags = article.tags || [];
     const tagsChanged =
-      localTags.length !== currentTags.length ||
-      localTags.some((tag, i) => tag !== currentTags[i]);
+      localTags.length !== currentTags.length || localTags.some((tag, i) => tag !== currentTags[i]);
 
     if (!tagsChanged) return;
 
