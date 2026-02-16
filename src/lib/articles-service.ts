@@ -4,6 +4,9 @@ import type { IOptions } from 'sanitize-html';
 import { db } from './firebase-admin';
 import { AIChatMessage, Article, ArticleStatus, ArticleSummary, Note, Project } from '../types';
 
+/** Legacy collection name — articles are stored in 'annotations' for historical reasons. */
+export const ARTICLES_COLLECTION = 'annotations';
+
 const baseAllowedAttributes = sanitizeHtml.defaults.allowedAttributes ?? {};
 const plainTextSanitizeOptions: IOptions = {
   allowedTags: [],
@@ -159,19 +162,19 @@ export async function fetchArticleSummaries(
   listId?: string
 ): Promise<ArticleSummary[]> {
   let query = db
-    .collection('annotations')
+    .collection(ARTICLES_COLLECTION)
     .where('userId', '==', userId)
     .orderBy('createdAt', 'desc');
 
   // Support filtering by listId (new system) or projectId (legacy)
   if (listId && listId !== 'all') {
     query = db
-      .collection('annotations')
+      .collection(ARTICLES_COLLECTION)
       .where('userId', '==', userId)
       .where('listIds', 'array-contains', listId);
   } else if (projectId && projectId !== 'all') {
     query = db
-      .collection('annotations')
+      .collection(ARTICLES_COLLECTION)
       .where('userId', '==', userId)
       .where('projectId', '==', projectId);
   }
@@ -209,7 +212,7 @@ export async function fetchArticleSummaries(
 }
 
 export async function fetchArticleById(id: string, userId: string): Promise<Article | null> {
-  const doc = await db.collection('annotations').doc(id).get();
+  const doc = await db.collection(ARTICLES_COLLECTION).doc(id).get();
   if (!doc.exists) return null;
   const data = doc.data()!;
 
@@ -353,7 +356,7 @@ export function sanitizeArticlePayload(payload: {
 
 export async function findArticleByUrl(url: string, userId: string): Promise<string | null> {
   const snapshot = await db
-    .collection('annotations')
+    .collection(ARTICLES_COLLECTION)
     .where('userId', '==', userId)
     .where('url', '==', url)
     .limit(1)
@@ -385,7 +388,7 @@ export async function createArticleRecord(payload: {
   const readingTimeMinutes = calculateReadingTime(sanitized.content);
 
   const now = Timestamp.now();
-  const docRef = await db.collection('annotations').add({
+  const docRef = await db.collection(ARTICLES_COLLECTION).add({
     ...sanitized,
     notes: [],
     aiChat: [],
@@ -472,7 +475,10 @@ export async function createProject(name: string, userId: string): Promise<strin
 export async function moveArticlesToDefault(projectId: string, userId: string) {
   const defId = defaultProjectId(userId);
   if (projectId === defId) return;
-  const snapshot = await db.collection('annotations').where('projectId', '==', projectId).get();
+  const snapshot = await db
+    .collection(ARTICLES_COLLECTION)
+    .where('projectId', '==', projectId)
+    .get();
   const batch = db.batch();
   snapshot.forEach((doc) => {
     batch.update(doc.ref, { projectId: defId, updatedAt: Timestamp.now() });
@@ -499,7 +505,7 @@ export async function deleteProject(projectId: string, userId: string) {
 }
 
 export async function verifyArticleOwnership(articleId: string, userId: string): Promise<boolean> {
-  const doc = await db.collection('annotations').doc(articleId).get();
+  const doc = await db.collection(ARTICLES_COLLECTION).doc(articleId).get();
   if (!doc.exists) return false;
   const data = doc.data()!;
   // Allow legacy docs (no userId)
@@ -509,7 +515,7 @@ export async function verifyArticleOwnership(articleId: string, userId: string):
 
 export async function fetchAllTags(userId: string): Promise<string[]> {
   const snapshot = await db
-    .collection('annotations')
+    .collection(ARTICLES_COLLECTION)
     .where('userId', '==', userId)
     .select('tags')
     .get();
@@ -669,7 +675,7 @@ export async function searchArticles(
     return [];
   }
 
-  let dbQuery = db.collection('annotations').where('userId', '==', userId);
+  let dbQuery = db.collection(ARTICLES_COLLECTION).where('userId', '==', userId);
 
   if (projectId && projectId !== 'all') {
     dbQuery = dbQuery.where('projectId', '==', projectId);
