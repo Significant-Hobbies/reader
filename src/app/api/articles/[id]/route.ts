@@ -9,6 +9,7 @@ import {
   sanitizePlainText,
   sanitizeTitle,
   verifyArticleOwnership,
+  ARTICLES_COLLECTION,
 } from '../../../../lib/articles-service';
 import { ArticleStatus } from '../../../../types';
 import { getAuthenticatedUserId } from '../../../../lib/auth-api';
@@ -88,7 +89,7 @@ export async function PUT(request: Request, { params }: { params: Promise<{ id: 
 
     const { notes, aiChat, title, status, projectId, tags, aiSummary, keyPoints } = payload;
 
-    const docRef = db.collection('annotations').doc(id);
+    const docRef = db.collection(ARTICLES_COLLECTION).doc(id);
     const updateData: Record<string, unknown> = {
       updatedAt: Timestamp.now(),
     };
@@ -155,7 +156,7 @@ export async function DELETE(request: Request, { params }: { params: Promise<{ i
       return NextResponse.json({ error: 'Not found or not authorized' }, { status: 404 });
     }
 
-    const docRef = db.collection('annotations').doc(id);
+    const docRef = db.collection(ARTICLES_COLLECTION).doc(id);
     await docRef.delete();
     return NextResponse.json({ success: true });
   } catch (error) {

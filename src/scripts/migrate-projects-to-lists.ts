@@ -25,6 +25,7 @@
  */
 
 import { db } from '../lib/firebase-admin';
+import { ARTICLES_COLLECTION } from '../lib/articles-service';
 import { ensureDefaultLists } from '../lib/lists-service';
 import { Timestamp } from 'firebase-admin/firestore';
 
@@ -156,7 +157,10 @@ async function updateArticlesForUser(
   console.log(`  📄 Updating articles for user: ${userId.substring(0, 8)}...`);
 
   // Get all articles for this user
-  const articlesSnapshot = await db.collection('annotations').where('userId', '==', userId).get();
+  const articlesSnapshot = await db
+    .collection(ARTICLES_COLLECTION)
+    .where('userId', '==', userId)
+    .get();
 
   console.log(`  📊 Found ${articlesSnapshot.size} articles to process`);
 
