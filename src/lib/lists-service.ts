@@ -1,7 +1,7 @@
 import { Timestamp, FieldValue } from 'firebase-admin/firestore';
 import { db } from './firebase-admin';
 import { List } from '../types';
-import { sanitizePlainText } from './articles-service';
+import { sanitizePlainText, ARTICLES_COLLECTION } from './articles-service';
 
 // Default list IDs (format: {userId}_favourites, {userId}_read-later)
 export function favouritesListId(userId: string): string {
@@ -207,7 +207,7 @@ export async function deleteList(listId: string, userId: string): Promise<void> 
 
   // Remove listId from all articles that have it
   const articlesSnapshot = await db
-    .collection('annotations')
+    .collection(ARTICLES_COLLECTION)
     .where('listIds', 'array-contains', listId)
     .get();
 
@@ -254,7 +254,7 @@ export async function addArticleToList(
   userId: string
 ): Promise<void> {
   // Validate article ownership
-  const articleDoc = await db.collection('annotations').doc(articleId).get();
+  const articleDoc = await db.collection(ARTICLES_COLLECTION).doc(articleId).get();
 
   if (!articleDoc.exists) {
     throw new Error('Article not found');
@@ -282,7 +282,7 @@ export async function addArticleToList(
 
   // Add to listIds array (arrayUnion prevents duplicates)
   await db
-    .collection('annotations')
+    .collection(ARTICLES_COLLECTION)
     .doc(articleId)
     .update({
       listIds: FieldValue.arrayUnion(listId),
@@ -299,7 +299,7 @@ export async function removeArticleFromList(
   userId: string
 ): Promise<void> {
   // Validate article ownership
-  const articleDoc = await db.collection('annotations').doc(articleId).get();
+  const articleDoc = await db.collection(ARTICLES_COLLECTION).doc(articleId).get();
 
   if (!articleDoc.exists) {
     throw new Error('Article not found');
@@ -314,7 +314,7 @@ export async function removeArticleFromList(
 
   // Remove from listIds array
   await db
-    .collection('annotations')
+    .collection(ARTICLES_COLLECTION)
     .doc(articleId)
     .update({
       listIds: FieldValue.arrayRemove(listId),

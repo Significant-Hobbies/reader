@@ -7,6 +7,7 @@
 
 import * as admin from 'firebase-admin';
 import { db } from '../src/lib/firebase-admin';
+import { ARTICLES_COLLECTION } from '../src/lib/articles-service';
 
 const TARGET_EMAIL = 'sarthakagrawal927@gmail.com';
 
@@ -20,7 +21,7 @@ async function main() {
   let updatedProjects = 0;
 
   // --- annotations (articles) ---
-  const articlesSnap = await db.collection('annotations').get();
+  const articlesSnap = await db.collection(ARTICLES_COLLECTION).get();
   for (const doc of articlesSnap.docs) {
     const data = doc.data();
     if (!data.userId) {
