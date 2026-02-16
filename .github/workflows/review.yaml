@@ -18,6 +18,6 @@ jobs:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           ai_base_url: ${{ secrets.AI_BASE_URL }}
           ai_api_key: ${{ secrets.AI_API_KEY }}
-          model: 'gpt-4o-mini'
+          model: 'gemini-2.0-flash'
           max_inline_findings: '5'
           min_inline_severity: 'medium'
