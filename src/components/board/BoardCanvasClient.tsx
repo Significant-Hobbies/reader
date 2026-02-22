@@ -68,11 +68,9 @@ function hydrateEdges(board: Board): Edge[] {
 
 function useSuppressBrowserZoom() {
   useEffect(() => {
-    // Prevent Ctrl+scroll (browser zoom) — React Flow handles canvas zoom itself
     const onWheel = (e: WheelEvent) => {
       if (e.ctrlKey || e.metaKey) e.preventDefault();
     };
-    // Prevent Ctrl+Plus/Minus browser zoom
     const onKeyDown = (e: KeyboardEvent) => {
       if (
         (e.ctrlKey || e.metaKey) &&
@@ -81,12 +79,36 @@ function useSuppressBrowserZoom() {
         e.preventDefault();
       }
     };
-    // Use capture phase so this fires before any node-level handlers
+    const onGesture = (e: Event) => {
+      e.preventDefault();
+    };
+
+    const meta = document.createElement('meta');
+    meta.name = 'viewport';
+    meta.content = 'width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no';
+    const existingMeta = document.querySelector('meta[name="viewport"]');
+    const previousContent = existingMeta?.getAttribute('content') ?? null;
+    if (existingMeta) {
+      existingMeta.setAttribute('content', meta.content);
+    } else {
+      document.head.appendChild(meta);
+    }
+
     document.addEventListener('wheel', onWheel, { passive: false, capture: true });
     document.addEventListener('keydown', onKeyDown, { capture: true });
+    document.addEventListener('gesturestart', onGesture, { capture: true });
+    document.addEventListener('gesturechange', onGesture, { capture: true });
+
     return () => {
       document.removeEventListener('wheel', onWheel, { capture: true });
       document.removeEventListener('keydown', onKeyDown, { capture: true });
+      document.removeEventListener('gesturestart', onGesture, { capture: true });
+      document.removeEventListener('gesturechange', onGesture, { capture: true });
+      if (previousContent !== null && existingMeta) {
+        existingMeta.setAttribute('content', previousContent);
+      } else if (!existingMeta) {
+        meta.remove();
+      }
     };
   }, []);
 }
@@ -209,7 +231,7 @@ function BoardCanvas({ board }: BoardCanvasClientProps) {
   const defaultEdgeOptions = useMemo(() => ({ type: 'labeled' }), []);
 
   return (
-    <div className="relative h-full w-full">
+    <div className="relative h-full w-full" style={{ touchAction: 'none' }}>
       <ReactFlow
         nodes={nodes}
         edges={edges}
