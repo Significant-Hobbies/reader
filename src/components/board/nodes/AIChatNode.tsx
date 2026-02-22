@@ -21,6 +21,14 @@ import {
 type AIChatData = {
   messages: AIChatMessage[];
   contextLabel?: string;
+  elementAnchor?: {
+    articleId: string;
+    websiteNodeId: string;
+    elementIndex: number;
+    tagName?: string;
+    textPreview?: string;
+  };
+  onBrowseContent?: (articleId: string, websiteNodeId: string) => void;
 };
 
 const loadConfig = (): AIConfig => {
@@ -173,6 +181,27 @@ function AIChatNodeComponent({ id, data, selected }: NodeProps) {
           </button>
         )}
       </div>
+
+      {nodeData.elementAnchor && (
+        <div className="border-b border-gray-800 px-3 py-1.5">
+          <button
+            type="button"
+            onClick={(e) => {
+              e.stopPropagation();
+              nodeData.onBrowseContent?.(
+                nodeData.elementAnchor!.articleId,
+                nodeData.elementAnchor!.websiteNodeId
+              );
+            }}
+            className="inline-flex items-center gap-1 rounded-md bg-blue-500/15 px-2 py-0.5 text-[10px] font-medium text-blue-300 hover:bg-blue-500/25 transition-colors max-w-full"
+          >
+            <span className="font-mono">[{nodeData.elementAnchor.tagName || 'el'}]</span>
+            <span className="truncate">
+              &ldquo;{(nodeData.elementAnchor.textPreview || '').slice(0, 50)}&rdquo;
+            </span>
+          </button>
+        </div>
+      )}
 
       <div className="flex-1 overflow-y-auto p-2">
         {messages.length === 0 ? (
