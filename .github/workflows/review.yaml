@@ -3,8 +3,6 @@ on: [pull_request]
 
 permissions:
   contents: read
-  pull-requests: write
-  issues: write
 
 jobs:
   review:
@@ -12,13 +10,9 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
-      - name: Run AI Reviewer
-        uses: sarthakagrawal927/code-reviewer-action@v0
+      - name: Trigger Enterprise Reviewer
+        uses: sarthakagrawal927/code-reviewer-action@v1
         with:
-          github_token: ${{ secrets.GITHUB_TOKEN }}
-          ai_base_url: ${{ secrets.AI_BASE_URL != '' && secrets.AI_BASE_URL || 'https://api.openai.com/v1' }}
-          ai_api_key: ${{ secrets.AI_API_KEY != '' && secrets.AI_API_KEY || secrets.OPENAI_API_KEY != '' && secrets.OPENAI_API_KEY || secrets.GEMINI_API_KEY }}
-          model: 'gemini-3-flash-preview'
-          max_inline_findings: '5'
-          min_inline_severity: 'medium'
-          gateway_max_retries: '2'
+          platform_base_url: ${{ secrets.CODE_REVIEWER_PLATFORM_BASE_URL }}
+          platform_token: ${{ secrets.CODE_REVIEWER_PLATFORM_TOKEN }}
+          workflow_run_id: ${{ github.run_id }}
