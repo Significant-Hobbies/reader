@@ -62,10 +62,15 @@ export function BoardListClient() {
       ) : (
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {boards.map((board) => (
-            <button
+            <div
               key={board.id}
+              role="button"
+              tabIndex={0}
               onClick={() => router.push(`/board/${board.id}`)}
-              className="group relative rounded-xl border border-gray-700 bg-gray-800/60 p-5 text-left transition-all hover:border-blue-500/50 hover:bg-gray-800/80 shadow-md"
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' || e.key === ' ') router.push(`/board/${board.id}`);
+              }}
+              className="group relative cursor-pointer rounded-xl border border-gray-700 bg-gray-800/60 p-5 text-left transition-all hover:border-blue-500/50 hover:bg-gray-800/80 shadow-md"
             >
               <div className="mb-2 flex items-center justify-between">
                 <Layout className="h-5 w-5 text-blue-400" />
@@ -83,7 +88,7 @@ export function BoardListClient() {
                 {board.nodeCount} {board.nodeCount === 1 ? 'node' : 'nodes'}
                 {board.updatedAt && <> &middot; {new Date(board.updatedAt).toLocaleDateString()}</>}
               </p>
-            </button>
+            </div>
           ))}
         </div>
       )}
