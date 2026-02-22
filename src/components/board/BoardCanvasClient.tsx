@@ -29,6 +29,7 @@ import { BoardToolbar } from './BoardToolbar';
 import { AddWebsiteDialog } from './AddWebsiteDialog';
 import { ElementPickerPanel } from './ElementPickerPanel';
 import { useBoardAutoSave } from './hooks/useBoardAutoSave';
+import { useBoardArticleSync } from './hooks/useBoardArticleSync';
 import type { Board, ElementAnchor, AIChatMessage } from '../../types';
 
 interface BoardCanvasClientProps {
@@ -162,6 +163,9 @@ function BoardCanvas({ board }: BoardCanvasClientProps) {
   useEffect(() => {
     debouncedSave(nodes, edges);
   }, [nodes, edges, debouncedSave]);
+
+  // Sync linked note/chat nodes back to their articles
+  useBoardArticleSync(nodes);
 
   // Inject onBrowseContent into all nodes that support it
   useEffect(() => {
