@@ -17,6 +17,14 @@ const COLOR_KEYS = Object.keys(NOTE_COLORS);
 type NoteData = {
   text: string;
   color: string;
+  elementAnchor?: {
+    articleId: string;
+    websiteNodeId: string;
+    elementIndex: number;
+    tagName?: string;
+    textPreview?: string;
+  };
+  onBrowseContent?: (articleId: string, websiteNodeId: string) => void;
 };
 
 function NoteNodeComponent({ id, data, selected }: NodeProps) {
@@ -86,6 +94,24 @@ function NoteNodeComponent({ id, data, selected }: NodeProps) {
       )}
 
       <div className="p-3">
+        {nodeData.elementAnchor && (
+          <button
+            type="button"
+            onClick={(e) => {
+              e.stopPropagation();
+              nodeData.onBrowseContent?.(
+                nodeData.elementAnchor!.articleId,
+                nodeData.elementAnchor!.websiteNodeId
+              );
+            }}
+            className="mb-2 inline-flex items-center gap-1 rounded-md bg-blue-500/15 px-2 py-0.5 text-[10px] font-medium text-blue-300 hover:bg-blue-500/25 transition-colors max-w-full"
+          >
+            <span className="font-mono">[{nodeData.elementAnchor.tagName || 'el'}]</span>
+            <span className="truncate">
+              &ldquo;{(nodeData.elementAnchor.textPreview || '').slice(0, 50)}&rdquo;
+            </span>
+          </button>
+        )}
         {isEditing ? (
           <textarea
             value={nodeData.text}
