@@ -10,9 +10,10 @@ type WebsiteData = {
   excerpt: string;
   favicon?: string;
   articleId?: string;
+  onBrowseContent?: (articleId: string, websiteNodeId: string) => void;
 };
 
-function WebsiteNodeComponent({ data, selected }: NodeProps) {
+function WebsiteNodeComponent({ id, data, selected }: NodeProps) {
   const nodeData = data as unknown as WebsiteData;
 
   const hostname = (() => {
@@ -77,7 +78,7 @@ function WebsiteNodeComponent({ data, selected }: NodeProps) {
       </div>
 
       {nodeData.articleId && (
-        <div className="border-t border-gray-800 px-3 py-1.5">
+        <div className="flex items-center gap-2 border-t border-gray-800 px-3 py-1.5">
           <a
             href={`/reader/${nodeData.articleId}`}
             className="text-xs text-blue-400 hover:text-blue-300"
@@ -85,6 +86,16 @@ function WebsiteNodeComponent({ data, selected }: NodeProps) {
           >
             Open in Reader
           </a>
+          <button
+            type="button"
+            onClick={(e) => {
+              e.stopPropagation();
+              nodeData.onBrowseContent?.(nodeData.articleId!, id);
+            }}
+            className="ml-auto text-xs text-gray-500 hover:text-blue-400 transition-colors"
+          >
+            Browse content
+          </button>
         </div>
       )}
 
