@@ -122,7 +122,7 @@ function BoardCanvas({ board }: BoardCanvasClientProps) {
   const [showWebsiteDialog, setShowWebsiteDialog] = useState(false);
   const [boardName, setBoardName] = useState(board.name);
   const { debouncedSave, saveStatus } = useBoardAutoSave(board.id);
-  const { screenToFlowPosition } = useReactFlow();
+  const { screenToFlowPosition, getNodes } = useReactFlow();
 
   const [pickerState, setPickerState] = useState<{
     articleId: string;
@@ -203,10 +203,10 @@ function BoardCanvas({ board }: BoardCanvasClientProps) {
       id: nextId('note'),
       type: 'note',
       position,
-      data: { text: '', color: 'yellow' },
+      data: { text: '', color: 'yellow', onBrowseContent: openElementPicker },
     };
     setNodes((nds) => [...nds, newNode]);
-  }, [nextId, getViewportCenter, setNodes]);
+  }, [nextId, getViewportCenter, setNodes, openElementPicker]);
 
   const addWebsiteNode = useCallback(
     (data: {
@@ -234,10 +234,10 @@ function BoardCanvas({ board }: BoardCanvasClientProps) {
       id: nextId('chat'),
       type: 'aiChat',
       position,
-      data: { messages: [], contextLabel: '' },
+      data: { messages: [], contextLabel: '', onBrowseContent: openElementPicker },
     };
     setNodes((nds) => [...nds, newNode]);
-  }, [nextId, getViewportCenter, setNodes]);
+  }, [nextId, getViewportCenter, setNodes, openElementPicker]);
 
   const addIframeNode = useCallback(
     (data: { url: string; title?: string }) => {
@@ -257,7 +257,7 @@ function BoardCanvas({ board }: BoardCanvasClientProps) {
 
   const handlePickerAddNote = useCallback(
     (anchor: ElementAnchor, elementText: string) => {
-      const websiteNode = nodes.find((n) => n.id === anchor.websiteNodeId);
+      const websiteNode = getNodes().find((n) => n.id === anchor.websiteNodeId);
       const position = websiteNode
         ? {
             x: websiteNode.position.x + (websiteNode.measured?.width ?? 250) + 40,
@@ -294,12 +294,12 @@ function BoardCanvas({ board }: BoardCanvasClientProps) {
 
       setPickerState(null);
     },
-    [nodes, getViewportCenter, nextId, setNodes, setEdges, openElementPicker]
+    [getNodes, getViewportCenter, nextId, setNodes, setEdges, openElementPicker]
   );
 
   const handlePickerAskAI = useCallback(
     (anchor: ElementAnchor, elementText: string) => {
-      const websiteNode = nodes.find((n) => n.id === anchor.websiteNodeId);
+      const websiteNode = getNodes().find((n) => n.id === anchor.websiteNodeId);
       const position = websiteNode
         ? {
             x: websiteNode.position.x + (websiteNode.measured?.width ?? 250) + 40,
@@ -342,7 +342,7 @@ function BoardCanvas({ board }: BoardCanvasClientProps) {
 
       setPickerState(null);
     },
-    [nodes, getViewportCenter, nextId, setNodes, setEdges, openElementPicker]
+    [getNodes, getViewportCenter, nextId, setNodes, setEdges, openElementPicker]
   );
 
   const defaultEdgeOptions = useMemo(() => ({ type: 'labeled' }), []);
