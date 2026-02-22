@@ -11,6 +11,25 @@ const MAX_NOTE_TEXT_LENGTH = 5000;
 
 const COLLECTION = 'boards';
 
+function sanitizeElementAnchor(anchor: unknown): Record<string, unknown> | undefined {
+  if (typeof anchor !== 'object' || anchor === null) return undefined;
+  const a = anchor as Record<string, unknown>;
+
+  const articleId = typeof a.articleId === 'string' ? a.articleId.trim() : '';
+  const websiteNodeId = typeof a.websiteNodeId === 'string' ? a.websiteNodeId.trim() : '';
+  const elementIndex = Number(a.elementIndex);
+
+  if (!articleId || !websiteNodeId || !Number.isFinite(elementIndex) || elementIndex < 0) {
+    return undefined;
+  }
+
+  const result: Record<string, unknown> = { articleId, websiteNodeId, elementIndex };
+  if (typeof a.tagName === 'string') result.tagName = a.tagName.slice(0, 30);
+  if (typeof a.textPreview === 'string')
+    result.textPreview = sanitizePlainText(a.textPreview).slice(0, 200);
+  return result;
+}
+
 function sanitizeBoardNode(node: unknown): BoardNode | null {
   if (typeof node !== 'object' || node === null) return null;
   const n = node as Record<string, unknown>;
@@ -50,14 +69,13 @@ function sanitizeBoardNode(node: unknown): BoardNode | null {
   }
 
   if (type === 'note') {
-    return {
-      ...base,
-      type: 'note',
-      data: {
-        text: sanitizePlainText(data.text).slice(0, MAX_NOTE_TEXT_LENGTH),
-        color: typeof data.color === 'string' ? data.color.slice(0, 20) : 'yellow',
-      },
-    } as unknown as BoardNode;
+    const noteData: Record<string, unknown> = {
+      text: sanitizePlainText(data.text).slice(0, MAX_NOTE_TEXT_LENGTH),
+      color: typeof data.color === 'string' ? data.color.slice(0, 20) : 'yellow',
+    };
+    const anchor = sanitizeElementAnchor(data.elementAnchor);
+    if (anchor) noteData.elementAnchor = anchor;
+    return { ...base, type: 'note', data: noteData } as unknown as BoardNode;
   }
 
   if (type === 'iframe') {
@@ -77,7 +95,10 @@ function sanitizeBoardNode(node: unknown): BoardNode | null {
       if (msg.role !== 'user' && msg.role !== 'assistant') return null;
       const content = sanitizePlainText(msg.content).slice(0, MAX_AI_MESSAGE_LENGTH);
       if (!content) return null;
-      return { role: msg.role as 'user' | 'assistant', content };
+      const result: Record<string, unknown> = { role: msg.role, content };
+      const msgAnchor = sanitizeElementAnchor(msg.elementAnchor);
+      if (msgAnchor) result.elementAnchor = msgAnchor;
+      return result as unknown as AIChatMessage;
     })
     .filter((m): m is AIChatMessage => m !== null)
     .slice(-MAX_AI_MESSAGES_PER_NODE);
@@ -86,6 +107,8 @@ function sanitizeBoardNode(node: unknown): BoardNode | null {
   if (typeof data.contextLabel === 'string') {
     chatData.contextLabel = sanitizePlainText(data.contextLabel).slice(0, 200);
   }
+  const chatAnchor = sanitizeElementAnchor(data.elementAnchor);
+  if (chatAnchor) chatData.elementAnchor = chatAnchor;
 
   return { ...base, type: 'aiChat', data: chatData } as unknown as BoardNode;
 }

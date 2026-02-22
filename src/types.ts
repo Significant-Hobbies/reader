@@ -5,6 +5,14 @@ export interface NoteAnchor {
   pageNumber?: number; // For PDF annotations
 }
 
+export interface ElementAnchor {
+  articleId: string;
+  websiteNodeId: string;
+  elementIndex: number;
+  tagName?: string;
+  textPreview?: string;
+}
+
 export interface Note {
   id: number;
   text: string;
@@ -14,6 +22,7 @@ export interface Note {
 export interface AIChatMessage {
   role: 'user' | 'assistant';
   content: string;
+  elementAnchor?: ElementAnchor;
 }
 
 export type SummaryLength = 'short' | 'medium' | 'long';
@@ -94,11 +103,13 @@ export interface WebsiteNodeData {
 export interface NoteNodeData {
   text: string;
   color: string;
+  elementAnchor?: ElementAnchor;
 }
 
 export interface AIChatNodeData {
   messages: AIChatMessage[];
   contextLabel?: string;
+  elementAnchor?: ElementAnchor;
 }
 
 export interface IframeNodeData {

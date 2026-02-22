@@ -11,6 +11,7 @@ import { Navbar } from './Navbar';
 import { NotesAIChat } from './NotesAIChat';
 import { ArticleTagEditor } from './ArticleTagEditor';
 import { ArticleSummary } from './ArticleSummary';
+import { ANNOTATABLE_SELECTOR } from '../lib/annotatable';
 import {
   AI_CONFIG_STORAGE_KEY,
   AIConfig,
@@ -19,31 +20,6 @@ import {
   normalizeAvailableAIProvider,
   getDefaultModelForProvider,
 } from '../lib/ai-config';
-
-const ANNOTATABLE_SELECTOR = [
-  'p',
-  'h1',
-  'h2',
-  'h3',
-  'h4',
-  'h5',
-  'h6',
-  'li',
-  'blockquote',
-  'pre',
-  'figure',
-  'figcaption',
-  'img',
-  'video',
-  'iframe',
-  'code',
-  'table',
-  'thead',
-  'tbody',
-  'tr',
-  'td',
-  'th',
-].join(', ');
 
 const SCROLL_OFFSET = 80;
 const MAX_SELECTION_MENU_TEXT = 600;
