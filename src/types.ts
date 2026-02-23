@@ -55,6 +55,7 @@ export interface Article {
   // NEW FIELDS:
   listIds?: string[]; // Array of list IDs this article belongs to
   category?: string; // Optional single category (e.g., "Research", "Tutorial", "Blog Post")
+  shareId?: string;
 }
 
 export type ArticleSummary = Omit<Article, 'content' | 'notes'> & {
@@ -117,11 +118,17 @@ export interface IframeNodeData {
   title?: string;
 }
 
+export interface ReaderNodeData {
+  articleId: string;
+  url: string;
+  title: string;
+}
+
 export interface BoardNode {
   id: string;
-  type: 'website' | 'note' | 'aiChat' | 'iframe';
+  type: 'website' | 'note' | 'aiChat' | 'iframe' | 'reader';
   position: { x: number; y: number };
-  data: WebsiteNodeData | NoteNodeData | AIChatNodeData | IframeNodeData;
+  data: WebsiteNodeData | NoteNodeData | AIChatNodeData | IframeNodeData | ReaderNodeData;
   width?: number;
   height?: number;
 }
