@@ -16,8 +16,8 @@ export default async function SharedBoardPage({
     notFound();
   }
 
-  // Cast to Board with a dummy userId (stripped from response, only needed for type compat)
-  const readOnlyBoard: Board = { ...board, userId: '' };
+  // Dummy id/userId for type compat — neither is used in read-only mode
+  const readOnlyBoard: Board = { ...board, id: '', userId: '' };
 
   return <BoardCanvasClient board={readOnlyBoard} readOnly />;
 }

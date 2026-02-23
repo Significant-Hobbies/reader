@@ -228,17 +228,26 @@ export async function revokeShareId(boardId: string, userId: string): Promise<bo
   return true;
 }
 
-export async function fetchBoardByShareId(shareId: string): Promise<Omit<Board, 'userId'> | null> {
+export async function fetchBoardByShareId(
+  shareId: string
+): Promise<Omit<Board, 'userId' | 'id'> | null> {
   const snapshot = await db.collection(COLLECTION).where('shareId', '==', shareId).limit(1).get();
 
   if (snapshot.empty) return null;
   const doc = snapshot.docs[0];
   const data = doc.data();
 
+  // Strip internal IDs (articleId, elementAnchor) from nodes
+  const nodes = sanitizeNodes(data.nodes).map((n) => {
+    const nodeData = { ...(n.data as unknown as Record<string, unknown>) };
+    delete nodeData.articleId;
+    delete nodeData.elementAnchor;
+    return { ...n, data: nodeData } as unknown as BoardNode;
+  });
+
   return {
-    id: doc.id,
     name: data.name || 'Untitled Board',
-    nodes: sanitizeNodes(data.nodes),
+    nodes,
     edges: sanitizeEdges(data.edges),
     shareId: data.shareId,
     createdAt: data.createdAt?.toDate().toISOString(),
