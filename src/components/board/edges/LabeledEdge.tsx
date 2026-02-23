@@ -23,7 +23,11 @@ export function LabeledEdge({
   const { updateEdgeData } = useReactFlow();
   const [isEditing, setIsEditing] = useState(false);
 
-  const edgeData = (data ?? {}) as { label?: string; style?: 'solid' | 'dashed' };
+  const edgeData = (data ?? {}) as {
+    label?: string;
+    style?: 'solid' | 'dashed';
+    readOnly?: boolean;
+  };
   const isDashed = edgeData.style === 'dashed';
 
   const [edgePath, labelX, labelY] = getBezierPath({
@@ -76,14 +80,16 @@ export function LabeledEdge({
             />
           ) : (
             <button
-              onDoubleClick={() => setIsEditing(true)}
+              onDoubleClick={edgeData.readOnly ? undefined : () => setIsEditing(true)}
               className={`rounded px-1.5 py-0.5 text-[10px] transition-colors ${
                 edgeData.label
                   ? 'bg-gray-800/90 text-gray-300 hover:bg-gray-700'
-                  : 'text-transparent hover:bg-gray-800/60 hover:text-gray-500'
+                  : edgeData.readOnly
+                    ? 'text-transparent'
+                    : 'text-transparent hover:bg-gray-800/60 hover:text-gray-500'
               }`}
             >
-              {edgeData.label || 'label'}
+              {edgeData.label || (edgeData.readOnly ? '' : 'label')}
             </button>
           )}
         </div>

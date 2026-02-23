@@ -21,6 +21,7 @@ import {
 type AIChatData = {
   messages: AIChatMessage[];
   contextLabel?: string;
+  readOnly?: boolean;
   elementAnchor?: {
     articleId: string;
     websiteNodeId: string;
@@ -172,7 +173,7 @@ function AIChatNodeComponent({ id, data, selected }: NodeProps) {
           <span className="text-xs font-medium text-gray-300">AI Chat</span>
           <span className="text-[10px] text-gray-600">{PROVIDER_LABELS[config.provider]}</span>
         </div>
-        {messages.length > 0 && (
+        {messages.length > 0 && !nodeData.readOnly && (
           <button
             onClick={clearChat}
             className="rounded p-1 text-gray-500 hover:bg-gray-800 hover:text-gray-300"
@@ -238,42 +239,44 @@ function AIChatNodeComponent({ id, data, selected }: NodeProps) {
         )}
       </div>
 
-      <div className="border-t border-gray-800 p-2">
-        <div className="flex items-end gap-1.5">
-          <input
-            type="text"
-            value={input}
-            onChange={(e) => setInput(e.target.value)}
-            onKeyDown={(e) => {
-              if (e.key === 'Enter' && !e.shiftKey) {
-                e.preventDefault();
-                void sendMessage();
-              }
-            }}
-            placeholder={isReady ? 'Ask something...' : 'Set API key in Reader'}
-            className="flex-1 rounded-lg border border-gray-700 bg-gray-950 px-2.5 py-1.5 text-xs text-gray-100 placeholder:text-gray-600 focus:outline-none focus:ring-1 focus:ring-blue-500"
-          />
-          {isStreaming ? (
-            <button
-              onClick={() => {
-                stop();
-                pendingHistoryRef.current = null;
+      {!nodeData.readOnly && (
+        <div className="border-t border-gray-800 p-2">
+          <div className="flex items-end gap-1.5">
+            <input
+              type="text"
+              value={input}
+              onChange={(e) => setInput(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' && !e.shiftKey) {
+                  e.preventDefault();
+                  void sendMessage();
+                }
               }}
-              className="flex h-7 w-7 items-center justify-center rounded-lg border border-red-500/40 bg-red-500/15 text-red-300"
-            >
-              <Square className="h-3 w-3" />
-            </button>
-          ) : (
-            <button
-              onClick={() => void sendMessage()}
-              disabled={!input.trim() || !isReady}
-              className="flex h-7 w-7 items-center justify-center rounded-lg bg-blue-600 text-white disabled:opacity-50"
-            >
-              <Send className="h-3 w-3" />
-            </button>
-          )}
+              placeholder={isReady ? 'Ask something...' : 'Set API key in Reader'}
+              className="flex-1 rounded-lg border border-gray-700 bg-gray-950 px-2.5 py-1.5 text-xs text-gray-100 placeholder:text-gray-600 focus:outline-none focus:ring-1 focus:ring-blue-500"
+            />
+            {isStreaming ? (
+              <button
+                onClick={() => {
+                  stop();
+                  pendingHistoryRef.current = null;
+                }}
+                className="flex h-7 w-7 items-center justify-center rounded-lg border border-red-500/40 bg-red-500/15 text-red-300"
+              >
+                <Square className="h-3 w-3" />
+              </button>
+            ) : (
+              <button
+                onClick={() => void sendMessage()}
+                disabled={!input.trim() || !isReady}
+                className="flex h-7 w-7 items-center justify-center rounded-lg bg-blue-600 text-white disabled:opacity-50"
+              >
+                <Send className="h-3 w-3" />
+              </button>
+            )}
+          </div>
         </div>
-      </div>
+      )}
 
       <Handle type="source" position={Position.Bottom} className="!bg-gray-500 !w-2 !h-2" />
     </div>

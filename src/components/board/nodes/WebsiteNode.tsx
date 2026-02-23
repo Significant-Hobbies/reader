@@ -10,6 +10,7 @@ type WebsiteData = {
   excerpt: string;
   favicon?: string;
   articleId?: string;
+  readOnly?: boolean;
   onBrowseContent?: (articleId: string, websiteNodeId: string) => void;
 };
 
@@ -69,7 +70,7 @@ function WebsiteNodeComponent({ id, data, selected }: NodeProps) {
         )}
       </div>
 
-      {nodeData.articleId && (
+      {nodeData.articleId && !nodeData.readOnly && (
         <div className="flex items-center gap-2 border-t border-gray-800 px-3 py-1.5">
           <a
             href={`/reader/${nodeData.articleId}`}

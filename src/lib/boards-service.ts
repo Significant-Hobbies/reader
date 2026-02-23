@@ -1,4 +1,5 @@
-import { Timestamp } from 'firebase-admin/firestore';
+import crypto from 'crypto';
+import { FieldValue, Timestamp } from 'firebase-admin/firestore';
 import { db } from './firebase-admin';
 import { sanitizePlainText, sanitizeTitle } from './articles-service';
 import type { Board, BoardEdge, BoardNode, BoardSummary, AIChatMessage } from '../types';
@@ -179,6 +180,7 @@ export async function fetchBoardById(id: string, userId: string): Promise<Board 
     name: data.name || 'Untitled Board',
     nodes: sanitizeNodes(data.nodes),
     edges: sanitizeEdges(data.edges),
+    ...(data.shareId ? { shareId: data.shareId } : {}),
     createdAt: data.createdAt?.toDate().toISOString(),
     updatedAt: data.updatedAt?.toDate().toISOString(),
   };
@@ -202,4 +204,44 @@ export async function verifyBoardOwnership(boardId: string, userId: string): Pro
   const doc = await db.collection(COLLECTION).doc(boardId).get();
   if (!doc.exists) return false;
   return doc.data()!.userId === userId;
+}
+
+export async function generateShareId(boardId: string, userId: string): Promise<string | null> {
+  const doc = await db.collection(COLLECTION).doc(boardId).get();
+  if (!doc.exists) return null;
+  const data = doc.data()!;
+  if (data.userId !== userId) return null;
+
+  if (data.shareId) return data.shareId as string;
+
+  const shareId = crypto.randomBytes(16).toString('base64url');
+  await db.collection(COLLECTION).doc(boardId).update({ shareId });
+  return shareId;
+}
+
+export async function revokeShareId(boardId: string, userId: string): Promise<boolean> {
+  const doc = await db.collection(COLLECTION).doc(boardId).get();
+  if (!doc.exists) return false;
+  if (doc.data()!.userId !== userId) return false;
+
+  await db.collection(COLLECTION).doc(boardId).update({ shareId: FieldValue.delete() });
+  return true;
+}
+
+export async function fetchBoardByShareId(shareId: string): Promise<Omit<Board, 'userId'> | null> {
+  const snapshot = await db.collection(COLLECTION).where('shareId', '==', shareId).limit(1).get();
+
+  if (snapshot.empty) return null;
+  const doc = snapshot.docs[0];
+  const data = doc.data();
+
+  return {
+    id: doc.id,
+    name: data.name || 'Untitled Board',
+    nodes: sanitizeNodes(data.nodes),
+    edges: sanitizeEdges(data.edges),
+    shareId: data.shareId,
+    createdAt: data.createdAt?.toDate().toISOString(),
+    updatedAt: data.updatedAt?.toDate().toISOString(),
+  };
 }

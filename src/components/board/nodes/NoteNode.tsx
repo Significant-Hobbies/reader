@@ -17,6 +17,7 @@ const COLOR_KEYS = Object.keys(NOTE_COLORS);
 type NoteData = {
   text: string;
   color: string;
+  readOnly?: boolean;
   elementAnchor?: {
     articleId: string;
     websiteNodeId: string;
@@ -112,7 +113,7 @@ function NoteNodeComponent({ id, data, selected }: NodeProps) {
             </span>
           </button>
         )}
-        {isEditing ? (
+        {isEditing && !nodeData.readOnly ? (
           <textarea
             value={nodeData.text}
             onChange={handleTextChange}
@@ -124,12 +125,12 @@ function NoteNodeComponent({ id, data, selected }: NodeProps) {
           />
         ) : (
           <div
-            onDoubleClick={() => setIsEditing(true)}
-            className={`min-h-[4rem] cursor-text whitespace-pre-wrap text-sm ${colors.text} ${
+            onDoubleClick={nodeData.readOnly ? undefined : () => setIsEditing(true)}
+            className={`min-h-[4rem] whitespace-pre-wrap text-sm ${nodeData.readOnly ? '' : 'cursor-text'} ${colors.text} ${
               !nodeData.text ? 'opacity-40 italic' : ''
             }`}
           >
-            {nodeData.text || 'Double-click to edit'}
+            {nodeData.text || (nodeData.readOnly ? '' : 'Double-click to edit')}
           </div>
         )}
       </div>
