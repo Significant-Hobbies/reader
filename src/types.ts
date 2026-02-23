@@ -140,6 +140,7 @@ export interface Board {
   name: string;
   nodes: BoardNode[];
   edges: BoardEdge[];
+  shareId?: string;
   createdAt?: string;
   updatedAt?: string;
 }

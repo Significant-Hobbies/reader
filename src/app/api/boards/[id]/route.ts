@@ -6,6 +6,8 @@ import {
   verifyBoardOwnership,
   sanitizeNodes,
   sanitizeEdges,
+  generateShareId,
+  revokeShareId,
 } from '../../../../lib/boards-service';
 import { sanitizeTitle } from '../../../../lib/articles-service';
 import { getAuthenticatedUserId } from '../../../../lib/auth-api';
@@ -49,6 +51,19 @@ export async function PUT(request: Request, { params }: { params: Promise<{ id: 
     }
 
     const payload = body as Record<string, unknown>;
+
+    if (payload.shareAction === 'generate') {
+      const shareId = await generateShareId(id, userId);
+      if (!shareId)
+        return NextResponse.json({ error: 'Failed to generate share link' }, { status: 500 });
+      return NextResponse.json({ shareId });
+    }
+
+    if (payload.shareAction === 'revoke') {
+      await revokeShareId(id, userId);
+      return NextResponse.json({ success: true });
+    }
+
     const docRef = db.collection('boards').doc(id);
     const updateData: Record<string, unknown> = {
       updatedAt: Timestamp.now(),

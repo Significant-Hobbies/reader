@@ -1,7 +1,8 @@
 'use client';
 
-import { useState, useRef, useEffect } from 'react';
-import { StickyNote, Globe, Bot, Pencil, Check } from 'lucide-react';
+import { useState, useRef, useEffect, useCallback } from 'react';
+import { StickyNote, Globe, Bot, Pencil, Check, Share2 } from 'lucide-react';
+import { ShareDialog } from './ShareDialog';
 import type { SaveStatus } from './hooks/useBoardAutoSave';
 
 interface BoardToolbarProps {
@@ -11,6 +12,8 @@ interface BoardToolbarProps {
   onAddWebsite: () => void;
   onAddAIChat: () => void;
   saveStatus: SaveStatus;
+  boardId: string;
+  shareId?: string;
 }
 
 const STATUS_LABELS: Record<SaveStatus, string> = {
@@ -27,9 +30,13 @@ export function BoardToolbar({
   onAddWebsite,
   onAddAIChat,
   saveStatus,
+  boardId,
+  shareId: initialShareId,
 }: BoardToolbarProps) {
   const [isEditing, setIsEditing] = useState(false);
   const [editValue, setEditValue] = useState(boardName);
+  const [showShareDialog, setShowShareDialog] = useState(false);
+  const [shareId, setShareId] = useState(initialShareId);
   const inputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
@@ -43,6 +50,10 @@ export function BoardToolbar({
     setIsEditing(false);
     onBoardNameChange(editValue);
   };
+
+  const handleShareIdChange = useCallback((newShareId: string | undefined) => {
+    setShareId(newShareId);
+  }, []);
 
   return (
     <>
@@ -81,6 +92,17 @@ export function BoardToolbar({
           </button>
         )}
 
+        <div className="h-4 w-px bg-gray-700" />
+
+        <button
+          onClick={() => setShowShareDialog(true)}
+          className="flex items-center gap-1 text-gray-400 hover:text-blue-300 transition-colors"
+          title="Share"
+        >
+          <Share2 className="h-3.5 w-3.5" />
+          {shareId && <span className="h-1.5 w-1.5 rounded-full bg-green-400" />}
+        </button>
+
         {saveStatus !== 'idle' && (
           <>
             <div className="h-4 w-px bg-gray-700" />
@@ -111,6 +133,14 @@ export function BoardToolbar({
           onClick={onAddAIChat}
         />
       </div>
+
+      <ShareDialog
+        open={showShareDialog}
+        onClose={() => setShowShareDialog(false)}
+        boardId={boardId}
+        shareId={shareId}
+        onShareIdChange={handleShareIdChange}
+      />
     </>
   );
 }

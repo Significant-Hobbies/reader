@@ -34,6 +34,7 @@ import type { Board, ElementAnchor, AIChatMessage } from '../../types';
 
 interface BoardCanvasClientProps {
   board: Board;
+  readOnly?: boolean;
 }
 
 const nodeTypes: NodeTypes = {
@@ -47,24 +48,30 @@ const edgeTypes: EdgeTypes = {
   labeled: LabeledEdge,
 };
 
-function hydrateNodes(board: Board): Node[] {
+function hydrateNodes(board: Board, readOnly?: boolean): Node[] {
   return board.nodes.map((n) => ({
     id: n.id,
     type: n.type,
     position: n.position,
-    data: n.data as unknown as Record<string, unknown>,
+    data: {
+      ...(n.data as unknown as Record<string, unknown>),
+      ...(readOnly ? { readOnly: true } : {}),
+    },
     width: n.width,
     height: n.height,
   }));
 }
 
-function hydrateEdges(board: Board): Edge[] {
+function hydrateEdges(board: Board, readOnly?: boolean): Edge[] {
   return board.edges.map((e) => ({
     id: e.id,
     source: e.source,
     target: e.target,
     type: 'labeled' as const,
-    data: { label: e.label, style: e.style } as Record<string, unknown>,
+    data: { label: e.label, style: e.style, ...(readOnly ? { readOnly: true } : {}) } as Record<
+      string,
+      unknown
+    >,
   }));
 }
 
@@ -115,10 +122,10 @@ function useSuppressBrowserZoom() {
   }, []);
 }
 
-function BoardCanvas({ board }: BoardCanvasClientProps) {
+function BoardCanvas({ board, readOnly }: BoardCanvasClientProps) {
   useSuppressBrowserZoom();
-  const [nodes, setNodes, onNodesChange] = useNodesState(hydrateNodes(board));
-  const [edges, setEdges, onEdgesChange] = useEdgesState(hydrateEdges(board));
+  const [nodes, setNodes, onNodesChange] = useNodesState(hydrateNodes(board, readOnly));
+  const [edges, setEdges, onEdgesChange] = useEdgesState(hydrateEdges(board, readOnly));
   const [showWebsiteDialog, setShowWebsiteDialog] = useState(false);
   const [boardName, setBoardName] = useState(board.name);
   const { debouncedSave, saveStatus } = useBoardAutoSave(board.id);
@@ -161,14 +168,15 @@ function BoardCanvas({ board }: BoardCanvasClientProps) {
 
   // Auto-save whenever nodes or edges change
   useEffect(() => {
-    debouncedSave(nodes, edges);
-  }, [nodes, edges, debouncedSave]);
+    if (!readOnly) debouncedSave(nodes, edges);
+  }, [nodes, edges, debouncedSave, readOnly]);
 
   // Sync linked note/chat nodes back to their articles
-  useBoardArticleSync(nodes);
+  useBoardArticleSync(readOnly ? [] : nodes);
 
   // Inject onBrowseContent into all nodes that support it
   useEffect(() => {
+    if (readOnly) return;
     setNodes((nds) =>
       nds.map((n) => {
         if (n.type === 'website' || n.type === 'note' || n.type === 'aiChat') {
@@ -178,7 +186,7 @@ function BoardCanvas({ board }: BoardCanvasClientProps) {
       })
     );
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [openElementPicker]);
+  }, [openElementPicker, readOnly]);
 
   const onConnect = useCallback(
     (connection: Connection) => {
@@ -352,14 +360,17 @@ function BoardCanvas({ board }: BoardCanvasClientProps) {
       <ReactFlow
         nodes={nodes}
         edges={edges}
-        onNodesChange={onNodesChange}
-        onEdgesChange={onEdgesChange}
-        onConnect={onConnect}
+        onNodesChange={readOnly ? undefined : onNodesChange}
+        onEdgesChange={readOnly ? undefined : onEdgesChange}
+        onConnect={readOnly ? undefined : onConnect}
         nodeTypes={nodeTypes}
         edgeTypes={edgeTypes}
         defaultEdgeOptions={defaultEdgeOptions}
         fitView
-        deleteKeyCode={['Backspace', 'Delete']}
+        nodesDraggable={!readOnly}
+        nodesConnectable={!readOnly}
+        elementsSelectable={!readOnly}
+        deleteKeyCode={readOnly ? null : ['Backspace', 'Delete']}
         className="board-canvas"
         proOptions={{ hideAttribution: true }}
       >
@@ -381,39 +392,50 @@ function BoardCanvas({ board }: BoardCanvasClientProps) {
         />
       </ReactFlow>
 
-      <BoardToolbar
-        boardName={boardName}
-        onBoardNameChange={saveBoardName}
-        onAddNote={addNoteNode}
-        onAddWebsite={() => setShowWebsiteDialog(true)}
-        onAddAIChat={addAIChatNode}
-        saveStatus={saveStatus}
-      />
+      {readOnly ? (
+        <div className="absolute left-4 top-4 z-10 rounded-lg border border-gray-700 bg-gray-900/90 px-3 py-1.5 shadow-lg backdrop-blur">
+          <span className="text-sm font-semibold text-white">{boardName}</span>
+          <span className="ml-2 text-xs text-gray-500">Read-only</span>
+        </div>
+      ) : (
+        <>
+          <BoardToolbar
+            boardName={boardName}
+            onBoardNameChange={saveBoardName}
+            onAddNote={addNoteNode}
+            onAddWebsite={() => setShowWebsiteDialog(true)}
+            onAddAIChat={addAIChatNode}
+            saveStatus={saveStatus}
+            boardId={board.id}
+            shareId={board.shareId}
+          />
 
-      <AddWebsiteDialog
-        open={showWebsiteDialog}
-        onClose={() => setShowWebsiteDialog(false)}
-        onAdd={addWebsiteNode}
-        onAddIframe={addIframeNode}
-      />
+          <AddWebsiteDialog
+            open={showWebsiteDialog}
+            onClose={() => setShowWebsiteDialog(false)}
+            onAdd={addWebsiteNode}
+            onAddIframe={addIframeNode}
+          />
 
-      {pickerState && (
-        <ElementPickerPanel
-          articleId={pickerState.articleId}
-          websiteNodeId={pickerState.websiteNodeId}
-          onClose={() => setPickerState(null)}
-          onAddNote={handlePickerAddNote}
-          onAskAI={handlePickerAskAI}
-        />
+          {pickerState && (
+            <ElementPickerPanel
+              articleId={pickerState.articleId}
+              websiteNodeId={pickerState.websiteNodeId}
+              onClose={() => setPickerState(null)}
+              onAddNote={handlePickerAddNote}
+              onAskAI={handlePickerAskAI}
+            />
+          )}
+        </>
       )}
     </div>
   );
 }
 
-export function BoardCanvasClient({ board }: BoardCanvasClientProps) {
+export function BoardCanvasClient({ board, readOnly }: BoardCanvasClientProps) {
   return (
     <ReactFlowProvider>
-      <BoardCanvas board={board} />
+      <BoardCanvas board={board} readOnly={readOnly} />
     </ReactFlowProvider>
   );
 }
