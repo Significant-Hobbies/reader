@@ -39,7 +39,14 @@ function sanitizeBoardNode(node: unknown): BoardNode | null {
   if (!id) return null;
 
   const type = n.type;
-  if (type !== 'website' && type !== 'note' && type !== 'aiChat' && type !== 'iframe') return null;
+  if (
+    type !== 'website' &&
+    type !== 'note' &&
+    type !== 'aiChat' &&
+    type !== 'iframe' &&
+    type !== 'reader'
+  )
+    return null;
 
   const pos = n.position as Record<string, unknown> | undefined;
   const x = Number(pos?.x ?? 0);
@@ -85,6 +92,16 @@ function sanitizeBoardNode(node: unknown): BoardNode | null {
     };
     if (typeof data.title === 'string') iframeData.title = sanitizeTitle(data.title, '');
     return { ...base, type: 'iframe', data: iframeData } as unknown as BoardNode;
+  }
+
+  if (type === 'reader') {
+    const readerData: Record<string, unknown> = {
+      articleId: typeof data.articleId === 'string' ? data.articleId.trim() : '',
+      url: sanitizePlainText(data.url).slice(0, 2048),
+      title: sanitizeTitle(data.title, 'Untitled'),
+    };
+    if (!readerData.articleId) return null;
+    return { ...base, type: 'reader', data: readerData } as unknown as BoardNode;
   }
 
   // aiChat
