@@ -1,4 +1,5 @@
-import { Timestamp } from 'firebase-admin/firestore';
+import crypto from 'crypto';
+import { FieldValue, Timestamp } from 'firebase-admin/firestore';
 import sanitizeHtml from 'sanitize-html';
 import type { IOptions } from 'sanitize-html';
 import { db } from './firebase-admin';
@@ -245,10 +246,11 @@ export async function fetchArticleById(id: string, userId: string): Promise<Arti
         : Array.isArray(data.notes)
           ? data.notes.length
           : 0,
-    createdAt: data.createdAt?.toDate().toISOString(),
-    updatedAt: data.updatedAt?.toDate().toISOString(),
     listIds: Array.isArray(data.listIds) ? data.listIds : [],
     category: typeof data.category === 'string' ? data.category : undefined,
+    ...(data.shareId ? { shareId: data.shareId } : {}),
+    createdAt: data.createdAt?.toDate().toISOString(),
+    updatedAt: data.updatedAt?.toDate().toISOString(),
   };
 }
 
@@ -759,4 +761,65 @@ export async function searchArticles(
   results.sort((a, b) => b.relevanceScore - a.relevanceScore);
 
   return results;
+}
+
+export async function generateArticleShareId(
+  articleId: string,
+  userId: string
+): Promise<string | null> {
+  const doc = await db.collection(ARTICLES_COLLECTION).doc(articleId).get();
+  if (!doc.exists) return null;
+  const data = doc.data()!;
+  if (data.userId && data.userId !== userId) return null;
+
+  if (data.shareId) return data.shareId as string;
+
+  const shareId = crypto.randomBytes(16).toString('base64url');
+  await db.collection(ARTICLES_COLLECTION).doc(articleId).update({ shareId });
+  return shareId;
+}
+
+export async function revokeArticleShareId(articleId: string, userId: string): Promise<boolean> {
+  const doc = await db.collection(ARTICLES_COLLECTION).doc(articleId).get();
+  if (!doc.exists) return false;
+  if (doc.data()!.userId !== userId) return false;
+
+  await db.collection(ARTICLES_COLLECTION).doc(articleId).update({
+    shareId: FieldValue.delete(),
+  });
+  return true;
+}
+
+export async function fetchArticleByShareId(
+  shareId: string
+): Promise<Omit<Article, 'userId' | 'id' | 'aiChat'> | null> {
+  const snapshot = await db
+    .collection(ARTICLES_COLLECTION)
+    .where('shareId', '==', shareId)
+    .limit(1)
+    .get();
+
+  if (snapshot.empty) return null;
+  const data = snapshot.docs[0].data();
+
+  return {
+    url: data.url,
+    title: data.title || data.url,
+    byline: data.byline,
+    content: data.content,
+    notes: (data.notes ?? []).map((n: Record<string, unknown>) => ({
+      id: Number(n.id) || 0,
+      text: String(n.text || ''),
+      anchor: n.anchor,
+    })),
+    aiSummary: typeof data.aiSummary === 'string' ? data.aiSummary : undefined,
+    keyPoints: Array.isArray(data.keyPoints) ? data.keyPoints : undefined,
+    tags: Array.isArray(data.tags) ? data.tags : [],
+    readingTimeMinutes:
+      typeof data.readingTimeMinutes === 'number' ? data.readingTimeMinutes : undefined,
+    type: data.type || 'article',
+    shareId: data.shareId,
+    createdAt: data.createdAt?.toDate().toISOString(),
+    updatedAt: data.updatedAt?.toDate().toISOString(),
+  };
 }
