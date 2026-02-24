@@ -24,6 +24,7 @@ import { NoteNode } from './nodes/NoteNode';
 import { WebsiteNode } from './nodes/WebsiteNode';
 import { AIChatNode } from './nodes/AIChatNode';
 import { IframeNode } from './nodes/IframeNode';
+import { ReaderNode } from './nodes/ReaderNode';
 import { LabeledEdge } from './edges/LabeledEdge';
 import { BoardToolbar } from './BoardToolbar';
 import { AddWebsiteDialog } from './AddWebsiteDialog';
@@ -42,6 +43,7 @@ const nodeTypes: NodeTypes = {
   website: WebsiteNode,
   aiChat: AIChatNode,
   iframe: IframeNode,
+  reader: ReaderNode,
 };
 
 const edgeTypes: EdgeTypes = {
@@ -174,20 +176,6 @@ function BoardCanvas({ board, readOnly }: BoardCanvasClientProps) {
   // Sync linked note/chat nodes back to their articles
   useBoardArticleSync(readOnly ? [] : nodes);
 
-  // Inject onBrowseContent into all nodes that support it
-  useEffect(() => {
-    if (readOnly) return;
-    setNodes((nds) =>
-      nds.map((n) => {
-        if (n.type === 'website' || n.type === 'note' || n.type === 'aiChat') {
-          return { ...n, data: { ...n.data, onBrowseContent: openElementPicker } };
-        }
-        return n;
-      })
-    );
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [openElementPicker, readOnly]);
-
   const onConnect = useCallback(
     (connection: Connection) => {
       setEdges((eds) =>
@@ -261,6 +249,134 @@ function BoardCanvas({ board, readOnly }: BoardCanvasClientProps) {
       setNodes((nds) => [...nds, newNode]);
     },
     [nextId, getViewportCenter, setNodes]
+  );
+
+  const handleReaderSpawnNote = useCallback(
+    (anchor: ElementAnchor, elementText: string) => {
+      const readerNode = getNodes().find((n) => n.id === anchor.websiteNodeId);
+      const position = readerNode
+        ? {
+            x: readerNode.position.x + (readerNode.measured?.width ?? 700) + 40,
+            y: readerNode.position.y,
+          }
+        : getViewportCenter();
+
+      const newNode: Node = {
+        id: nextId('note'),
+        type: 'note',
+        position,
+        data: {
+          text: elementText,
+          color: 'blue',
+          elementAnchor: anchor,
+          onBrowseContent: openElementPicker,
+        },
+      };
+      setNodes((nds) => [...nds, newNode]);
+      setEdges((eds) => [
+        ...eds,
+        {
+          id: `link-${newNode.id}-${anchor.websiteNodeId}`,
+          source: anchor.websiteNodeId,
+          target: newNode.id,
+          type: 'labeled',
+          data: { label: anchor.tagName || 'element', style: 'dashed' },
+        },
+      ]);
+    },
+    [getNodes, getViewportCenter, nextId, setNodes, setEdges, openElementPicker]
+  );
+
+  const handleReaderSpawnAIChat = useCallback(
+    (anchor: ElementAnchor, elementText: string) => {
+      const readerNode = getNodes().find((n) => n.id === anchor.websiteNodeId);
+      const position = readerNode
+        ? {
+            x: readerNode.position.x + (readerNode.measured?.width ?? 700) + 40,
+            y: readerNode.position.y + 100,
+          }
+        : getViewportCenter();
+
+      const contextMessage: AIChatMessage = {
+        role: 'user',
+        content: `Explain this element from the article:\n\n"${elementText}"`,
+        elementAnchor: anchor,
+      };
+
+      const newNode: Node = {
+        id: nextId('chat'),
+        type: 'aiChat',
+        position,
+        data: {
+          messages: [contextMessage],
+          contextLabel: `Re: ${anchor.tagName || 'element'} — "${(anchor.textPreview || '').slice(0, 60)}"`,
+          elementAnchor: anchor,
+          onBrowseContent: openElementPicker,
+        },
+      };
+      setNodes((nds) => [...nds, newNode]);
+      setEdges((eds) => [
+        ...eds,
+        {
+          id: `link-${newNode.id}-${anchor.websiteNodeId}`,
+          source: anchor.websiteNodeId,
+          target: newNode.id,
+          type: 'labeled',
+          data: { label: anchor.tagName || 'element', style: 'dashed' },
+        },
+      ]);
+    },
+    [getNodes, getViewportCenter, nextId, setNodes, setEdges, openElementPicker]
+  );
+
+  const addReaderNode = useCallback(
+    (articleId: string, url: string, title: string, nearNodeId?: string) => {
+      const nearNode = nearNodeId ? getNodes().find((n) => n.id === nearNodeId) : undefined;
+      const position = nearNode
+        ? {
+            x: nearNode.position.x + (nearNode.measured?.width ?? 280) + 60,
+            y: nearNode.position.y,
+          }
+        : getViewportCenter();
+
+      const newNode: Node = {
+        id: nextId('reader'),
+        type: 'reader',
+        position,
+        data: {
+          articleId,
+          url,
+          title,
+          onSpawnNote: handleReaderSpawnNote,
+          onSpawnAIChat: handleReaderSpawnAIChat,
+        },
+        width: 700,
+        height: 500,
+      };
+      setNodes((nds) => [...nds, newNode]);
+
+      if (nearNodeId) {
+        setEdges((eds) => [
+          ...eds,
+          {
+            id: `link-${newNode.id}-${nearNodeId}`,
+            source: nearNodeId,
+            target: newNode.id,
+            type: 'labeled',
+            data: { label: '', style: 'solid' },
+          },
+        ]);
+      }
+    },
+    [
+      nextId,
+      getViewportCenter,
+      getNodes,
+      setNodes,
+      setEdges,
+      handleReaderSpawnNote,
+      handleReaderSpawnAIChat,
+    ]
   );
 
   const handlePickerAddNote = useCallback(
@@ -352,6 +468,40 @@ function BoardCanvas({ board, readOnly }: BoardCanvasClientProps) {
     },
     [getNodes, getViewportCenter, nextId, setNodes, setEdges, openElementPicker]
   );
+
+  // Inject callbacks into all nodes that support them
+  useEffect(() => {
+    if (readOnly) return;
+    setNodes((nds) =>
+      nds.map((n) => {
+        if (n.type === 'website') {
+          return {
+            ...n,
+            data: {
+              ...n.data,
+              onBrowseContent: openElementPicker,
+              onOpenInBoard: addReaderNode,
+            },
+          };
+        }
+        if (n.type === 'note' || n.type === 'aiChat') {
+          return { ...n, data: { ...n.data, onBrowseContent: openElementPicker } };
+        }
+        if (n.type === 'reader') {
+          return {
+            ...n,
+            data: {
+              ...n.data,
+              onSpawnNote: handleReaderSpawnNote,
+              onSpawnAIChat: handleReaderSpawnAIChat,
+            },
+          };
+        }
+        return n;
+      })
+    );
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [openElementPicker, addReaderNode, handleReaderSpawnNote, handleReaderSpawnAIChat, readOnly]);
 
   const defaultEdgeOptions = useMemo(() => ({ type: 'labeled' }), []);
 
