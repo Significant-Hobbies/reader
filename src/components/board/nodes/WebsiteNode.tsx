@@ -12,6 +12,7 @@ type WebsiteData = {
   articleId?: string;
   readOnly?: boolean;
   onBrowseContent?: (articleId: string, websiteNodeId: string) => void;
+  onOpenInBoard?: (articleId: string, url: string, title: string, websiteNodeId: string) => void;
 };
 
 function WebsiteNodeComponent({ id, data, selected }: NodeProps) {
@@ -83,11 +84,11 @@ function WebsiteNodeComponent({ id, data, selected }: NodeProps) {
             type="button"
             onClick={(e) => {
               e.stopPropagation();
-              nodeData.onBrowseContent?.(nodeData.articleId!, id);
+              nodeData.onOpenInBoard?.(nodeData.articleId!, nodeData.url, nodeData.title, id);
             }}
             className="ml-auto text-xs text-gray-500 hover:text-blue-400 transition-colors"
           >
-            Browse content
+            Open in Board
           </button>
         </div>
       )}
