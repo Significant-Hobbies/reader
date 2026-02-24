@@ -3,9 +3,11 @@ import { Timestamp } from 'firebase-admin/firestore';
 import { db } from '../../../../lib/firebase-admin';
 import {
   fetchArticleById,
+  generateArticleShareId,
   normalizeAIChatMessages,
   normalizeNotes,
   normalizeTags,
+  revokeArticleShareId,
   sanitizePlainText,
   sanitizeTitle,
   verifyArticleOwnership,
@@ -75,6 +77,19 @@ export async function PUT(request: Request, { params }: { params: Promise<{ id: 
     }
 
     const payload = body as Record<string, unknown>;
+
+    if (payload.shareAction === 'generate') {
+      const shareId = await generateArticleShareId(id, userId);
+      if (!shareId)
+        return NextResponse.json({ error: 'Failed to generate share link' }, { status: 500 });
+      return NextResponse.json({ shareId });
+    }
+
+    if (payload.shareAction === 'revoke') {
+      await revokeArticleShareId(id, userId);
+      return NextResponse.json({ success: true });
+    }
+
     const localOnlyField = Object.keys(payload).find((key) =>
       LOCAL_ONLY_AI_SETTINGS_FIELDS.has(key)
     );
