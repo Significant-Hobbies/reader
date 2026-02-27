@@ -28,7 +28,8 @@ import {
 import { Label } from './ui/label';
 import { Badge } from './ui/badge';
 import { Input } from './ui/input';
-import { MoreVertical, X, Clock, FileText, Heart, Plus } from 'lucide-react';
+import { MoreVertical, X, Clock, FileText, Heart, Plus, LayoutDashboard } from 'lucide-react';
+import Link from 'next/link';
 import { Navbar } from './Navbar';
 import { getTagColor } from '../lib/tag-utils';
 import { getCategoryColor } from '../lib/category-utils';
@@ -369,6 +370,26 @@ export default function HomeClient() {
       <div className="flex">
         {/* Sidebar for Lists */}
         <aside className="w-64 min-h-screen border-r border-gray-800 p-6 space-y-4">
+          <div className="mb-6">
+            <h3 className="text-sm font-medium text-gray-400 uppercase tracking-wide mb-3">
+              Navigate
+            </h3>
+            <Link
+              href="/"
+              className="w-full flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium bg-blue-600 text-white"
+            >
+              <FileText size={18} />
+              Articles
+            </Link>
+            <Link
+              href="/board"
+              className="w-full flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium text-gray-300 hover:bg-gray-800 transition-colors"
+            >
+              <LayoutDashboard size={18} />
+              Boards
+            </Link>
+          </div>
+          <div className="border-t border-gray-700 mb-4" />
           <div className="flex items-center justify-between mb-6">
             <h3 className="text-sm font-medium text-gray-400 uppercase tracking-wide">Lists</h3>
             <Dialog open={isListModalOpen} onOpenChange={setIsListModalOpen}>
