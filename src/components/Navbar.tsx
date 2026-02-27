@@ -26,12 +26,6 @@ export function Navbar() {
         </Link>
 
         <div className="flex items-center gap-4 flex-1 max-w-2xl">
-          <Link
-            href="/board"
-            className="text-sm text-gray-400 hover:text-white transition-colors whitespace-nowrap"
-          >
-            Boards
-          </Link>
           <SearchBar />
         </div>
 

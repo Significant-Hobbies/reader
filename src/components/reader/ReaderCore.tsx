@@ -71,6 +71,7 @@ export interface ReaderCoreProps {
   onSpawnNote?: (anchor: ElementAnchor, text: string) => void;
   onSpawnAIChat?: (anchor: ElementAnchor, text: string) => void;
   compact?: boolean;
+  headerActions?: React.ReactNode;
 }
 
 // ---------------------------------------------------------------------------
@@ -83,6 +84,7 @@ export function ReaderCore({
   onSpawnNote,
   onSpawnAIChat,
   compact = false,
+  headerActions,
 }: ReaderCoreProps) {
   const id = article.id;
   const queryClient = useQueryClient();
@@ -793,6 +795,7 @@ export function ReaderCore({
                 {isNotesSaving ? 'Saving...' : 'Saved'}
               </span>
             )}
+            {headerActions}
           </div>
         </div>
 
