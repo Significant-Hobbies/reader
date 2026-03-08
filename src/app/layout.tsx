@@ -1,10 +1,10 @@
 import type { Metadata } from 'next';
 import { Geist, Geist_Mono } from 'next/font/google';
 import './globals.css';
-import Script from 'next/script';
 import { QueryProvider } from '../components/QueryProvider';
 import { AuthProvider } from '../components/AuthProvider';
 import { SaaSMakerFeedback } from '../components/saasmaker-feedback';
+import { SaasMakerAnalytics } from '../components/SaasMakerAnalytics';
 
 export const dynamic = 'force-dynamic';
 export const fetchCache = 'force-no-store';
@@ -55,13 +55,8 @@ export default function RootLayout({
         <AuthProvider>
           <QueryProvider>{children}</QueryProvider>
           <SaaSMakerFeedback />
+          <SaasMakerAnalytics />
         </AuthProvider>
-        <Script
-          src="https://unpkg.com/@saas-maker/analytics-sdk@0.2.0/dist/index.global.js"
-          data-project={process.env.NEXT_PUBLIC_SAASMAKER_API_KEY}
-          data-api="https://api.sassmaker.com"
-          strategy="afterInteractive"
-        />
       </body>
     </html>
   );
