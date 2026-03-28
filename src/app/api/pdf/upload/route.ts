@@ -73,8 +73,11 @@ export async function POST(request: NextRequest) {
       },
     });
 
-    await fileRef.makePublic();
-    const pdfUrl = `https://storage.googleapis.com/${bucket.name}/${storagePath}`;
+    const [signedUrl] = await fileRef.getSignedUrl({
+      action: 'read',
+      expires: Date.now() + 7 * 24 * 60 * 60 * 1000, // 7 days
+    });
+    const pdfUrl = signedUrl;
 
     const title = extraction.metadata?.title || file.name.replace('.pdf', '');
     const byline = extraction.metadata?.author;
@@ -92,6 +95,7 @@ export async function POST(request: NextRequest) {
       pdfMetadata: {
         pageCount: extraction.pageCount,
         fileSize: buffer.length,
+        storagePath,
       },
       listIds,
       category: category || undefined,
