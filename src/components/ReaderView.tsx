@@ -60,8 +60,7 @@ const ReaderViewComponent = ({
   settings: ReaderSettings;
   contentRef?: RefObject<HTMLDivElement | null>;
 }) => {
-  // Content is sanitized on ingestion; render as-is to keep server/client HTML in sync.
-  const sanitizedContent = content;
+  // Content is sanitized server-side (both on ingestion and on fetch) before reaching the client.
   const themeClasses = getThemeClasses(settings.theme);
   const fontClasses = getFontClasses(settings.fontFamily);
   const sizeClasses = getSizeClasses(settings.fontSize);
@@ -97,7 +96,7 @@ const ReaderViewComponent = ({
           suppressHydrationWarning
           className={`prose max-w-none transition-all duration-300 ${sizeClasses} ${themeClasses}`}
           ref={contentRef}
-          dangerouslySetInnerHTML={{ __html: sanitizedContent }}
+          dangerouslySetInnerHTML={{ __html: content }}
         />
       </div>
     </div>

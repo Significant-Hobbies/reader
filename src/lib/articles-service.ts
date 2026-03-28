@@ -226,7 +226,7 @@ export async function fetchArticleById(id: string, userId: string): Promise<Arti
     url: data.url,
     title: data.title,
     byline: data.byline,
-    content: data.content,
+    content: sanitizeHTML(data.content),
     notes: data.notes ?? [],
     aiChat: normalizeAIChatMessages(data.aiChat),
     aiSummary: typeof data.aiSummary === 'string' ? data.aiSummary : undefined,
@@ -806,7 +806,7 @@ export async function fetchArticleByShareId(
     url: data.url,
     title: data.title || data.url,
     byline: data.byline,
-    content: data.content,
+    content: sanitizeHTML(data.content),
     notes: (data.notes ?? []).map((n: Record<string, unknown>) => ({
       id: Number(n.id) || 0,
       text: String(n.text || ''),
