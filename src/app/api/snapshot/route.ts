@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { Readability } from '@mozilla/readability';
 import { parseHTML } from 'linkedom';
 import { getAuthenticatedUserId } from '../../../lib/auth-api';
+import { validateExternalUrl } from '../../../lib/url-validation';
 
 export async function GET(req: NextRequest) {
   const userId = await getAuthenticatedUserId();
@@ -15,8 +16,13 @@ export async function GET(req: NextRequest) {
     return new NextResponse('URL parameter is required', { status: 400 });
   }
 
+  const validation = await validateExternalUrl(targetUrl);
+  if (!validation.ok) {
+    return new NextResponse(validation.reason, { status: 400 });
+  }
+
   try {
-    const response = await fetch(targetUrl, {
+    const response = await fetch(validation.url.href, {
       headers: {
         'User-Agent':
           'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36',
