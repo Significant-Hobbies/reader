@@ -51,6 +51,7 @@ export interface Article {
   pdfMetadata?: {
     pageCount?: number;
     fileSize?: number;
+    storagePath?: string;
   };
   // NEW FIELDS:
   listIds?: string[]; // Array of list IDs this article belongs to

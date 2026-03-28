@@ -310,6 +310,7 @@ export function sanitizeArticlePayload(payload: {
   pdfMetadata?: {
     pageCount?: number;
     fileSize?: number;
+    storagePath?: string;
   };
   listIds?: string[];
   category?: string;
@@ -380,6 +381,7 @@ export async function createArticleRecord(payload: {
   pdfMetadata?: {
     pageCount?: number;
     fileSize?: number;
+    storagePath?: string;
   };
   listIds?: string[];
   category?: string;
