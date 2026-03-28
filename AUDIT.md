@@ -7,39 +7,35 @@
 
 ## Critical
 
-- [ ] **Credential exposure check** — `firebase-service-account.json`, `.env.local`, `.env`
+- [x] **Credential exposure check** — `firebase-service-account.json`, `.env.local`, `.env`
   - `git log --all` shows these files were **never committed**. Both are in `.gitignore`. No rotation needed.
   - `firebase-service-account.json` exists locally but is properly ignored.
   - **Status:** Clean. No action required.
 
-- [ ] **No auth on `/api/snapshot`** — `src/app/api/snapshot/route.ts`
-  - Route fetches arbitrary URLs server-side with no `getAuthenticatedUserId()` check.
+- [x] **No auth on `/api/snapshot`** — `src/app/api/snapshot/route.ts`
+  - Route fetched arbitrary URLs server-side with no `getAuthenticatedUserId()` check.
   - Middleware (`src/proxy.ts`) is **dead code** — no `middleware.ts` file exists at any valid Next.js path, so it provides zero protection.
-  - **Fix:** Add `getAuthenticatedUserId()` check, return 401 if missing.
+  - **Fixed:** Added `getAuthenticatedUserId()` check, returns 401 if missing.
 
 ## High
 
-- [ ] **SSRF in `/api/proxy` and `/api/snapshot`** — `src/app/api/proxy/route.ts:36`, `src/app/api/snapshot/route.ts:13`
-  - Both routes fetch user-supplied URLs without blocking private IP ranges, localhost, link-local, or cloud metadata endpoints (169.254.169.254).
-  - An authenticated attacker can scan internal networks and exfiltrate cloud credentials.
-  - **Fix:** Add `isPrivateUrl()` validation that resolves DNS and blocks RFC1918, loopback, link-local, and metadata IPs before fetching.
+- [x] **SSRF in `/api/proxy` and `/api/snapshot`** — `src/app/api/proxy/route.ts`, `src/app/api/snapshot/route.ts`
+  - Both routes fetched user-supplied URLs without blocking private IP ranges, localhost, link-local, or cloud metadata endpoints (169.254.169.254).
+  - **Fixed:** Added `validateExternalUrl()` in `src/lib/url-validation.ts` — resolves DNS, blocks RFC1918, loopback, link-local, metadata IPs.
 
-- [ ] **PDFs made world-readable via `makePublic()`** — `src/app/api/pdf/upload/route.ts:76`
-  - Uploaded PDFs are made publicly accessible via direct GCS URL. Anyone with the URL can download without auth.
-  - **Fix:** Remove `makePublic()`, generate signed URLs with expiration instead.
+- [x] **PDFs made world-readable via `makePublic()`** — `src/app/api/pdf/upload/route.ts`
+  - Uploaded PDFs were made publicly accessible via direct GCS URL.
+  - **Fixed:** Replaced `makePublic()` with `getSignedUrl()` (7-day expiry). Storage path saved in metadata for re-generation.
 
-- [ ] **No Firestore security rules** — `firebase.json` only references indexes, no rules file
-  - If client SDK is ever initialized with write access, all data is exposed. Defense-in-depth requires explicit deny rules.
-  - **Fix:** Create `firestore.rules` denying all direct client read/write. Update `firebase.json` to reference it.
+- [x] **No Firestore security rules** — `firebase.json`
+  - No rules file existed; all Firestore access was API-layer only.
+  - **Fixed:** Created `firestore.rules` denying all direct client read/write. Updated `firebase.json`.
 
 ## Medium
 
-- [ ] **`dangerouslySetInnerHTML` without render-time sanitization** — `src/components/ReaderView.tsx:100`, `src/components/board/ElementPickerPanel.tsx:167`
-  - Content is sanitized at ingestion (`sanitizeHTML()` in `articles-service.ts`) but NOT re-sanitized at render time.
-  - ReaderView aliases `content` to `sanitizedContent` with no actual sanitization — misleading variable name.
-  - ElementPickerPanel renders `article.content` directly from API response.
-  - If a Firestore write bypasses the app layer (admin console, direct API), unsanitized HTML reaches the browser.
-  - **Fix:** Add server-side re-sanitization in the article fetch API responses to ensure defense-in-depth.
+- [x] **`dangerouslySetInnerHTML` without render-time sanitization** — `src/components/ReaderView.tsx:100`, `src/components/board/ElementPickerPanel.tsx:167`
+  - Content was sanitized at ingestion but NOT re-sanitized on read from Firestore.
+  - **Fixed:** Added `sanitizeHTML()` calls in `fetchArticleById()` and `fetchArticleByShareId()` for defense-in-depth. Removed misleading variable alias in ReaderView.
 
 ## Low / Informational
 
@@ -75,4 +71,4 @@
 - **Auth:** Firebase session cookies (HTTP-only, secure, sameSite=lax, 14-day expiry)
 - **Secrets:** Loaded via `FIREBASE_SERVICE_ACCOUNT_KEY` env var (base64), never file-based in prod
 - **No `vercel.json`** — relies on Vercel project defaults
-- **No Firestore security rules deployed** — all access control is API-layer only
+- **Firestore rules** — deny-all rules added, deploy via `firebase deploy --only firestore:rules`
