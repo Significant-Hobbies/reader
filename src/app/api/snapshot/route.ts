@@ -1,8 +1,14 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { Readability } from '@mozilla/readability';
 import { parseHTML } from 'linkedom';
+import { getAuthenticatedUserId } from '../../../lib/auth-api';
 
 export async function GET(req: NextRequest) {
+  const userId = await getAuthenticatedUserId();
+  if (!userId) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  }
+
   const targetUrl = req.nextUrl.searchParams.get('url');
 
   if (!targetUrl) {
