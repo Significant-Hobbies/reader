@@ -1,5 +1,6 @@
 import { NextRequest } from 'next/server';
 import { getAuthenticatedUserId } from '../../../lib/auth-api';
+import { validateExternalUrl } from '../../../lib/url-validation';
 
 const MAX_RESPONSE_SIZE = 10 * 1024 * 1024; // 10MB
 
@@ -21,19 +22,14 @@ export async function GET(request: NextRequest) {
     return new Response('Missing url parameter', { status: 400 });
   }
 
-  let parsed: URL;
-  try {
-    parsed = new URL(targetUrl);
-  } catch {
-    return new Response('Invalid URL', { status: 400 });
+  const validation = await validateExternalUrl(targetUrl);
+  if (!validation.ok) {
+    return new Response(validation.reason, { status: 400 });
   }
-
-  if (!['http:', 'https:'].includes(parsed.protocol)) {
-    return new Response('Only HTTP(S) URLs allowed', { status: 400 });
-  }
+  const parsed = validation.url;
 
   try {
-    const upstream = await fetch(targetUrl, {
+    const upstream = await fetch(parsed.href, {
       headers: {
         'User-Agent': 'Mozilla/5.0 (compatible; BlogReader/1.0)',
         Accept: 'text/html,application/xhtml+xml,*/*',
