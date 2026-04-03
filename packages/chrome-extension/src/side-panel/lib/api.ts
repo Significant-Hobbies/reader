@@ -5,8 +5,25 @@ const API_BASE =
     ? 'https://web-annotator.vercel.app'
     : 'http://localhost:3000';
 
+const SESSION_KEY = 'session-token';
+
 export function getApiBase(): string {
   return API_BASE;
+}
+
+async function getSessionToken(): Promise<string | null> {
+  try {
+    const result = await chrome.storage.local.get(SESSION_KEY);
+    return result[SESSION_KEY] || null;
+  } catch {
+    return null;
+  }
+}
+
+async function authHeaders(): Promise<Record<string, string>> {
+  const token = await getSessionToken();
+  if (!token) return {};
+  return { Authorization: `Bearer ${token}` };
 }
 
 export async function streamChat(
@@ -31,10 +48,11 @@ export async function streamChat(
         messages: messages.slice(-6),
       };
 
+  const auth = isAuthenticated ? await authHeaders() : {};
+
   const response = await fetch(`${API_BASE}${endpoint}`, {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    credentials: isAuthenticated ? 'include' : 'omit',
+    headers: { 'Content-Type': 'application/json', ...auth },
     body: JSON.stringify(body),
     signal,
   });
@@ -56,8 +74,11 @@ export async function checkAuth(): Promise<{
   photoURL: string;
 } | null> {
   try {
+    const auth = await authHeaders();
+    if (!auth.Authorization) return null;
+
     const response = await fetch(`${API_BASE}/api/auth/me`, {
-      credentials: 'include',
+      headers: auth,
     });
     if (!response.ok) return null;
     return response.json();
@@ -72,10 +93,10 @@ export async function saveToLibrary(article: {
   byline?: string | null;
   content: string;
 }): Promise<{ id: string; existing: boolean }> {
+  const auth = await authHeaders();
   const response = await fetch(`${API_BASE}/api/articles`, {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    credentials: 'include',
+    headers: { 'Content-Type': 'application/json', ...auth },
     body: JSON.stringify(article),
   });
 
@@ -88,10 +109,10 @@ export async function saveToLibrary(article: {
 }
 
 export async function saveChatHistory(articleId: string, messages: AIChatMessage[]): Promise<void> {
+  const auth = await authHeaders();
   const response = await fetch(`${API_BASE}/api/articles/${articleId}`, {
     method: 'PUT',
-    headers: { 'Content-Type': 'application/json' },
-    credentials: 'include',
+    headers: { 'Content-Type': 'application/json', ...auth },
     body: JSON.stringify({ aiChat: messages }),
   });
 
@@ -100,12 +121,35 @@ export async function saveChatHistory(articleId: string, messages: AIChatMessage
   }
 }
 
-export async function createSession(idToken: string): Promise<boolean> {
+export async function createSession(
+  idToken: string
+): Promise<{ success: boolean; session?: string }> {
   const response = await fetch(`${API_BASE}/api/auth/session`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    credentials: 'include',
     body: JSON.stringify({ idToken }),
   });
-  return response.ok;
+
+  if (!response.ok) return { success: false };
+
+  const data = (await response.json()) as {
+    success: boolean;
+    session?: string;
+  };
+
+  // Store session token for bearer auth
+  if (data.session) {
+    await chrome.storage.local.set({ [SESSION_KEY]: data.session });
+  }
+
+  return data;
+}
+
+export async function deleteSession(): Promise<void> {
+  const auth = await authHeaders();
+  await fetch(`${API_BASE}/api/auth/session`, {
+    method: 'DELETE',
+    headers: auth,
+  }).catch(() => {});
+  await chrome.storage.local.remove(SESSION_KEY);
 }

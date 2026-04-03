@@ -22,7 +22,8 @@ export async function POST(request: Request) {
       sameSite: 'lax',
     });
 
-    return NextResponse.json({ success: true });
+    // Return session token for extension bearer auth (cross-origin cookies are unreliable)
+    return NextResponse.json({ success: true, session: sessionCookie });
   } catch (error) {
     console.error('Session creation error:', error);
     return NextResponse.json({ error: 'Failed to create session' }, { status: 401 });
