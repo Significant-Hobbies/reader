@@ -1,9 +1,10 @@
 import type { AIChatMessage, AIConfig } from './types';
 
 const API_BASE =
-  typeof chrome !== 'undefined' && chrome.runtime?.id
+  import.meta.env.VITE_API_BASE ||
+  (typeof chrome !== 'undefined' && chrome.runtime?.id
     ? 'https://web-annotator.vercel.app'
-    : 'http://localhost:3000';
+    : 'http://localhost:3000');
 
 const SESSION_KEY = 'session-token';
 

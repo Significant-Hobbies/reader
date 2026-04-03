@@ -9,10 +9,8 @@ interface PageHeaderProps {
   onAuthChange: (auth: AuthState) => void;
 }
 
-const FIREBASE_API_KEY = 'AIzaSyBCjZ0n2RK7tT5iagPoGp3L3kvSB_0i-fw';
-const FIREBASE_AUTH_DOMAIN = 'web-annotator-7cc0d.firebaseapp.com';
-const GOOGLE_CLIENT_ID =
-  '1098654421093-q7tl0aq4h62omsrf8rjvs2mp66ievfke.apps.googleusercontent.com';
+const FIREBASE_API_KEY = import.meta.env.VITE_FIREBASE_API_KEY || '';
+const GOOGLE_CLIENT_ID = import.meta.env.VITE_GOOGLE_CLIENT_ID || '';
 
 async function signInWithGoogle(onAuthChange: (auth: AuthState) => void): Promise<void> {
   try {
