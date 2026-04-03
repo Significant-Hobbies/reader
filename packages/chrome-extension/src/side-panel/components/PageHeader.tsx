@@ -1,6 +1,6 @@
 import { Globe, LogIn, LogOut, User } from 'lucide-react';
 import type { PageContent, AuthState } from '../lib/types';
-import { checkAuth, createSession, getApiBase } from '../lib/api';
+import { checkAuth, createSession, deleteSession } from '../lib/api';
 import { saveAuthState, clearAuthState } from '../lib/storage';
 
 interface PageHeaderProps {
@@ -60,9 +60,9 @@ async function signInWithGoogle(onAuthChange: (auth: AuthState) => void): Promis
       localId: string;
     };
 
-    // Create server session
-    const sessionOk = await createSession(firebaseData.idToken);
-    if (!sessionOk) throw new Error('Session creation failed');
+    // Create server session (stores bearer token in chrome.storage.local)
+    const sessionResult = await createSession(firebaseData.idToken);
+    if (!sessionResult.success) throw new Error('Session creation failed');
 
     // Verify and get full user info
     const user = await checkAuth();
@@ -77,14 +77,7 @@ async function signInWithGoogle(onAuthChange: (auth: AuthState) => void): Promis
 }
 
 async function signOut(onAuthChange: (auth: AuthState) => void): Promise<void> {
-  try {
-    await fetch(`${getApiBase()}/api/auth/session`, {
-      method: 'DELETE',
-      credentials: 'include',
-    });
-  } catch {
-    // Ignore network errors on sign-out
-  }
+  await deleteSession();
   await clearAuthState();
   onAuthChange({ isAuthenticated: false, user: null });
 }
