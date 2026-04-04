@@ -26,16 +26,16 @@ jobs:
         run: pnpm install --frozen-lockfile
 
       - name: Check Formatting
-        run: pnpm check-format
+        run: pnpm -w check-format
 
       - name: Lint
-        run: pnpm lint
+        run: pnpm -w lint
 
       - name: Type Check
-        run: pnpm type-check
+        run: pnpm -w type-check
 
       - name: Test
-        run: pnpm test
+        run: pnpm -w test && pnpm -r test
 
       - name: Build
-        run: pnpm build
+        run: pnpm -w build
