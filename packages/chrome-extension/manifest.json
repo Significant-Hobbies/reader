@@ -4,7 +4,7 @@
   "version": "0.1.0",
   "description": "Chat with any webpage using AI. Save pages and conversations to your Web Annotator library.",
   "permissions": ["activeTab", "sidePanel", "storage", "identity"],
-  "host_permissions": ["https://web-annotator.vercel.app/*", "http://localhost:3000/*"],
+  "host_permissions": ["https://web-annotator.vercel.app/*"],
   "side_panel": {
     "default_path": "side-panel/index.html"
   },
