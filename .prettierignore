@@ -1,1 +1,4 @@
-public/pdf.worker.min.mjs
+pnpm-lock.yaml
+packages/*/pnpm-lock.yaml
+packages/*/dist
+plans

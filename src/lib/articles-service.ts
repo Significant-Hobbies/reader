@@ -3,7 +3,7 @@ import { FieldValue, Timestamp } from 'firebase-admin/firestore';
 import sanitizeHtml from 'sanitize-html';
 import type { IOptions } from 'sanitize-html';
 import { db } from './firebase-admin';
-import { AIChatMessage, Article, ArticleStatus, ArticleSummary, Note, Project } from '../types';
+import { AIChatMessage, Article, ArticleStatus, ArticleSummary, Note } from '../types';
 
 /** Legacy collection name — articles are stored in 'annotations' for historical reasons. */
 export const ARTICLES_COLLECTION = 'annotations';
@@ -97,8 +97,6 @@ const sanitizeHTML = (value: unknown) => sanitizeHtml(String(value ?? ''), htmlS
 
 export const sanitizeTitle = (value: unknown, fallback = '') =>
   sanitizePlainText(value ?? fallback).slice(0, 500);
-
-const DEFAULT_PROJECT_NAME = 'Default';
 
 const normalizeStatus = (status: unknown): ArticleStatus => {
   return status === 'read' ? 'read' : 'in_progress';
@@ -407,105 +405,6 @@ export async function createArticleRecord(payload: {
 
 function defaultProjectId(userId: string) {
   return `${userId}_default`;
-}
-
-const sanitizeProjectName = (value: unknown) => sanitizeTitle(value, DEFAULT_PROJECT_NAME);
-
-export async function ensureDefaultProject(userId: string): Promise<Project> {
-  const docId = defaultProjectId(userId);
-  const defaultRef = db.collection('projects').doc(docId);
-  const snapshot = await defaultRef.get();
-  if (!snapshot.exists) {
-    const now = Timestamp.now();
-    await defaultRef.set({
-      name: DEFAULT_PROJECT_NAME,
-      userId,
-      createdAt: now,
-      updatedAt: now,
-    });
-  }
-  const fresh = await defaultRef.get();
-  const data = fresh.data() || {};
-  return {
-    id: docId,
-    name: data.name || DEFAULT_PROJECT_NAME,
-    createdAt: data.createdAt?.toDate().toISOString(),
-    updatedAt: data.updatedAt?.toDate().toISOString(),
-  };
-}
-
-export async function fetchProjects(userId: string): Promise<Project[]> {
-  const defaultProject = await ensureDefaultProject(userId);
-  const snapshot = await db
-    .collection('projects')
-    .where('userId', '==', userId)
-    .orderBy('createdAt', 'desc')
-    .get();
-
-  const projects: Project[] = snapshot.docs.map((doc) => {
-    const data = doc.data();
-    return {
-      id: doc.id,
-      name: data.name || DEFAULT_PROJECT_NAME,
-      createdAt: data.createdAt?.toDate().toISOString(),
-      updatedAt: data.updatedAt?.toDate().toISOString(),
-    };
-  });
-
-  const merged = [defaultProject, ...projects.filter((p) => p.id !== defaultProject.id)];
-  const seen = new Set<string>();
-  return merged.filter((p) => {
-    if (seen.has(p.id)) return false;
-    seen.add(p.id);
-    return true;
-  });
-}
-
-export async function createProject(name: string, userId: string): Promise<string> {
-  const sanitizedName = sanitizeProjectName(name);
-  if (!sanitizedName) {
-    throw new Error('Project name is required');
-  }
-  const now = Timestamp.now();
-  const ref = await db.collection('projects').add({
-    name: sanitizedName,
-    userId,
-    createdAt: now,
-    updatedAt: now,
-  });
-  return ref.id;
-}
-
-export async function moveArticlesToDefault(projectId: string, userId: string) {
-  const defId = defaultProjectId(userId);
-  if (projectId === defId) return;
-  const snapshot = await db
-    .collection(ARTICLES_COLLECTION)
-    .where('projectId', '==', projectId)
-    .get();
-  const batch = db.batch();
-  snapshot.forEach((doc) => {
-    batch.update(doc.ref, { projectId: defId, updatedAt: Timestamp.now() });
-  });
-  if (!snapshot.empty) {
-    await batch.commit();
-  }
-}
-
-export async function deleteProject(projectId: string, userId: string) {
-  const defId = defaultProjectId(userId);
-  if (projectId === defId) {
-    throw new Error('Cannot delete default project');
-  }
-
-  // Verify ownership
-  const doc = await db.collection('projects').doc(projectId).get();
-  if (!doc.exists) throw new Error('Project not found');
-  const data = doc.data()!;
-  if (data.userId && data.userId !== userId) throw new Error('Not authorized');
-
-  await moveArticlesToDefault(projectId, userId);
-  await db.collection('projects').doc(projectId).delete();
 }
 
 export async function verifyArticleOwnership(articleId: string, userId: string): Promise<boolean> {

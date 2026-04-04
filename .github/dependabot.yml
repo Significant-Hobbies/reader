@@ -1,12 +1,12 @@
 version: 2
 updates:
   - package-ecosystem: npm
-    directory: "/"
+    directory: '/'
     schedule:
       interval: weekly
       day: monday
     allow:
-      - dependency-name: "@saas-maker/sdk"
+      - dependency-name: '@saas-maker/sdk'
     commit-message:
-      prefix: "deps"
+      prefix: 'deps'
     open-pull-requests-limit: 1

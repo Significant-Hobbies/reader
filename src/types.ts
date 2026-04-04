@@ -74,14 +74,6 @@ export interface ReaderSettings {
   fontFamily: FontFamily;
 }
 
-export interface Project {
-  id: string;
-  name: string;
-  userId?: string;
-  createdAt?: string;
-  updatedAt?: string;
-}
-
 export interface List {
   id: string;
   name: string;
