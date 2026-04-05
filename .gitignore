@@ -45,3 +45,6 @@ firebase-service-account.json
 
 # worktrees
 .worktrees/
+
+# local build artifacts
+web-annotator-extension-*.zip
