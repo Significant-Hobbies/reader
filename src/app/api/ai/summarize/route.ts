@@ -1,13 +1,9 @@
 import { NextResponse } from 'next/server';
 import { generateText } from 'ai';
+import { createAIModel } from '@saas-maker/ai/server';
 import { getAuthenticatedUserId } from '@/lib/auth-api';
 import { isLocalCLIEnabled } from '@/lib/ai-config';
-import {
-  createLanguageModel,
-  normalizeApiKey,
-  normalizeEndpointUrl,
-  normalizeText,
-} from '@/lib/ai-server';
+import { normalizeApiKey, normalizeEndpointUrl, normalizeText } from '@/lib/ai-server';
 import { SummaryLength } from '@/types';
 
 export const runtime = 'nodejs';
@@ -96,7 +92,7 @@ ${lengthInstruction}
 Remember to respond with valid JSON in the exact format specified.`;
 
     const result = await generateText({
-      model: createLanguageModel({ endpointUrl, apiKey, model }),
+      model: createAIModel({ endpointUrl, apiKey, model }),
       system: SUMMARY_SYSTEM_PROMPT,
       prompt: userPrompt,
       maxRetries: 1,

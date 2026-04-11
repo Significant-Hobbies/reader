@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import { streamText } from 'ai';
+import { createAIModel } from '@saas-maker/ai/server';
 import {
-  createLanguageModel,
   DEFAULT_SYSTEM_PROMPT,
   normalizeChatMessages,
   normalizeText,
@@ -79,7 +79,7 @@ export async function POST(request: Request) {
 
   try {
     const result = streamText({
-      model: createLanguageModel({
+      model: createAIModel({
         endpointUrl: gatewayUrl,
         apiKey,
         model: 'openai/gpt-4.1-mini',

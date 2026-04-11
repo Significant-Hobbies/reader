@@ -1,9 +1,9 @@
 import { NextResponse } from 'next/server';
 import { streamText } from 'ai';
+import { createAIModel } from '@saas-maker/ai/server';
 import { getAuthenticatedUserId } from '@/lib/auth-api';
 import { isLocalCLIEnabled } from '@/lib/ai-config';
 import {
-  createLanguageModel,
   createLocalAITextStream,
   DEFAULT_SYSTEM_PROMPT,
   MAX_SYSTEM_PROMPT_LENGTH,
@@ -75,7 +75,7 @@ export async function POST(request: Request) {
 
   try {
     const result = streamText({
-      model: createLanguageModel({ endpointUrl, apiKey, model }),
+      model: createAIModel({ endpointUrl, apiKey, model }),
       system: systemPrompt,
       messages: toSDKMessages(messages),
       maxRetries: 0,

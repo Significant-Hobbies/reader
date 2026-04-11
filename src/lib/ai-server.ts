@@ -1,4 +1,4 @@
-import { createOpenAICompatible } from '@ai-sdk/openai-compatible';
+import { createAIModel } from '@saas-maker/ai/server';
 import { createParser } from 'eventsource-parser';
 import type { AIChatMessage } from './ai-config';
 
@@ -69,14 +69,7 @@ export const createLanguageModel = ({
   endpointUrl: string;
   apiKey: string;
   model: string;
-}) => {
-  const provider = createOpenAICompatible({
-    baseURL: endpointUrl,
-    apiKey,
-    name: 'custom',
-  });
-  return provider(model);
-};
+}) => createAIModel({ endpointUrl, apiKey, model });
 
 export const createLocalAITextStream = async ({
   model,

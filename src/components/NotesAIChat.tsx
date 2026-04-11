@@ -6,27 +6,15 @@ import { useCompletion } from '@ai-sdk/react';
 import { Bot, Loader2, Send, Settings, Square, Trash2, X } from 'lucide-react';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
+import { useAIConfig, useModelDiscovery } from '@saas-maker/ai';
 import { Note, Article } from '../types';
-import {
-  AIChatMessage,
-  AI_CONFIG_STORAGE_KEY,
-  AIConfig,
-  DEFAULT_AI_CONFIG,
-  isLocalCLIEnabled,
-  prioritizeStableModelIds,
-} from '../lib/ai-config';
+import { AIChatMessage, AI_CONFIG_STORAGE_KEY, isLocalCLIEnabled } from '../lib/ai-config';
 
 interface NotesAIChatProps {
   article: Pick<Article, 'id' | 'title' | 'url' | 'byline' | 'content' | 'aiChat'>;
   notes: Note[];
   queuedPrompt?: string | null;
   onQueuedPromptHandled?: () => void;
-}
-
-interface ModelDiscoveryResponse {
-  models?: Array<{ id?: string }>;
-  source?: string;
-  error?: string;
 }
 
 const MAX_SAVED_MESSAGES = 80;
@@ -94,35 +82,6 @@ const toUserFacingError = (
   return { message: raw || GENERIC_ERROR_MESSAGE, openSettings: false };
 };
 
-const includeSelectedModel = (selectedModel: string, modelIds: string[]) => {
-  if (!selectedModel) return modelIds;
-  if (modelIds.includes(selectedModel)) return modelIds;
-  return [selectedModel, ...modelIds];
-};
-
-const loadConfig = (): AIConfig => {
-  if (typeof window === 'undefined') return DEFAULT_AI_CONFIG;
-
-  try {
-    const raw = window.localStorage.getItem(AI_CONFIG_STORAGE_KEY);
-    if (!raw) return DEFAULT_AI_CONFIG;
-
-    const parsed = JSON.parse(raw) as Partial<AIConfig>;
-    return {
-      endpointUrl: typeof parsed.endpointUrl === 'string' ? parsed.endpointUrl.trim() : '',
-      apiKey: typeof parsed.apiKey === 'string' ? parsed.apiKey : '',
-      model: typeof parsed.model === 'string' ? parsed.model.trim() : '',
-    };
-  } catch {
-    return DEFAULT_AI_CONFIG;
-  }
-};
-
-const persistConfig = (config: AIConfig) => {
-  if (typeof window === 'undefined') return;
-  window.localStorage.setItem(AI_CONFIG_STORAGE_KEY, JSON.stringify(config));
-};
-
 const stripHTML = (html: string) =>
   html
     .replace(/<[^>]+>/g, ' ')
@@ -170,14 +129,16 @@ export function NotesAIChat({
   const [input, setInput] = useState('');
   const [showSettings, setShowSettings] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [isConfigLoaded, setIsConfigLoaded] = useState(false);
   const [allowLocalAI, setAllowLocalAI] = useState(false);
   const [useLocalAI, setUseLocalAI] = useState(false);
-  const [config, setConfig] = useState<AIConfig>(DEFAULT_AI_CONFIG);
+  const { config, setConfig, save: saveConfig } = useAIConfig(AI_CONFIG_STORAGE_KEY);
   const [messages, setMessages] = useState<AIChatMessage[]>([]);
-  const [availableModels, setAvailableModels] = useState<string[]>([]);
-  const [modelError, setModelError] = useState<string | null>(null);
-  const [isModelsLoading, setIsModelsLoading] = useState(false);
+  const {
+    models: availableModels,
+    loading: isModelsLoading,
+    error: modelError,
+    discover: discoverModels,
+  } = useModelDiscovery({ modelsApiUrl: '/api/ai/models' });
   const [customModelInput, setCustomModelInput] = useState('');
 
   const chatEndRef = useRef<HTMLDivElement>(null);
@@ -225,12 +186,10 @@ export function NotesAIChat({
     },
   });
 
-  useEffect(() => {
-    const localEnabled = isLocalCLIEnabled();
-    setAllowLocalAI(localEnabled);
-    setConfig(loadConfig());
-    setIsConfigLoaded(true);
-  }, []);
+  const [isConfigLoaded] = useState(() => {
+    setAllowLocalAI(isLocalCLIEnabled());
+    return true;
+  });
 
   useEffect(() => {
     const hydratedMessages = Array.isArray(article.aiChat) ? article.aiChat : [];
@@ -244,7 +203,7 @@ export function NotesAIChat({
     skipNextPersistRef.current = true;
     pendingHistoryRef.current = null;
     setCompletion('');
-    setMessages(hydratedMessages);
+    queueMicrotask(() => setMessages(hydratedMessages));
     latestMessagesRef.current = hydratedMessages;
     lastPersistedMessagesRef.current = hydratedSignature;
     hasHydratedMessagesRef.current = true;
@@ -254,10 +213,18 @@ export function NotesAIChat({
     latestMessagesRef.current = messages;
   }, [messages]);
 
-  useEffect(() => {
-    if (!isConfigLoaded) return;
-    persistConfig(config);
-  }, [config, isConfigLoaded]);
+  // Auto-persist config changes to localStorage
+  const setConfigAndSave: typeof setConfig = useCallback(
+    (next) => {
+      setConfig((prev) => {
+        const resolved = typeof next === 'function' ? next(prev) : next;
+        // Persist asynchronously to avoid setState-in-setState
+        queueMicrotask(() => saveConfig());
+        return resolved;
+      });
+    },
+    [setConfig, saveConfig]
+  );
 
   useEffect(() => {
     if (!hasHydratedMessagesRef.current) return;
@@ -354,61 +321,11 @@ export function NotesAIChat({
   // Fetch models when endpoint URL + key change
   useEffect(() => {
     if (useLocalAI || !config.endpointUrl) {
-      setAvailableModels([]);
-      setModelError(null);
       return;
     }
 
-    const controller = new AbortController();
-
-    const fetchModels = async () => {
-      setIsModelsLoading(true);
-      setModelError(null);
-
-      try {
-        const response = await fetch('/api/ai/models', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            endpointUrl: config.endpointUrl,
-            apiKey: config.apiKey,
-          }),
-          signal: controller.signal,
-        });
-
-        const payload = (await response.json().catch(() => ({}))) as ModelDiscoveryResponse;
-
-        if (!response.ok) {
-          throw new Error(payload.error || `Model fetch failed with status ${response.status}`);
-        }
-
-        const ids = Array.isArray(payload.models)
-          ? payload.models
-              .map((model) => (typeof model?.id === 'string' ? model.id.trim() : ''))
-              .filter((id) => id.length > 0)
-          : [];
-
-        const nextModels = ids.length > 0 ? prioritizeStableModelIds(ids) : [];
-        setAvailableModels(includeSelectedModel(config.model, nextModels));
-        setModelError(payload.error ?? null);
-      } catch (fetchError) {
-        if (controller.signal.aborted) return;
-
-        const feedback = toUserFacingError(fetchError, 'models');
-        setModelError(feedback.message);
-        if (feedback.openSettings) setShowSettings(true);
-        setAvailableModels(config.model ? [config.model] : []);
-      } finally {
-        if (!controller.signal.aborted) {
-          setIsModelsLoading(false);
-        }
-      }
-    };
-
-    fetchModels();
-
-    return () => controller.abort();
-  }, [config.endpointUrl, config.apiKey, config.model, useLocalAI]);
+    discoverModels(config.endpointUrl, config.apiKey);
+  }, [config.endpointUrl, config.apiKey, useLocalAI]);
 
   const isReady = useMemo(() => {
     if (useLocalAI) return true;
@@ -489,9 +406,11 @@ export function NotesAIChat({
       return;
     }
 
-    setInput('');
-    void sendMessage(normalizedPrompt);
-    onQueuedPromptHandled?.();
+    queueMicrotask(() => {
+      setInput('');
+      void sendMessage(normalizedPrompt);
+      onQueuedPromptHandled?.();
+    });
   }, [queuedPrompt, onQueuedPromptHandled, sendMessage]);
 
   const stopStreaming = () => {
@@ -564,7 +483,7 @@ export function NotesAIChat({
                     type="text"
                     value={config.endpointUrl}
                     onChange={(event) =>
-                      setConfig((prev) => ({
+                      setConfigAndSave((prev) => ({
                         ...prev,
                         endpointUrl: event.target.value,
                       }))
@@ -580,7 +499,7 @@ export function NotesAIChat({
                     type="password"
                     value={config.apiKey}
                     onChange={(event) =>
-                      setConfig((prev) => ({
+                      setConfigAndSave((prev) => ({
                         ...prev,
                         apiKey: event.target.value,
                       }))
@@ -603,7 +522,7 @@ export function NotesAIChat({
                       onChange={(event) => {
                         const value = event.target.value;
                         setCustomModelInput(value);
-                        setConfig((prev) => ({ ...prev, model: value }));
+                        setConfigAndSave((prev) => ({ ...prev, model: value }));
                       }}
                       onFocus={() => setCustomModelInput(config.model)}
                       onBlur={() => setCustomModelInput('')}

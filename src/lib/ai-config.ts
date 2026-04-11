@@ -2,19 +2,13 @@ import type { AIChatMessage as SharedAIChatMessage } from '../types';
 
 export type AIChatMessage = SharedAIChatMessage;
 
-export interface AIConfig {
-  endpointUrl: string;
-  apiKey: string;
-  model: string;
-}
-
-export const DEFAULT_AI_CONFIG: AIConfig = {
-  endpointUrl: '',
-  apiKey: '',
-  model: '',
-};
+// Re-export from @saas-maker/ai with the project's custom storage key
+export type { AIConfig } from '@saas-maker/ai';
+export { getAIConfig, saveAIConfig } from '@saas-maker/ai';
 
 export const AI_CONFIG_STORAGE_KEY = 'web-annotator-ai-config-v2';
+
+export const DEFAULT_AI_CONFIG = { endpointUrl: '', apiKey: '', model: '' };
 
 export const isLocalCLIEnabled = () => process.env.NODE_ENV === 'development';
 
