@@ -3,9 +3,10 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev": "concurrently -k -n app,cli -c cyan,magenta \"npm:dev:app\" \"npm:cli-bridge\"",
+    "dev": "concurrently -k -n app,ai -c cyan,magenta \"npm:dev:app\" \"npm:local-ai\"",
     "dev:app": "next dev --hostname 127.0.0.1 --port 3000",
-    "cli-bridge": "node ../cli-bridge/index.mjs",
+    "local-ai": "node scripts/local-ai.mjs",
+    "cli-bridge": "npm run local-ai",
     "dev:with-cli": "npm run dev",
     "build": "next build",
     "start": "next start",
@@ -32,9 +33,7 @@
     ]
   },
   "dependencies": {
-    "@ai-sdk/anthropic": "^3.0.43",
-    "@ai-sdk/google": "^3.0.29",
-    "@ai-sdk/openai": "^3.0.28",
+    "@ai-sdk/openai-compatible": "^2.0.41",
     "@ai-sdk/react": "^3.0.86",
     "@mozilla/readability": "^0.6.0",
     "@radix-ui/react-dialog": "^1.1.5",

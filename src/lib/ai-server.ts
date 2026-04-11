@@ -1,9 +1,6 @@
-import { createAnthropic } from '@ai-sdk/anthropic';
-import { createGoogleGenerativeAI } from '@ai-sdk/google';
-import { createOpenAI } from '@ai-sdk/openai';
+import { createOpenAICompatible } from '@ai-sdk/openai-compatible';
 import { createParser } from 'eventsource-parser';
-import { createGateway } from 'ai';
-import { AIChatMessage, AIProvider, LOCAL_TOOL_BY_PROVIDER, isLocalAIProvider } from './ai-config';
+import type { AIChatMessage } from './ai-config';
 
 export const MAX_API_KEY_LENGTH = 512;
 export const MAX_CHAT_MESSAGES = 24;
@@ -27,6 +24,9 @@ export const normalizeText = (value: unknown, maxLength: number) =>
 
 export const normalizeApiKey = (value: unknown) =>
   typeof value === 'string' ? value.trim().slice(0, MAX_API_KEY_LENGTH) : '';
+
+export const normalizeEndpointUrl = (value: unknown) =>
+  typeof value === 'string' ? value.trim().replace(/\/+$/, '').slice(0, 512) : '';
 
 export const normalizeChatMessages = (payload: unknown): AIChatMessage[] => {
   if (!Array.isArray(payload)) return [];
@@ -61,48 +61,45 @@ export const parseResponseError = async (response: Response) => {
   return `Provider returned ${response.status}: ${raw.slice(0, 400)}`;
 };
 
-export const createLanguageModel = (provider: AIProvider, model: string, apiKey: string) => {
-  if (provider === 'gateway') {
-    const gatewayApiKey = apiKey || process.env.AI_GATEWAY_API_KEY || undefined;
-    const gatewayProvider = gatewayApiKey
-      ? createGateway({ apiKey: gatewayApiKey })
-      : createGateway();
-    return gatewayProvider(model);
-  }
-
-  if (provider === 'openai') {
-    return createOpenAI({ apiKey })(model);
-  }
-
-  if (provider === 'anthropic') {
-    return createAnthropic({ apiKey })(model);
-  }
-
-  return createGoogleGenerativeAI({ apiKey })(model);
+export const createLanguageModel = ({
+  endpointUrl,
+  apiKey,
+  model,
+}: {
+  endpointUrl: string;
+  apiKey: string;
+  model: string;
+}) => {
+  const provider = createOpenAICompatible({
+    baseURL: endpointUrl,
+    apiKey,
+    name: 'custom',
+  });
+  return provider(model);
 };
 
-export const createLocalBridgeTextStream = async ({
-  localProvider,
+export const createLocalAITextStream = async ({
   model,
   messages,
   systemPrompt,
 }: {
-  localProvider: keyof typeof LOCAL_TOOL_BY_PROVIDER;
   model: string;
   messages: AIChatMessage[];
   systemPrompt: string;
 }) => {
-  const bridgeBase = (process.env.CLI_BRIDGE_URL || 'http://127.0.0.1:3456').replace(/\/$/, '');
-  const cliModel = model.endsWith('-local') ? '' : model;
+  const localAiBase = (
+    process.env.LOCAL_AI_URL ||
+    process.env.CLI_BRIDGE_URL ||
+    'http://127.0.0.1:3456'
+  ).replace(/\/$/, '');
 
-  const response = await fetch(`${bridgeBase}/api/chat`, {
+  const response = await fetch(`${localAiBase}/api/chat`, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
     },
     body: JSON.stringify({
-      tool: LOCAL_TOOL_BY_PROVIDER[localProvider],
-      model: cliModel || undefined,
+      model: model || undefined,
       messages,
       systemPrompt,
     }),
@@ -172,24 +169,3 @@ export const createLocalBridgeTextStream = async ({
     },
   });
 };
-
-export const listLiveModels = async (provider: AIProvider, apiKey: string): Promise<string[]> => {
-  if (provider !== 'gateway') return [];
-
-  const gatewayApiKey = apiKey || process.env.AI_GATEWAY_API_KEY || undefined;
-  const gatewayProvider = gatewayApiKey
-    ? createGateway({ apiKey: gatewayApiKey })
-    : createGateway();
-  const metadata = await gatewayProvider.getAvailableModels();
-
-  const languageModels = Array.isArray(metadata.models)
-    ? metadata.models.filter((entry) => !entry.modelType || entry.modelType === 'language')
-    : [];
-
-  return Array.from(
-    new Set(languageModels.map((entry) => entry.id.trim()).filter((id) => id.length > 0))
-  ).sort((a, b) => a.localeCompare(b));
-};
-
-export const requiresApiKey = (provider: AIProvider) =>
-  !isLocalAIProvider(provider) && provider !== 'gateway';

@@ -75,13 +75,19 @@ export async function POST(request: Request) {
   }
 
   const apiKey = process.env.AI_GATEWAY_API_KEY || '';
+  const gatewayUrl = process.env.AI_GATEWAY_URL || 'https://gateway.vercel.ai/v1';
 
   try {
     const result = streamText({
-      model: createLanguageModel('gateway', 'openai/gpt-4.1-mini', apiKey),
+      model: createLanguageModel({
+        endpointUrl: gatewayUrl,
+        apiKey,
+        model: 'openai/gpt-4.1-mini',
+      }),
       system: systemPrompt,
       messages: toSDKMessages(messages),
       maxRetries: 0,
+      headers: { 'x-gateway-project-id': 'reader' },
     });
 
     return result.toTextStreamResponse({

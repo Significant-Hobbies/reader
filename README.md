@@ -30,7 +30,7 @@ Web Annotator solves this by providing a personal research library where you can
 
 ### AI-Powered Features
 
-- **AI Chat**: Ask questions about your articles and notes using BYOK providers (OpenAI, Anthropic, Gemini, Gateway) or local CLI mode
+- **AI Chat**: Ask questions about your articles and notes using BYOK providers (OpenAI, Anthropic, Gemini, Gateway) or local AI mode
 - **Auto-Summaries**: Generate intelligent summaries with one click (short/medium/long options)
 - **Key Points Extraction**: Automatically extract 3-5 key takeaways from any article
 - **Chat History**: Persistent per-article conversations rendered as markdown
@@ -74,7 +74,7 @@ graph TB
         AIProviders --> Anthropic[Anthropic]
         AIProviders --> Gemini[Google Gemini]
         AIProviders --> Gateway[Custom Gateway]
-        AIProviders --> CLIBridge[Local CLI Bridge]
+        AIProviders --> LocalAI[Local AI]
     end
 
     UI --> API
@@ -94,7 +94,7 @@ graph TB
 
 - **Frontend**: Next.js 16, React 19, TypeScript, Tailwind CSS
 - **Backend**: Firebase (Authentication + Firestore + Storage)
-- **AI Integration**: Vercel AI SDK + AI Gateway (preferred), BYOK chat providers, local CLI bridge support
+- **AI Integration**: Vercel AI SDK + AI Gateway (preferred), BYOK chat providers, local AI support
 - **PDF Processing**: react-pdf, pdfjs-dist, pdf-parse for viewing and text extraction
 - **Deployment**: Optimized for Vercel
 
@@ -146,7 +146,7 @@ graph TB
    NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID=your_sender_id
    NEXT_PUBLIC_FIREBASE_APP_ID=your_app_id
    FIREBASE_SERVICE_ACCOUNT_KEY=your_base64_service_account_json
-   CLI_BRIDGE_URL=http://127.0.0.1:3456  # Optional: for local AI mode
+   LOCAL_AI_URL=http://127.0.0.1:3456  # Optional: for local AI mode
    ```
 
 4. Run the development server:
@@ -155,8 +155,8 @@ graph TB
    npm run dev
    ```
 
-   `npm run dev` starts both the Next.js app and local `cli-bridge`.
-   Local CLI providers are shown only in development mode.
+   `npm run dev` starts both the Next.js app and the local AI server.
+   Local AI providers are shown only in development mode.
    If you only want the app server:
 
    ```bash
@@ -168,9 +168,9 @@ graph TB
 ### Development Commands
 
 ```bash
-npm run dev          # Start Next.js + local AI CLI bridge
+npm run dev          # Start Next.js + local AI server
 npm run dev:app      # Start only Next.js app
-npm run cli-bridge   # Start only local AI CLI bridge
+npm run local-ai     # Start only the local AI server
 npm run dev:with-cli # Alias for npm run dev
 npm run build        # Build for production
 npm run start        # Start production server

@@ -11,10 +11,6 @@ import {
   AI_CONFIG_STORAGE_KEY,
   AIConfig,
   DEFAULT_AI_CONFIG,
-  getDefaultModelForProvider,
-  isLocalAIProvider,
-  normalizeAvailableAIProvider,
-  PROVIDER_LABELS,
   isLocalCLIEnabled,
 } from '../../../lib/ai-config';
 
@@ -38,16 +34,10 @@ const loadConfig = (): AIConfig => {
     const raw = window.localStorage.getItem(AI_CONFIG_STORAGE_KEY);
     if (!raw) return DEFAULT_AI_CONFIG;
     const parsed = JSON.parse(raw) as Partial<AIConfig>;
-    const allowLocal = isLocalCLIEnabled();
-    const provider = normalizeAvailableAIProvider(parsed.provider, allowLocal);
-    const model =
-      typeof parsed.model === 'string' && parsed.model.trim()
-        ? parsed.model.trim()
-        : getDefaultModelForProvider(provider);
     return {
-      provider,
-      model,
+      endpointUrl: typeof parsed.endpointUrl === 'string' ? parsed.endpointUrl.trim() : '',
       apiKey: typeof parsed.apiKey === 'string' ? parsed.apiKey : '',
+      model: typeof parsed.model === 'string' ? parsed.model.trim() : '',
     };
   } catch {
     return DEFAULT_AI_CONFIG;
@@ -63,12 +53,15 @@ function AIChatNodeComponent({ id, data, selected }: NodeProps) {
   const pendingHistoryRef = useRef<AIChatMessage[] | null>(null);
 
   const config = useMemo(() => loadConfig(), []);
+  const useLocalAI = useMemo(
+    () => isLocalCLIEnabled() && !config.endpointUrl,
+    [config.endpointUrl]
+  );
 
   const isReady = useMemo(() => {
-    if (isLocalAIProvider(config.provider)) return true;
-    if (config.provider === 'gateway') return true;
-    return Boolean(config.apiKey.trim());
-  }, [config]);
+    if (useLocalAI) return true;
+    return Boolean(config.endpointUrl.trim() && config.model.trim());
+  }, [config.endpointUrl, config.model, useLocalAI]);
 
   const {
     completion,
@@ -123,9 +116,10 @@ function AIChatNodeComponent({ id, data, selected }: NodeProps) {
     try {
       await complete(userMessage, {
         body: {
-          provider: config.provider,
+          endpointUrl: useLocalAI ? undefined : config.endpointUrl,
           model: config.model,
-          apiKey: config.apiKey,
+          apiKey: useLocalAI ? undefined : config.apiKey,
+          local: useLocalAI || undefined,
           messages: nextHistory,
           systemPrompt,
         },
@@ -141,6 +135,7 @@ function AIChatNodeComponent({ id, data, selected }: NodeProps) {
     setCompletion,
     complete,
     config,
+    useLocalAI,
     nodeData.contextLabel,
   ]);
 
@@ -171,7 +166,10 @@ function AIChatNodeComponent({ id, data, selected }: NodeProps) {
             <Bot className="h-3.5 w-3.5" />
           </div>
           <span className="text-xs font-medium text-gray-300">AI Chat</span>
-          <span className="text-[10px] text-gray-600">{PROVIDER_LABELS[config.provider]}</span>
+          {config.model && !useLocalAI && (
+            <span className="text-[10px] text-gray-600">{config.model}</span>
+          )}
+          {useLocalAI && <span className="text-[10px] text-emerald-400">Local</span>}
         </div>
         {messages.length > 0 && !nodeData.readOnly && (
           <button
@@ -252,7 +250,7 @@ function AIChatNodeComponent({ id, data, selected }: NodeProps) {
                   void sendMessage();
                 }
               }}
-              placeholder={isReady ? 'Ask something...' : 'Set API key in Reader'}
+              placeholder={isReady ? 'Ask something...' : 'Configure AI in Reader settings'}
               className="flex-1 rounded-lg border border-gray-700 bg-gray-950 px-2.5 py-1.5 text-xs text-gray-100 placeholder:text-gray-600 focus:outline-none focus:ring-1 focus:ring-blue-500"
             />
             {isStreaming ? (

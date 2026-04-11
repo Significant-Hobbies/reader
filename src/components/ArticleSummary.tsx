@@ -9,7 +9,7 @@ interface ArticleSummaryProps {
   articleTitle: string;
   initialSummary?: string;
   initialKeyPoints?: string[];
-  provider: string;
+  endpointUrl: string;
   model: string;
   apiKey: string;
   theme?: 'light' | 'dark' | 'sepia';
@@ -22,7 +22,7 @@ export function ArticleSummary({
   articleTitle,
   initialSummary,
   initialKeyPoints,
-  provider,
+  endpointUrl,
   model,
   apiKey,
   theme = 'dark',
@@ -44,7 +44,7 @@ export function ArticleSummary({
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          provider,
+          endpointUrl,
           model,
           apiKey,
           articleContent,
@@ -84,7 +84,7 @@ export function ArticleSummary({
       setIsGenerating(false);
     }
   }, [
-    provider,
+    endpointUrl,
     model,
     apiKey,
     articleContent,
