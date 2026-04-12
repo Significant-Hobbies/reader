@@ -6,33 +6,15 @@ import { useCompletion } from '@ai-sdk/react';
 import { Bot, Loader2, Send, Settings, Square, Trash2, X } from 'lucide-react';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
+import { useAIConfig, useModelDiscovery } from '@saas-maker/ai';
 import { Note, Article } from '../types';
-import {
-  AIChatMessage,
-  AI_CONFIG_STORAGE_KEY,
-  AIConfig,
-  FALLBACK_MODELS,
-  getDefaultModelForProvider,
-  isLocalAIProvider,
-  normalizeAvailableAIProvider,
-  prioritizeStableModelIds,
-  PROVIDER_LABELS,
-  type AIProvider,
-  DEFAULT_AI_CONFIG,
-  isLocalCLIEnabled,
-} from '../lib/ai-config';
+import { AIChatMessage, AI_CONFIG_STORAGE_KEY, isLocalCLIEnabled } from '../lib/ai-config';
 
 interface NotesAIChatProps {
   article: Pick<Article, 'id' | 'title' | 'url' | 'byline' | 'content' | 'aiChat'>;
   notes: Note[];
   queuedPrompt?: string | null;
   onQueuedPromptHandled?: () => void;
-}
-
-interface ModelDiscoveryResponse {
-  models?: Array<{ id?: string }>;
-  source?: 'live' | 'fallback';
-  error?: string;
 }
 
 const MAX_SAVED_MESSAGES = 80;
@@ -49,13 +31,11 @@ const toCompactErrorMessage = (error: unknown) => {
 
 const toUserFacingError = (
   error: unknown,
-  provider: AIProvider,
   context: 'chat' | 'persist' | 'models'
 ): { message: string; openSettings: boolean } => {
   const raw = toCompactErrorMessage(error);
   const lower = raw.toLowerCase();
 
-  // Missing or invalid API key
   if (
     lower.includes('api key') ||
     lower.includes('apikey') ||
@@ -63,24 +43,22 @@ const toUserFacingError = (
     lower.includes('401')
   ) {
     return {
-      message: `No API key found for ${PROVIDER_LABELS[provider]}. Add one in settings.`,
+      message: 'Invalid or missing API key. Check your settings.',
       openSettings: true,
     };
   }
 
-  // Rate limit
   if (
     lower.includes('rate limit') ||
     lower.includes('429') ||
     lower.includes('too many requests')
   ) {
     return {
-      message: `Rate limited by ${PROVIDER_LABELS[provider]}. Wait a moment and try again.`,
+      message: 'Rate limited. Wait a moment and try again.',
       openSettings: false,
     };
   }
 
-  // Network / connection errors
   if (lower.includes('fetch') || lower.includes('network') || lower.includes('econnrefused')) {
     if (context === 'persist')
       return {
@@ -88,56 +66,20 @@ const toUserFacingError = (
         openSettings: false,
       };
     return {
-      message: `Could not reach ${PROVIDER_LABELS[provider]}. Check your connection.`,
-      openSettings: false,
+      message: 'Could not reach the endpoint. Check your connection and URL.',
+      openSettings: true,
     };
   }
 
-  // Context-specific fallbacks
   if (context === 'persist')
     return { message: 'Failed to save chat history.', openSettings: false };
   if (context === 'models')
     return {
-      message: `Could not load models for ${PROVIDER_LABELS[provider]}.`,
+      message: 'Could not load models from that endpoint.',
       openSettings: true,
     };
 
   return { message: raw || GENERIC_ERROR_MESSAGE, openSettings: false };
-};
-
-const includeSelectedModel = (selectedModel: string, modelIds: string[]) => {
-  if (!selectedModel) return modelIds;
-  if (modelIds.includes(selectedModel)) return modelIds;
-  return [selectedModel, ...modelIds];
-};
-
-const loadConfig = (allowLocalProviders: boolean): AIConfig => {
-  if (typeof window === 'undefined') return DEFAULT_AI_CONFIG;
-
-  try {
-    const raw = window.localStorage.getItem(AI_CONFIG_STORAGE_KEY);
-    if (!raw) return DEFAULT_AI_CONFIG;
-
-    const parsed = JSON.parse(raw) as Partial<AIConfig>;
-    const provider = normalizeAvailableAIProvider(parsed.provider, allowLocalProviders);
-    const model =
-      typeof parsed.model === 'string' && parsed.model.trim()
-        ? parsed.model.trim()
-        : getDefaultModelForProvider(provider);
-
-    return {
-      provider,
-      model,
-      apiKey: typeof parsed.apiKey === 'string' ? parsed.apiKey : '',
-    };
-  } catch {
-    return DEFAULT_AI_CONFIG;
-  }
-};
-
-const persistConfig = (config: AIConfig) => {
-  if (typeof window === 'undefined') return;
-  window.localStorage.setItem(AI_CONFIG_STORAGE_KEY, JSON.stringify(config));
 };
 
 const stripHTML = (html: string) =>
@@ -187,16 +129,17 @@ export function NotesAIChat({
   const [input, setInput] = useState('');
   const [showSettings, setShowSettings] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [isConfigLoaded, setIsConfigLoaded] = useState(false);
-  const [allowLocalProviders, setAllowLocalProviders] = useState(false);
-  const [config, setConfig] = useState<AIConfig>(DEFAULT_AI_CONFIG);
+  const [allowLocalAI, setAllowLocalAI] = useState(false);
+  const [useLocalAI, setUseLocalAI] = useState(false);
+  const { config, setConfig, save: saveConfig } = useAIConfig(AI_CONFIG_STORAGE_KEY);
   const [messages, setMessages] = useState<AIChatMessage[]>([]);
-  const [availableModels, setAvailableModels] = useState<string[]>(
-    FALLBACK_MODELS[DEFAULT_AI_CONFIG.provider]
-  );
-  const [modelSource, setModelSource] = useState<'live' | 'fallback'>('fallback');
-  const [modelError, setModelError] = useState<string | null>(null);
-  const [isModelsLoading, setIsModelsLoading] = useState(false);
+  const {
+    models: availableModels,
+    loading: isModelsLoading,
+    error: modelError,
+    discover: discoverModels,
+  } = useModelDiscovery({ modelsApiUrl: '/api/ai/models' });
+  const [customModelInput, setCustomModelInput] = useState('');
 
   const chatEndRef = useRef<HTMLDivElement>(null);
   const hasHydratedMessagesRef = useRef(false);
@@ -223,7 +166,7 @@ export function NotesAIChat({
       return response;
     },
     onError: (streamError) => {
-      const feedback = toUserFacingError(streamError, config.provider, 'chat');
+      const feedback = toUserFacingError(streamError, 'chat');
       setError(feedback.message);
       if (feedback.openSettings) setShowSettings(true);
       pendingHistoryRef.current = null;
@@ -243,12 +186,10 @@ export function NotesAIChat({
     },
   });
 
-  useEffect(() => {
-    const localProvidersAllowed = isLocalCLIEnabled();
-    setAllowLocalProviders(localProvidersAllowed);
-    setConfig(loadConfig(localProvidersAllowed));
-    setIsConfigLoaded(true);
-  }, []);
+  const [isConfigLoaded] = useState(() => {
+    setAllowLocalAI(isLocalCLIEnabled());
+    return true;
+  });
 
   useEffect(() => {
     const hydratedMessages = Array.isArray(article.aiChat) ? article.aiChat : [];
@@ -262,7 +203,7 @@ export function NotesAIChat({
     skipNextPersistRef.current = true;
     pendingHistoryRef.current = null;
     setCompletion('');
-    setMessages(hydratedMessages);
+    queueMicrotask(() => setMessages(hydratedMessages));
     latestMessagesRef.current = hydratedMessages;
     lastPersistedMessagesRef.current = hydratedSignature;
     hasHydratedMessagesRef.current = true;
@@ -272,10 +213,18 @@ export function NotesAIChat({
     latestMessagesRef.current = messages;
   }, [messages]);
 
-  useEffect(() => {
-    if (!isConfigLoaded) return;
-    persistConfig(config);
-  }, [config, isConfigLoaded]);
+  // Auto-persist config changes to localStorage
+  const setConfigAndSave: typeof setConfig = useCallback(
+    (next) => {
+      setConfig((prev) => {
+        const resolved = typeof next === 'function' ? next(prev) : next;
+        // Persist asynchronously to avoid setState-in-setState
+        queueMicrotask(() => saveConfig());
+        return resolved;
+      });
+    },
+    [setConfig, saveConfig]
+  );
 
   useEffect(() => {
     if (!hasHydratedMessagesRef.current) return;
@@ -329,13 +278,13 @@ export function NotesAIChat({
           lastPersistedMessagesRef.current = serializedPayload;
         })
         .catch((persistError) => {
-          const feedback = toUserFacingError(persistError, config.provider, 'persist');
+          const feedback = toUserFacingError(persistError, 'persist');
           setError(feedback.message);
         });
     }, SAVE_DEBOUNCE_MS);
 
     return () => clearTimeout(timeoutId);
-  }, [messages, persistMessagesToServer, config.provider]);
+  }, [messages, persistMessagesToServer]);
 
   useEffect(
     () => () => {
@@ -369,75 +318,19 @@ export function NotesAIChat({
     ]);
   }, [completion]);
 
+  // Fetch models when endpoint URL + key change
   useEffect(() => {
-    const controller = new AbortController();
+    if (useLocalAI || !config.endpointUrl) {
+      return;
+    }
 
-    const fetchModels = async () => {
-      setIsModelsLoading(true);
-      setModelError(null);
-
-      try {
-        const response = await fetch('/api/ai/models', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            provider: config.provider,
-            apiKey: config.apiKey,
-          }),
-          signal: controller.signal,
-        });
-
-        const payload = (await response.json().catch(() => ({}))) as ModelDiscoveryResponse;
-
-        if (!response.ok) {
-          throw new Error(payload.error || `Model fetch failed with status ${response.status}`);
-        }
-
-        const ids = Array.isArray(payload.models)
-          ? payload.models
-              .map((model) => (typeof model?.id === 'string' ? model.id.trim() : ''))
-              .filter((id) => id.length > 0)
-          : [];
-
-        const nextModels =
-          ids.length > 0
-            ? prioritizeStableModelIds(ids)
-            : (FALLBACK_MODELS[config.provider] ?? [getDefaultModelForProvider(config.provider)]);
-
-        setAvailableModels(includeSelectedModel(config.model, nextModels));
-        setModelSource(payload.source === 'live' ? 'live' : 'fallback');
-        setModelError(payload.error ?? null);
-      } catch (fetchError) {
-        if (controller.signal.aborted) return;
-
-        setModelSource('fallback');
-        const feedback = toUserFacingError(fetchError, config.provider, 'models');
-        setModelError(feedback.message);
-        if (feedback.openSettings) setShowSettings(true);
-
-        const fallbackModels = FALLBACK_MODELS[config.provider] ?? [
-          getDefaultModelForProvider(config.provider),
-        ];
-        setAvailableModels(includeSelectedModel(config.model, fallbackModels));
-      } finally {
-        if (!controller.signal.aborted) {
-          setIsModelsLoading(false);
-        }
-      }
-    };
-
-    fetchModels();
-
-    return () => controller.abort();
-  }, [config.provider, config.apiKey, config.model]);
+    discoverModels(config.endpointUrl, config.apiKey);
+  }, [config.endpointUrl, config.apiKey, useLocalAI]);
 
   const isReady = useMemo(() => {
-    if (isLocalAIProvider(config.provider)) return true;
-    if (config.provider === 'gateway') return true;
-    return Boolean(config.apiKey.trim());
-  }, [config]);
+    if (useLocalAI) return true;
+    return Boolean(config.endpointUrl.trim() && config.model.trim());
+  }, [config.endpointUrl, config.model, useLocalAI]);
 
   const sendMessage = useCallback(
     async (queuedMessage?: string) => {
@@ -454,7 +347,7 @@ export function NotesAIChat({
 
       if (!isReady) {
         setShowSettings(true);
-        setError(`Add an API key for ${PROVIDER_LABELS[config.provider]}.`);
+        setError('Configure your AI endpoint in settings.');
         if (isQueuedMessage) {
           setInput(userMessage);
         }
@@ -474,23 +367,35 @@ export function NotesAIChat({
       try {
         await complete(userMessage, {
           body: {
-            provider: config.provider,
+            endpointUrl: useLocalAI ? undefined : config.endpointUrl,
             model: config.model,
-            apiKey: config.apiKey,
+            apiKey: useLocalAI ? undefined : config.apiKey,
+            local: useLocalAI || undefined,
             messages: nextHistory,
             systemPrompt: buildSystemPrompt(article, notes),
           },
         });
       } catch (streamError) {
         if ((streamError as { name?: string })?.name !== 'AbortError') {
-          const feedback = toUserFacingError(streamError, config.provider, 'chat');
+          const feedback = toUserFacingError(streamError, 'chat');
           setError(feedback.message);
           if (feedback.openSettings) setShowSettings(true);
         }
         pendingHistoryRef.current = null;
       }
     },
-    [article, complete, config, input, isReady, isStreaming, messages, notes, setCompletion]
+    [
+      article,
+      complete,
+      config,
+      input,
+      isReady,
+      isStreaming,
+      messages,
+      notes,
+      setCompletion,
+      useLocalAI,
+    ]
   );
 
   useEffect(() => {
@@ -501,9 +406,11 @@ export function NotesAIChat({
       return;
     }
 
-    setInput('');
-    void sendMessage(normalizedPrompt);
-    onQueuedPromptHandled?.();
+    queueMicrotask(() => {
+      setInput('');
+      void sendMessage(normalizedPrompt);
+      onQueuedPromptHandled?.();
+    });
   }, [queuedPrompt, onQueuedPromptHandled, sendMessage]);
 
   const stopStreaming = () => {
@@ -526,7 +433,10 @@ export function NotesAIChat({
             </div>
             <div>
               <p className="text-sm font-semibold text-gray-100">AI Chat</p>
-              <p className="text-xs text-gray-500">{PROVIDER_LABELS[config.provider]}</p>
+              {config.model && !useLocalAI && (
+                <p className="text-xs text-gray-500">{config.model}</p>
+              )}
+              {useLocalAI && <p className="text-xs text-emerald-400">Local AI</p>}
             </div>
           </div>
           <div className="flex items-center gap-1">
@@ -553,90 +463,93 @@ export function NotesAIChat({
 
         {showSettings && (
           <div className="mt-3 space-y-3 rounded-xl border border-gray-800 bg-gray-950/80 p-3">
-            <div className="grid gap-3 md:grid-cols-2">
-              <label className="space-y-1 text-xs text-gray-400">
-                <span>Provider</span>
-                <select
-                  value={config.provider}
-                  onChange={(event) => {
-                    const provider = event.target.value as AIProvider;
-                    setConfig((prev) => ({
-                      ...prev,
-                      provider,
-                      model: getDefaultModelForProvider(provider),
-                    }));
-                  }}
-                  className="h-10 w-full rounded-lg border border-gray-700 bg-gray-900 px-3 text-sm text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                >
-                  {allowLocalProviders && (
-                    <optgroup label="Local CLI (no API key)">
-                      <option value="claude-code">Claude Code</option>
-                      <option value="codex">Codex CLI</option>
-                      <option value="gemini-cli">Gemini CLI</option>
-                    </optgroup>
-                  )}
-                  <optgroup label="Cloud API (BYOK)">
-                    <option value="gateway">Vercel AI Gateway</option>
-                    <option value="openai">OpenAI</option>
-                    <option value="anthropic">Anthropic</option>
-                    <option value="google">Google Gemini</option>
-                  </optgroup>
-                </select>
-              </label>
-
-              <label className="space-y-1 text-xs text-gray-400">
-                <span>
-                  Model{' '}
-                  {isModelsLoading ? <span className="text-gray-500">(refreshing)</span> : null}
-                </span>
-                <select
-                  value={config.model}
-                  onChange={(event) =>
-                    setConfig((prev) => ({
-                      ...prev,
-                      model: event.target.value,
-                    }))
-                  }
-                  className="h-10 w-full rounded-lg border border-gray-700 bg-gray-900 px-3 text-sm text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                >
-                  {availableModels.map((modelId) => (
-                    <option key={modelId} value={modelId}>
-                      {modelId}
-                    </option>
-                  ))}
-                </select>
-              </label>
-            </div>
-
-            {!isLocalAIProvider(config.provider) && (
-              <label className="space-y-1 text-xs text-gray-400">
-                <span>API key (stored in your browser only)</span>
+            {allowLocalAI && (
+              <label className="flex items-center gap-2 text-xs text-gray-400">
                 <input
-                  type="password"
-                  value={config.apiKey}
-                  onChange={(event) =>
-                    setConfig((prev) => ({
-                      ...prev,
-                      apiKey: event.target.value,
-                    }))
-                  }
-                  placeholder="Paste your API key"
-                  className="h-10 w-full rounded-lg border border-gray-700 bg-gray-900 px-3 text-sm text-gray-100 placeholder:text-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  type="checkbox"
+                  checked={useLocalAI}
+                  onChange={(event) => setUseLocalAI(event.target.checked)}
+                  className="rounded border-gray-600 bg-gray-800"
                 />
+                <span>Use local AI (dev mode)</span>
               </label>
             )}
 
-            {isLocalAIProvider(config.provider) && (
+            {!useLocalAI && (
+              <>
+                <label className="space-y-1 text-xs text-gray-400">
+                  <span>Endpoint URL</span>
+                  <input
+                    type="text"
+                    value={config.endpointUrl}
+                    onChange={(event) =>
+                      setConfigAndSave((prev) => ({
+                        ...prev,
+                        endpointUrl: event.target.value,
+                      }))
+                    }
+                    placeholder="https://api.openai.com/v1"
+                    className="h-10 w-full rounded-lg border border-gray-700 bg-gray-900 px-3 text-sm text-gray-100 placeholder:text-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  />
+                </label>
+
+                <label className="space-y-1 text-xs text-gray-400">
+                  <span>API Key (stored in your browser only)</span>
+                  <input
+                    type="password"
+                    value={config.apiKey}
+                    onChange={(event) =>
+                      setConfigAndSave((prev) => ({
+                        ...prev,
+                        apiKey: event.target.value,
+                      }))
+                    }
+                    placeholder="Paste your API key"
+                    className="h-10 w-full rounded-lg border border-gray-700 bg-gray-900 px-3 text-sm text-gray-100 placeholder:text-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  />
+                </label>
+
+                <label className="space-y-1 text-xs text-gray-400">
+                  <span>
+                    Model{' '}
+                    {isModelsLoading ? <span className="text-gray-500">(loading...)</span> : null}
+                  </span>
+                  <div className="relative">
+                    <input
+                      type="text"
+                      list="ai-model-options"
+                      value={customModelInput || config.model}
+                      onChange={(event) => {
+                        const value = event.target.value;
+                        setCustomModelInput(value);
+                        setConfigAndSave((prev) => ({ ...prev, model: value }));
+                      }}
+                      onFocus={() => setCustomModelInput(config.model)}
+                      onBlur={() => setCustomModelInput('')}
+                      placeholder={
+                        availableModels.length > 0
+                          ? 'Select or type a model name'
+                          : 'Enter model name'
+                      }
+                      className="h-10 w-full rounded-lg border border-gray-700 bg-gray-900 px-3 text-sm text-gray-100 placeholder:text-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    />
+                    <datalist id="ai-model-options">
+                      {availableModels.map((modelId) => (
+                        <option key={modelId} value={modelId} />
+                      ))}
+                    </datalist>
+                  </div>
+                </label>
+              </>
+            )}
+
+            {useLocalAI && (
               <p className="rounded-lg border border-emerald-500/25 bg-emerald-500/10 px-3 py-2 text-xs text-emerald-300">
-                Local CLI mode is enabled. Run `../cli-bridge` on port 3456 to stream responses from
-                your local CLI tools.
+                Local AI mode is enabled. Run `pnpm local-ai` to stream responses from your local AI
+                tools.
               </p>
             )}
 
-            <p className="text-[11px] text-gray-500">
-              Model catalog source:{' '}
-              {modelSource === 'live' ? 'live provider data' : 'fallback list'}
-            </p>
             {modelError && <p className="text-[11px] text-yellow-400">{modelError}</p>}
           </div>
         )}
@@ -698,7 +611,9 @@ export function NotesAIChat({
             }}
             rows={2}
             placeholder={
-              isReady ? 'Ask about this article or your notes...' : 'Add API key in settings'
+              isReady
+                ? 'Ask about this article or your notes...'
+                : 'Configure AI endpoint in settings'
             }
             className="min-h-[68px] flex-1 resize-none rounded-xl border border-gray-700 bg-gray-950 px-3 py-2 text-sm text-gray-100 placeholder:text-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
           />

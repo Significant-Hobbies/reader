@@ -1,18 +1,9 @@
 import { NextResponse } from 'next/server';
 import { generateText } from 'ai';
+import { createAIModel } from '@saas-maker/ai/server';
 import { getAuthenticatedUserId } from '@/lib/auth-api';
-import {
-  getDefaultModelForProvider,
-  isLocalCLIEnabled,
-  isLocalAIProvider,
-  normalizeAIProvider,
-} from '@/lib/ai-config';
-import {
-  createLanguageModel,
-  normalizeApiKey,
-  normalizeText,
-  requiresApiKey,
-} from '@/lib/ai-server';
+import { isLocalCLIEnabled } from '@/lib/ai-config';
+import { normalizeApiKey, normalizeEndpointUrl, normalizeText } from '@/lib/ai-server';
 import { SummaryLength } from '@/types';
 
 export const runtime = 'nodejs';
@@ -42,19 +33,21 @@ export async function POST(request: Request) {
   }
 
   const body = (await request.json().catch(() => ({}))) as {
-    provider?: unknown;
+    endpointUrl?: unknown;
     model?: unknown;
     apiKey?: unknown;
     articleContent?: unknown;
     articleTitle?: unknown;
     summaryLength?: unknown;
+    local?: unknown;
   };
 
-  const provider = normalizeAIProvider(body.provider);
-  const model = normalizeText(body.model, 180) || getDefaultModelForProvider(provider);
+  const endpointUrl = normalizeEndpointUrl(body.endpointUrl);
+  const model = normalizeText(body.model, 180);
   const apiKey = normalizeApiKey(body.apiKey);
   const articleContent = normalizeText(body.articleContent, 100_000);
   const articleTitle = normalizeText(body.articleTitle, 500);
+  const isLocal = body.local === true;
   const summaryLength = (
     body.summaryLength === 'short' ||
     body.summaryLength === 'medium' ||
@@ -67,31 +60,28 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: 'Article content is required' }, { status: 400 });
   }
 
-  if (isLocalAIProvider(provider) && !isLocalCLIEnabled()) {
+  if (isLocal) {
+    if (!isLocalCLIEnabled()) {
+      return NextResponse.json(
+        { error: 'Local AI is available only in development environments.' },
+        { status: 400 }
+      );
+    }
     return NextResponse.json(
-      {
-        error: 'Local CLI providers are available only in development environments.',
-      },
+      { error: 'Local AI is not supported for summary generation.' },
       { status: 400 }
     );
   }
 
-  if (requiresApiKey(provider) && !apiKey) {
-    return NextResponse.json({ error: `API key is required for ${provider}` }, { status: 400 });
+  if (!endpointUrl) {
+    return NextResponse.json({ error: 'Endpoint URL is required' }, { status: 400 });
+  }
+
+  if (!model) {
+    return NextResponse.json({ error: 'Model is required' }, { status: 400 });
   }
 
   try {
-    // For local providers, we'll use a simpler approach without generateText
-    if (isLocalAIProvider(provider)) {
-      return NextResponse.json(
-        {
-          error:
-            'Local providers are not supported for summary generation. Please use OpenAI, Anthropic, or Google.',
-        },
-        { status: 400 }
-      );
-    }
-
     const lengthInstruction = SUMMARY_LENGTH_INSTRUCTIONS[summaryLength];
     const userPrompt = `Please analyze and summarize the following article${articleTitle ? ` titled "${articleTitle}"` : ''}:
 
@@ -102,10 +92,11 @@ ${lengthInstruction}
 Remember to respond with valid JSON in the exact format specified.`;
 
     const result = await generateText({
-      model: createLanguageModel(provider, model, apiKey),
+      model: createAIModel({ endpointUrl, apiKey, model }),
       system: SUMMARY_SYSTEM_PROMPT,
       prompt: userPrompt,
       maxRetries: 1,
+      headers: { 'x-gateway-project-id': 'reader' },
     });
 
     // Parse the JSON response

@@ -10,14 +10,7 @@ import { NotesAIChat } from '../NotesAIChat';
 import { ArticleTagEditor } from '../ArticleTagEditor';
 import { ArticleSummary } from '../ArticleSummary';
 import { ANNOTATABLE_SELECTOR } from '../../lib/annotatable';
-import {
-  AI_CONFIG_STORAGE_KEY,
-  AIConfig,
-  DEFAULT_AI_CONFIG,
-  isLocalCLIEnabled,
-  normalizeAvailableAIProvider,
-  getDefaultModelForProvider,
-} from '../../lib/ai-config';
+import { AI_CONFIG_STORAGE_KEY, AIConfig, DEFAULT_AI_CONFIG } from '../../lib/ai-config';
 
 // ---------------------------------------------------------------------------
 // Constants & types
@@ -37,7 +30,7 @@ type SelectionActionMenuState = {
 // Helpers
 // ---------------------------------------------------------------------------
 
-const loadAIConfig = (allowLocalProviders: boolean): AIConfig => {
+const loadAIConfig = (): AIConfig => {
   if (typeof window === 'undefined') return DEFAULT_AI_CONFIG;
 
   try {
@@ -45,16 +38,10 @@ const loadAIConfig = (allowLocalProviders: boolean): AIConfig => {
     if (!raw) return DEFAULT_AI_CONFIG;
 
     const parsed = JSON.parse(raw) as Partial<AIConfig>;
-    const provider = normalizeAvailableAIProvider(parsed.provider, allowLocalProviders);
-    const model =
-      typeof parsed.model === 'string' && parsed.model.trim()
-        ? parsed.model.trim()
-        : getDefaultModelForProvider(provider);
-
     return {
-      provider,
-      model,
+      endpointUrl: typeof parsed.endpointUrl === 'string' ? parsed.endpointUrl.trim() : '',
       apiKey: typeof parsed.apiKey === 'string' ? parsed.apiKey : '',
+      model: typeof parsed.model === 'string' ? parsed.model.trim() : '',
     };
   } catch {
     return DEFAULT_AI_CONFIG;
@@ -96,7 +83,7 @@ export function ReaderCore({
   const [isTitleEditing, setIsTitleEditing] = useState(false);
   const [selectionMenu, setSelectionMenu] = useState<SelectionActionMenuState | null>(null);
   const [queuedAIPrompt, setQueuedAIPrompt] = useState<string | null>(null);
-  const [aiConfig] = useState<AIConfig>(() => loadAIConfig(isLocalCLIEnabled()));
+  const [aiConfig] = useState<AIConfig>(() => loadAIConfig());
 
   // Layout
   const [leftPanelWidth, setLeftPanelWidth] = useState(66.66);
@@ -815,7 +802,7 @@ export function ReaderCore({
                 articleTitle={article.title}
                 initialSummary={article.aiSummary}
                 initialKeyPoints={article.keyPoints}
-                provider={aiConfig.provider}
+                endpointUrl={aiConfig.endpointUrl}
                 model={aiConfig.model}
                 apiKey={aiConfig.apiKey}
                 theme={settings.theme}

@@ -8,7 +8,7 @@ Personal research library for capturing, reading, annotating, and organizing web
 - **Styling**: Tailwind CSS 4 + `@tailwindcss/typography`, Radix UI primitives, `lucide-react` icons
 - **Database**: Firebase (Firestore) -- articles in `annotations` collection (legacy name), plus `projects`, `lists`, `boards`
 - **Auth**: Firebase Auth with Google Sign-In, server-side session cookies (`__session`, 14-day expiry), verified via `firebase-admin`
-- **AI**: Vercel AI SDK (`ai` + `@ai-sdk/*`) for streaming chat/summarization. Supports Gateway (default, no key needed), OpenAI, Anthropic, Google (BYOK), and local CLI bridge
+- **AI**: Vercel AI SDK (`ai` + `@ai-sdk/*`) for streaming chat/summarization. Supports Gateway (default, no key needed), OpenAI, Anthropic, Google (BYOK), and local AI
 - **PDF**: `react-pdf`, `pdfjs-dist`, `pdf-parse`
 - **Canvas/Board**: `@xyflow/react` for node-based research boards
 - **State**: React Query (`@tanstack/react-query`) with server-side prefetching
@@ -58,7 +58,7 @@ src/
     boards-service.ts       # Board CRUD, node/edge sanitization
     lists-service.ts        # Lists CRUD (Favourites, Read Later, custom)
     ai-config.ts            # AI provider types, model lists
-    ai-server.ts            # AI SDK wrappers, local CLI bridge stream
+    ai-server.ts            # AI SDK wrappers, local AI stream
   types.ts                  # All shared TypeScript interfaces
 ```
 
@@ -77,7 +77,7 @@ src/
 ## Commands
 
 ```bash
-npm run dev          # Start Next.js + cli-bridge via concurrently
+npm run dev          # Start Next.js + local-ai via concurrently
 npm run dev:app      # Start only Next.js
 npm run build        # Production build
 npm run lint         # ESLint
@@ -99,7 +99,7 @@ FIREBASE_SERVICE_ACCOUNT_KEY=          # base64-encoded service account JSON
 
 # Optional
 AI_GATEWAY_API_KEY=                    # Server-side fallback for Vercel AI Gateway
-CLI_BRIDGE_URL=http://127.0.0.1:3456  # Local CLI bridge endpoint
+LOCAL_AI_URL=http://127.0.0.1:3456    # Local AI endpoint
 NEXT_PUBLIC_SAASMAKER_API_KEY=         # SaaS Maker integration
 ```
 
