@@ -48,3 +48,7 @@ firebase-service-account.json
 
 # local build artifacts
 web-annotator-extension-*.zip
+.env
+.env.*
+!.env.example
+.saasmaker.json
