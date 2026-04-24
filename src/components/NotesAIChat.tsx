@@ -129,7 +129,7 @@ export function NotesAIChat({
   const [input, setInput] = useState('');
   const [showSettings, setShowSettings] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [allowLocalAI, setAllowLocalAI] = useState(false);
+  const [allowLocalAI] = useState(() => isLocalCLIEnabled());
   const [useLocalAI, setUseLocalAI] = useState(false);
   const { config, setConfig, save: saveConfig } = useAIConfig(AI_CONFIG_STORAGE_KEY);
   const [messages, setMessages] = useState<AIChatMessage[]>([]);
@@ -184,11 +184,6 @@ export function NotesAIChat({
       ]);
       pendingHistoryRef.current = null;
     },
-  });
-
-  const [isConfigLoaded] = useState(() => {
-    setAllowLocalAI(isLocalCLIEnabled());
-    return true;
   });
 
   useEffect(() => {
@@ -325,7 +320,7 @@ export function NotesAIChat({
     }
 
     discoverModels(config.endpointUrl, config.apiKey);
-  }, [config.endpointUrl, config.apiKey, useLocalAI]);
+  }, [config.endpointUrl, config.apiKey, useLocalAI, discoverModels]);
 
   const isReady = useMemo(() => {
     if (useLocalAI) return true;
