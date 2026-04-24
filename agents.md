@@ -73,6 +73,7 @@ src/
 - **AI keys**: BYOK stored in browser only (`localStorage`), sent per-request
 - **Streaming**: AI responses use plain text streams (not SSE)
 - **Commit style**: Conventional Commits (`feat(scope): message`)
+- **Plans**: live plans sit in `plans/<slug>.md`. When a plan materially changes, archive the prior version to `plans/archive/YYYY-MM-DD-<slug>.md` before editing. When an initiative ships, move the file to `plans/archive/` with the archive date as prefix.
 
 ## Commands
 
