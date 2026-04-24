@@ -56,15 +56,9 @@ export async function GET(req: NextRequest) {
     });
   } catch (error: unknown) {
     console.error('Snapshot error:', error);
-    return new NextResponse(
-      JSON.stringify({
-        message: 'Failed to capture the website content.',
-        error: error instanceof Error ? error.message : 'Unknown error',
-      }),
-      {
-        status: 500,
-        headers: { 'Content-Type': 'application/json' },
-      }
+    return NextResponse.json(
+      { message: 'Failed to capture the website content.' },
+      { status: 500 }
     );
   }
 }

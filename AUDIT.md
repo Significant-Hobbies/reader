@@ -39,15 +39,13 @@
 
 ## Low / Informational
 
-- [ ] **Dead middleware** — `src/proxy.ts`
-  - Exports `proxy()` function (not `middleware()`) and no `middleware.ts` exists. This file does nothing.
-  - Share routes (`/api/share/*`) work correctly without middleware since they're intentionally public.
-  - **Fix:** Either wire up as proper Next.js middleware or delete the dead code.
+- [x] **Dead middleware** — `src/proxy.ts`
+  - Exported `proxy()` (not `middleware()`) and no `middleware.ts` existed, so it did nothing.
+  - **Fixed:** Deleted. API routes already enforce auth via `getAuthenticatedUserId()`; share routes are intentionally public.
 
-- [ ] **Error messages leak internal details** — Multiple API routes
-  - Routes return `error.message` to clients (e.g., `src/app/api/snapshot/route.ts:50`, `src/app/api/proxy/route.ts:91`).
-  - Internal errors (Firestore connection failures, DNS resolution details) may leak to attackers.
-  - **Recommendation:** Return generic error messages in production; log details server-side only.
+- [x] **Error messages leak internal details** — `src/app/api/snapshot/route.ts`, `src/app/api/proxy/route.ts`
+  - Routes returned `error.message` to clients.
+  - **Fixed:** Both routes now return a generic message; full error is logged server-side via `console.error`.
 
 - [ ] **No explicit CORS configuration**
   - Relies on Next.js same-origin defaults. External URLs are proxied server-side via `/api/proxy`.

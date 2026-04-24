@@ -84,8 +84,7 @@ export async function GET(request: NextRequest) {
       headers: responseHeaders,
     });
   } catch (err) {
-    const message = err instanceof Error ? err.message : 'Proxy fetch failed';
-    console.error('Proxy error:', message);
-    return new Response(message, { status: 502 });
+    console.error('Proxy error:', err);
+    return new Response('Proxy fetch failed', { status: 502 });
   }
 }
