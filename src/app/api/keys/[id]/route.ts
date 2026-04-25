@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { and, eq, isNull } from 'drizzle-orm';
 import { auth } from '@/lib/auth';
+import { headers } from 'next/headers';
 import { db } from '@/lib/db/client';
 import { apiKeys } from '@/lib/db/schema';
 
@@ -8,7 +9,7 @@ export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 
 async function requireSessionUserId(): Promise<string | null> {
-  const session = await auth();
+  const session = await auth.api.getSession({ headers: await headers() });
   return session?.user?.id ?? null;
 }
 

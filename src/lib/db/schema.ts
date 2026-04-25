@@ -2,22 +2,63 @@ import { integer, primaryKey, sqliteTable, text, index } from 'drizzle-orm/sqlit
 import { sql } from 'drizzle-orm';
 import type { AIChatMessage, ArticleStatus, Note } from '../../types';
 
-// --- Auth.js tables ---
-// Mirrors @auth/drizzle-adapter's SQLite defaults so `drizzle-kit push`
-// emits them. The adapter's `defineTables()` accepts a schema override, but
-// duplicating the shape here keeps the schema the single source of truth for
-// `drizzle-kit` and for anything that wants to query users directly.
-
+// --- User table (shared by better-auth; legacy NextAuth columns kept for existing rows) ---
 export const users = sqliteTable('user', {
   id: text('id')
     .primaryKey()
     .$defaultFn(() => crypto.randomUUID()),
-  name: text('name'),
+  name: text('name').default(''),
   email: text('email').unique(),
-  emailVerified: integer('emailVerified', { mode: 'timestamp_ms' }),
+  // Stored as 0/1 integer; better-auth reads this as boolean via its own coercion
+  emailVerified: integer('emailVerified').default(0),
   image: text('image'),
+  // Added for better-auth; existing rows get NULL (no expression default — SQLite limitation)
+  createdAt: integer('createdAt', { mode: 'timestamp_ms' }),
+  updatedAt: integer('updatedAt', { mode: 'timestamp_ms' }),
 });
 
+// --- better-auth tables ---
+export const baSessions = sqliteTable('ba_session', {
+  id: text('id').primaryKey(),
+  createdAt: integer('createdAt', { mode: 'timestamp_ms' }).notNull(),
+  updatedAt: integer('updatedAt', { mode: 'timestamp_ms' }).notNull(),
+  userId: text('userId')
+    .notNull()
+    .references(() => users.id, { onDelete: 'cascade' }),
+  expiresAt: integer('expiresAt', { mode: 'timestamp_ms' }).notNull(),
+  token: text('token').notNull().unique(),
+  ipAddress: text('ipAddress'),
+  userAgent: text('userAgent'),
+});
+
+export const baAccounts = sqliteTable('ba_account', {
+  id: text('id').primaryKey(),
+  createdAt: integer('createdAt', { mode: 'timestamp_ms' }).notNull(),
+  updatedAt: integer('updatedAt', { mode: 'timestamp_ms' }).notNull(),
+  userId: text('userId')
+    .notNull()
+    .references(() => users.id, { onDelete: 'cascade' }),
+  providerId: text('providerId').notNull(),
+  accountId: text('accountId').notNull(),
+  accessToken: text('accessToken'),
+  refreshToken: text('refreshToken'),
+  idToken: text('idToken'),
+  accessTokenExpiresAt: integer('accessTokenExpiresAt', { mode: 'timestamp_ms' }),
+  refreshTokenExpiresAt: integer('refreshTokenExpiresAt', { mode: 'timestamp_ms' }),
+  scope: text('scope'),
+  password: text('password'),
+});
+
+export const baVerifications = sqliteTable('ba_verification', {
+  id: text('id').primaryKey(),
+  createdAt: integer('createdAt', { mode: 'timestamp_ms' }),
+  updatedAt: integer('updatedAt', { mode: 'timestamp_ms' }),
+  identifier: text('identifier').notNull(),
+  value: text('value').notNull(),
+  expiresAt: integer('expiresAt', { mode: 'timestamp_ms' }).notNull(),
+});
+
+// --- Legacy NextAuth tables (kept for reference, not used by better-auth) ---
 export const accounts = sqliteTable(
   'account',
   {

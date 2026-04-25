@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { signIn } from 'next-auth/react';
+import { signIn } from '@/lib/auth-client';
 import { Button } from './ui/button';
 
 export default function LoginClient() {
@@ -14,7 +14,7 @@ export default function LoginClient() {
     setSigningIn(true);
     try {
       setRedirecting(true);
-      await signIn('google', { callbackUrl: '/' });
+      await signIn.social({ provider: 'google', callbackURL: '/' });
     } catch (err) {
       console.error('Sign-in error:', err);
       setError('Failed to sign in. Please try again.');

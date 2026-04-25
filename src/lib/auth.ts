@@ -1,36 +1,24 @@
-import NextAuth from 'next-auth';
-import Google from 'next-auth/providers/google';
-import { DrizzleAdapter } from '@auth/drizzle-adapter';
-import { db, schema } from './db/client';
+import { betterAuth } from 'better-auth';
+import { drizzleAdapter } from 'better-auth/adapters/drizzle';
+import { db } from './db/client';
+import { users, baSessions, baAccounts, baVerifications } from './db/schema';
 
-export const { handlers, auth, signIn, signOut } = NextAuth({
-  adapter: DrizzleAdapter(db, {
-    usersTable: schema.users,
-    accountsTable: schema.accounts,
-    sessionsTable: schema.sessions,
-    verificationTokensTable: schema.verificationTokens,
+export const auth = betterAuth({
+  secret: process.env.BETTER_AUTH_SECRET || process.env.AUTH_SECRET,
+  baseURL: process.env.BETTER_AUTH_URL || 'https://reader-4nu.pages.dev',
+  database: drizzleAdapter(db, {
+    provider: 'sqlite',
+    schema: {
+      user: users,
+      session: baSessions,
+      account: baAccounts,
+      verification: baVerifications,
+    },
   }),
-  providers: [
-    Google({
-      clientId: process.env.GOOGLE_CLIENT_ID,
-      clientSecret: process.env.GOOGLE_CLIENT_SECRET,
-      // Safe here: only one provider (Google) and no email/password sign-in,
-      // so linking by verified email cannot be weaponized for account takeover.
-      // Required so the migrated user row (seeded without an accounts entry)
-      // links on first sign-in instead of throwing OAuthAccountNotLinked.
-      allowDangerousEmailAccountLinking: true,
-    }),
-  ],
-  session: { strategy: 'database' },
-  pages: { signIn: '/login' },
-  trustHost: true,
-  secret: process.env.AUTH_SECRET,
-  callbacks: {
-    session({ session, user }) {
-      if (session.user) {
-        session.user.id = user.id;
-      }
-      return session;
+  socialProviders: {
+    google: {
+      clientId: process.env.GOOGLE_CLIENT_ID || '',
+      clientSecret: process.env.GOOGLE_CLIENT_SECRET || '',
     },
   },
 });

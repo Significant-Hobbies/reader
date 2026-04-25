@@ -1,11 +1,28 @@
-import { del, put } from '@vercel/blob';
+import {
+  DeleteObjectCommand,
+  GetObjectCommand,
+  PutObjectCommand,
+  S3Client,
+} from '@aws-sdk/client-s3';
+import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
 
-// PDFs live in a private Vercel Blob store. Keys are unguessable but we still
-// require auth + ownership check before issuing a download — see
-// `src/app/api/pdfs/[id]/download/route.ts`. The private-store SDK does not
-// expose a server-side "generate short-lived signed URL" primitive; the only
-// way to hand bytes to a browser is to stream them through our own route.
+const R2_ACCOUNT_ID = process.env.CLOUDFLARE_ACCOUNT_ID!;
+const R2_ACCESS_KEY_ID = process.env.R2_ACCESS_KEY_ID!;
+const R2_SECRET_ACCESS_KEY = process.env.R2_SECRET_ACCESS_KEY!;
+const R2_BUCKET = process.env.R2_BUCKET_NAME || 'reader-pdfs';
+
 const PDF_PREFIX = 'pdfs';
+
+function getS3Client(): S3Client {
+  return new S3Client({
+    region: 'auto',
+    endpoint: `https://${R2_ACCOUNT_ID}.r2.cloudflarestorage.com`,
+    credentials: {
+      accessKeyId: R2_ACCESS_KEY_ID,
+      secretAccessKey: R2_SECRET_ACCESS_KEY,
+    },
+  });
+}
 
 export interface UploadPdfOptions {
   filename: string;
@@ -13,7 +30,7 @@ export interface UploadPdfOptions {
 }
 
 export interface UploadPdfResult {
-  /** The blob store pathname / key. Persist this in `pdfStorageKey`. */
+  /** The R2 object key. Persist this in `pdfStorageKey`. */
   storageKey: string;
   /** Size of the uploaded payload in bytes. */
   sizeBytes: number;
@@ -29,9 +46,9 @@ function toBuffer(input: Buffer | ArrayBuffer): Buffer {
 }
 
 /**
- * Upload a PDF to private Vercel Blob storage. Returns the storage key to
- * persist on the article row. Callers never hand the raw URL to clients —
- * access is always mediated by `getPdfDownloadUrl()`.
+ * Upload a PDF to Cloudflare R2. Returns the storage key to persist on the
+ * article row. Access is mediated by `getPdfDownloadUrl()` — callers never
+ * hand the raw signed URL to clients directly.
  */
 export async function uploadPdf(
   buffer: Buffer | ArrayBuffer,
@@ -39,19 +56,19 @@ export async function uploadPdf(
 ): Promise<UploadPdfResult> {
   const body = toBuffer(buffer);
   const sanitized = sanitizeFilename(opts.filename);
-  // The random suffix makes keys unguessable even though the store is private.
-  const pathname = `${PDF_PREFIX}/${opts.userId}/${sanitized}`;
+  const storageKey = `${PDF_PREFIX}/${opts.userId}/${Date.now()}-${sanitized}`;
 
-  const result = await put(pathname, body, {
-    access: 'private',
-    addRandomSuffix: true,
-    contentType: 'application/pdf',
-  });
+  const s3 = getS3Client();
+  await s3.send(
+    new PutObjectCommand({
+      Bucket: R2_BUCKET,
+      Key: storageKey,
+      Body: body,
+      ContentType: 'application/pdf',
+    })
+  );
 
-  return {
-    storageKey: result.pathname,
-    sizeBytes: body.length,
-  };
+  return { storageKey, sizeBytes: body.length };
 }
 
 /**
@@ -65,32 +82,39 @@ export function getPdfDownloadUrl(articleId: string): string {
 }
 
 /**
- * Fetch PDF bytes from Vercel Blob. Used by the download proxy route to
- * stream the file to the authenticated user.
+ * Fetch PDF bytes from R2 via a presigned URL. Used by the download proxy
+ * route to stream the file to the authenticated user.
  */
 export async function fetchPdfBytes(storageKey: string): Promise<{
   stream: ReadableStream<Uint8Array>;
   contentType: string;
   size: number;
 }> {
-  // Dynamic import keeps the blob client out of bundles that only need
-  // `uploadPdf` / `getPdfDownloadUrl`.
-  const { get } = await import('@vercel/blob');
-  const result = await get(storageKey, { access: 'private' });
-  if (!result || result.statusCode !== 200) {
+  const s3 = getS3Client();
+  const signedUrl = await getSignedUrl(
+    s3,
+    new GetObjectCommand({ Bucket: R2_BUCKET, Key: storageKey }),
+    { expiresIn: 3600 }
+  );
+
+  const response = await fetch(signedUrl);
+  if (!response.ok || !response.body) {
     throw new Error('PDF not found in storage');
   }
+
+  const contentLength = response.headers.get('content-length');
   return {
-    stream: result.stream,
-    contentType: result.blob.contentType,
-    size: result.blob.size,
+    stream: response.body,
+    contentType: response.headers.get('content-type') || 'application/pdf',
+    size: contentLength ? parseInt(contentLength, 10) : 0,
   };
 }
 
 /**
- * Delete a PDF from blob storage. Safe to call even if the key no longer
- * exists — `del()` is idempotent.
+ * Delete a PDF from R2. Safe to call even if the key no longer exists —
+ * DeleteObjectCommand is idempotent.
  */
 export async function deletePdf(storageKey: string): Promise<void> {
-  await del(storageKey);
+  const s3 = getS3Client();
+  await s3.send(new DeleteObjectCommand({ Bucket: R2_BUCKET, Key: storageKey }));
 }

@@ -1,7 +1,8 @@
 import { auth } from './auth';
+import { headers } from 'next/headers';
 
 /**
- * Returns the current Auth.js session user (with `id`), or null.
+ * Returns the current better-auth session user, or null.
  * Used by SSR pages that need the authenticated user before rendering.
  */
 export async function getCurrentUser(): Promise<{
@@ -10,7 +11,7 @@ export async function getCurrentUser(): Promise<{
   name: string | null;
   image: string | null;
 } | null> {
-  const session = await auth();
+  const session = await auth.api.getSession({ headers: await headers() });
   const user = session?.user;
   if (!user?.id) return null;
   return {

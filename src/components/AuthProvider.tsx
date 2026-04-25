@@ -1,10 +1,11 @@
 'use client';
 
 import { ReactNode } from 'react';
-import { SessionProvider, signIn, signOut, useSession } from 'next-auth/react';
+import { useSession, signIn, signOut } from '@/lib/auth-client';
 
 export function AuthProvider({ children }: { children: ReactNode }) {
-  return <SessionProvider>{children}</SessionProvider>;
+  // better-auth manages its own session state via cookies — no wrapper needed
+  return <>{children}</>;
 }
 
 export type AuthUser = {
@@ -15,14 +16,10 @@ export type AuthUser = {
 };
 
 /**
- * Auth.js-backed replacement for the previous Firebase-based `useAuth()` hook.
- * Preserves the `{ user, loading, signInWithGoogle, logout }` shape.
- * Note: `user.photoURL` → `user.image` and `user.uid` → `user.id` on the
- * Auth.js side; any downstream UI using the old Firebase field names must be
- * updated alongside this change.
+ * better-auth session hook. Preserves the `{ user, loading, signInWithGoogle, logout }` shape.
  */
 export function useAuth() {
-  const { data: session, status } = useSession();
+  const { data: session, isPending } = useSession();
   const sessionUser = session?.user;
 
   const user: AuthUser | null = sessionUser
@@ -36,8 +33,8 @@ export function useAuth() {
 
   return {
     user,
-    loading: status === 'loading',
-    signInWithGoogle: () => signIn('google', { callbackUrl: '/' }),
-    logout: () => signOut({ callbackUrl: '/login' }),
+    loading: isPending,
+    signInWithGoogle: () => signIn.social({ provider: 'google', callbackURL: '/' }),
+    logout: () => signOut({ fetchOptions: { onSuccess: () => { window.location.href = '/login'; } } }),
   };
 }
