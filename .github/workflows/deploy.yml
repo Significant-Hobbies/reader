@@ -1,7 +1,7 @@
 name: Deploy to Cloudflare Workers
 on:
   push:
-    branches: [main]
+    branches: [main, migrate-off-firebase]
   pull_request:
     branches: [main]
   pull_request_target:
@@ -20,8 +20,11 @@ jobs:
         with:
           node-version: '20'
           cache: pnpm
-      - run: pnpm install --frozen-lockfile --ignore-scripts
+      - run: pnpm install --frozen-lockfile
       - run: pnpm cf:build
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CF_API_TOKEN }}
+          NEXT_TELEMETRY_DISABLED: 1
       - uses: cloudflare/wrangler-action@v3
         with:
           apiToken: ${{ secrets.CF_API_TOKEN }}
