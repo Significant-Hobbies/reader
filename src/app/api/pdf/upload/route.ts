@@ -1,3 +1,4 @@
+export const dynamic = 'force-dynamic';
 import { NextRequest, NextResponse } from 'next/server';
 import { getAuthenticatedUserId } from '../../../../lib/auth-api';
 import { extractTextFromPDF, validatePDFFile } from '../../../../lib/pdf-service';

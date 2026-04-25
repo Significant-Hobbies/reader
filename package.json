@@ -9,7 +9,7 @@
     "cli-bridge": "npm run local-ai",
     "dev:with-cli": "npm run dev",
     "build": "next build --webpack",
-    "cf:build": "node scripts/patch-opennext.mjs && opennextjs-cloudflare build",
+    "cf:build": "node scripts/patch-opennext.mjs && next build --webpack && opennextjs-cloudflare build --skipNextBuild && node scripts/patch-opennext.mjs --post",
     "deploy": "pnpm cf:build && wrangler deploy",
     "start": "next start",
     "lint": "eslint",

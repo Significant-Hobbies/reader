@@ -1,3 +1,4 @@
+export const dynamic = 'force-dynamic';
 import { NextResponse } from 'next/server';
 import { getAuthenticatedUserId } from '../../../../../lib/auth-api';
 import { db } from '../../../../../lib/db/client';
