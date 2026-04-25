@@ -1,7 +1,7 @@
 import { redirect } from 'next/navigation';
 import { dehydrate } from '@tanstack/react-query';
 import { BoardListClient } from '../../components/board/BoardListClient';
-import { fetchBoardSummaries } from '../../lib/boards-service';
+import { fetchBoardSummaries } from '../../lib/boards-db';
 import { ReactQueryHydrate } from '../../components/ReactQueryHydrate';
 import { getQueryClient } from '../../lib/get-query-client';
 import { getCurrentUser } from '../../lib/auth-server';
@@ -18,7 +18,7 @@ export default async function BoardsPage() {
 
   await queryClient.prefetchQuery({
     queryKey: ['boards'],
-    queryFn: () => fetchBoardSummaries(user.uid),
+    queryFn: () => fetchBoardSummaries(user.id),
   });
 
   return (

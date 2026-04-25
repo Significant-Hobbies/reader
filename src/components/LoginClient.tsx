@@ -1,28 +1,25 @@
 'use client';
 
 import { useState } from 'react';
-import { useRouter } from 'next/navigation';
-import { useAuth } from './AuthProvider';
+import { signIn } from 'next-auth/react';
 import { Button } from './ui/button';
 
 export default function LoginClient() {
-  const { signInWithGoogle, loading } = useAuth();
   const [error, setError] = useState<string | null>(null);
   const [signingIn, setSigningIn] = useState(false);
   const [redirecting, setRedirecting] = useState(false);
-  const router = useRouter();
 
   const handleSignIn = async () => {
     setError(null);
     setSigningIn(true);
     try {
-      await signInWithGoogle();
       setRedirecting(true);
-      router.push('/');
+      await signIn('google', { callbackUrl: '/' });
     } catch (err) {
       console.error('Sign-in error:', err);
       setError('Failed to sign in. Please try again.');
       setSigningIn(false);
+      setRedirecting(false);
     }
   };
 
@@ -45,11 +42,7 @@ export default function LoginClient() {
           <p className="text-gray-400 mt-2">Sign in to access your library</p>
         </div>
 
-        <Button
-          onClick={handleSignIn}
-          disabled={loading || signingIn}
-          className="w-full py-3 text-base"
-        >
+        <Button onClick={handleSignIn} disabled={signingIn} className="w-full py-3 text-base">
           {signingIn ? (
             <span className="flex items-center justify-center gap-2">
               <span className="h-4 w-4 border-2 border-white border-t-transparent rounded-full animate-spin" />

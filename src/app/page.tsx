@@ -1,7 +1,7 @@
 import { redirect } from 'next/navigation';
 import { dehydrate } from '@tanstack/react-query';
 import HomeClient from '../components/HomeClient';
-import { fetchArticleSummaries } from '../lib/articles-service';
+import { fetchArticleSummaries } from '../lib/articles-db';
 import { ReactQueryHydrate } from '../components/ReactQueryHydrate';
 import { getQueryClient } from '../lib/get-query-client';
 import { getCurrentUser } from '../lib/auth-server';
@@ -18,7 +18,7 @@ export default async function Page() {
 
   await queryClient.prefetchQuery({
     queryKey: ['articles'],
-    queryFn: () => fetchArticleSummaries(user.uid),
+    queryFn: () => fetchArticleSummaries(user.id),
   });
 
   return (

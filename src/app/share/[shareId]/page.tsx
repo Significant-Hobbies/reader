@@ -1,6 +1,6 @@
 import { notFound } from 'next/navigation';
 import { BoardCanvasClient } from '../../../components/board/BoardCanvasClient';
-import { fetchBoardByShareId } from '../../../lib/boards-service';
+import { fetchBoardByShareId } from '../../../lib/boards-db';
 import type { Board } from '../../../types';
 
 export const dynamic = 'force-dynamic';

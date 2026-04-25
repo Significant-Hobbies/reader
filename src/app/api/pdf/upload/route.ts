@@ -1,9 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getAuthenticatedUserId } from '../../../../lib/auth-api';
 import { extractTextFromPDF, validatePDFFile } from '../../../../lib/pdf-service';
-import { createArticleRecord } from '../../../../lib/articles-service';
-import { ensureFirebaseAdmin } from '../../../../lib/firebase-admin';
-import { getStorage } from 'firebase-admin/storage';
+import { createArticleRecord } from '../../../../lib/articles-db';
+import { getPdfDownloadUrl, uploadPdf } from '../../../../lib/storage';
 
 export async function POST(request: NextRequest) {
   try {
@@ -51,51 +50,31 @@ export async function POST(request: NextRequest) {
 
     const extraction = await extractTextFromPDF(buffer);
 
-    ensureFirebaseAdmin();
-    const storage = getStorage();
-    const bucket = storage.bucket(
-      process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET ||
-        `${process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID}.appspot.com`
-    );
-
-    const timestamp = Date.now();
-    const sanitizedFileName = file.name.replace(/[^a-zA-Z0-9.-]/g, '_');
-    const storagePath = `pdfs/${userId}/${timestamp}_${sanitizedFileName}`;
-    const fileRef = bucket.file(storagePath);
-
-    await fileRef.save(buffer, {
-      metadata: {
-        contentType: 'application/pdf',
-        metadata: {
-          userId,
-          uploadedAt: new Date().toISOString(),
-        },
-      },
+    const { storageKey, sizeBytes } = await uploadPdf(buffer, {
+      filename: file.name,
+      userId,
     });
 
-    const [signedUrl] = await fileRef.getSignedUrl({
-      action: 'read',
-      expires: Date.now() + 7 * 24 * 60 * 60 * 1000, // 7 days
-    });
-    const pdfUrl = signedUrl;
-
-    const title = extraction.metadata?.title || file.name.replace('.pdf', '');
+    const title = extraction.metadata?.title || file.name.replace(/\.pdf$/i, '');
     const byline = extraction.metadata?.author;
 
+    // Store the blob key as the article's `url` so lookups / dedup don't clash
+    // with the private blob URL — the actual download URL is generated on read.
+    const urlKey = `blob://${storageKey}`;
+
     const id = await createArticleRecord({
-      url: pdfUrl,
+      url: urlKey,
       title,
       byline: byline || undefined,
       content: extraction.text,
       projectId: projectId || undefined,
       userId,
       type: 'pdf',
-      pdfUrl,
       extractedText: extraction.text,
       pdfMetadata: {
         pageCount: extraction.pageCount,
-        fileSize: buffer.length,
-        storagePath,
+        fileSize: sizeBytes,
+        storagePath: storageKey,
       },
       listIds,
       category: category || undefined,
@@ -105,7 +84,7 @@ export async function POST(request: NextRequest) {
       id,
       title,
       pageCount: extraction.pageCount,
-      pdfUrl,
+      pdfUrl: getPdfDownloadUrl(id),
     });
   } catch (error) {
     console.error('Error uploading PDF:', error);

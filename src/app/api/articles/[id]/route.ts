@@ -1,42 +1,14 @@
 import { NextResponse } from 'next/server';
-import { Timestamp } from 'firebase-admin/firestore';
-import { db } from '../../../../lib/firebase-admin';
 import {
+  ArticleUpdateValidationError,
+  deleteArticle,
   fetchArticleById,
   generateArticleShareId,
-  normalizeAIChatMessages,
-  normalizeNotes,
-  normalizeTags,
   revokeArticleShareId,
-  sanitizePlainText,
-  sanitizeTitle,
+  updateArticle,
   verifyArticleOwnership,
-  ARTICLES_COLLECTION,
-} from '../../../../lib/articles-service';
-import { ArticleStatus } from '../../../../types';
+} from '../../../../lib/articles-db';
 import { getAuthenticatedUserId } from '../../../../lib/auth-api';
-
-const normalizeStatus = (status: unknown): ArticleStatus | null =>
-  status === 'read' || status === 'in_progress' ? status : null;
-
-const LOCAL_ONLY_AI_SETTINGS_FIELDS = new Set([
-  'provider',
-  'model',
-  'apiKey',
-  'systemPrompt',
-  'aiConfig',
-]);
-
-const normalizeKeyPoints = (payload: unknown): string[] | null => {
-  if (!Array.isArray(payload)) return null;
-
-  const normalized = payload
-    .map((point) => sanitizePlainText(point).slice(0, 500))
-    .filter((point) => point.length > 0)
-    .slice(0, 10); // Max 10 key points
-
-  return normalized.length > 0 ? normalized : null;
-};
 
 export async function GET(request: Request, { params }: { params: Promise<{ id: string }> }) {
   try {
@@ -90,66 +62,14 @@ export async function PUT(request: Request, { params }: { params: Promise<{ id: 
       return NextResponse.json({ success: true });
     }
 
-    const localOnlyField = Object.keys(payload).find((key) =>
-      LOCAL_ONLY_AI_SETTINGS_FIELDS.has(key)
-    );
-    if (localOnlyField) {
-      return NextResponse.json(
-        {
-          error: `${localOnlyField} is local-only and must not be sent to article persistence.`,
-        },
-        { status: 400 }
-      );
-    }
-
-    const { notes, aiChat, title, status, projectId, tags, aiSummary, keyPoints } = payload;
-
-    const docRef = db.collection(ARTICLES_COLLECTION).doc(id);
-    const updateData: Record<string, unknown> = {
-      updatedAt: Timestamp.now(),
-    };
-
-    if (notes !== undefined) {
-      const normalized = normalizeNotes(notes);
-      updateData.notes = normalized;
-      updateData.notesCount = normalized.length;
-    }
-
-    if (aiChat !== undefined) {
-      updateData.aiChat = normalizeAIChatMessages(aiChat);
-    }
-
-    if (typeof title === 'string') {
-      const trimmedTitle = sanitizeTitle(title);
-      if (trimmedTitle.length > 0) {
-        updateData.title = trimmedTitle;
+    try {
+      await updateArticle(id, userId, payload);
+    } catch (error) {
+      if (error instanceof ArticleUpdateValidationError) {
+        return NextResponse.json({ error: error.message }, { status: 400 });
       }
+      throw error;
     }
-
-    const normalizedStatus = normalizeStatus(status);
-    if (normalizedStatus) {
-      updateData.status = normalizedStatus;
-    }
-
-    if (typeof projectId === 'string' && projectId.trim()) {
-      updateData.projectId = projectId.trim();
-    }
-
-    if (tags !== undefined) {
-      updateData.tags = normalizeTags(tags);
-    }
-
-    if (typeof aiSummary === 'string') {
-      const trimmedSummary = sanitizePlainText(aiSummary).slice(0, 5000);
-      updateData.aiSummary = trimmedSummary.length > 0 ? trimmedSummary : null;
-    }
-
-    if (keyPoints !== undefined) {
-      const normalizedKeyPoints = normalizeKeyPoints(keyPoints);
-      updateData.keyPoints = normalizedKeyPoints;
-    }
-
-    await docRef.update(updateData);
 
     return NextResponse.json({ success: true });
   } catch (error) {
@@ -171,8 +91,7 @@ export async function DELETE(request: Request, { params }: { params: Promise<{ i
       return NextResponse.json({ error: 'Not found or not authorized' }, { status: 404 });
     }
 
-    const docRef = db.collection(ARTICLES_COLLECTION).doc(id);
-    await docRef.delete();
+    await deleteArticle(id, userId);
     return NextResponse.json({ success: true });
   } catch (error) {
     console.error('Error deleting article:', error);

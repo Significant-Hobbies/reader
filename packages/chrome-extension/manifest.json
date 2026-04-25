@@ -3,7 +3,7 @@
   "name": "Web Annotator - Chat with Any Page",
   "version": "0.1.0",
   "description": "Chat with any webpage using AI. Save pages and conversations to your Web Annotator library.",
-  "permissions": ["activeTab", "sidePanel", "storage", "identity"],
+  "permissions": ["activeTab", "sidePanel", "storage"],
   "host_permissions": ["https://web-annotator.vercel.app/*"],
   "side_panel": {
     "default_path": "side-panel/index.html"

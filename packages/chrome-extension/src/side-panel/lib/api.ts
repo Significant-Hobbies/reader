@@ -6,25 +6,34 @@ const API_BASE =
     ? 'https://web-annotator.vercel.app'
     : 'http://localhost:3000');
 
-const SESSION_KEY = 'session-token';
+const API_KEY_STORAGE_KEY = 'api-key';
 
 export function getApiBase(): string {
   return API_BASE;
 }
 
-async function getSessionToken(): Promise<string | null> {
+export async function getApiKey(): Promise<string | null> {
   try {
-    const result = await chrome.storage.local.get(SESSION_KEY);
-    return result[SESSION_KEY] || null;
+    const result = await chrome.storage.local.get(API_KEY_STORAGE_KEY);
+    const value = result[API_KEY_STORAGE_KEY];
+    return typeof value === 'string' && value.startsWith('rdr_') ? value : null;
   } catch {
     return null;
   }
 }
 
+export async function setApiKey(key: string): Promise<void> {
+  await chrome.storage.local.set({ [API_KEY_STORAGE_KEY]: key });
+}
+
+export async function clearApiKey(): Promise<void> {
+  await chrome.storage.local.remove(API_KEY_STORAGE_KEY);
+}
+
 async function authHeaders(): Promise<Record<string, string>> {
-  const token = await getSessionToken();
-  if (!token) return {};
-  return { Authorization: `Bearer ${token}` };
+  const key = await getApiKey();
+  if (!key) return {};
+  return { Authorization: `Bearer ${key}` };
 }
 
 export async function streamChat(
@@ -120,37 +129,4 @@ export async function saveChatHistory(articleId: string, messages: AIChatMessage
   if (!response.ok) {
     throw new Error('Failed to save chat history');
   }
-}
-
-export async function createSession(
-  idToken: string
-): Promise<{ success: boolean; session?: string }> {
-  const response = await fetch(`${API_BASE}/api/auth/session`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ idToken }),
-  });
-
-  if (!response.ok) return { success: false };
-
-  const data = (await response.json()) as {
-    success: boolean;
-    session?: string;
-  };
-
-  // Store session token for bearer auth
-  if (data.session) {
-    await chrome.storage.local.set({ [SESSION_KEY]: data.session });
-  }
-
-  return data;
-}
-
-export async function deleteSession(): Promise<void> {
-  const auth = await authHeaders();
-  await fetch(`${API_BASE}/api/auth/session`, {
-    method: 'DELETE',
-    headers: auth,
-  }).catch(() => {});
-  await chrome.storage.local.remove(SESSION_KEY);
 }

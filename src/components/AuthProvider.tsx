@@ -1,59 +1,43 @@
 'use client';
 
-import { createContext, useContext, useEffect, useState, ReactNode } from 'react';
-import {
-  onAuthStateChanged,
-  signInWithPopup,
-  signOut as firebaseSignOut,
-  User,
-} from 'firebase/auth';
-import { auth, googleProvider } from '../lib/firebase';
-
-interface AuthContextValue {
-  user: User | null;
-  loading: boolean;
-  signInWithGoogle: () => Promise<void>;
-  logout: () => Promise<void>;
-}
-
-const AuthContext = createContext<AuthContextValue>({
-  user: null,
-  loading: true,
-  signInWithGoogle: async () => {},
-  logout: async () => {},
-});
+import { ReactNode } from 'react';
+import { SessionProvider, signIn, signOut, useSession } from 'next-auth/react';
 
 export function AuthProvider({ children }: { children: ReactNode }) {
-  const [user, setUser] = useState<User | null>(null);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    return onAuthStateChanged(auth, async (firebaseUser) => {
-      setUser(firebaseUser);
-      setLoading(false);
-    });
-  }, []);
-
-  const signInWithGoogle = async () => {
-    const result = await signInWithPopup(auth, googleProvider);
-    const idToken = await result.user.getIdToken();
-    await fetch('/api/auth/session', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ idToken }),
-    });
-  };
-
-  const logout = async () => {
-    await fetch('/api/auth/session', { method: 'DELETE' });
-    await firebaseSignOut(auth);
-  };
-
-  return (
-    <AuthContext.Provider value={{ user, loading, signInWithGoogle, logout }}>
-      {children}
-    </AuthContext.Provider>
-  );
+  return <SessionProvider>{children}</SessionProvider>;
 }
 
-export const useAuth = () => useContext(AuthContext);
+export type AuthUser = {
+  id: string | null;
+  email: string | null;
+  name: string | null;
+  image: string | null;
+};
+
+/**
+ * Auth.js-backed replacement for the previous Firebase-based `useAuth()` hook.
+ * Preserves the `{ user, loading, signInWithGoogle, logout }` shape.
+ * Note: `user.photoURL` → `user.image` and `user.uid` → `user.id` on the
+ * Auth.js side; any downstream UI using the old Firebase field names must be
+ * updated alongside this change.
+ */
+export function useAuth() {
+  const { data: session, status } = useSession();
+  const sessionUser = session?.user;
+
+  const user: AuthUser | null = sessionUser
+    ? {
+        id: sessionUser.id ?? null,
+        email: sessionUser.email ?? null,
+        name: sessionUser.name ?? null,
+        image: sessionUser.image ?? null,
+      }
+    : null;
+
+  return {
+    user,
+    loading: status === 'loading',
+    signInWithGoogle: () => signIn('google', { callbackUrl: '/' }),
+    logout: () => signOut({ callbackUrl: '/login' }),
+  };
+}

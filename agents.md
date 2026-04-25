@@ -1,133 +1,94 @@
-# Web Annotator
+# agents.md — reader
 
-Personal research library for capturing, reading, annotating, and organizing web content with AI assistance.
+## Purpose
+Personal research library — capture, read, annotate, and AI-chat with web articles and PDFs, with a companion Chrome MV3 extension.
 
-## Tech Stack
+## Stack
+- Framework: Next.js 16 (App Router), React 19
+- Language: TypeScript
+- Styling: Tailwind CSS v4 + `@tailwindcss/typography`, Radix UI
+- DB: Firebase Firestore (current/active) + Turso/libSQL via Drizzle (migration in progress — schema exists, not yet primary)
+- Auth: Firebase Auth (Google, current) + `firebase-admin` session cookies; target: NextAuth v5
+- Testing: Vitest (unit), Playwright (e2e)
+- Deploy: Vercel
+- Package manager: pnpm workspace
 
-- **Framework**: Next.js 16 (App Router), React 19, TypeScript
-- **Styling**: Tailwind CSS 4 + `@tailwindcss/typography`, Radix UI primitives, `lucide-react` icons
-- **Database**: Firebase (Firestore) -- articles in `annotations` collection (legacy name), plus `projects`, `lists`, `boards`
-- **Auth**: Firebase Auth with Google Sign-In, server-side session cookies (`__session`, 14-day expiry), verified via `firebase-admin`
-- **AI**: Vercel AI SDK (`ai` + `@ai-sdk/*`) for streaming chat/summarization. Supports Gateway (default, no key needed), OpenAI, Anthropic, Google (BYOK), and local AI
-- **PDF**: `react-pdf`, `pdfjs-dist`, `pdf-parse`
-- **Canvas/Board**: `@xyflow/react` for node-based research boards
-- **State**: React Query (`@tanstack/react-query`) with server-side prefetching
-- **Content Processing**: `@mozilla/readability` + `linkedom` for article extraction, `sanitize-html` for XSS prevention
-- **SaaS Maker**: feedback, testimonials, changelog, analytics
-- **Dev Tooling**: ESLint 9 + Prettier + Husky + lint-staged
-- **Runtime**: Node.js 24.x, deployed on Vercel
-
-## Architecture
-
+## Repo structure
 ```
 src/
   app/
-    layout.tsx              # Root layout: AuthProvider > QueryProvider > children + SaaSMaker widgets
-    page.tsx                # Home -- SSR with prefetched articles, redirects to /login if unauthenticated
-    login/page.tsx          # Google Sign-In page
-    reader/[id]/page.tsx    # Article/PDF reader view
-    board/                  # Research boards (list + canvas views)
-      page.tsx              # Board list
-      [id]/page.tsx         # Board canvas
-    share/                  # Public shared views (articles + boards)
-    api/
-      auth/session/         # POST: create session cookie, DELETE: clear it
-      articles/             # CRUD for articles
-      articles/[id]/        # GET/PATCH/DELETE single article
-      articles/[id]/lists/  # PUT/DELETE to add/remove article from lists
-      boards/               # CRUD for boards
-      lists/                # CRUD for lists (Favourites, Read Later, custom)
-      ai/chat/              # POST: streaming AI chat (multi-provider)
-      ai/summarize/         # POST: generate article summary/key points
-      ai/models/            # GET: list available models
-      search/               # GET: full-text search
-      snapshot/             # POST: capture article from URL via Readability
+    page.tsx             # Home (article library)
+    login/               # Login page
+    reader/              # Article reader view
+    board/               # Kanban board view
+    share/               # Public share page
+    api/                 # REST API routes
   components/
-    HomeClient.tsx          # Main dashboard: article list, list sidebar, tag filtering
-    reader/ReaderCore.tsx   # Core reader with notes, AI chat, summary panels
-    NotesAIChat.tsx         # AI chat panel (multi-provider, streaming)
-    board/
-      BoardCanvasClient.tsx # XYFlow canvas with drag-and-drop nodes
-      nodes/                # Node types: Website, Note, AIChat, Iframe, Reader
-    ui/                     # Radix-based primitives
+    ReaderView.tsx        # Article reading mode (typography, annotations)
+    PDFReaderClient.tsx   # PDF reading via pdfjs-dist / react-pdf
+    NotesAIChat.tsx       # AI chat panel for notes
+    ArticleSummary.tsx    # AI-generated summary
+    board/               # Board components
+    reader/              # Reader components
+    ui/                  # Shadcn-style primitives
   lib/
-    firebase.ts             # Client-side Firebase init
-    firebase-admin.ts       # Server-side Firebase Admin SDK
-    auth-server.ts          # Session cookie management
-    articles-service.ts     # Article CRUD, sanitization, search
-    boards-service.ts       # Board CRUD, node/edge sanitization
-    lists-service.ts        # Lists CRUD (Favourites, Read Later, custom)
-    ai-config.ts            # AI provider types, model lists
-    ai-server.ts            # AI SDK wrappers, local AI stream
-  types.ts                  # All shared TypeScript interfaces
+    db/
+      schema.ts          # Drizzle schema (Turso target — migration in progress)
+      client.ts          # Turso libSQL client
+    articles-db.ts       # Firestore article CRUD (current active path)
+    articles-service.ts  # Business logic layer
+    boards-db.ts         # Firestore boards CRUD
+    auth.ts              # Auth helpers (browser)
+    auth-server.ts       # Firebase Admin session auth
+    ai-server.ts         # AI provider config (server)
+    storage.ts           # Vercel Blob helpers
+    pdf-service.ts       # PDF text extraction
+packages/
+  chrome-extension/      # Chrome MV3 extension (separate Vite build)
+    manifest.json        # MV3 manifest — side panel, content script, service worker
+    src/                 # Extension source (background, content script)
+    side-panel/          # Side panel HTML entry
+    vite.config.ts       # Extension Vite config (builds independently)
+plans/
+  migrate-off-firebase.md  # ACTIVE migration plan: Firebase → Turso + NextAuth v5 + Vercel Blob
+  archive/                 # Archived plans with timestamps
+scripts/
+  local-ai.mjs            # Local LLM bridge server (runs alongside Next.js in dev)
+  migrate-firestore-to-turso.ts  # One-time migration script
+drizzle.config.ts         # Drizzle config (Turso, schema at src/lib/db/schema.ts)
+firestore.rules           # Firestore security rules
 ```
 
-## Key Conventions
-
-- **Path aliases**: `@/*` maps to `src/*`
-- **Auth pattern**: Every API route calls `getAuthenticatedUserId()` first
-- **Sanitization**: All user input sanitized via `sanitize-html` before storage
-- **Ownership**: Every query filters by `userId`
-- **Article collection name**: Collection is `annotations` (historical), via `ARTICLES_COLLECTION` constant
-- **Lists > Projects**: `projectId` deprecated. Use `listIds[]` (array-contains queries)
-- **AI keys**: BYOK stored in browser only (`localStorage`), sent per-request
-- **Streaming**: AI responses use plain text streams (not SSE)
-- **Commit style**: Conventional Commits (`feat(scope): message`)
-- **Plans**: live plans sit in `plans/<slug>.md`. When a plan materially changes, archive the prior version to `plans/archive/YYYY-MM-DD-<slug>.md` before editing. When an initiative ships, move the file to `plans/archive/` with the archive date as prefix.
-
-## Commands
-
+## Key commands
 ```bash
-npm run dev          # Start Next.js + local-ai via concurrently
-npm run dev:app      # Start only Next.js
-npm run build        # Production build
-npm run lint         # ESLint
-npm run format       # Prettier --write
-npm run type-check   # tsc --noEmit
+# Web app
+pnpm dev            # Next.js + local-ai.mjs concurrently
+pnpm dev:app        # Next.js only (port 3000)
+pnpm build          # next build
+pnpm test           # vitest run
+pnpm test:e2e       # playwright test
+pnpm lint           # eslint
+pnpm type-check     # tsc --noEmit
+
+# Database (Turso — migration target)
+pnpm db:push        # drizzle-kit push
+pnpm db:studio      # drizzle-kit studio
+
+# Chrome extension (from packages/chrome-extension/)
+pnpm dev            # vite build --watch → dist/
+pnpm build          # vite build (production)
+pnpm test           # vitest run
 ```
 
-## Environment Variables
+## Architecture notes
+- **ACTIVE MIGRATION**: Firebase Firestore → Turso + NextAuth v5 + Vercel Blob. Both paths live simultaneously. `articles-db.ts` (Firestore) is the current active path. `src/lib/db/schema.ts` (Drizzle/Turso) is the migration target. See `plans/migrate-off-firebase.md`.
+- **Chrome extension**: Manifest V3. Side panel (not popup) for chat UI. Content script uses `@mozilla/readability` for page extraction. Communicates with web app at `https://web-annotator.vercel.app`. Builds independently in `packages/chrome-extension/`.
+- **PDF support**: `pdfjs-dist` for rendering, `pdf-parse` for text extraction.
+- **Boards**: Kanban view at `/board` using `@xyflow/react`.
+- **AI**: `@ai-sdk/openai-compatible` + Vercel AI SDK. `scripts/local-ai.mjs` bridges a local LLM in dev.
+- **React Query**: `@tanstack/react-query` for client data fetching; `ReactQueryHydrate` for SSR hydration.
+- **pnpm monorepo**: root is the Next.js web app; `packages/chrome-extension` is a separate workspace package.
+- Do NOT commit `.env` or Firebase credentials — verify `.gitignore` before first commit.
+- Pre-commit and pre-push hooks via Husky: lint-staged runs ESLint + Prettier.
 
-```bash
-# Required -- Firebase
-NEXT_PUBLIC_FIREBASE_API_KEY=
-NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN=
-NEXT_PUBLIC_FIREBASE_PROJECT_ID=
-NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET=
-NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID=
-NEXT_PUBLIC_FIREBASE_APP_ID=
-FIREBASE_SERVICE_ACCOUNT_KEY=          # base64-encoded service account JSON
-
-# Optional
-AI_GATEWAY_API_KEY=                    # Server-side fallback for Vercel AI Gateway
-LOCAL_AI_URL=http://127.0.0.1:3456    # Local AI endpoint
-NEXT_PUBLIC_SAASMAKER_API_KEY=         # SaaS Maker integration
-```
-
-## Current State
-
-**Done:**
-
-- Full article capture (URL via Readability + PDF upload)
-- Reader view with themes (light/dark/sepia), fonts, font sizes
-- Notes with optional DOM anchoring, text selection actions
-- AI chat per article (multi-provider streaming)
-- AI summaries + key points extraction
-- Lists system (Favourites, Read Later, custom) replacing legacy projects
-- Tags with color-coded badges, autocomplete, filtering
-- Full-text search (Cmd+K)
-- Research boards (XYFlow canvas) with 5 node types
-- Public sharing for articles and boards
-- Google Sign-In auth with session cookies
-- Pre-commit hooks (lint + format)
-
-**Migration in progress:**
-
-- `projectId` deprecated in favor of `listIds[]` -- migration script exists
-
-**Not done:**
-
-- No tests
-- Search is client-side (loads all docs, filters in memory)
-- No offline support or PWA
-- No export functionality
+## Active context

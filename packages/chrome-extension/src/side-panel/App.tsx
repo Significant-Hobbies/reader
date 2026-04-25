@@ -6,9 +6,8 @@ import {
   saveAIConfig,
   loadChatHistory,
   saveChatHistory as saveChatToStorage,
-  loadAuthState,
 } from './lib/storage';
-import { checkAuth } from './lib/api';
+import { checkAuth, getApiKey } from './lib/api';
 import { Chat } from './components/Chat';
 import { PageHeader } from './components/PageHeader';
 
@@ -38,19 +37,15 @@ export function App() {
   }, []);
 
   useEffect(() => {
-    // Load config and auth state on mount
+    // Load config; if an API key is stored, verify it and hydrate user.
     loadAIConfig().then(setConfig);
-    loadAuthState().then((stored) => {
-      if (stored.isAuthenticated) {
-        // Verify session is still valid
-        checkAuth().then((user) => {
-          if (user) {
-            setAuth({ isAuthenticated: true, user });
-          } else {
-            setAuth({ isAuthenticated: false, user: null });
-          }
-        });
-      }
+    getApiKey().then((key) => {
+      if (!key) return;
+      checkAuth().then((user) => {
+        if (user) {
+          setAuth({ isAuthenticated: true, user });
+        }
+      });
     });
 
     extractPage();

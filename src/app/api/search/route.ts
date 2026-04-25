@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { searchArticles } from '../../../lib/articles-service';
+import { searchArticles } from '../../../lib/articles-db';
 import { getAuthenticatedUserId } from '../../../lib/auth-api';
 
 export async function GET(request: NextRequest) {

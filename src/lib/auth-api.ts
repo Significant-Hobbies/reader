@@ -1,33 +1,35 @@
-import * as admin from 'firebase-admin';
-import { cookies, headers } from 'next/headers';
-import { ensureFirebaseAdmin } from './firebase-admin';
+import { headers } from 'next/headers';
+import { auth } from './auth';
+import { API_KEY_PREFIX, verifyApiKey } from './api-keys';
 
-const SESSION_COOKIE_NAME = '__session';
-
+/**
+ * Resolve the authenticated user for an API request.
+ *
+ * Priority:
+ *   1. `Authorization: Bearer rdr_*` — long-lived API key (chrome extension).
+ *   2. Auth.js session cookie — webapp users.
+ *
+ * The bearer path lets the chrome extension survive session cookie expiry.
+ */
 export async function getAuthenticatedUserId(): Promise<string | null> {
   try {
-    ensureFirebaseAdmin();
-
-    // Check session cookie first (web app)
-    const cookieStore = await cookies();
-    const sessionCookie = cookieStore.get(SESSION_COOKIE_NAME)?.value;
-    if (sessionCookie) {
-      const decoded = await admin.auth().verifySessionCookie(sessionCookie, true);
-      return decoded.uid;
+    const h = await headers();
+    const authHeader = h.get('authorization') ?? h.get('Authorization');
+    if (authHeader) {
+      const [scheme, value] = authHeader.split(' ', 2);
+      if (scheme?.toLowerCase() === 'bearer' && value?.startsWith(API_KEY_PREFIX)) {
+        const userId = await verifyApiKey(value);
+        if (userId) return userId;
+        // Explicit bearer present but invalid — don't silently fall through to
+        // a session cookie; the caller is claiming API-key auth.
+        return null;
+      }
     }
-
-    // Fall back to Authorization header (Chrome extension)
-    const headerStore = await headers();
-    const authHeader = headerStore.get('authorization');
-    if (authHeader?.startsWith('Bearer ')) {
-      const token = authHeader.slice(7);
-      const decoded = await admin.auth().verifySessionCookie(token, true);
-      return decoded.uid;
-    }
-
-    return null;
-  } catch (error) {
-    console.error('Session verification failed:', error);
-    return null;
+  } catch {
+    // `headers()` throws outside a request scope (e.g. during build); fall
+    // through to the session path.
   }
+
+  const session = await auth();
+  return session?.user?.id ?? null;
 }

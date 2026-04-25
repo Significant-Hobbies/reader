@@ -1,5 +1,5 @@
 import { notFound } from 'next/navigation';
-import { fetchArticleByShareId } from '../../../../lib/articles-service';
+import { fetchArticleByShareId } from '../../../../lib/articles-db';
 import { ReaderCore } from '../../../../components/reader/ReaderCore';
 import type { Article } from '../../../../types';
 

@@ -1,8 +1,7 @@
-import type { AIConfig, AIChatMessage, AuthState } from './types';
+import type { AIConfig, AIChatMessage } from './types';
 import { AI_CONFIG_STORAGE_KEY, DEFAULT_AI_CONFIG } from './types';
 
 const CHAT_HISTORY_PREFIX = 'chat:';
-const AUTH_STATE_KEY = 'auth-state';
 const MAX_CACHED_CONVERSATIONS = 20;
 
 export async function loadAIConfig(): Promise<AIConfig> {
@@ -49,23 +48,4 @@ async function pruneOldConversations(): Promise<void> {
 
   const toRemove = chatKeys.slice(0, chatKeys.length - MAX_CACHED_CONVERSATIONS);
   await chrome.storage.local.remove(toRemove);
-}
-
-export async function loadAuthState(): Promise<AuthState> {
-  try {
-    const result = await chrome.storage.local.get(AUTH_STATE_KEY);
-    return result[AUTH_STATE_KEY] || { isAuthenticated: false, user: null };
-  } catch {
-    return { isAuthenticated: false, user: null };
-  }
-}
-
-export async function saveAuthState(state: AuthState): Promise<void> {
-  await chrome.storage.local.set({ [AUTH_STATE_KEY]: state });
-}
-
-export async function clearAuthState(): Promise<void> {
-  await chrome.storage.local.set({
-    [AUTH_STATE_KEY]: { isAuthenticated: false, user: null },
-  });
 }

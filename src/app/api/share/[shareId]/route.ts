@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { fetchBoardByShareId } from '../../../../lib/boards-service';
+import { fetchBoardByShareId } from '../../../../lib/boards-db';
 
 export async function GET(_request: Request, { params }: { params: Promise<{ shareId: string }> }) {
   try {

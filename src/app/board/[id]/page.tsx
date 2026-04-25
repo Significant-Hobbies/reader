@@ -1,7 +1,7 @@
 import { redirect, notFound } from 'next/navigation';
 import { dehydrate } from '@tanstack/react-query';
 import { BoardCanvasClient } from '../../../components/board/BoardCanvasClient';
-import { fetchBoardById } from '../../../lib/boards-service';
+import { fetchBoardById } from '../../../lib/boards-db';
 import { ReactQueryHydrate } from '../../../components/ReactQueryHydrate';
 import { getQueryClient } from '../../../lib/get-query-client';
 import { getCurrentUser } from '../../../lib/auth-server';
@@ -17,7 +17,7 @@ export default async function BoardPage({ params }: { params: Promise<{ id: stri
   const { id } = await params;
   const queryClient = getQueryClient();
 
-  const board = await fetchBoardById(id, user.uid);
+  const board = await fetchBoardById(id, user.id);
   if (!board) {
     notFound();
   }

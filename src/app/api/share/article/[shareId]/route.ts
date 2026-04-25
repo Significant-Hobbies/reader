@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { fetchArticleByShareId } from '../../../../../lib/articles-service';
+import { fetchArticleByShareId } from '../../../../../lib/articles-db';
 
 export async function GET(_request: Request, { params }: { params: Promise<{ shareId: string }> }) {
   try {

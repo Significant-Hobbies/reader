@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { fetchBoardSummaries, createBoard } from '../../../lib/boards-service';
+import { fetchBoardSummaries, createBoard } from '../../../lib/boards-db';
 import { getAuthenticatedUserId } from '../../../lib/auth-api';
 
 export async function GET() {

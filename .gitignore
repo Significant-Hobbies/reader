@@ -52,3 +52,8 @@ web-annotator-extension-*.zip
 .env.*
 !.env.example
 .saasmaker.json
+
+# CF/open-next build artifacts
+.open-next/
+.wrangler/
+.omx/

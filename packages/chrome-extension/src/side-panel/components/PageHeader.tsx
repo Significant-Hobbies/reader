@@ -1,7 +1,7 @@
-import { Globe, LogIn, LogOut, User } from 'lucide-react';
+import { useState } from 'react';
+import { ExternalLink, Globe, KeyRound, LogOut, User } from 'lucide-react';
 import type { PageContent, AuthState } from '../lib/types';
-import { checkAuth, createSession, deleteSession } from '../lib/api';
-import { saveAuthState, clearAuthState } from '../lib/storage';
+import { checkAuth, clearApiKey, getApiBase, setApiKey } from '../lib/api';
 
 interface PageHeaderProps {
   page: PageContent | null;
@@ -9,78 +9,35 @@ interface PageHeaderProps {
   onAuthChange: (auth: AuthState) => void;
 }
 
-const FIREBASE_API_KEY = import.meta.env.VITE_FIREBASE_API_KEY || '';
-const GOOGLE_CLIENT_ID = import.meta.env.VITE_GOOGLE_CLIENT_ID || '';
-
-async function signInWithGoogle(onAuthChange: (auth: AuthState) => void): Promise<void> {
-  try {
-    const redirectUri = chrome.identity.getRedirectURL();
-    const authUrl =
-      `https://accounts.google.com/o/oauth2/v2/auth?` +
-      `client_id=${GOOGLE_CLIENT_ID}` +
-      `&redirect_uri=${encodeURIComponent(redirectUri)}` +
-      `&response_type=token` +
-      `&scope=${encodeURIComponent('openid email profile')}`;
-
-    const responseUrl = await chrome.identity.launchWebAuthFlow({
-      url: authUrl,
-      interactive: true,
-    });
-
-    if (!responseUrl) throw new Error('Auth flow cancelled');
-
-    const url = new URL(responseUrl);
-    const accessToken = new URLSearchParams(url.hash.slice(1)).get('access_token');
-    if (!accessToken) throw new Error('No access token received');
-
-    // Exchange Google access token for Firebase ID token via REST API
-    const firebaseRes = await fetch(
-      `https://identitytoolkit.googleapis.com/v1/accounts:signInWithIdp?key=${FIREBASE_API_KEY}`,
-      {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          postBody: `access_token=${accessToken}&providerId=google.com`,
-          requestUri: redirectUri,
-          returnSecureToken: true,
-          returnIdpCredential: true,
-        }),
-      }
-    );
-
-    if (!firebaseRes.ok) throw new Error('Firebase auth exchange failed');
-
-    const firebaseData = (await firebaseRes.json()) as {
-      idToken: string;
-      email: string;
-      displayName: string;
-      photoUrl: string;
-      localId: string;
-    };
-
-    // Create server session (stores bearer token in chrome.storage.local)
-    const sessionResult = await createSession(firebaseData.idToken);
-    if (!sessionResult.success) throw new Error('Session creation failed');
-
-    // Verify and get full user info
-    const user = await checkAuth();
-    if (user) {
-      const authState: AuthState = { isAuthenticated: true, user };
-      await saveAuthState(authState);
-      onAuthChange(authState);
-    }
-  } catch (err) {
-    console.error('Sign-in failed:', err);
-  }
-}
-
 async function signOut(onAuthChange: (auth: AuthState) => void): Promise<void> {
-  await deleteSession();
-  await clearAuthState();
+  await clearApiKey();
   onAuthChange({ isAuthenticated: false, user: null });
 }
 
 export function PageHeader({ page, auth, onAuthChange }: PageHeaderProps) {
+  const [connecting, setConnecting] = useState(false);
+  const [pasteValue, setPasteValue] = useState('');
+  const [error, setError] = useState<string | null>(null);
+
+  const handleConnect = async () => {
+    const trimmed = pasteValue.trim();
+    if (!trimmed.startsWith('rdr_')) {
+      setError('Key must start with rdr_');
+      return;
+    }
+    setError(null);
+    await setApiKey(trimmed);
+    const user = await checkAuth();
+    if (user) {
+      onAuthChange({ isAuthenticated: true, user });
+      setConnecting(false);
+      setPasteValue('');
+    } else {
+      await clearApiKey();
+      setError('Key rejected — is it active?');
+    }
+  };
+
   return (
     <div className="border-b border-gray-800 bg-gray-900/80 px-4 py-3">
       <div className="flex items-center justify-between gap-2">
@@ -105,9 +62,9 @@ export function PageHeader({ page, auth, onAuthChange }: PageHeaderProps) {
               )}
               <button
                 type="button"
-                onClick={() => signOut(onAuthChange)}
+                onClick={() => void signOut(onAuthChange)}
                 className="rounded-md p-1.5 text-gray-400 hover:bg-gray-800 hover:text-gray-200"
-                title="Sign out"
+                title="Disconnect"
               >
                 <LogOut className="h-4 w-4" />
               </button>
@@ -115,15 +72,49 @@ export function PageHeader({ page, auth, onAuthChange }: PageHeaderProps) {
           ) : (
             <button
               type="button"
-              onClick={() => signInWithGoogle(onAuthChange)}
+              onClick={() => setConnecting((v) => !v)}
               className="flex items-center gap-1.5 rounded-lg bg-blue-600 px-3 py-1.5 text-xs font-medium text-white hover:bg-blue-500"
             >
-              <LogIn className="h-3.5 w-3.5" />
-              Sign in
+              <KeyRound className="h-3.5 w-3.5" />
+              Connect
             </button>
           )}
         </div>
       </div>
+      {!auth.isAuthenticated && connecting && (
+        <div className="mt-3 space-y-2 rounded-xl border border-gray-800 bg-gray-950/80 p-2.5">
+          <p className="text-xs text-gray-400">
+            Sign in at{' '}
+            <a
+              href={getApiBase()}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-0.5 text-blue-300 hover:text-blue-200"
+            >
+              {getApiBase().replace(/^https?:\/\//, '')}
+              <ExternalLink className="h-3 w-3" />
+            </a>{' '}
+            then POST to <code className="text-gray-300">/api/keys</code> to get a key. Paste it
+            below.
+          </p>
+          <input
+            type="password"
+            value={pasteValue}
+            onChange={(e) => setPasteValue(e.target.value)}
+            placeholder="rdr_..."
+            className="h-8 w-full rounded-lg border border-gray-700 bg-gray-900 px-2 text-xs text-gray-100 placeholder:text-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
+          />
+          {error && <p className="text-xs text-red-300">{error}</p>}
+          <button
+            type="button"
+            onClick={() => void handleConnect()}
+            disabled={!pasteValue.trim()}
+            className="w-full rounded-lg bg-blue-600 px-3 py-1.5 text-xs font-medium text-white hover:bg-blue-500 disabled:cursor-not-allowed disabled:opacity-50"
+          >
+            Save key
+          </button>
+        </div>
+      )}
     </div>
   );
 }

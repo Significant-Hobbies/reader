@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { createList, fetchLists } from '../../../lib/lists-service';
+import { createList, fetchLists } from '../../../lib/lists-db';
 import { getAuthenticatedUserId } from '../../../lib/auth-api';
 
 export async function GET() {

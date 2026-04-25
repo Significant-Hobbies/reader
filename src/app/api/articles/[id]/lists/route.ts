@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { addArticleToList, removeArticleFromList } from '../../../../../lib/lists-service';
+import { addArticleToList, removeArticleFromList } from '../../../../../lib/lists-db';
 import { getAuthenticatedUserId } from '../../../../../lib/auth-api';
 
 /**

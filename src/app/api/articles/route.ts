@@ -3,7 +3,7 @@ import {
   createArticleRecord,
   fetchArticleSummaries,
   findArticleByUrl,
-} from '../../../lib/articles-service';
+} from '../../../lib/articles-db';
 import { getAuthenticatedUserId } from '../../../lib/auth-api';
 
 export async function GET(request: NextRequest) {
