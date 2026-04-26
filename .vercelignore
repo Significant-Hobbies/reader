@@ -1,6 +1,0 @@
-# Ignore git worktrees during Vercel deployment
-.worktrees/
-
-# Ignore local AI bridge directories
-local-ai/
-cli-bridge/
