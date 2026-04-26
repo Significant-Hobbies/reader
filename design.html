@@ -1,0 +1,225 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>The Reader</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;family=Source+Serif+4:ital,opsz,wght@0,8..60,400;0,8..60,600;1,8..60,400;1,8..60,600&amp;family=Manrope:wght@400;600;800&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            colors: {
+              surface: "#fafafa",
+              surface_container_low: "#f3f3f3",
+              surface_container_highest: "#e5e5e5",
+              secondary_container: "#dbeafe",
+            },
+            borderRadius: {
+              "DEFAULT": "1rem",
+              "lg": "2rem",
+              "xl": "3rem",
+              "full": "9999px"
+            },
+            fontFamily: {
+              headline: ["Manrope", "sans-serif"],
+              display: ["Manrope", "sans-serif"],
+              body: ["'Source Serif 4'", "serif"],
+              label: ["'Source Serif 4'", "serif"],
+              sans: ["Inter", "sans-serif"]
+            }
+          }
+        }
+      }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        body {
+            background-color: #fafafa;
+            color: #1c1917;
+            -webkit-font-smoothing: antialiased;
+        }
+        .reading-text {
+            line-height: 1.6;
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-surface selection:bg-secondary_container">
+<!-- TopAppBar -->
+<header class="bg-stone-50 dark:bg-stone-950 fixed top-0 w-full z-50">
+<nav class="flex justify-between items-center w-full px-6 py-4 max-w-screen-2xl mx-auto">
+<div class="flex items-center gap-4">
+<button class="hover:bg-stone-200/50 dark:hover:bg-stone-800/50 transition-colors duration-300 p-2 rounded-full scale-95 active:scale-90">
+<span class="material-symbols-outlined text-stone-900 dark:text-stone-50">menu</span>
+</button>
+</div>
+<h1 class="font-['Source_Serif_4'] italic text-2xl font-semibold text-stone-900 dark:text-stone-50">The Reader</h1>
+<div class="flex items-center gap-4">
+<button class="hover:bg-stone-200/50 dark:hover:bg-stone-800/50 transition-colors duration-300 p-2 rounded-full scale-95 active:scale-90">
+<span class="material-symbols-outlined text-stone-900 dark:text-stone-50">search</span>
+</button>
+</div>
+</nav>
+</header>
+<main class="pt-24 pb-32 max-w-screen-xl mx-auto px-6 md:px-12">
+<!-- Hero Section -->
+<section class="mb-24">
+<div class="relative group cursor-pointer overflow-hidden rounded-xl mb-8">
+<img class="w-full h-[530px] object-cover grayscale transition-transform duration-700 group-hover:scale-105" data-alt="Minimalist still life of a single open book on a clean white linen surface with soft morning light and long shadows" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDX59p422Ux0ctTR3y9flzUSoiOweyJLeTi9zhgrFDz2pgTVUtRIjp7MhdOLVxst4JcfVQw5zR8Gm5axhbysJVwBsB-8cJ5K0gz3fTBnrauS8AT_JPoETyYeIw7-pXRydKKR7_LU2Qzgvq2R4hXRb8OlyHsj8qCitRgWcwZK48MPdzQ0yRztMHkA6Ogv2s-rIQvo2K-5c5Hq8TxV8Rp-ciXu00x40SDMQ2uaVo8LJ9pGFWII5aC_SoWnATADPl_BRDfxs075cAoMsGX"/>
+<div class="absolute inset-0 bg-gradient-to-t from-stone-900/40 to-transparent"></div>
+</div>
+<div class="max-w-3xl">
+<span class="font-sans text-xs uppercase tracking-[0.2em] text-stone-500 mb-4 block">Featured Essay</span>
+<h2 class="font-['Source_Serif_4'] text-5xl md:text-6xl font-medium tracking-tight text-stone-900 mb-6 leading-tight">The Art of Mindful Consumption</h2>
+<p class="font-['Source_Serif_4'] text-xl text-stone-600 reading-text italic">In an age of digital noise, we explore how returning to slow, focused reading can restore the architecture of our attention.</p>
+</div>
+</section>
+<!-- Reading List Section -->
+<section class="mb-24">
+<div class="flex justify-between items-end mb-12">
+<h3 class="font-['Source_Serif_4'] text-3xl font-medium text-stone-900">Currently Reading</h3>
+<a class="font-sans text-sm font-semibold text-stone-400 hover:text-stone-900 transition-colors uppercase tracking-widest" href="#">View All</a>
+</div>
+<div class="grid md:grid-cols-2 gap-12">
+<!-- Item 1 -->
+<div class="flex gap-8 group">
+<div class="w-32 h-48 flex-shrink-0 shadow-sm overflow-hidden bg-stone-100">
+<img class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110" data-alt="A minimalist book cover design with bold black typography on an off-white background titled Essentialism" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDJGCNSLQABSiov_PVps_gT-ULRpWx1KSNlHe3nT39g9D-qs4Au62shOuj9SmRTQv-OAMjYkcnDV6nyNctU6dqcTX-BuGxgN5miHajdUuinDYXxIvNYHJSKZZ9hOrYml7X5O0L2LnRm0QpsSWKM4Z2dWEjPvbBhgQ6OuhULzhhSFWN3cpHjSht3IF_PV1Ej8Gu2Xaw2V3SqnXGJsTeZf1q_d0ywm4K28jsInzGv6w9QAD9RXP28qW1C-qBYlTd6iZE-RXZ-z5PVvXqc"/>
+</div>
+<div class="flex flex-col justify-center">
+<span class="font-sans text-[10px] uppercase tracking-widest text-stone-400 mb-2">Non-Fiction</span>
+<h4 class="font-['Source_Serif_4'] text-xl font-semibold text-stone-900 mb-1">Meditations</h4>
+<p class="font-sans text-sm text-stone-500 mb-6">Marcus Aurelius</p>
+<div class="w-full h-[2px] bg-stone-100">
+<div class="w-[65%] h-full bg-stone-900"></div>
+</div>
+<span class="font-sans text-[10px] mt-2 text-stone-400">65% Completed</span>
+</div>
+</div>
+<!-- Item 2 -->
+<div class="flex gap-8 group">
+<div class="w-32 h-48 flex-shrink-0 shadow-sm overflow-hidden bg-stone-100">
+<img class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110" data-alt="Classical book with gold leaf lettering on a dark leather spine sitting on a mahogany table" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCmeXpi2Ex9lN_A0pDnkSkaT7pM4PoBkxbjD7XD9Sf4aCaXWTB50crCpXK9gJUpOrtQtr4Go9nd3mR6jwocKfwP8eVHNlCsvsBLIBCtszUPCL2bWuPhD9hgq2EKTWY1uWF3rHIdP__-k-US_gRzU_Cr2lJoiHydtDZ68jTZT5uKFXrz-VZ7XbtupWagRtUiTeDZNXMbuZu-Nh_JbLfPQYmtSrEDdnFbCpLzdiFyMIrfDYt4c8eKEUCxGPPuezvEeE2ATQkWArRrdco5"/>
+</div>
+<div class="flex flex-col justify-center">
+<span class="font-sans text-[10px] uppercase tracking-widest text-stone-400 mb-2">Philosophy</span>
+<h4 class="font-['Source_Serif_4'] text-xl font-semibold text-stone-900 mb-1">Beyond Good and Evil</h4>
+<p class="font-sans text-sm text-stone-500 mb-6">Friedrich Nietzsche</p>
+<div class="w-full h-[2px] bg-stone-100">
+<div class="w-[12%] h-full bg-stone-900"></div>
+</div>
+<span class="font-sans text-[10px] mt-2 text-stone-400">12% Completed</span>
+</div>
+</div>
+</div>
+</section>
+<!-- Article Archive -->
+<section class="mb-24 py-16 bg-stone-100/50 -mx-6 md:-mx-12 px-6 md:px-12">
+<h3 class="font-['Source_Serif_4'] text-3xl font-medium text-stone-900 mb-12">From the Archive</h3>
+<div class="grid gap-12 divide-y divide-stone-200">
+<!-- Archive Card 1 -->
+<div class="pt-8 group cursor-pointer">
+<span class="font-sans text-[11px] uppercase tracking-widest text-stone-400 block mb-2 group-hover:text-stone-600 transition-colors">Poetry</span>
+<h4 class="font-['Source_Serif_4'] text-2xl font-medium text-stone-900 mb-2 group-hover:italic transition-all">The Rhythms of Silence</h4>
+<p class="font-['Source_Serif_4'] text-stone-500">An exploration of white space in modern stanzas.</p>
+</div>
+<!-- Archive Card 2 -->
+<div class="pt-8 group cursor-pointer">
+<span class="font-sans text-[11px] uppercase tracking-widest text-stone-400 block mb-2 group-hover:text-stone-600 transition-colors">Design</span>
+<h4 class="font-['Source_Serif_4'] text-2xl font-medium text-stone-900 mb-2 group-hover:italic transition-all">Gutenberg's Ghost</h4>
+<p class="font-['Source_Serif_4'] text-stone-500">How the moveable type press still dictates our digital screens.</p>
+</div>
+<!-- Archive Card 3 -->
+<div class="pt-8 group cursor-pointer">
+<span class="font-sans text-[11px] uppercase tracking-widest text-stone-400 block mb-2 group-hover:text-stone-600 transition-colors">Literature</span>
+<h4 class="font-['Source_Serif_4'] text-2xl font-medium text-stone-900 mb-2 group-hover:italic transition-all">Winter in St. Petersburg</h4>
+<p class="font-['Source_Serif_4'] text-stone-500">The atmospheric weight of Dostoevsky's prose.</p>
+</div>
+</div>
+</section>
+<!-- Library View Grid -->
+<section class="mb-12">
+<div class="flex justify-between items-end mb-12">
+<h3 class="font-['Source_Serif_4'] text-3xl font-medium text-stone-900">Library</h3>
+<div class="flex gap-4">
+<button class="p-2 bg-stone-100 rounded-full hover:bg-stone-200 transition-colors">
+<span class="material-symbols-outlined text-stone-600">grid_view</span>
+</button>
+<button class="p-2 hover:bg-stone-100 rounded-full transition-colors">
+<span class="material-symbols-outlined text-stone-400">list</span>
+</button>
+</div>
+</div>
+<div class="grid grid-cols-2 md:grid-cols-4 gap-8">
+<!-- Grid Item 1 -->
+<div class="group cursor-pointer">
+<div class="aspect-[3/4] bg-stone-100 overflow-hidden mb-4 rounded-sm shadow-sm group-hover:shadow-md transition-shadow">
+<img class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105" data-alt="An artistic close-up of a book's pages fanned out, creating a rhythmic pattern of lines and shadows" src="https://lh3.googleusercontent.com/aida-public/AB6AXuD6OzqjzM0Bo9QW63o_F_0Muz3Jvzkgl25AmsmCHfr__E4WdHAODaxYfhdhuZsoq5TWnHFoT7r340H8xVG_GYXGPIAKebbMFtCxhtBhulb5sH2uuaTtRHHhpjSOeaYdvd3_li_0xQm8AKJpfJ5C2yPgRfncDxOKUVjid5W0NbF8nvTp24KRF0ZO0bIF2RJSV-nLARCLYX5oZ88vBaQSRDaAierIK38enMb05rD20Ta9icRKiYQ_k3Hww_L7_8-er4-CljZX7kuHyZiE"/>
+</div>
+<h5 class="font-['Source_Serif_4'] font-semibold text-stone-900 leading-tight">A Moveable Feast</h5>
+<p class="font-sans text-xs text-stone-400 mt-1">Ernest Hemingway</p>
+</div>
+<!-- Grid Item 2 -->
+<div class="group cursor-pointer">
+<div class="aspect-[3/4] bg-stone-100 overflow-hidden mb-4 rounded-sm shadow-sm group-hover:shadow-md transition-shadow">
+<img class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105" data-alt="Top down view of an open notebook with elegant cursive handwriting and a fountain pen resting on the side" src="https://lh3.googleusercontent.com/aida-public/AB6AXuB--ssniLUiFLW6oa3O1mnWAqotsPIWqxLDLimDndAa5MJ_opON0G31fvbvFHJ8GPlOT6V5WDQIIhSbdLw3XuSzaXBkEq4nfBY7o3W8maVAofUjrSyyr8uQFwV-9Ik0N9CeD3tmsslrUHCSc7yOo2Q9xoEM_YzqEAtM4Wb8ffBblHQo6AwiCzi91ld_AQ7xjq9PTSiW-4V2dVtysI82uAQPZMf_HkaJqrV1_efqI9Uy1O4kl5p8vq3OTVZA0MGE2BBLbdUsMtLLW1UV"/>
+</div>
+<h5 class="font-['Source_Serif_4'] font-semibold text-stone-900 leading-tight">The Alchemist</h5>
+<p class="font-sans text-xs text-stone-400 mt-1">Paulo Coelho</p>
+</div>
+<!-- Grid Item 3 -->
+<div class="group cursor-pointer">
+<div class="aspect-[3/4] bg-stone-100 overflow-hidden mb-4 rounded-sm shadow-sm group-hover:shadow-md transition-shadow">
+<img class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105" data-alt="Stacks of old books with weathered pages and textures in a dim library setting with soft focus" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBu-UsGrtKDrsoXs3eA3uiW-q0FUK91SvTl93PSyvrwcXgjTtmlbK4VsrUpcP5aj3M7MFSJrEQJ4hpqLD30U8HMGes3JCeWahf_0LFFabf3OSeEMDMmtGaD5YP_eIFauqpELqQ5HCObbMS5OsZSAUVyJCGI5MJ8NY3Xb8KLbhWLYsmOb8-_LMon-Cf5tO3ILqZkrOMa5ozvlMqgcsNE_a439vE0V9dVtj9SobpaGkEW-I4ieYGhl8_Wnm5J25rbrecOiovwMYhX5nB_"/>
+</div>
+<h5 class="font-['Source_Serif_4'] font-semibold text-stone-900 leading-tight">Silence</h5>
+<p class="font-sans text-xs text-stone-400 mt-1">Shūsaku Endō</p>
+</div>
+<!-- Grid Item 4 -->
+<div class="group cursor-pointer">
+<div class="aspect-[3/4] bg-stone-100 overflow-hidden mb-4 rounded-sm shadow-sm group-hover:shadow-md transition-shadow">
+<img class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105" data-alt="Abstract conceptual photo of a single feather resting on an open book under soft, ethereal lighting" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBfymfrrB50aDoEvHiKJq4QPhfhxghHUNoZzraaCv4L0aPoxFL-goNisL8uZYdxicgyba9JX4vttxXElLoL--ykaHbon2hTDF0Zwcj0dia0mA6rlzN9x7PUiy-u6IJZUVPkburiHBNdVv4TUE00LiyH5PZOlcStoC4MJOPVLBYINwJ69jUEU4Des8jGmen1my6LLEiev7DIkSb-__sVNfQ2pNLZHN0bs7dQdn0Oz8hERA4ZWF3SQzDm3a3iblgJ33WZGDAn2mIdylLs"/>
+</div>
+<h5 class="font-['Source_Serif_4'] font-semibold text-stone-900 leading-tight">The Stranger</h5>
+<p class="font-sans text-xs text-stone-400 mt-1">Albert Camus</p>
+</div>
+</div>
+</section>
+</main>
+<!-- BottomNavBar -->
+<nav class="fixed bottom-0 left-0 w-full z-50 flex justify-around items-center px-4 py-3 pb-safe bg-stone-50/90 dark:bg-stone-950/90 backdrop-blur-md">
+<!-- Discover (Active) -->
+<a class="flex flex-col items-center justify-center bg-blue-100/50 dark:bg-blue-900/30 text-stone-900 dark:text-stone-50 rounded-full px-6 py-2 transition-all duration-300" href="#">
+<span class="material-symbols-outlined" data-weight="fill">auto_stories</span>
+<span class="font-['Inter'] text-[11px] uppercase tracking-widest font-semibold mt-1">Discover</span>
+</a>
+<!-- Library -->
+<a class="flex flex-col items-center justify-center text-stone-400 dark:text-stone-500 px-6 py-2 hover:text-stone-900 dark:hover:text-stone-50 transition-all duration-300" href="#">
+<span class="material-symbols-outlined">local_library</span>
+<span class="font-['Inter'] text-[11px] uppercase tracking-widest font-semibold mt-1">Library</span>
+</a>
+<!-- Notes -->
+<a class="flex flex-col items-center justify-center text-stone-400 dark:text-stone-500 px-6 py-2 hover:text-stone-900 dark:hover:text-stone-50 transition-all duration-300" href="#">
+<span class="material-symbols-outlined">edit_note</span>
+<span class="font-['Inter'] text-[11px] uppercase tracking-widest font-semibold mt-1">Notes</span>
+</a>
+<!-- Profile -->
+<a class="flex flex-col items-center justify-center text-stone-400 dark:text-stone-500 px-6 py-2 hover:text-stone-900 dark:hover:text-stone-50 transition-all duration-300" href="#">
+<span class="material-symbols-outlined">person</span>
+<span class="font-['Inter'] text-[11px] uppercase tracking-widest font-semibold mt-1">Profile</span>
+</a>
+</nav>
+<!-- Floating Action Button: Contextually suppressed on landing but showing the capability -->
+<!-- Suppressed per Semantic Shell Mandate as this is a browsing/reading intent landing page -->
+</body></html>
