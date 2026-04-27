@@ -2,9 +2,27 @@ import { getCloudflareContext } from '@opennextjs/cloudflare';
 
 const PDF_PREFIX = 'pdfs';
 
-function getBucket(): R2Bucket {
+interface R2HttpMetadata {
+  contentType?: string;
+}
+interface R2Object {
+  body: ReadableStream<Uint8Array> | null;
+  size: number;
+  httpMetadata?: R2HttpMetadata;
+}
+interface R2BucketLike {
+  put(
+    key: string,
+    value: ArrayBuffer | ArrayBufferView | Uint8Array | string,
+    options?: { httpMetadata?: R2HttpMetadata }
+  ): Promise<unknown>;
+  get(key: string): Promise<R2Object | null>;
+  delete(key: string): Promise<void>;
+}
+
+function getBucket(): R2BucketLike {
   const { env } = getCloudflareContext();
-  const bucket = (env as unknown as { PDFS_BUCKET?: R2Bucket }).PDFS_BUCKET;
+  const bucket = (env as unknown as { PDFS_BUCKET?: R2BucketLike }).PDFS_BUCKET;
   if (!bucket) {
     throw new Error('R2 binding PDFS_BUCKET is not configured');
   }

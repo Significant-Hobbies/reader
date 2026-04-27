@@ -19,3 +19,18 @@ simple = { limit = 100, period = 60 }
 
 [vars]
 NODE_ENV = "production"
+
+[[r2_buckets]]
+binding = "PDFS_BUCKET"
+bucket_name = "reader-pdfs"
+
+[ai]
+binding = "AI"
+
+# TODO: Vectorize index `reader-articles` requires API token w/ Vectorize:Edit
+# perms. After granting, run:
+#   wrangler vectorize create reader-articles --preset=@cf/baai/bge-base-en-v1.5
+# then uncomment the binding below.
+# [[vectorize]]
+# binding = "ARTICLES_VECTORS"
+# index_name = "reader-articles"
