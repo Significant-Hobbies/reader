@@ -1,17 +1,19 @@
-import { getCloudflareContext } from '@opennextjs/cloudflare';
 import type { AIConfig } from '@saas-maker/ai/server';
 import { createAIModel } from '@saas-maker/ai/server';
 import type { LanguageModel } from 'ai';
-import { createWorkersAI } from 'workers-ai-provider';
 
 /**
- * Default Workers AI text model. ~64 Neurons/inference.
- * 10k Neurons/day free quota → ~150 inferences/day before overage.
+ * Default Workers AI text model. ~64 Neurons/inference. Routed through the
+ * free-ai-gateway, which enforces a daily 9500-Neuron hard cap so we never
+ * exceed the 10k/day free tier across the entire Fleet.
  */
 const DEFAULT_WORKERS_AI_MODEL = '@cf/meta/llama-3.3-70b-instruct-fp8-fast';
 
 /** Default Workers AI embedding model — 768 dims, ~0.5 Neurons/call. */
 export const DEFAULT_WORKERS_AI_EMBEDDING_MODEL = '@cf/baai/bge-base-en-v1.5';
+
+const FALLBACK_GATEWAY_BASE_URL = 'https://free-ai-gateway.sarthakagrawal927.workers.dev/v1';
+const PROJECT_ID = 'reader';
 
 interface CreateLanguageModelArgs {
   endpointUrl: string;
@@ -20,15 +22,21 @@ interface CreateLanguageModelArgs {
   headers?: Record<string, string>;
 }
 
+function getGatewayBaseUrl(): string {
+  const fromEnv = process.env.AI_BASE_URL?.trim();
+  if (fromEnv) return fromEnv.replace(/\/+$/, '');
+  return FALLBACK_GATEWAY_BASE_URL;
+}
+
+function getGatewayApiKey(): string {
+  return process.env.AI_API_KEY?.trim() ?? '';
+}
+
 /**
- * Returns a LanguageModel that uses the Cloudflare Workers AI binding when
- * available, falling back to the user-configured external OpenAI-compatible
- * endpoint (e.g. Vercel AI Gateway).
- *
- * Selection order:
- *   1. User supplied endpointUrl + apiKey → external provider (BYO key)
- *   2. env.AI binding present             → Workers AI (free tier)
- *   3. External provider regardless       → preserve existing error surface
+ * Returns a LanguageModel that talks to free-ai-gateway by default. The
+ * gateway is the single Workers AI chokepoint for the entire Fleet — it owns
+ * the daily Neuron budget. Users can still BYO an external provider by
+ * supplying both `endpointUrl` and `apiKey`.
  */
 export function getLanguageModel({
   endpointUrl,
@@ -36,55 +44,68 @@ export function getLanguageModel({
   model,
   headers,
 }: CreateLanguageModelArgs): LanguageModel {
-  // Honour explicit BYO config first.
+  // Honour explicit BYO config first (settings UI etc.).
   if (endpointUrl && apiKey) {
     return createAIModel({ endpointUrl, apiKey, model } as AIConfig, { headers });
   }
 
-  const ai = getWorkersAIBinding();
-  if (ai) {
-    const workersai = createWorkersAI({ binding: ai });
-    const modelId = model?.startsWith('@cf/') ? model : DEFAULT_WORKERS_AI_MODEL;
-    return workersai(modelId as Parameters<typeof workersai>[0]);
-  }
+  const gatewayBaseUrl = getGatewayBaseUrl();
+  const gatewayApiKey = getGatewayApiKey();
+  const resolvedModel = model || DEFAULT_WORKERS_AI_MODEL;
 
-  // Fall back to whatever endpoint config we got — preserves existing error
-  // messages when the user has not configured anything.
-  return createAIModel({ endpointUrl, apiKey, model } as AIConfig, { headers });
+  return createAIModel(
+    {
+      endpointUrl: gatewayBaseUrl,
+      // free-ai-gateway tolerates an empty key; pass a placeholder so the
+      // OpenAI-compatible client still attaches a Bearer header (some
+      // intermediaries strip empty Authorization values).
+      apiKey: gatewayApiKey || 'free-ai-gateway',
+      model: resolvedModel,
+    } as AIConfig,
+    {
+      headers: {
+        'x-gateway-project-id': PROJECT_ID,
+        ...headers,
+      },
+    }
+  );
 }
 
 /**
- * Generate embeddings via the Workers AI binding when present. Returns null
- * when the binding is not available, letting the caller decide whether to
- * fall back to a different provider.
- *
- * Uses `@cf/baai/bge-base-en-v1.5` (768 dims) which is also the model the
- * `reader-articles` Vectorize index is provisioned for.
+ * Generate embeddings via the free-ai-gateway `/v1/embeddings` endpoint
+ * (OpenAI-compatible). Returns null on failure so callers can fall back.
  */
 export async function embedTextsWithWorkersAI(
   texts: string[],
   modelId: string = DEFAULT_WORKERS_AI_EMBEDDING_MODEL
 ): Promise<number[][] | null> {
-  const ai = getWorkersAIBinding();
-  if (!ai) return null;
+  if (texts.length === 0) return [];
 
-  const result = (await ai.run(modelId, { text: texts })) as {
-    data?: number[][];
-  };
-  return result.data ?? null;
-}
-
-interface AiBinding {
-  run(model: string, inputs: unknown, options?: unknown): Promise<unknown>;
-}
-
-function getWorkersAIBinding(): AiBinding | null {
   try {
-    const { env } = getCloudflareContext();
-    const ai = (env as unknown as { AI?: AiBinding }).AI;
-    return ai ?? null;
+    const response = await fetch(`${getGatewayBaseUrl()}/embeddings`, {
+      method: 'POST',
+      headers: {
+        'content-type': 'application/json',
+        authorization: `Bearer ${getGatewayApiKey() || 'free-ai-gateway'}`,
+        'x-gateway-project-id': PROJECT_ID,
+      },
+      body: JSON.stringify({
+        model: modelId,
+        input: texts,
+        project_id: PROJECT_ID,
+      }),
+    });
+
+    if (!response.ok) return null;
+
+    const json = (await response.json()) as {
+      data?: Array<{ embedding?: number[] }>;
+    };
+    const rows = (json.data ?? [])
+      .map((item) => item.embedding)
+      .filter((row): row is number[] => Array.isArray(row));
+    return rows.length > 0 ? rows : null;
   } catch {
-    // getCloudflareContext throws outside the Workers runtime.
     return null;
   }
 }

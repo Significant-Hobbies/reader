@@ -109,9 +109,6 @@ importers:
       sanitize-html:
         specifier: 2.17.0
         version: 2.17.0
-      workers-ai-provider:
-        specifier: ^3.1.12
-        version: 3.1.12(@ai-sdk/provider@3.0.8)(ai@6.0.168(zod@4.3.6))
     devDependencies:
       '@opennextjs/cloudflare':
         specifier: 1.19.4
@@ -6242,12 +6239,6 @@ packages:
     resolution: {integrity: sha512-oKsB0Xo/mfkYMdSACoS06XZg09VUK4rXwHfF/1t3P++sMbwzf4UHQvMO57+zxpEB2nVrY/ZkW0bYFGq4GdAFSQ==}
     engines: {node: '>=16'}
     hasBin: true
-
-  workers-ai-provider@3.1.12:
-    resolution: {integrity: sha512-L11DDxFtMb1o1pB1FEh/zEahp7imnh3zCA/0YJLnbd1ezYfPydCCcZbsun8MyeKmFXZP54syUfD9FiBt0ijRSQ==}
-    peerDependencies:
-      '@ai-sdk/provider': ^3.0.0
-      ai: ^6.0.0
 
   wrangler@4.85.0:
     resolution: {integrity: sha512-93cwt2RPb1qdcmEgPzH7ybiLN4BIKoWpscIX6SywjHrQOeIZrQk2haoc3XMLKtQTmzapxza9OuDD+kMHpsuuhg==}
@@ -12971,11 +12962,6 @@ snapshots:
       '@cloudflare/workerd-linux-64': 1.20260424.1
       '@cloudflare/workerd-linux-arm64': 1.20260424.1
       '@cloudflare/workerd-windows-64': 1.20260424.1
-
-  workers-ai-provider@3.1.12(@ai-sdk/provider@3.0.8)(ai@6.0.168(zod@4.3.6)):
-    dependencies:
-      '@ai-sdk/provider': 3.0.8
-      ai: 6.0.168(zod@4.3.6)
 
   wrangler@4.85.0:
     dependencies:

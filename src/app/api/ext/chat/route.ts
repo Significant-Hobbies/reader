@@ -80,12 +80,13 @@ export async function POST(request: Request) {
 
   try {
     const result = streamText({
-      // When AI_GATEWAY_API_KEY is set, use Vercel gateway. Otherwise fall
-      // back to the Workers AI binding (free 10k Neurons/day).
+      // When AI_GATEWAY_API_KEY (Vercel) is explicitly set, use that gateway.
+      // Otherwise route through free-ai-gateway, which is the Fleet-wide
+      // single AI chokepoint with daily Neuron budget enforcement.
       model: getLanguageModel({
         endpointUrl: apiKey ? gatewayUrl : '',
         apiKey,
-        model: apiKey ? 'openai/gpt-4.1-mini' : '@cf/meta/llama-3.3-70b-instruct-fp8-fast',
+        model: apiKey ? 'openai/gpt-4.1-mini' : 'auto',
         headers: { 'x-gateway-project-id': 'reader' },
       }),
       system: systemPrompt,
