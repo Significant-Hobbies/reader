@@ -17,10 +17,20 @@ const EXT_MAX_MESSAGES = 6;
 const EXT_MAX_SYSTEM_PROMPT_LENGTH = 2_000;
 const DAILY_LIMIT = 10;
 
+// NOTE: This in-memory map is intentionally best-effort. On serverless
+// runtimes each cold-start gets a fresh map, so the limit is per-instance
+// rather than globally enforced. The free-ai-gateway already enforces a hard
+// daily Neuron budget server-side, so this is a secondary UX guard only.
+// A persistent counter (KV / Turso) would be needed for strict enforcement.
 const rateLimitMap = new Map<string, { count: number; resetDate: string }>();
 
 function getClientIP(request: Request): string {
+  // CF-Connecting-IP is set by Cloudflare Pages and is not spoofable.
+  // x-forwarded-for is used as fallback for other hosts; we take only the
+  // first (leftmost) entry which represents the original client IP when the
+  // proxy is trustworthy. An attacker behind a proxy could still spoof this.
   return (
+    request.headers.get('cf-connecting-ip') ||
     request.headers.get('x-forwarded-for')?.split(',')[0]?.trim() ||
     request.headers.get('x-real-ip') ||
     'unknown'
@@ -103,11 +113,6 @@ export async function POST(request: Request) {
   } catch (error) {
     console.error('Extension chat request failed:', error);
 
-    return NextResponse.json(
-      {
-        error: error instanceof Error ? error.message : 'Failed to stream AI response',
-      },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: 'Failed to stream AI response' }, { status: 500 });
   }
 }

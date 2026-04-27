@@ -39,7 +39,11 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'No file provided' }, { status: 400 });
     }
 
-    if (file.type !== 'application/pdf') {
+    // Do not trust file.type — it is browser-controlled and easily spoofed.
+    // Read the first 5 bytes and verify the PDF magic number (%PDF-) instead.
+    const headerBytes = await file.slice(0, 5).arrayBuffer();
+    const magic = Buffer.from(headerBytes).toString('ascii');
+    if (magic !== '%PDF-') {
       return NextResponse.json({ error: 'File must be a PDF' }, { status: 400 });
     }
 

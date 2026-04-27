@@ -73,6 +73,15 @@ export async function GET(request: NextRequest) {
         html = baseTag + html;
       }
 
+      // Sandbox proxied pages: prevent scripts from running in our origin's
+      // context and block them from accessing parent frames or cookies.
+      responseHeaders.set(
+        'Content-Security-Policy',
+        "default-src * 'unsafe-inline' 'unsafe-eval' data: blob:; frame-ancestors 'self'"
+      );
+      // Prevent the proxied page from setting cookies on our domain.
+      responseHeaders.set('X-Content-Type-Options', 'nosniff');
+
       return new Response(html, {
         status: 200,
         headers: responseHeaders,

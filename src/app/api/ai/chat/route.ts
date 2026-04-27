@@ -92,11 +92,6 @@ export async function POST(request: Request) {
   } catch (error) {
     console.error('AI chat request failed:', error);
 
-    return NextResponse.json(
-      {
-        error: error instanceof Error ? error.message : 'Failed to stream AI response',
-      },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: 'Failed to stream AI response' }, { status: 500 });
   }
 }

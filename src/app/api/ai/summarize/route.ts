@@ -140,11 +140,6 @@ Remember to respond with valid JSON in the exact format specified.`;
   } catch (error) {
     console.error('AI summary generation failed:', error);
 
-    return NextResponse.json(
-      {
-        error: error instanceof Error ? error.message : 'Failed to generate summary',
-      },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: 'Failed to generate summary' }, { status: 500 });
   }
 }

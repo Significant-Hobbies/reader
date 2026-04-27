@@ -39,6 +39,20 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'URL and content are required' }, { status: 400 });
     }
 
+    // Validate URL scheme — reject javascript:, file:, data: etc. that could
+    // be stored and later rendered as a clickable link or iframe src.
+    // blob:// is a synthetic internal scheme used for PDFs — allow it.
+    if (typeof url === 'string' && !url.startsWith('blob://')) {
+      try {
+        const { protocol } = new URL(url);
+        if (!['http:', 'https:'].includes(protocol)) {
+          return NextResponse.json({ error: 'Invalid URL scheme' }, { status: 400 });
+        }
+      } catch {
+        return NextResponse.json({ error: 'Invalid URL' }, { status: 400 });
+      }
+    }
+
     // Dedup: reuse existing article for this URL if one exists
     const existingId = await findArticleByUrl(url, userId);
     if (existingId) {

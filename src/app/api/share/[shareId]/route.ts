@@ -5,7 +5,9 @@ import { fetchBoardByShareId } from '../../../../lib/boards-db';
 export async function GET(_request: Request, { params }: { params: Promise<{ shareId: string }> }) {
   try {
     const { shareId } = await params;
-    if (!shareId || shareId.length > 30) {
+    // base64url(16 bytes) = exactly 22 chars; reject anything outside that to
+    // block probing with malformed or over-long tokens.
+    if (!shareId || !/^[A-Za-z0-9_-]{22}$/.test(shareId)) {
       return NextResponse.json({ error: 'Invalid share link' }, { status: 400 });
     }
 
