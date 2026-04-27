@@ -1,7 +1,7 @@
-import { createAIModel } from '@saas-maker/ai/server';
 import { streamText } from 'ai';
 import { NextResponse } from 'next/server';
 
+import { getLanguageModel } from '@/lib/ai-cloudflare';
 import { isLocalCLIEnabled } from '@/lib/ai-config';
 import {
   createLocalAITextStream,
@@ -66,21 +66,24 @@ export async function POST(request: Request) {
     }
   }
 
-  if (!endpointUrl) {
-    return NextResponse.json({ error: 'Endpoint URL is required' }, { status: 400 });
-  }
-
   if (!model) {
     return NextResponse.json({ error: 'Model is required' }, { status: 400 });
   }
 
+  // endpointUrl/apiKey are optional when the Workers AI binding is present —
+  // getLanguageModel falls back to env.AI automatically.
+
   try {
     const result = streamText({
-      model: createAIModel({ endpointUrl, apiKey, model }),
+      model: getLanguageModel({
+        endpointUrl,
+        apiKey,
+        model,
+        headers: { 'x-gateway-project-id': 'reader' },
+      }),
       system: systemPrompt,
       messages: toSDKMessages(messages),
       maxRetries: 0,
-      headers: { 'x-gateway-project-id': 'reader' },
     });
 
     return result.toTextStreamResponse({

@@ -1,7 +1,5 @@
 import config from '@saas-maker/eslint-config/next';
 
-// Disable @saas-maker/fallow/audit until plugin is updated for ESLint 10
-// (uses context.getFilename() which was removed in ESLint 10).
 // Ignore generated bundle directories (huge worker.js files OOM ESLint).
 export default [
   {
@@ -18,9 +16,4 @@ export default [
     ],
   },
   ...config,
-  {
-    rules: {
-      '@saas-maker/fallow/audit': 'off',
-    },
-  },
 ];
