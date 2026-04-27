@@ -1,41 +1,10 @@
 name: CI
-
 on:
   push:
-    branches: ['main', 'master']
+    branches: [main, master]
   pull_request:
-    branches: ['main', 'master']
+    branches: [main, master]
 
 jobs:
-  build:
-    runs-on: ubuntu-latest
-
-    steps:
-      - uses: actions/checkout@v4
-
-      - name: Install pnpm
-        uses: pnpm/action-setup@v4
-
-      - name: Use Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: '24'
-          cache: 'pnpm'
-
-      - name: Install dependencies
-        run: pnpm install --frozen-lockfile
-
-      - name: Check Formatting
-        run: pnpm -w check-format
-
-      - name: Lint
-        run: pnpm -w lint
-
-      - name: Type Check
-        run: pnpm -w type-check
-
-      - name: Test
-        run: pnpm -w test && pnpm -r test
-
-      - name: Build
-        run: pnpm -w build
+  foundry-ci:
+    uses: sarthakagrawal927/saas-maker/.github/workflows/foundry-ci.yml@main
