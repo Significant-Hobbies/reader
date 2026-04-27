@@ -63,9 +63,11 @@ graph TB
     end
 
     subgraph "Backend Services"
-        Firebase[Firebase]
-        Firebase --> FireAuth[Authentication]
-        Firebase --> Firestore[Firestore Database]
+        Turso[Turso libSQL]
+        Turso --> Drizzle[Drizzle ORM]
+        Turso --> BetterAuth[better-auth - Google OAuth]
+
+        R2[Cloudflare R2 - PDFS_BUCKET]
 
         External[External Services]
         External --> Readability[Mozilla Readability]
@@ -78,7 +80,8 @@ graph TB
     end
 
     UI --> API
-    API --> Firebase
+    API --> Turso
+    API --> R2
     API --> External
 
     classDef frontend fill:#3b82f6,stroke:#1e40af,color:#fff
@@ -86,24 +89,28 @@ graph TB
     classDef external fill:#f59e0b,stroke:#d97706,color:#fff
 
     class UI,Styling,State frontend
-    class API,Articles,Projects,Auth,AI,Search,Tags,PDF,Snapshot,Firebase,FireAuth,Firestore backend
-    class External,Readability,AIProviders,OpenAI,Anthropic,Gemini,Gateway,CLIBridge external
+    class API,Articles,Projects,Auth,AI,Search,Tags,PDF,Snapshot,Turso,Drizzle,BetterAuth,R2 backend
+    class External,Readability,AIProviders,OpenAI,Anthropic,Gemini,Gateway,LocalAI external
 ```
 
 ### Tech Stack
 
 - **Frontend**: Next.js 16, React 19, TypeScript, Tailwind CSS
-- **Backend**: Firebase (Authentication + Firestore + Storage)
+- **Database**: Turso (libSQL) via Drizzle ORM
+- **Auth**: better-auth (Google OAuth, Drizzle adapter)
+- **Storage**: Cloudflare R2 (PDFs) via Workers binding
 - **AI Integration**: Vercel AI SDK + AI Gateway (preferred), BYOK chat providers, local AI support
 - **PDF Processing**: react-pdf, pdfjs-dist, pdf-parse for viewing and text extraction
-- **Deployment**: Optimized for Vercel
+- **Deployment**: Cloudflare Workers via OpenNext (`pnpm deploy`)
 
 ## Getting Started
 
 ### Prerequisites
 
-- Node.js 24.x
-- Firebase project with Firestore and Google Authentication enabled
+- Node.js 22+
+- A Turso database (`turso db create`) and auth token
+- A Cloudflare account with an R2 bucket bound as `PDFS_BUCKET`
+- A Google OAuth client (Cloud Console > APIs & Services > Credentials)
 
 ### Installation
 
@@ -112,55 +119,56 @@ graph TB
    ```bash
    git clone <repository-url>
    cd web-annotator
-   npm install
+   pnpm install
    ```
 
-2. Set up Firebase:
-   - Create a Firebase project at [console.firebase.google.com](https://console.firebase.google.com/)
-   - Enable Google Sign-In in Authentication settings
-   - Create a Firestore database
-   - Download your service account JSON from Project Settings > Service Accounts
-   - Convert the service account JSON to base64 (use this same value for local and Vercel):
+2. Configure environment variables:
 
    ```bash
-   # macOS
-   base64 firebase-service-account.json | tr -d '\n'
-
-   # Linux
-   base64 -w0 firebase-service-account.json
+   cp .env.example .env.local
    ```
 
-3. Configure environment variables:
-
-   ```bash
-   cp env.example .env.local
-   ```
-
-   Edit `.env.local` with your Firebase credentials:
+   Edit `.env.local`:
 
    ```env
-   NEXT_PUBLIC_FIREBASE_API_KEY=your_api_key
-   NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN=your_project.firebaseapp.com
-   NEXT_PUBLIC_FIREBASE_PROJECT_ID=your_project_id
-   NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET=your_project.appspot.com
-   NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID=your_sender_id
-   NEXT_PUBLIC_FIREBASE_APP_ID=your_app_id
-   FIREBASE_SERVICE_ACCOUNT_KEY=your_base64_service_account_json
-   LOCAL_AI_URL=http://127.0.0.1:3456  # Optional: for local AI mode
+   # Turso
+   TURSO_DATABASE_URL=libsql://your-db.turso.io
+   TURSO_AUTH_TOKEN=...
+
+   # better-auth
+   BETTER_AUTH_SECRET=$(openssl rand -base64 32)
+   BETTER_AUTH_URL=http://localhost:3000
+   GOOGLE_CLIENT_ID=...
+   GOOGLE_CLIENT_SECRET=...
+
+   # Cloudflare R2 (used by `pnpm deploy`; local dev uses the wrangler binding)
+   CLOUDFLARE_ACCOUNT_ID=...
+   R2_ACCESS_KEY_ID=...
+   R2_SECRET_ACCESS_KEY=...
+   R2_BUCKET_NAME=reader-pdfs
+
+   # Optional
+   LOCAL_AI_URL=http://127.0.0.1:3456
+   ```
+
+3. Push the schema to Turso:
+
+   ```bash
+   pnpm db:push
    ```
 
 4. Run the development server:
 
    ```bash
-   npm run dev
+   pnpm dev
    ```
 
-   `npm run dev` starts both the Next.js app and the local AI server.
+   `pnpm dev` starts both the Next.js app and the local AI server.
    Local AI providers are shown only in development mode.
    If you only want the app server:
 
    ```bash
-   npm run dev:app
+   pnpm dev:app
    ```
 
 5. Open [http://localhost:3000](http://localhost:3000)
@@ -168,31 +176,30 @@ graph TB
 ### Development Commands
 
 ```bash
-npm run dev          # Start Next.js + local AI server
-npm run dev:app      # Start only Next.js app
-npm run local-ai     # Start only the local AI server
-npm run dev:with-cli # Alias for npm run dev
-npm run build        # Build for production
-npm run start        # Start production server
-npm run lint         # Run ESLint
-npm run format       # Format code with Prettier
-npm run type-check   # Check TypeScript types
+pnpm dev          # Start Next.js + local AI server
+pnpm dev:app      # Start only Next.js app
+pnpm local-ai     # Start only the local AI server
+pnpm build        # Build for production
+pnpm start        # Start production server
+pnpm lint         # Run ESLint
+pnpm format       # Format code with Prettier
+pnpm type-check   # Check TypeScript types
+pnpm db:push      # Apply schema to Turso (Drizzle)
+pnpm db:studio    # Open Drizzle Studio
 ```
 
 ## Deployment
 
-### Vercel
-
-1. Push your code to GitHub
-2. Import the project in Vercel
-3. Add the same Firebase environment variables used locally:
-   - All `NEXT_PUBLIC_FIREBASE_*` variables
-   - `FIREBASE_SERVICE_ACCOUNT_KEY` (same base64 value as local)
-4. Keep local and Vercel configs in sync by pulling from Vercel when needed:
+### Cloudflare Workers (via OpenNext)
 
 ```bash
-vercel env pull .env.local --environment=production
+pnpm deploy
 ```
+
+This runs `cf:build` (Next build + OpenNext bundling) and `wrangler deploy`.
+Configure secrets via `wrangler secret put` for `BETTER_AUTH_SECRET`,
+`TURSO_AUTH_TOKEN`, `GOOGLE_CLIENT_SECRET`, etc., and bind the R2 bucket as
+`PDFS_BUCKET` in `wrangler.toml`.
 
 ## Project Structure
 
@@ -201,13 +208,17 @@ web-annotator/
 ├── src/
 │   ├── app/              # Next.js pages and API routes
 │   │   ├── api/          # Backend API endpoints
-│   │   ├── login/        # Authentication pages
+│   │   ├── login/        # better-auth login page
 │   │   └── reader/       # Article reader view
 │   ├── components/       # React components
 │   ├── lib/              # Business logic and utilities
+│   │   ├── auth.ts       # better-auth server config
+│   │   ├── auth-client.ts# better-auth browser client
+│   │   ├── db/           # Drizzle schema + Turso client
+│   │   └── storage.ts    # R2 helpers
 │   └── types.ts          # TypeScript definitions
 ├── public/               # Static assets
-└── AGENTS.md             # Development guide
+└── agents.md             # Development guide
 ```
 
 ## Development
