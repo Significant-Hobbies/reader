@@ -1,7 +1,7 @@
-import { createAIModel } from '@saas-maker/ai/server';
 import { generateText } from 'ai';
 import { NextResponse } from 'next/server';
 
+import { getLanguageModel } from '@/lib/ai-cloudflare';
 import { isLocalCLIEnabled } from '@/lib/ai-config';
 import { normalizeApiKey, normalizeEndpointUrl, normalizeText } from '@/lib/ai-server';
 import { getAuthenticatedUserId } from '@/lib/auth-api';
@@ -74,13 +74,12 @@ export async function POST(request: Request) {
     );
   }
 
-  if (!endpointUrl) {
-    return NextResponse.json({ error: 'Endpoint URL is required' }, { status: 400 });
-  }
-
   if (!model) {
     return NextResponse.json({ error: 'Model is required' }, { status: 400 });
   }
+
+  // endpointUrl/apiKey are optional — getLanguageModel falls back to the
+  // Workers AI binding when no BYO provider is configured.
 
   try {
     const lengthInstruction = SUMMARY_LENGTH_INSTRUCTIONS[summaryLength];
@@ -93,11 +92,15 @@ ${lengthInstruction}
 Remember to respond with valid JSON in the exact format specified.`;
 
     const result = await generateText({
-      model: createAIModel({ endpointUrl, apiKey, model }),
+      model: getLanguageModel({
+        endpointUrl,
+        apiKey,
+        model,
+        headers: { 'x-gateway-project-id': 'reader' },
+      }),
       system: SUMMARY_SYSTEM_PROMPT,
       prompt: userPrompt,
       maxRetries: 1,
-      headers: { 'x-gateway-project-id': 'reader' },
     });
 
     // Parse the JSON response

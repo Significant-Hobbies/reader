@@ -1,6 +1,6 @@
-import { createAIModel } from '@saas-maker/ai/server';
 import { createParser } from 'eventsource-parser';
 
+import { getLanguageModel } from './ai-cloudflare';
 import type { AIChatMessage } from './ai-config';
 
 export const MAX_API_KEY_LENGTH = 512;
@@ -66,11 +66,13 @@ export const createLanguageModel = ({
   endpointUrl,
   apiKey,
   model,
+  headers,
 }: {
   endpointUrl: string;
   apiKey: string;
   model: string;
-}) => createAIModel({ endpointUrl, apiKey, model });
+  headers?: Record<string, string>;
+}) => getLanguageModel({ endpointUrl, apiKey, model, headers });
 
 export const createLocalAITextStream = async ({
   model,

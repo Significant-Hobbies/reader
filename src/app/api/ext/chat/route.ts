@@ -1,7 +1,7 @@
-import { createAIModel } from '@saas-maker/ai/server';
 import { streamText } from 'ai';
 import { NextResponse } from 'next/server';
 
+import { getLanguageModel } from '@/lib/ai-cloudflare';
 import {
   DEFAULT_SYSTEM_PROMPT,
   normalizeChatMessages,
@@ -80,15 +80,17 @@ export async function POST(request: Request) {
 
   try {
     const result = streamText({
-      model: createAIModel({
-        endpointUrl: gatewayUrl,
+      // When AI_GATEWAY_API_KEY is set, use Vercel gateway. Otherwise fall
+      // back to the Workers AI binding (free 10k Neurons/day).
+      model: getLanguageModel({
+        endpointUrl: apiKey ? gatewayUrl : '',
         apiKey,
-        model: 'openai/gpt-4.1-mini',
+        model: apiKey ? 'openai/gpt-4.1-mini' : '@cf/meta/llama-3.3-70b-instruct-fp8-fast',
+        headers: { 'x-gateway-project-id': 'reader' },
       }),
       system: systemPrompt,
       messages: toSDKMessages(messages),
       maxRetries: 0,
-      headers: { 'x-gateway-project-id': 'reader' },
     });
 
     return result.toTextStreamResponse({
