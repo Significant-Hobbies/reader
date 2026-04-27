@@ -57,3 +57,10 @@ web-annotator-extension-*.zip
 .open-next/
 .wrangler/
 .omx/
+
+# fallow cache
+.fallow/
+cache.bin
+
+# CF Pages build output
+.cf-pages-bundle/
