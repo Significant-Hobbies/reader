@@ -1,8 +1,9 @@
 'use client';
 
-import { useState, useEffect, useRef, useCallback } from 'react';
-import { X, Loader2 } from 'lucide-react';
+import { Loader2, X } from 'lucide-react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
+
 import { ANNOTATABLE_SELECTOR } from '../../lib/annotatable';
 import type { Article, ElementAnchor } from '../../types';
 
@@ -134,7 +135,7 @@ export function ElementPickerPanel({
       <div className="fixed inset-0 z-40 bg-black/30" onClick={onClose} />
 
       {/* Panel */}
-      <div className="fixed right-0 top-0 z-50 flex h-full w-[480px] max-w-[90vw] flex-col border-l border-gray-700 bg-gray-950 shadow-2xl">
+      <div className="fixed top-0 right-0 z-50 flex h-full w-[480px] max-w-[90vw] flex-col border-l border-gray-700 bg-gray-950 shadow-2xl">
         {/* Header */}
         <div className="flex items-center justify-between border-b border-gray-800 px-4 py-3">
           <div className="min-w-0 flex-1">

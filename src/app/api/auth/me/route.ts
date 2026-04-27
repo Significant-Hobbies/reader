@@ -1,8 +1,9 @@
-import { NextResponse } from 'next/server';
 import { eq } from 'drizzle-orm';
+import { NextResponse } from 'next/server';
+
+import { getAuthenticatedUserId } from '@/lib/auth-api';
 import { db } from '@/lib/db/client';
 import { users } from '@/lib/db/schema';
-import { getAuthenticatedUserId } from '@/lib/auth-api';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';

@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
-import { fetchBoardSummaries, createBoard } from '../../../lib/boards-db';
+
 import { getAuthenticatedUserId } from '../../../lib/auth-api';
+import { createBoard, fetchBoardSummaries } from '../../../lib/boards-db';
 
 export async function GET() {
   try {

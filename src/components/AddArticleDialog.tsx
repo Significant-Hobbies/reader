@@ -1,12 +1,14 @@
 'use client';
 
-import { useState, useRef } from 'react';
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from './ui/dialog';
+import { FileText, Link as LinkIcon, Loader2, Upload } from 'lucide-react';
+import { useRef, useState } from 'react';
+
+import { SUGGESTED_CATEGORIES } from '@/lib/category-utils';
+
 import { Button } from './ui/button';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from './ui/dialog';
 import { Input } from './ui/input';
 import { Label } from './ui/label';
-import { SUGGESTED_CATEGORIES } from '@/lib/category-utils';
-import { Upload, Link as LinkIcon, FileText, Loader2 } from 'lucide-react';
 
 interface AddArticleDialogProps {
   open: boolean;
@@ -187,7 +189,7 @@ export function AddArticleDialog({
               <Button type="submit" disabled={!url || isSubmitting}>
                 {isSubmitting ? (
                   <>
-                    <Loader2 className="h-4 w-4 animate-spin mr-2" /> Importing...
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" /> Importing...
                   </>
                 ) : (
                   'Import'
@@ -232,7 +234,7 @@ export function AddArticleDialog({
               {selectedFile && (
                 <div className="flex items-center gap-2 rounded-lg border border-gray-700 bg-gray-900/60 px-3 py-2">
                   <FileText className="h-4 w-4 text-blue-400" />
-                  <span className="text-sm text-gray-300 truncate flex-1">{selectedFile.name}</span>
+                  <span className="flex-1 truncate text-sm text-gray-300">{selectedFile.name}</span>
                   <span className="text-xs text-gray-500">
                     {(selectedFile.size / 1024 / 1024).toFixed(1)} MB
                   </span>
@@ -258,11 +260,11 @@ export function AddArticleDialog({
               >
                 {isSubmitting ? (
                   <>
-                    <Loader2 className="h-4 w-4 animate-spin mr-2" /> Processing...
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" /> Processing...
                   </>
                 ) : (
                   <>
-                    <Upload className="h-4 w-4 mr-2" /> Upload
+                    <Upload className="mr-2 h-4 w-4" /> Upload
                   </>
                 )}
               </Button>

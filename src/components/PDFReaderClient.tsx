@@ -1,9 +1,10 @@
 'use client';
 
-import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { useRouter } from 'next/navigation';
-import { Article, ReaderSettings } from '../types';
+import { useState } from 'react';
+
+import type { Article, ReaderSettings } from '../types';
 import { AppearanceToolbar } from './AppearanceToolbar';
 import { Navbar } from './Navbar';
 import { NotesAIChat } from './NotesAIChat';
@@ -47,7 +48,7 @@ export default function PDFReaderClient({ articleId }: { articleId: string }) {
     return (
       <div className="flex h-screen items-center justify-center bg-gray-900">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500 mx-auto mb-4"></div>
+          <div className="mx-auto mb-4 h-12 w-12 animate-spin rounded-full border-b-2 border-blue-500"></div>
           <p className="text-gray-400">Loading PDF...</p>
         </div>
       </div>
@@ -56,11 +57,11 @@ export default function PDFReaderClient({ articleId }: { articleId: string }) {
 
   if (articleError && !article) {
     return (
-      <div className="flex h-screen flex-col items-center justify-center bg-gray-900 text-gray-200 gap-4">
+      <div className="flex h-screen flex-col items-center justify-center gap-4 bg-gray-900 text-gray-200">
         <p>{articleError.message === 'NOT_FOUND' ? 'PDF not found.' : 'Failed to load PDF.'}</p>
         <button
           onClick={() => router.push('/')}
-          className="px-4 py-2 rounded-lg bg-blue-600 text-white hover:bg-blue-500 transition"
+          className="rounded-lg bg-blue-600 px-4 py-2 text-white transition hover:bg-blue-500"
         >
           Back to Library
         </button>
@@ -71,31 +72,31 @@ export default function PDFReaderClient({ articleId }: { articleId: string }) {
   if (!article || !article.pdfUrl) return null;
 
   return (
-    <div className="flex flex-col h-screen bg-gradient-to-b from-black via-gray-950 to-gray-900 font-sans text-gray-100 overflow-hidden">
+    <div className="flex h-screen flex-col overflow-hidden bg-gradient-to-b from-black via-gray-950 to-gray-900 font-sans text-gray-100">
       <Navbar />
-      <div className="flex flex-1 overflow-hidden p-4 md:p-6 gap-4">
+      <div className="flex flex-1 gap-4 overflow-hidden p-4 md:p-6">
         {/* LEFT PANEL: PDF Viewer */}
-        <div className="flex-1 h-full flex flex-col bg-gray-900/70 backdrop-blur border border-gray-800 rounded-2xl overflow-hidden shadow-2xl">
+        <div className="flex h-full flex-1 flex-col overflow-hidden rounded-2xl border border-gray-800 bg-gray-900/70 shadow-2xl backdrop-blur">
           {/* Header */}
-          <div className="p-4 border-b border-gray-800 bg-gray-900/80 backdrop-blur-md z-10 shadow-md flex flex-wrap items-center gap-4">
+          <div className="z-10 flex flex-wrap items-center gap-4 border-b border-gray-800 bg-gray-900/80 p-4 shadow-md backdrop-blur-md">
             <button
               onClick={() => router.push('/')}
-              className="p-2 rounded-lg bg-gray-800/60 hover:bg-gray-800 text-gray-200 transition-colors border border-gray-700"
+              className="rounded-lg border border-gray-700 bg-gray-800/60 p-2 text-gray-200 transition-colors hover:bg-gray-800"
               title="Back to Library"
             >
               ←
             </button>
 
-            <div className="flex-1 min-w-[220px]">
+            <div className="min-w-[220px] flex-1">
               <h1 className="text-2xl font-semibold text-white">
                 {article.title || 'PDF Document'}
               </h1>
               {article.pdfMetadata?.pageCount && (
-                <p className="text-xs text-gray-400 mt-1">{article.pdfMetadata.pageCount} pages</p>
+                <p className="mt-1 text-xs text-gray-400">{article.pdfMetadata.pageCount} pages</p>
               )}
             </div>
 
-            <div className="flex items-center gap-4 ml-auto">
+            <div className="ml-auto flex items-center gap-4">
               <AppearanceToolbar settings={settings} onUpdate={updateSettings} />
             </div>
           </div>
@@ -107,12 +108,12 @@ export default function PDFReaderClient({ articleId }: { articleId: string }) {
         </div>
 
         {/* RIGHT PANEL: Notes & AI Chat */}
-        <div className="w-[400px] h-full bg-gray-900/70 backdrop-blur flex flex-col shadow-2xl z-20 border border-gray-800 rounded-2xl">
-          <div className="p-4 border-b border-gray-800 bg-gray-900/80">
+        <div className="z-20 flex h-full w-[400px] flex-col rounded-2xl border border-gray-800 bg-gray-900/70 shadow-2xl backdrop-blur">
+          <div className="border-b border-gray-800 bg-gray-900/80 p-4">
             <div className="flex gap-2">
               <button
                 onClick={() => setActiveSidebarTab('notes')}
-                className={`flex-1 px-4 py-2 rounded-lg font-medium transition-colors ${
+                className={`flex-1 rounded-lg px-4 py-2 font-medium transition-colors ${
                   activeSidebarTab === 'notes'
                     ? 'bg-blue-600 text-white'
                     : 'bg-gray-800/50 text-gray-400 hover:bg-gray-800/80 hover:text-gray-200'
@@ -122,7 +123,7 @@ export default function PDFReaderClient({ articleId }: { articleId: string }) {
               </button>
               <button
                 onClick={() => setActiveSidebarTab('ai')}
-                className={`flex-1 px-4 py-2 rounded-lg font-medium transition-colors ${
+                className={`flex-1 rounded-lg px-4 py-2 font-medium transition-colors ${
                   activeSidebarTab === 'ai'
                     ? 'bg-blue-600 text-white'
                     : 'bg-gray-800/50 text-gray-400 hover:bg-gray-800/80 hover:text-gray-200'
@@ -135,9 +136,9 @@ export default function PDFReaderClient({ articleId }: { articleId: string }) {
 
           <div className="flex-1 overflow-hidden">
             {activeSidebarTab === 'notes' ? (
-              <div className="h-full p-6 overflow-y-auto">
-                <div className="text-center py-12">
-                  <p className="text-gray-400 mb-4">PDF annotations coming soon</p>
+              <div className="h-full overflow-y-auto p-6">
+                <div className="py-12 text-center">
+                  <p className="mb-4 text-gray-400">PDF annotations coming soon</p>
                   <p className="text-sm text-gray-500">
                     Use the AI Chat to ask questions about this PDF
                   </p>

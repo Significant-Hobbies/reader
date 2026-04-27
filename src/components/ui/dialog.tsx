@@ -1,6 +1,7 @@
-import * as React from 'react';
 import * as DialogPrimitive from '@radix-ui/react-dialog';
 import { X } from 'lucide-react';
+import * as React from 'react';
+
 import { cn } from '../../lib/utils';
 
 export const Dialog = DialogPrimitive.Root;
@@ -30,13 +31,13 @@ export const DialogContent = React.forwardRef<
     <DialogPrimitive.Content
       ref={ref}
       className={cn(
-        'fixed left-1/2 top-1/2 z-50 grid w-full max-w-lg -translate-x-1/2 -translate-y-1/2 gap-4 border border-gray-700 bg-gray-900 p-6 shadow-2xl rounded-2xl',
+        'fixed top-1/2 left-1/2 z-50 grid w-full max-w-lg -translate-x-1/2 -translate-y-1/2 gap-4 rounded-2xl border border-gray-700 bg-gray-900 p-6 shadow-2xl',
         className
       )}
       {...props}
     >
       {children}
-      <DialogPrimitive.Close className="absolute right-3 top-3 rounded-full p-2 text-gray-400 hover:text-white hover:bg-gray-800">
+      <DialogPrimitive.Close className="absolute top-3 right-3 rounded-full p-2 text-gray-400 hover:bg-gray-800 hover:text-white">
         <X className="h-4 w-4" />
         <span className="sr-only">Close</span>
       </DialogPrimitive.Close>
@@ -64,7 +65,7 @@ export const DialogTitle = React.forwardRef<
 >(({ className, ...props }, ref) => (
   <DialogPrimitive.Title
     ref={ref}
-    className={cn('text-lg font-semibold leading-none tracking-tight text-white', className)}
+    className={cn('text-lg leading-none font-semibold tracking-tight text-white', className)}
     {...props}
   />
 ));

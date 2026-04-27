@@ -1,8 +1,10 @@
 export const dynamic = 'force-dynamic';
-import { NextRequest, NextResponse } from 'next/server';
+import type { NextRequest } from 'next/server';
+import { NextResponse } from 'next/server';
+
+import { createArticleRecord } from '../../../../lib/articles-db';
 import { getAuthenticatedUserId } from '../../../../lib/auth-api';
 import { extractTextFromPDF, validatePDFFile } from '../../../../lib/pdf-service';
-import { createArticleRecord } from '../../../../lib/articles-db';
 import { getPdfDownloadUrl, uploadPdf } from '../../../../lib/storage';
 
 export async function POST(request: NextRequest) {

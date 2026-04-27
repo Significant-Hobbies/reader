@@ -19,16 +19,17 @@
  */
 
 import 'dotenv/config';
-import { config as loadEnv } from 'dotenv';
+
 import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
-import { fileURLToPath } from 'node:url';
 import { dirname } from 'node:path';
+import { fileURLToPath } from 'node:url';
 
-import admin from 'firebase-admin';
 import { createClient } from '@libsql/client';
-import { drizzle } from 'drizzle-orm/libsql';
+import { config as loadEnv } from 'dotenv';
 import { sql } from 'drizzle-orm';
+import { drizzle } from 'drizzle-orm/libsql';
+import admin from 'firebase-admin';
 
 // Relative imports (scripts run outside Next.js, so no `@/` alias).
 import * as schema from '../src/lib/db/schema';

@@ -1,5 +1,6 @@
-import { auth } from './auth';
 import { headers } from 'next/headers';
+
+import { auth } from './auth';
 
 /**
  * Returns the current better-auth session user, or null.

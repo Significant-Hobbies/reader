@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+
 import { fetchAllTags } from '../../../lib/articles-db';
 import { getAuthenticatedUserId } from '../../../lib/auth-api';
 

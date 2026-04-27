@@ -2,7 +2,8 @@
 
 import { memo, useEffect, useMemo } from 'react';
 import { createPortal } from 'react-dom';
-import { Note } from '../../types';
+
+import type { Note } from '../../types';
 
 interface NoteMarkerGroupProps {
   anchorElement: HTMLElement;

@@ -1,11 +1,12 @@
 import crypto from 'crypto';
 import { and, desc, eq } from 'drizzle-orm';
-import sanitizeHtml from 'sanitize-html';
 import type { IOptions } from 'sanitize-html';
+import sanitizeHtml from 'sanitize-html';
+
+import type { AIChatMessage, Article, ArticleStatus, ArticleSummary, Note } from '../types';
 import { db } from './db/client';
 import { articles } from './db/schema';
 import { getPdfDownloadUrl } from './storage';
-import type { AIChatMessage, Article, ArticleStatus, ArticleSummary, Note } from '../types';
 
 // ---------------------------------------------------------------------------
 // Sanitize / normalize utilities (previously in articles-service.ts)
@@ -129,9 +130,7 @@ export function formatReadingTime(minutes?: number): string {
   if (minutes >= 60) {
     const hours = Math.floor(minutes / 60);
     const remainingMinutes = minutes % 60;
-    return remainingMinutes === 0
-      ? `${hours} hr read`
-      : `${hours} hr ${remainingMinutes} min read`;
+    return remainingMinutes === 0 ? `${hours} hr read` : `${hours} hr ${remainingMinutes} min read`;
   }
   return `${minutes} min read`;
 }
@@ -208,7 +207,12 @@ export function sanitizeArticlePayload(payload: {
   };
 
   if (payload.type === 'pdf') {
-    return { ...base, pdfUrl: payload.pdfUrl, extractedText: payload.extractedText, pdfMetadata: payload.pdfMetadata };
+    return {
+      ...base,
+      pdfUrl: payload.pdfUrl,
+      extractedText: payload.extractedText,
+      pdfMetadata: payload.pdfMetadata,
+    };
   }
   return base;
 }

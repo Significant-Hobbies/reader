@@ -1,7 +1,8 @@
 'use client';
 
-import { useState, useCallback } from 'react';
-import { SummaryLength } from '../types';
+import { useCallback, useState } from 'react';
+
+import type { SummaryLength } from '../types';
 
 interface ArticleSummaryProps {
   articleId: string;
@@ -118,11 +119,11 @@ export function ArticleSummary({
         : 'bg-gray-200 hover:bg-gray-300';
 
   return (
-    <div className={`mb-6 border ${borderColor} rounded-xl overflow-hidden ${bgColor}`}>
+    <div className={`mb-6 border ${borderColor} overflow-hidden rounded-xl ${bgColor}`}>
       <div className="p-4">
-        <div className="flex items-center justify-between mb-3">
+        <div className="mb-3 flex items-center justify-between">
           <h3 className={`text-lg font-semibold ${textColor} flex items-center gap-2`}>
-            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path
                 strokeLinecap="round"
                 strokeLinejoin="round"
@@ -134,11 +135,11 @@ export function ArticleSummary({
           </h3>
           <button
             onClick={() => setIsExpanded(!isExpanded)}
-            className={`p-2 rounded-lg ${secondaryBgColor} ${textColor} transition-colors`}
+            className={`rounded-lg p-2 ${secondaryBgColor} ${textColor} transition-colors`}
             title={isExpanded ? 'Collapse' : 'Expand'}
           >
             <svg
-              className={`w-4 h-4 transition-transform ${isExpanded ? 'rotate-180' : ''}`}
+              className={`h-4 w-4 transition-transform ${isExpanded ? 'rotate-180' : ''}`}
               fill="none"
               stroke="currentColor"
               viewBox="0 0 24 24"
@@ -170,7 +171,7 @@ export function ArticleSummary({
                       <button
                         key={length}
                         onClick={() => setSummaryLength(length)}
-                        className={`px-3 py-1 rounded-lg text-sm font-medium transition-colors ${
+                        className={`rounded-lg px-3 py-1 text-sm font-medium transition-colors ${
                           summaryLength === length
                             ? buttonBgColor + ' text-white'
                             : secondaryBgColor + ' ' + textColor
@@ -185,7 +186,7 @@ export function ArticleSummary({
                 <button
                   onClick={generateSummary}
                   disabled={isGenerating}
-                  className={`w-full px-4 py-2 rounded-lg text-white font-medium transition-colors ${buttonBgColor} disabled:opacity-50 disabled:cursor-not-allowed`}
+                  className={`w-full rounded-lg px-4 py-2 font-medium text-white transition-colors ${buttonBgColor} disabled:cursor-not-allowed disabled:opacity-50`}
                 >
                   Generate Summary
                 </button>
@@ -195,7 +196,7 @@ export function ArticleSummary({
             {isGenerating && (
               <div className="flex items-center justify-center py-8">
                 <div className="text-center">
-                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500 mx-auto mb-3"></div>
+                  <div className="mx-auto mb-3 h-8 w-8 animate-spin rounded-full border-b-2 border-blue-500"></div>
                   <p
                     className={`text-sm ${theme === 'dark' ? 'text-gray-400' : theme === 'sepia' ? 'text-[#8b7355]' : 'text-gray-600'}`}
                   >
@@ -207,7 +208,7 @@ export function ArticleSummary({
 
             {error && (
               <div
-                className={`p-3 rounded-lg ${theme === 'dark' ? 'bg-red-900/20 border border-red-800 text-red-400' : 'bg-red-50 border border-red-200 text-red-600'}`}
+                className={`rounded-lg p-3 ${theme === 'dark' ? 'border border-red-800 bg-red-900/20 text-red-400' : 'border border-red-200 bg-red-50 text-red-600'}`}
               >
                 <p className="text-sm font-medium">Error: {error}</p>
                 <button
@@ -222,22 +223,22 @@ export function ArticleSummary({
             {summary && !isGenerating && (
               <div className="space-y-4">
                 <div
-                  className={`p-4 rounded-lg ${theme === 'dark' ? 'bg-gray-900/50' : theme === 'sepia' ? 'bg-[#f4ecd8]' : 'bg-white'} border ${borderColor}`}
+                  className={`rounded-lg p-4 ${theme === 'dark' ? 'bg-gray-900/50' : theme === 'sepia' ? 'bg-[#f4ecd8]' : 'bg-white'} border ${borderColor}`}
                 >
-                  <h4 className={`text-sm font-semibold mb-2 ${textColor}`}>Summary</h4>
+                  <h4 className={`mb-2 text-sm font-semibold ${textColor}`}>Summary</h4>
                   <p className={`text-sm leading-relaxed ${textColor}`}>{summary}</p>
                 </div>
 
                 {keyPoints.length > 0 && (
                   <div
-                    className={`p-4 rounded-lg ${theme === 'dark' ? 'bg-gray-900/50' : theme === 'sepia' ? 'bg-[#f4ecd8]' : 'bg-white'} border ${borderColor}`}
+                    className={`rounded-lg p-4 ${theme === 'dark' ? 'bg-gray-900/50' : theme === 'sepia' ? 'bg-[#f4ecd8]' : 'bg-white'} border ${borderColor}`}
                   >
-                    <h4 className={`text-sm font-semibold mb-3 ${textColor}`}>Key Points</h4>
+                    <h4 className={`mb-3 text-sm font-semibold ${textColor}`}>Key Points</h4>
                     <ul className="space-y-2">
                       {keyPoints.map((point, index) => (
-                        <li key={index} className={`text-sm flex items-start gap-2 ${textColor}`}>
+                        <li key={index} className={`flex items-start gap-2 text-sm ${textColor}`}>
                           <span
-                            className={`inline-block w-1.5 h-1.5 rounded-full mt-1.5 flex-shrink-0 ${theme === 'dark' ? 'bg-blue-400' : theme === 'sepia' ? 'bg-amber-600' : 'bg-blue-500'}`}
+                            className={`mt-1.5 inline-block h-1.5 w-1.5 flex-shrink-0 rounded-full ${theme === 'dark' ? 'bg-blue-400' : theme === 'sepia' ? 'bg-amber-600' : 'bg-blue-500'}`}
                           ></span>
                           <span className="flex-1">{point}</span>
                         </li>
@@ -249,7 +250,7 @@ export function ArticleSummary({
                 <button
                   onClick={generateSummary}
                   disabled={isGenerating}
-                  className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${secondaryBgColor} ${textColor} hover:opacity-80 disabled:opacity-50 disabled:cursor-not-allowed`}
+                  className={`rounded-lg px-4 py-2 text-sm font-medium transition-colors ${secondaryBgColor} ${textColor} hover:opacity-80 disabled:cursor-not-allowed disabled:opacity-50`}
                 >
                   Regenerate Summary
                 </button>

@@ -1,9 +1,10 @@
 'use client';
 
-import { useState, useRef, useEffect, useCallback } from 'react';
-import { StickyNote, Globe, Bot, Pencil, Check, Share2 } from 'lucide-react';
-import { ShareDialog } from './ShareDialog';
+import { Bot, Check, Globe, Pencil, Share2, StickyNote } from 'lucide-react';
+import { useCallback, useEffect, useRef, useState } from 'react';
+
 import type { SaveStatus } from './hooks/useBoardAutoSave';
+import { ShareDialog } from './ShareDialog';
 
 interface BoardToolbarProps {
   boardName: string;
@@ -58,7 +59,7 @@ export function BoardToolbar({
   return (
     <>
       {/* Board name - top left */}
-      <div className="absolute left-4 top-4 z-10 flex items-center gap-2 rounded-lg border border-gray-700 bg-gray-900/90 px-3 py-1.5 shadow-lg backdrop-blur">
+      <div className="absolute top-4 left-4 z-10 flex items-center gap-2 rounded-lg border border-gray-700 bg-gray-900/90 px-3 py-1.5 shadow-lg backdrop-blur">
         {isEditing ? (
           <form
             onSubmit={(e) => {
@@ -85,7 +86,7 @@ export function BoardToolbar({
               setEditValue(boardName);
               setIsEditing(true);
             }}
-            className="flex items-center gap-1.5 text-sm font-semibold text-white hover:text-blue-300 transition-colors"
+            className="flex items-center gap-1.5 text-sm font-semibold text-white transition-colors hover:text-blue-300"
           >
             {boardName}
             <Pencil className="h-3 w-3 text-gray-500" />
@@ -96,7 +97,7 @@ export function BoardToolbar({
 
         <button
           onClick={() => setShowShareDialog(true)}
-          className="flex items-center gap-1 text-gray-400 hover:text-blue-300 transition-colors"
+          className="flex items-center gap-1 text-gray-400 transition-colors hover:text-blue-300"
           title="Share"
         >
           <Share2 className="h-3.5 w-3.5" />

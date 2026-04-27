@@ -1,8 +1,9 @@
 'use client';
 
-import { memo, useState, useMemo } from 'react';
-import { Handle, Position, NodeProps, NodeResizer } from '@xyflow/react';
-import { ExternalLink, Globe, AlertTriangle } from 'lucide-react';
+import type { NodeProps } from '@xyflow/react';
+import { Handle, NodeResizer, Position } from '@xyflow/react';
+import { AlertTriangle, ExternalLink, Globe } from 'lucide-react';
+import { memo, useMemo, useState } from 'react';
 
 type IframeData = {
   url: string;
@@ -26,7 +27,7 @@ function IframeNodeComponent({ data, selected }: NodeProps) {
 
   return (
     <div
-      className={`flex min-w-[16rem] flex-col rounded-xl border bg-gray-900/95 shadow-lg overflow-hidden ${
+      className={`flex min-w-[16rem] flex-col overflow-hidden rounded-xl border bg-gray-900/95 shadow-lg ${
         selected
           ? 'border-blue-500 ring-2 ring-blue-500/30'
           : 'border-gray-700 hover:border-gray-600'
@@ -40,11 +41,11 @@ function IframeNodeComponent({ data, selected }: NodeProps) {
         lineClassName="!border-blue-500"
         handleClassName="!w-2 !h-2 !bg-blue-500 !border-blue-500"
       />
-      <Handle type="target" position={Position.Top} className="!bg-gray-500 !w-2 !h-2" />
+      <Handle type="target" position={Position.Top} className="!h-2 !w-2 !bg-gray-500" />
 
-      <div className="flex items-center gap-2 border-b border-gray-800 px-3 py-1.5 shrink-0">
+      <div className="flex shrink-0 items-center gap-2 border-b border-gray-800 px-3 py-1.5">
         <Globe className="h-3.5 w-3.5 text-gray-500" />
-        <span className="truncate text-xs text-gray-400 flex-1">{nodeData.title || hostname}</span>
+        <span className="flex-1 truncate text-xs text-gray-400">{nodeData.title || hostname}</span>
         <a
           href={nodeData.url}
           target="_blank"
@@ -56,16 +57,16 @@ function IframeNodeComponent({ data, selected }: NodeProps) {
         </a>
       </div>
 
-      <div className="flex-1 overflow-hidden relative">
+      <div className="relative flex-1 overflow-hidden">
         {loadError ? (
-          <div className="flex flex-col items-center justify-center h-full gap-2 p-4 text-center">
+          <div className="flex h-full flex-col items-center justify-center gap-2 p-4 text-center">
             <AlertTriangle className="h-6 w-6 text-yellow-500" />
             <p className="text-xs text-gray-400">Failed to load this site.</p>
             <a
               href={nodeData.url}
               target="_blank"
               rel="noopener noreferrer"
-              className="text-xs text-blue-400 hover:text-blue-300 underline"
+              className="text-xs text-blue-400 underline hover:text-blue-300"
               onClick={(e) => e.stopPropagation()}
             >
               Open in new tab
@@ -75,7 +76,7 @@ function IframeNodeComponent({ data, selected }: NodeProps) {
           <iframe
             src={proxiedUrl}
             title={nodeData.title || hostname}
-            className="w-full h-full border-0 bg-white"
+            className="h-full w-full border-0 bg-white"
             sandbox="allow-scripts allow-same-origin allow-popups allow-forms"
             loading="lazy"
             onError={() => setLoadError(true)}
@@ -83,7 +84,7 @@ function IframeNodeComponent({ data, selected }: NodeProps) {
         )}
       </div>
 
-      <Handle type="source" position={Position.Bottom} className="!bg-gray-500 !w-2 !h-2" />
+      <Handle type="source" position={Position.Bottom} className="!h-2 !w-2 !bg-gray-500" />
     </div>
   );
 }

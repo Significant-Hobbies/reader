@@ -1,18 +1,20 @@
 'use client';
 
-import { useState, useRef, useEffect, useCallback, startTransition, useMemo } from 'react';
-import { createPortal } from 'react-dom';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { Article, Note, ReaderSettings, ElementAnchor } from '../../types';
-import { ReaderView, getThemeClasses } from '../ReaderView';
-import { AppearanceToolbar } from '../AppearanceToolbar';
-import { NotesAIChat } from '../NotesAIChat';
-import { ArticleTagEditor } from '../ArticleTagEditor';
-import { ArticleSummary } from '../ArticleSummary';
+import { startTransition, useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { createPortal } from 'react-dom';
+
+import type { AIConfig } from '../../lib/ai-config';
+import { AI_CONFIG_STORAGE_KEY, DEFAULT_AI_CONFIG } from '../../lib/ai-config';
 import { ANNOTATABLE_SELECTOR } from '../../lib/annotatable';
-import { AI_CONFIG_STORAGE_KEY, AIConfig, DEFAULT_AI_CONFIG } from '../../lib/ai-config';
-import { NoteMarkerGroupMemo } from './NoteMarkerGroup';
+import type { Article, ElementAnchor, Note, ReaderSettings } from '../../types';
+import { AppearanceToolbar } from '../AppearanceToolbar';
+import { ArticleSummary } from '../ArticleSummary';
+import { ArticleTagEditor } from '../ArticleTagEditor';
+import { NotesAIChat } from '../NotesAIChat';
+import { getThemeClasses, ReaderView } from '../ReaderView';
 import { NoteCard } from './NoteCard';
+import { NoteMarkerGroupMemo } from './NoteMarkerGroup';
 
 // ---------------------------------------------------------------------------
 // Constants & types
@@ -714,15 +716,15 @@ export function ReaderCore({
   // ---- Render ----
 
   return (
-    <div className="flex h-full w-full overflow-hidden rounded-2xl relative">
+    <div className="relative flex h-full w-full overflow-hidden rounded-2xl">
       {/* LEFT PANEL: Article Content */}
       <div
-        className="h-full flex flex-col bg-gray-900/70 backdrop-blur border border-gray-800 rounded-2xl overflow-hidden shadow-2xl relative"
+        className="relative flex h-full flex-col overflow-hidden rounded-2xl border border-gray-800 bg-gray-900/70 shadow-2xl backdrop-blur"
         style={compact ? { flex: 1 } : { width: `${leftPanelWidth}%` }}
       >
         {/* Header */}
-        <div className="p-4 border-b border-gray-800 bg-gray-900/80 backdrop-blur-md z-10 shadow-md flex flex-wrap items-center gap-4">
-          <div className="flex-1 min-w-[220px]">
+        <div className="z-10 flex flex-wrap items-center gap-4 border-b border-gray-800 bg-gray-900/80 p-4 shadow-md backdrop-blur-md">
+          <div className="min-w-[220px] flex-1">
             {!readOnly && isTitleEditing ? (
               <input
                 type="text"
@@ -743,29 +745,29 @@ export function ReaderCore({
                 placeholder={article?.title || article?.url || 'Untitled article'}
                 maxLength={120}
                 autoFocus
-                className="w-full bg-transparent text-2xl font-semibold text-white border-b border-blue-500 focus:outline-none pb-1 transition-colors"
+                className="w-full border-b border-blue-500 bg-transparent pb-1 text-2xl font-semibold text-white transition-colors focus:outline-none"
               />
             ) : readOnly ? (
-              <h1 className="text-2xl font-semibold text-white leading-snug">
+              <h1 className="text-2xl leading-snug font-semibold text-white">
                 {titleDraft.trim() || article?.title || article?.url || 'Untitled article'}
               </h1>
             ) : (
               <button
                 type="button"
                 onClick={() => setIsTitleEditing(true)}
-                className="w-full text-left group"
+                className="group w-full text-left"
                 title="Click to edit title"
               >
-                <h1 className="text-2xl font-semibold text-white group-hover:text-blue-300 transition-colors leading-snug">
+                <h1 className="text-2xl leading-snug font-semibold text-white transition-colors group-hover:text-blue-300">
                   {titleDraft.trim() || article?.title || article?.url || 'Untitled article'}
                 </h1>
-                <p className="text-xs text-gray-500 opacity-0 group-hover:opacity-100 transition-opacity">
+                <p className="text-xs text-gray-500 opacity-0 transition-opacity group-hover:opacity-100">
                   Click to edit title
                 </p>
               </button>
             )}
             {!readOnly && (isTitleError || isTitleSaving) && (
-              <div className="text-xs text-gray-500 h-4 mt-1">
+              <div className="mt-1 h-4 text-xs text-gray-500">
                 {isTitleError ? (
                   <span className="text-red-400">{titleErrorMessage}</span>
                 ) : isTitleSaving ? (
@@ -775,11 +777,11 @@ export function ReaderCore({
             )}
           </div>
 
-          <div className="flex items-center gap-4 ml-auto">
+          <div className="ml-auto flex items-center gap-4">
             {!readOnly && <AppearanceToolbar settings={settings} onUpdate={updateSettings} />}
             {!readOnly && (
               <span
-                className={`text-xs font-medium px-2 py-1 rounded-full ${isNotesSaving ? 'bg-yellow-900/30 text-yellow-500' : 'bg-green-900/30 text-green-500'}`}
+                className={`rounded-full px-2 py-1 text-xs font-medium ${isNotesSaving ? 'bg-yellow-900/30 text-yellow-500' : 'bg-green-900/30 text-green-500'}`}
               >
                 {isNotesSaving ? 'Saving...' : 'Saved'}
               </span>
@@ -791,13 +793,13 @@ export function ReaderCore({
         {/* Article Content */}
         <div
           ref={snapshotContainerRef}
-          className={`flex-grow overflow-y-auto relative scroll-smooth ${getThemeClasses(settings.theme)}`}
+          className={`relative flex-grow overflow-y-auto scroll-smooth ${getThemeClasses(settings.theme)}`}
           onMouseUp={!readOnly ? handleSelectionMouseUp : undefined}
           onContextMenu={!readOnly ? handleSelectionContextMenu : undefined}
         >
           <div className="relative min-h-full">
             {/* AI Summary Section */}
-            <div className="max-w-3xl mx-auto px-8 pt-8">
+            <div className="mx-auto max-w-3xl px-8 pt-8">
               <ArticleSummary
                 articleId={article.id}
                 articleContent={article.content}
@@ -847,11 +849,11 @@ export function ReaderCore({
       {/* RESIZER - hidden in compact mode */}
       {!compact && (
         <div
-          className="w-1 bg-gray-800 hover:bg-blue-500 cursor-col-resize transition-colors z-30 flex items-center justify-center relative group mx-1 rounded-full"
+          className="group relative z-30 mx-1 flex w-1 cursor-col-resize items-center justify-center rounded-full bg-gray-800 transition-colors hover:bg-blue-500"
           onMouseDown={startResizing}
         >
-          <div className="absolute inset-y-0 -left-2 -right-2 z-30" />
-          <div className="w-1 h-8 bg-gray-600 rounded-full group-hover:bg-white" />
+          <div className="absolute inset-y-0 -right-2 -left-2 z-30" />
+          <div className="h-8 w-1 rounded-full bg-gray-600 group-hover:bg-white" />
         </div>
       )}
 
@@ -859,7 +861,7 @@ export function ReaderCore({
       {compact && (
         <button
           onClick={() => setShowSidebar(!showSidebar)}
-          className="absolute top-2 right-2 z-40 px-2 py-1 rounded-lg bg-gray-800/80 border border-gray-700 text-xs text-gray-300 hover:bg-gray-700 transition-colors"
+          className="absolute top-2 right-2 z-40 rounded-lg border border-gray-700 bg-gray-800/80 px-2 py-1 text-xs text-gray-300 transition-colors hover:bg-gray-700"
         >
           {showSidebar ? 'Hide' : 'Notes'}
         </button>
@@ -868,14 +870,14 @@ export function ReaderCore({
       {/* RIGHT PANEL: Sidebar */}
       {(showSidebar || !compact) && (
         <div
-          className="h-full bg-gray-900/70 backdrop-blur flex flex-col shadow-2xl z-20 border border-gray-800 rounded-2xl"
+          className="z-20 flex h-full flex-col rounded-2xl border border-gray-800 bg-gray-900/70 shadow-2xl backdrop-blur"
           style={
             compact
               ? { position: 'absolute', right: 0, top: 0, width: '300px', zIndex: 30 }
               : { width: `${100 - leftPanelWidth}%` }
           }
         >
-          <div className="p-4 border-b border-gray-800 bg-gray-900/80">
+          <div className="border-b border-gray-800 bg-gray-900/80 p-4">
             <h2 className="text-lg font-semibold text-gray-100">Sidebar</h2>
             <p className="text-sm text-gray-500">
               {activeSidebarTab === 'notes'
@@ -926,9 +928,9 @@ export function ReaderCore({
           </div>
 
           {activeSidebarTab === 'notes' ? (
-            <div className="flex-grow overflow-y-auto p-4 space-y-4">
+            <div className="flex-grow space-y-4 overflow-y-auto p-4">
               {notes.length === 0 && (
-                <div className="text-center text-gray-500 mt-10">
+                <div className="mt-10 text-center text-gray-500">
                   <p>No notes yet.</p>
                   {!readOnly && (
                     <p className="text-sm">Select text, then use Add note from the actions menu.</p>
@@ -961,7 +963,7 @@ export function ReaderCore({
             </div>
           ) : (
             <div className="flex-grow overflow-y-auto p-4">
-              <p className="text-gray-500 text-sm text-center mt-10">
+              <p className="mt-10 text-center text-sm text-gray-500">
                 Not available in read-only mode.
               </p>
             </div>

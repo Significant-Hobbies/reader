@@ -1,7 +1,7 @@
 'use client';
 
+import { Loader2, X } from 'lucide-react';
 import { useState } from 'react';
-import { X, Loader2 } from 'lucide-react';
 
 interface AddWebsiteDialogProps {
   open: boolean;
@@ -121,7 +121,7 @@ export function AddWebsiteDialog({ open, onClose, onAdd, onAddIframe }: AddWebsi
             onChange={(e) => setUrl(e.target.value)}
             placeholder="https://example.com"
             autoFocus
-            className="mb-3 h-10 w-full rounded-lg border border-gray-700 bg-gray-950 px-3 text-sm text-gray-100 placeholder:text-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className="mb-3 h-10 w-full rounded-lg border border-gray-700 bg-gray-950 px-3 text-sm text-gray-100 placeholder:text-gray-500 focus:ring-2 focus:ring-blue-500 focus:outline-none"
           />
 
           <div className="mb-3 flex gap-2">
@@ -135,7 +135,7 @@ export function AddWebsiteDialog({ open, onClose, onAdd, onAddIframe }: AddWebsi
               }`}
             >
               Save as Card
-              <span className="block text-[10px] opacity-70 mt-0.5">Extract title & excerpt</span>
+              <span className="mt-0.5 block text-[10px] opacity-70">Extract title & excerpt</span>
             </button>
             <button
               type="button"
@@ -147,7 +147,7 @@ export function AddWebsiteDialog({ open, onClose, onAdd, onAddIframe }: AddWebsi
               }`}
             >
               Embed as Iframe
-              <span className="block text-[10px] opacity-70 mt-0.5">Live preview on canvas</span>
+              <span className="mt-0.5 block text-[10px] opacity-70">Live preview on canvas</span>
             </button>
           </div>
 

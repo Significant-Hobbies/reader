@@ -1,6 +1,7 @@
 import { notFound } from 'next/navigation';
-import { fetchArticleByShareId } from '../../../../lib/articles-db';
+
 import { ReaderCore } from '../../../../components/reader/ReaderCore';
+import { fetchArticleByShareId } from '../../../../lib/articles-db';
 import type { Article } from '../../../../types';
 
 export const dynamic = 'force-dynamic';

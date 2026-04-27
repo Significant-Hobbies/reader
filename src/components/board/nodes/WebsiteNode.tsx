@@ -1,8 +1,9 @@
 'use client';
 
-import { memo } from 'react';
-import { Handle, Position, NodeProps } from '@xyflow/react';
+import type { NodeProps } from '@xyflow/react';
+import { Handle, Position } from '@xyflow/react';
 import { ExternalLink } from 'lucide-react';
+import { memo } from 'react';
 
 type WebsiteData = {
   url: string;
@@ -34,7 +35,7 @@ function WebsiteNodeComponent({ id, data, selected }: NodeProps) {
           : 'border-gray-700 hover:border-gray-600'
       }`}
     >
-      <Handle type="target" position={Position.Top} className="!bg-gray-500 !w-2 !h-2" />
+      <Handle type="target" position={Position.Top} className="!h-2 !w-2 !bg-gray-500" />
 
       <div className="border-b border-gray-800 px-3 py-2">
         <div className="flex items-center gap-2">
@@ -63,11 +64,11 @@ function WebsiteNodeComponent({ id, data, selected }: NodeProps) {
       </div>
 
       <div className="px-3 py-2.5">
-        <h4 className="mb-1 text-sm font-semibold text-gray-100 line-clamp-2">
+        <h4 className="mb-1 line-clamp-2 text-sm font-semibold text-gray-100">
           {nodeData.title || 'Untitled'}
         </h4>
         {nodeData.excerpt && (
-          <p className="text-xs leading-relaxed text-gray-400 line-clamp-3">{nodeData.excerpt}</p>
+          <p className="line-clamp-3 text-xs leading-relaxed text-gray-400">{nodeData.excerpt}</p>
         )}
       </div>
 
@@ -86,14 +87,14 @@ function WebsiteNodeComponent({ id, data, selected }: NodeProps) {
               e.stopPropagation();
               nodeData.onOpenInBoard?.(nodeData.articleId!, nodeData.url, nodeData.title, id);
             }}
-            className="ml-auto text-xs text-gray-500 hover:text-blue-400 transition-colors"
+            className="ml-auto text-xs text-gray-500 transition-colors hover:text-blue-400"
           >
             Open in Board
           </button>
         </div>
       )}
 
-      <Handle type="source" position={Position.Bottom} className="!bg-gray-500 !w-2 !h-2" />
+      <Handle type="source" position={Position.Bottom} className="!h-2 !w-2 !bg-gray-500" />
     </div>
   );
 }

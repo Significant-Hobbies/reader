@@ -1,5 +1,6 @@
-import { useState, useEffect, useRef } from 'react';
-import { ReaderSettings, FontFamily, FontSize } from '../types';
+import { useEffect, useRef, useState } from 'react';
+
+import type { FontFamily, FontSize, ReaderSettings } from '../types';
 
 export const AppearanceToolbar = ({
   settings,
@@ -44,23 +45,23 @@ export const AppearanceToolbar = ({
     <div className="relative" ref={toolbarRef}>
       <button
         onClick={() => setIsOpen(!isOpen)}
-        className={`p-2 rounded-lg transition-colors ${isOpen ? 'bg-gray-800 text-gray-200' : 'hover:bg-gray-800 text-gray-400'}`}
+        className={`rounded-lg p-2 transition-colors ${isOpen ? 'bg-gray-800 text-gray-200' : 'text-gray-400 hover:bg-gray-800'}`}
         title="Appearance Settings"
       >
-        <span className="text-xl font-serif">Aa</span>
+        <span className="font-serif text-xl">Aa</span>
       </button>
 
       {isOpen && (
-        <div className="absolute left-0 top-full mt-2 w-64 bg-gray-800 rounded-xl shadow-xl border border-gray-700 p-4 z-50 flex flex-col gap-4">
+        <div className="absolute top-full left-0 z-50 mt-2 flex w-64 flex-col gap-4 rounded-xl border border-gray-700 bg-gray-800 p-4 shadow-xl">
           {/* Font Family */}
-          <div className="flex bg-gray-900 rounded-lg p-1">
+          <div className="flex rounded-lg bg-gray-900 p-1">
             {(['sans', 'serif', 'mono'] as FontFamily[]).map((font) => (
               <button
                 key={font}
                 onClick={() => onUpdate({ fontFamily: font })}
-                className={`flex-1 py-1 rounded-md text-sm capitalize transition-colors ${
+                className={`flex-1 rounded-md py-1 text-sm capitalize transition-colors ${
                   settings.fontFamily === font
-                    ? 'bg-gray-700 shadow-sm text-blue-400 font-medium'
+                    ? 'bg-gray-700 font-medium text-blue-400 shadow-sm'
                     : 'text-gray-400 hover:text-gray-200'
                 }`}
               >
@@ -70,13 +71,13 @@ export const AppearanceToolbar = ({
           </div>
 
           {/* Font Size */}
-          <div className="flex flex-col px-2 gap-2">
-            <div className="flex justify-between text-xs text-gray-400 font-medium uppercase tracking-wider">
+          <div className="flex flex-col gap-2 px-2">
+            <div className="flex justify-between text-xs font-medium tracking-wider text-gray-400 uppercase">
               <span>Size</span>
               <span>{getSliderValue() * 20 + 60}%</span>
             </div>
             <div className="flex items-center gap-3">
-              <span className="text-xs text-gray-500 font-bold">A</span>
+              <span className="text-xs font-bold text-gray-500">A</span>
               <input
                 type="range"
                 min="0"
@@ -84,9 +85,9 @@ export const AppearanceToolbar = ({
                 step="1"
                 value={getSliderValue()}
                 onChange={handleFontSizeChange}
-                className="flex-grow h-1 bg-gray-600 rounded-lg appearance-none cursor-pointer accent-blue-500"
+                className="h-1 flex-grow cursor-pointer appearance-none rounded-lg bg-gray-600 accent-blue-500"
               />
-              <span className="text-xl text-gray-500 font-bold">A</span>
+              <span className="text-xl font-bold text-gray-500">A</span>
             </div>
           </div>
 
@@ -94,17 +95,17 @@ export const AppearanceToolbar = ({
           <div className="flex gap-2">
             <button
               onClick={() => onUpdate({ theme: 'light' })}
-              className={`flex-1 h-8 rounded-full border ${settings.theme === 'light' ? 'border-blue-500 ring-1 ring-blue-500' : 'border-gray-600'} bg-white`}
+              className={`h-8 flex-1 rounded-full border ${settings.theme === 'light' ? 'border-blue-500 ring-1 ring-blue-500' : 'border-gray-600'} bg-white`}
               title="Light"
             />
             <button
               onClick={() => onUpdate({ theme: 'sepia' })}
-              className={`flex-1 h-8 rounded-full border ${settings.theme === 'sepia' ? 'border-blue-500 ring-1 ring-blue-500' : 'border-[#e3dccb]'} bg-[#f4ecd8]`}
+              className={`h-8 flex-1 rounded-full border ${settings.theme === 'sepia' ? 'border-blue-500 ring-1 ring-blue-500' : 'border-[#e3dccb]'} bg-[#f4ecd8]`}
               title="Sepia"
             />
             <button
               onClick={() => onUpdate({ theme: 'dark' })}
-              className={`flex-1 h-8 rounded-full border ${settings.theme === 'dark' ? 'border-blue-500 ring-1 ring-blue-500' : 'border-gray-600'} bg-gray-900`}
+              className={`h-8 flex-1 rounded-full border ${settings.theme === 'dark' ? 'border-blue-500 ring-1 ring-blue-500' : 'border-gray-600'} bg-gray-900`}
               title="Dark"
             />
           </div>

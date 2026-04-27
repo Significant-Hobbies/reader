@@ -1,7 +1,8 @@
 'use client';
 
-import { useState, useRef, useEffect } from 'react';
 import { X } from 'lucide-react';
+import { useEffect, useRef, useState } from 'react';
+
 import { Badge } from './ui/badge';
 
 interface TagInputProps {
@@ -86,18 +87,18 @@ export function TagInput({
 
   return (
     <div ref={containerRef} className="relative w-full">
-      <div className="flex flex-wrap gap-2 p-3 bg-gray-900/60 rounded-lg border border-gray-700 focus-within:border-blue-500 transition-colors min-h-[48px]">
+      <div className="flex min-h-[48px] flex-wrap gap-2 rounded-lg border border-gray-700 bg-gray-900/60 p-3 transition-colors focus-within:border-blue-500">
         {tags.map((tag) => (
           <Badge
             key={tag}
             variant="blue"
-            className="flex items-center gap-1 px-2 py-1 cursor-default"
+            className="flex cursor-default items-center gap-1 px-2 py-1"
           >
             <span>{tag}</span>
             <button
               type="button"
               onClick={() => removeTag(tag)}
-              className="hover:text-red-300 transition-colors"
+              className="transition-colors hover:text-red-300"
               aria-label={`Remove ${tag}`}
             >
               <X className="h-3 w-3" />
@@ -113,19 +114,19 @@ export function TagInput({
           onFocus={() => inputValue.trim() && setShowSuggestions(true)}
           placeholder={tags.length === 0 ? placeholder : ''}
           disabled={tags.length >= maxTags}
-          className="flex-1 min-w-[120px] bg-transparent text-gray-200 placeholder-gray-500 focus:outline-none text-sm"
+          className="min-w-[120px] flex-1 bg-transparent text-sm text-gray-200 placeholder-gray-500 focus:outline-none"
         />
       </div>
 
       {showSuggestions && filteredSuggestions.length > 0 && (
-        <div className="absolute z-50 w-full mt-1 bg-gray-900 border border-gray-700 rounded-lg shadow-xl max-h-60 overflow-y-auto">
+        <div className="absolute z-50 mt-1 max-h-60 w-full overflow-y-auto rounded-lg border border-gray-700 bg-gray-900 shadow-xl">
           {filteredSuggestions.map((suggestion, index) => (
             <button
               key={suggestion}
               type="button"
               onClick={() => addTag(suggestion)}
               onMouseEnter={() => setSelectedIndex(index)}
-              className={`w-full text-left px-3 py-2 text-sm transition-colors ${
+              className={`w-full px-3 py-2 text-left text-sm transition-colors ${
                 index === selectedIndex
                   ? 'bg-blue-600/30 text-blue-200'
                   : 'text-gray-300 hover:bg-gray-800'
@@ -138,7 +139,7 @@ export function TagInput({
       )}
 
       {tags.length >= maxTags && (
-        <p className="text-xs text-gray-500 mt-1">Maximum {maxTags} tags reached</p>
+        <p className="mt-1 text-xs text-gray-500">Maximum {maxTags} tags reached</p>
       )}
     </div>
   );

@@ -1,13 +1,13 @@
 'use client';
 
-import { useState, useCallback } from 'react';
 import {
   BaseEdge,
   EdgeLabelRenderer,
+  type EdgeProps,
   getBezierPath,
   useReactFlow,
-  type EdgeProps,
 } from '@xyflow/react';
+import { useCallback, useState } from 'react';
 
 export function LabeledEdge({
   id,
@@ -76,7 +76,7 @@ export function LabeledEdge({
               onKeyDown={(e) => {
                 if (e.key === 'Enter') setIsEditing(false);
               }}
-              className="w-24 rounded border border-gray-600 bg-gray-900 px-1.5 py-0.5 text-center text-[10px] text-gray-200 focus:outline-none focus:ring-1 focus:ring-blue-500"
+              className="w-24 rounded border border-gray-600 bg-gray-900 px-1.5 py-0.5 text-center text-[10px] text-gray-200 focus:ring-1 focus:ring-blue-500 focus:outline-none"
             />
           ) : (
             <button

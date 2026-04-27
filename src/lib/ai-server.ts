@@ -1,5 +1,6 @@
 import { createAIModel } from '@saas-maker/ai/server';
 import { createParser } from 'eventsource-parser';
+
 import type { AIChatMessage } from './ai-config';
 
 export const MAX_API_KEY_LENGTH = 512;

@@ -1,11 +1,13 @@
 'use client';
 
-import { memo, useCallback } from 'react';
-import { Handle, Position, NodeProps, NodeResizeControl } from '@xyflow/react';
 import { useQuery } from '@tanstack/react-query';
+import type { NodeProps } from '@xyflow/react';
+import { Handle, NodeResizeControl, Position } from '@xyflow/react';
 import { GripVertical } from 'lucide-react';
-import { ReaderCore } from '../../reader/ReaderCore';
+import { memo, useCallback } from 'react';
+
 import type { Article, ElementAnchor } from '../../../types';
+import { ReaderCore } from '../../reader/ReaderCore';
 
 type ReaderData = {
   articleId: string;
@@ -51,12 +53,12 @@ function ReaderNodeComponent({ id, data, selected }: NodeProps) {
 
   return (
     <div
-      className={`rounded-xl border bg-gray-900/95 shadow-lg overflow-hidden ${
+      className={`overflow-hidden rounded-xl border bg-gray-900/95 shadow-lg ${
         selected ? 'border-blue-500 ring-2 ring-blue-500/30' : 'border-gray-700'
       }`}
       style={{ width: '100%', height: '100%', minWidth: 400, minHeight: 300 }}
     >
-      <Handle type="target" position={Position.Top} className="!bg-gray-500 !w-2 !h-2" />
+      <Handle type="target" position={Position.Top} className="!h-2 !w-2 !bg-gray-500" />
 
       {!nodeData.readOnly && (
         <NodeResizeControl
@@ -71,16 +73,16 @@ function ReaderNodeComponent({ id, data, selected }: NodeProps) {
       <div className="h-full w-full overflow-hidden">
         {isLoading && (
           <div className="flex h-full items-center justify-center">
-            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500" />
+            <div className="h-8 w-8 animate-spin rounded-full border-b-2 border-blue-500" />
           </div>
         )}
         {error && !article && (
-          <div className="flex h-full items-center justify-center text-gray-500 text-sm">
+          <div className="flex h-full items-center justify-center text-sm text-gray-500">
             Failed to load article
           </div>
         )}
         {article && (
-          <div className="h-full nodrag nowheel">
+          <div className="nodrag nowheel h-full">
             <ReaderCore
               article={article}
               readOnly={nodeData.readOnly}
@@ -92,7 +94,7 @@ function ReaderNodeComponent({ id, data, selected }: NodeProps) {
         )}
       </div>
 
-      <Handle type="source" position={Position.Bottom} className="!bg-gray-500 !w-2 !h-2" />
+      <Handle type="source" position={Position.Bottom} className="!h-2 !w-2 !bg-gray-500" />
     </div>
   );
 }

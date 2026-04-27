@@ -1,27 +1,14 @@
-import {
-  DeleteObjectCommand,
-  GetObjectCommand,
-  PutObjectCommand,
-  S3Client,
-} from '@aws-sdk/client-s3';
-import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
-
-const R2_ACCOUNT_ID = process.env.CLOUDFLARE_ACCOUNT_ID!;
-const R2_ACCESS_KEY_ID = process.env.R2_ACCESS_KEY_ID!;
-const R2_SECRET_ACCESS_KEY = process.env.R2_SECRET_ACCESS_KEY!;
-const R2_BUCKET = process.env.R2_BUCKET_NAME || 'reader-pdfs';
+import { getCloudflareContext } from '@opennextjs/cloudflare';
 
 const PDF_PREFIX = 'pdfs';
 
-function getS3Client(): S3Client {
-  return new S3Client({
-    region: 'auto',
-    endpoint: `https://${R2_ACCOUNT_ID}.r2.cloudflarestorage.com`,
-    credentials: {
-      accessKeyId: R2_ACCESS_KEY_ID,
-      secretAccessKey: R2_SECRET_ACCESS_KEY,
-    },
-  });
+function getBucket(): R2Bucket {
+  const { env } = getCloudflareContext();
+  const bucket = (env as unknown as { PDFS_BUCKET?: R2Bucket }).PDFS_BUCKET;
+  if (!bucket) {
+    throw new Error('R2 binding PDFS_BUCKET is not configured');
+  }
+  return bucket;
 }
 
 export interface UploadPdfOptions {
@@ -46,9 +33,9 @@ function toBuffer(input: Buffer | ArrayBuffer): Buffer {
 }
 
 /**
- * Upload a PDF to Cloudflare R2. Returns the storage key to persist on the
- * article row. Access is mediated by `getPdfDownloadUrl()` — callers never
- * hand the raw signed URL to clients directly.
+ * Upload a PDF to Cloudflare R2 via the native binding. Returns the storage
+ * key to persist on the article row. Access is mediated by
+ * `getPdfDownloadUrl()` — callers never hand the raw URL to clients directly.
  */
 export async function uploadPdf(
   buffer: Buffer | ArrayBuffer,
@@ -58,15 +45,9 @@ export async function uploadPdf(
   const sanitized = sanitizeFilename(opts.filename);
   const storageKey = `${PDF_PREFIX}/${opts.userId}/${Date.now()}-${sanitized}`;
 
-  const s3 = getS3Client();
-  await s3.send(
-    new PutObjectCommand({
-      Bucket: R2_BUCKET,
-      Key: storageKey,
-      Body: body,
-      ContentType: 'application/pdf',
-    })
-  );
+  await getBucket().put(storageKey, body, {
+    httpMetadata: { contentType: 'application/pdf' },
+  });
 
   return { storageKey, sizeBytes: body.length };
 }
@@ -74,15 +55,14 @@ export async function uploadPdf(
 /**
  * Return a URL that a browser can use to download the PDF. We always route
  * this through our own proxy (`/api/pdfs/[id]/download`) so that auth +
- * ownership are checked on every request. The `articleId` is the Turso row
- * id, not the storage key.
+ * ownership are checked on every request. The `articleId` is the row id.
  */
 export function getPdfDownloadUrl(articleId: string): string {
   return `/api/pdfs/${encodeURIComponent(articleId)}/download`;
 }
 
 /**
- * Fetch PDF bytes from R2 via a presigned URL. Used by the download proxy
+ * Fetch PDF bytes from R2 via the native binding. Used by the download proxy
  * route to stream the file to the authenticated user.
  */
 export async function fetchPdfBytes(storageKey: string): Promise<{
@@ -90,31 +70,22 @@ export async function fetchPdfBytes(storageKey: string): Promise<{
   contentType: string;
   size: number;
 }> {
-  const s3 = getS3Client();
-  const signedUrl = await getSignedUrl(
-    s3,
-    new GetObjectCommand({ Bucket: R2_BUCKET, Key: storageKey }),
-    { expiresIn: 3600 }
-  );
-
-  const response = await fetch(signedUrl);
-  if (!response.ok || !response.body) {
+  const object = await getBucket().get(storageKey);
+  if (!object || !object.body) {
     throw new Error('PDF not found in storage');
   }
 
-  const contentLength = response.headers.get('content-length');
   return {
-    stream: response.body,
-    contentType: response.headers.get('content-type') || 'application/pdf',
-    size: contentLength ? parseInt(contentLength, 10) : 0,
+    stream: object.body,
+    contentType: object.httpMetadata?.contentType || 'application/pdf',
+    size: object.size ?? 0,
   };
 }
 
 /**
  * Delete a PDF from R2. Safe to call even if the key no longer exists —
- * DeleteObjectCommand is idempotent.
+ * R2 delete is idempotent.
  */
 export async function deletePdf(storageKey: string): Promise<void> {
-  const s3 = getS3Client();
-  await s3.send(new DeleteObjectCommand({ Bucket: R2_BUCKET, Key: storageKey }));
+  await getBucket().delete(storageKey);
 }

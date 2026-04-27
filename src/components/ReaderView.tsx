@@ -1,7 +1,9 @@
-import { memo, RefObject } from 'react';
 import { Clock } from 'lucide-react';
-import { ReaderSettings, Theme, FontFamily, FontSize } from '../types';
+import type { RefObject } from 'react';
+import { memo } from 'react';
+
 import { formatReadingTime } from '../lib/reading-time-utils';
+import type { FontFamily, FontSize, ReaderSettings, Theme } from '../types';
 
 // --- Helper: Style Generators ---
 export const getThemeClasses = (theme: Theme) => {
@@ -67,9 +69,9 @@ const ReaderViewComponent = ({
 
   return (
     <div className={`min-h-full transition-colors duration-300 ${themeClasses}`}>
-      <div className={`max-w-3xl mx-auto py-12 px-8 ${fontClasses}`}>
+      <div className={`mx-auto max-w-3xl px-8 py-12 ${fontClasses}`}>
         <h1
-          className={`text-4xl font-bold mb-4 ${settings.theme === 'dark' ? 'text-white' : 'text-gray-900'}`}
+          className={`mb-4 text-4xl font-bold ${settings.theme === 'dark' ? 'text-white' : 'text-gray-900'}`}
         >
           {title}
         </h1>

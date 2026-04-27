@@ -1,4 +1,5 @@
-import { describe, it, expect } from 'vitest';
+import { describe, expect, it } from 'vitest';
+
 import { getCategoryColor, SUGGESTED_CATEGORIES } from '../category-utils';
 
 describe('SUGGESTED_CATEGORIES', () => {

@@ -1,10 +1,11 @@
 'use client';
 
-import { useState, useEffect } from 'react';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { Article } from '../types';
-import { TagInput } from './TagInput';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { useEffect, useState } from 'react';
+
 import { getTagColor } from '../lib/tag-utils';
+import type { Article } from '../types';
+import { TagInput } from './TagInput';
 
 interface ArticleTagEditorProps {
   article: Article;
@@ -69,14 +70,14 @@ export function ArticleTagEditor({ article }: ArticleTagEditorProps) {
   return (
     <div className="space-y-4">
       <div>
-        <h3 className="text-sm font-medium text-gray-300 mb-3">Tags</h3>
+        <h3 className="mb-3 text-sm font-medium text-gray-300">Tags</h3>
         <TagInput
           tags={localTags}
           suggestions={allTagsSuggestions}
           onChange={handleTagsChange}
           placeholder="Add tags to organize..."
         />
-        <p className="text-xs text-gray-500 mt-2">
+        <p className="mt-2 text-xs text-gray-500">
           {updateTagsMutation.isPending && 'Saving tags...'}
           {!updateTagsMutation.isPending && localTags.length > 0 && 'Tags saved'}
         </p>
@@ -84,7 +85,7 @@ export function ArticleTagEditor({ article }: ArticleTagEditorProps) {
 
       {localTags.length > 0 && (
         <div className="border-t border-gray-800 pt-4">
-          <h4 className="text-xs uppercase tracking-wide text-gray-500 mb-2">Current tags</h4>
+          <h4 className="mb-2 text-xs tracking-wide text-gray-500 uppercase">Current tags</h4>
           <div className="flex flex-wrap gap-2">
             {localTags.map((tag) => (
               <div

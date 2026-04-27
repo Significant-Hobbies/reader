@@ -1,4 +1,6 @@
 import { NextResponse } from 'next/server';
+
+import { getAuthenticatedUserId } from '../../../../lib/auth-api';
 import {
   deleteBoard,
   fetchBoardById,
@@ -7,7 +9,6 @@ import {
   updateBoard,
   verifyBoardOwnership,
 } from '../../../../lib/boards-db';
-import { getAuthenticatedUserId } from '../../../../lib/auth-api';
 
 export async function GET(request: Request, { params }: { params: Promise<{ id: string }> }) {
   try {

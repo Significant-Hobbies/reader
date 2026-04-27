@@ -1,7 +1,7 @@
 'use client';
 
-import { useState, useCallback } from 'react';
-import { X, Copy, Check, Link2, Trash2 } from 'lucide-react';
+import { Check, Copy, Link2, Trash2, X } from 'lucide-react';
+import { useCallback, useState } from 'react';
 
 interface ShareDialogProps {
   open: boolean;

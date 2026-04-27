@@ -1,14 +1,16 @@
 'use client';
 
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { useQueryClient } from '@tanstack/react-query';
 import { useCompletion } from '@ai-sdk/react';
+import { useAIConfig, useModelDiscovery } from '@saas-maker/ai';
+import { useQueryClient } from '@tanstack/react-query';
 import { Bot, Loader2, Send, Settings, Square, Trash2, X } from 'lucide-react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
-import { useAIConfig, useModelDiscovery } from '@saas-maker/ai';
-import { Note, Article } from '../types';
-import { AIChatMessage, AI_CONFIG_STORAGE_KEY, isLocalCLIEnabled } from '../lib/ai-config';
+
+import type { AIChatMessage } from '../lib/ai-config';
+import { AI_CONFIG_STORAGE_KEY, isLocalCLIEnabled } from '../lib/ai-config';
+import type { Article, Note } from '../types';
 
 interface NotesAIChatProps {
   article: Pick<Article, 'id' | 'title' | 'url' | 'byline' | 'content' | 'aiChat'>;
@@ -484,7 +486,7 @@ export function NotesAIChat({
                       }))
                     }
                     placeholder="https://api.openai.com/v1"
-                    className="h-10 w-full rounded-lg border border-gray-700 bg-gray-900 px-3 text-sm text-gray-100 placeholder:text-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    className="h-10 w-full rounded-lg border border-gray-700 bg-gray-900 px-3 text-sm text-gray-100 placeholder:text-gray-500 focus:ring-2 focus:ring-blue-500 focus:outline-none"
                   />
                 </label>
 
@@ -500,7 +502,7 @@ export function NotesAIChat({
                       }))
                     }
                     placeholder="Paste your API key"
-                    className="h-10 w-full rounded-lg border border-gray-700 bg-gray-900 px-3 text-sm text-gray-100 placeholder:text-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    className="h-10 w-full rounded-lg border border-gray-700 bg-gray-900 px-3 text-sm text-gray-100 placeholder:text-gray-500 focus:ring-2 focus:ring-blue-500 focus:outline-none"
                   />
                 </label>
 
@@ -526,7 +528,7 @@ export function NotesAIChat({
                           ? 'Select or type a model name'
                           : 'Enter model name'
                       }
-                      className="h-10 w-full rounded-lg border border-gray-700 bg-gray-900 px-3 text-sm text-gray-100 placeholder:text-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      className="h-10 w-full rounded-lg border border-gray-700 bg-gray-900 px-3 text-sm text-gray-100 placeholder:text-gray-500 focus:ring-2 focus:ring-blue-500 focus:outline-none"
                     />
                     <datalist id="ai-model-options">
                       {availableModels.map((modelId) => (
@@ -610,7 +612,7 @@ export function NotesAIChat({
                 ? 'Ask about this article or your notes...'
                 : 'Configure AI endpoint in settings'
             }
-            className="min-h-[68px] flex-1 resize-none rounded-xl border border-gray-700 bg-gray-950 px-3 py-2 text-sm text-gray-100 placeholder:text-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className="min-h-[68px] flex-1 resize-none rounded-xl border border-gray-700 bg-gray-950 px-3 py-2 text-sm text-gray-100 placeholder:text-gray-500 focus:ring-2 focus:ring-blue-500 focus:outline-none"
           />
 
           {isStreaming ? (

@@ -1,7 +1,8 @@
 'use client';
 
-import { ReactNode } from 'react';
-import { useSession, signIn, signOut } from '@/lib/auth-client';
+import type { ReactNode } from 'react';
+
+import { signIn, signOut, useSession } from '@/lib/auth-client';
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   // better-auth manages its own session state via cookies — no wrapper needed
@@ -35,6 +36,13 @@ export function useAuth() {
     user,
     loading: isPending,
     signInWithGoogle: () => signIn.social({ provider: 'google', callbackURL: '/' }),
-    logout: () => signOut({ fetchOptions: { onSuccess: () => { window.location.href = '/login'; } } }),
+    logout: () =>
+      signOut({
+        fetchOptions: {
+          onSuccess: () => {
+            window.location.href = '/login';
+          },
+        },
+      }),
   };
 }

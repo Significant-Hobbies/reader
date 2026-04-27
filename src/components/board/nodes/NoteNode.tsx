@@ -1,7 +1,8 @@
 'use client';
 
-import { memo, useState, useCallback } from 'react';
-import { Handle, Position, NodeProps, useReactFlow, NodeResizer } from '@xyflow/react';
+import type { NodeProps } from '@xyflow/react';
+import { Handle, NodeResizer, Position, useReactFlow } from '@xyflow/react';
+import { memo, useCallback, useState } from 'react';
 
 const NOTE_COLORS: Record<string, { bg: string; border: string; text: string }> = {
   yellow: { bg: 'bg-yellow-300/90', border: 'border-yellow-400', text: 'text-yellow-950' },
@@ -64,7 +65,7 @@ function NoteNodeComponent({ id, data, selected }: NodeProps) {
         lineClassName="!border-blue-500"
         handleClassName="!w-2 !h-2 !bg-blue-500 !border-blue-500"
       />
-      <Handle type="target" position={Position.Top} className="!bg-gray-600 !w-2 !h-2" />
+      <Handle type="target" position={Position.Top} className="!h-2 !w-2 !bg-gray-600" />
 
       {selected && (
         <div className="flex gap-0.5 border-b border-black/10 px-2 py-1">
@@ -105,7 +106,7 @@ function NoteNodeComponent({ id, data, selected }: NodeProps) {
                 nodeData.elementAnchor!.websiteNodeId
               );
             }}
-            className="mb-2 inline-flex items-center gap-1 rounded-md bg-blue-500/15 px-2 py-0.5 text-[10px] font-medium text-blue-300 hover:bg-blue-500/25 transition-colors max-w-full"
+            className="mb-2 inline-flex max-w-full items-center gap-1 rounded-md bg-blue-500/15 px-2 py-0.5 text-[10px] font-medium text-blue-300 transition-colors hover:bg-blue-500/25"
           >
             <span className="font-mono">[{nodeData.elementAnchor.tagName || 'el'}]</span>
             <span className="truncate">
@@ -126,8 +127,8 @@ function NoteNodeComponent({ id, data, selected }: NodeProps) {
         ) : (
           <div
             onDoubleClick={nodeData.readOnly ? undefined : () => setIsEditing(true)}
-            className={`min-h-[4rem] whitespace-pre-wrap text-sm ${nodeData.readOnly ? '' : 'cursor-text'} ${colors.text} ${
-              !nodeData.text ? 'opacity-40 italic' : ''
+            className={`min-h-[4rem] text-sm whitespace-pre-wrap ${nodeData.readOnly ? '' : 'cursor-text'} ${colors.text} ${
+              !nodeData.text ? 'italic opacity-40' : ''
             }`}
           >
             {nodeData.text || (nodeData.readOnly ? '' : 'Double-click to edit')}
@@ -135,7 +136,7 @@ function NoteNodeComponent({ id, data, selected }: NodeProps) {
         )}
       </div>
 
-      <Handle type="source" position={Position.Bottom} className="!bg-gray-600 !w-2 !h-2" />
+      <Handle type="source" position={Position.Bottom} className="!h-2 !w-2 !bg-gray-600" />
     </div>
   );
 }

@@ -1,8 +1,9 @@
 'use client';
 
-import { useState } from 'react';
+import { Layout, Loader2, Plus, Trash2 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
-import { Plus, Trash2, Layout, Loader2 } from 'lucide-react';
+import { useState } from 'react';
+
 import { useBoardList, useCreateBoard, useDeleteBoard } from './hooks/useBoardData';
 
 export function BoardListClient() {
@@ -37,7 +38,7 @@ export function BoardListClient() {
               if (e.key === 'Enter') void handleCreate();
             }}
             placeholder="Board name..."
-            className="h-9 rounded-lg border border-gray-700 bg-gray-900 px-3 text-sm text-gray-100 placeholder:text-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className="h-9 rounded-lg border border-gray-700 bg-gray-900 px-3 text-sm text-gray-100 placeholder:text-gray-500 focus:ring-2 focus:ring-blue-500 focus:outline-none"
           />
           <button
             onClick={() => void handleCreate()}
@@ -70,20 +71,20 @@ export function BoardListClient() {
               onKeyDown={(e) => {
                 if (e.key === 'Enter' || e.key === ' ') router.push(`/board/${board.id}`);
               }}
-              className="group relative cursor-pointer rounded-xl border border-gray-700 bg-gray-800/60 p-5 text-left transition-all hover:border-blue-500/50 hover:bg-gray-800/80 shadow-md"
+              className="group relative cursor-pointer rounded-xl border border-gray-700 bg-gray-800/60 p-5 text-left shadow-md transition-all hover:border-blue-500/50 hover:bg-gray-800/80"
             >
               <div className="mb-2 flex items-center justify-between">
                 <Layout className="h-5 w-5 text-blue-400" />
                 <button
                   onClick={(e) => handleDelete(e, board.id)}
                   disabled={deleteBoard.isPending}
-                  className="rounded-md p-1 text-gray-500 opacity-0 transition-all hover:bg-gray-800 hover:text-red-400 group-hover:opacity-100"
+                  className="rounded-md p-1 text-gray-500 opacity-0 transition-all group-hover:opacity-100 hover:bg-gray-800 hover:text-red-400"
                   title="Delete board"
                 >
                   <Trash2 className="h-4 w-4" />
                 </button>
               </div>
-              <h3 className="mb-1 font-semibold text-gray-100 truncate">{board.name}</h3>
+              <h3 className="mb-1 truncate font-semibold text-gray-100">{board.name}</h3>
               <p className="text-xs text-gray-500">
                 {board.nodeCount} {board.nodeCount === 1 ? 'node' : 'nodes'}
                 {board.updatedAt && <> &middot; {new Date(board.updatedAt).toLocaleDateString()}</>}

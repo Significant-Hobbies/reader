@@ -1,7 +1,8 @@
 'use client';
 
 import { memo, useState } from 'react';
-import { Note } from '../../types';
+
+import type { Note } from '../../types';
 
 interface NoteCardProps {
   note: Note;
@@ -22,12 +23,12 @@ export const NoteCard = memo(
 
     return (
       <div
-        className="bg-gray-800 p-4 rounded-xl shadow-sm border border-gray-700 hover:border-gray-600 transition-colors group"
+        className="group rounded-xl border border-gray-700 bg-gray-800 p-4 shadow-sm transition-colors hover:border-gray-600"
         onClick={() => onScrollTo(note)}
       >
-        <div className="flex justify-between items-start mb-2">
-          <span className="text-xs font-mono text-gray-400 bg-gray-900/50 px-2 py-1 rounded flex items-center gap-2">
-            <span className="w-4 h-4 bg-yellow-500 rounded-full flex items-center justify-center text-[10px] text-yellow-900 font-bold">
+        <div className="mb-2 flex items-start justify-between">
+          <span className="flex items-center gap-2 rounded bg-gray-900/50 px-2 py-1 font-mono text-xs text-gray-400">
+            <span className="flex h-4 w-4 items-center justify-center rounded-full bg-yellow-500 text-[10px] font-bold text-yellow-900">
               {index + 1}
             </span>
             {anchorLabel}
@@ -38,14 +39,14 @@ export const NoteCard = memo(
                 e.stopPropagation();
                 onDelete(note.id);
               }}
-              className="text-gray-500 hover:text-red-400 opacity-0 group-hover:opacity-100 transition-opacity"
+              className="text-gray-500 opacity-0 transition-opacity group-hover:opacity-100 hover:text-red-400"
             >
               Delete
             </button>
           )}
         </div>
         {note.anchor?.textPreview && (
-          <p className="text-xs text-gray-500 mb-3 italic overflow-hidden text-ellipsis whitespace-nowrap">
+          <p className="mb-3 overflow-hidden text-xs text-ellipsis whitespace-nowrap text-gray-500 italic">
             &ldquo;{note.anchor.textPreview}&rdquo;
           </p>
         )}
@@ -56,7 +57,7 @@ export const NoteCard = memo(
             placeholder="Write your observation..."
             rows={3}
             autoFocus
-            className="w-full p-3 text-gray-200 bg-gray-900/60 resize-none focus:outline-none rounded-md transition-colors placeholder-gray-600 min-h-[120px]"
+            className="min-h-[120px] w-full resize-none rounded-md bg-gray-900/60 p-3 text-gray-200 placeholder-gray-600 transition-colors focus:outline-none"
             onClick={(e) => e.stopPropagation()}
             onBlur={() => setIsEditing(false)}
           />
@@ -67,18 +68,18 @@ export const NoteCard = memo(
               e.stopPropagation();
               setIsEditing(true);
             }}
-            className="w-full text-left bg-gray-900/30 hover:bg-gray-900/60 transition-colors rounded-md p-3"
+            className="w-full rounded-md bg-gray-900/30 p-3 text-left transition-colors hover:bg-gray-900/60"
           >
             <p
-              className={`text-sm whitespace-pre-line overflow-hidden max-h-[4.5rem] ${note.text ? 'text-gray-200' : 'text-gray-500 italic'}`}
+              className={`max-h-[4.5rem] overflow-hidden text-sm whitespace-pre-line ${note.text ? 'text-gray-200' : 'text-gray-500 italic'}`}
             >
               {note.text || 'Click to write your observation...'}
             </p>
           </button>
         ) : (
-          <div className="bg-gray-900/30 rounded-md p-3">
+          <div className="rounded-md bg-gray-900/30 p-3">
             <p
-              className={`text-sm whitespace-pre-line overflow-hidden max-h-[4.5rem] ${note.text ? 'text-gray-200' : 'text-gray-500 italic'}`}
+              className={`max-h-[4.5rem] overflow-hidden text-sm whitespace-pre-line ${note.text ? 'text-gray-200' : 'text-gray-500 italic'}`}
             >
               {note.text || 'No content'}
             </p>

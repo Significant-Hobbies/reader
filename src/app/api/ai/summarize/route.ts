@@ -1,10 +1,11 @@
-import { NextResponse } from 'next/server';
-import { generateText } from 'ai';
 import { createAIModel } from '@saas-maker/ai/server';
-import { getAuthenticatedUserId } from '@/lib/auth-api';
+import { generateText } from 'ai';
+import { NextResponse } from 'next/server';
+
 import { isLocalCLIEnabled } from '@/lib/ai-config';
 import { normalizeApiKey, normalizeEndpointUrl, normalizeText } from '@/lib/ai-server';
-import { SummaryLength } from '@/types';
+import { getAuthenticatedUserId } from '@/lib/auth-api';
+import type { SummaryLength } from '@/types';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';

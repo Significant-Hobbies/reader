@@ -1,18 +1,20 @@
 'use client';
 
-import { memo, useState, useCallback, useRef, useEffect, useMemo } from 'react';
-import { Handle, Position, NodeProps, useReactFlow, NodeResizer } from '@xyflow/react';
 import { useCompletion } from '@ai-sdk/react';
+import type { NodeProps } from '@xyflow/react';
+import { Handle, NodeResizer, Position, useReactFlow } from '@xyflow/react';
 import { Bot, Send, Square, Trash2 } from 'lucide-react';
+import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
-import type { AIChatMessage } from '../../../types';
+
+import type { AIConfig } from '../../../lib/ai-config';
 import {
   AI_CONFIG_STORAGE_KEY,
-  AIConfig,
   DEFAULT_AI_CONFIG,
   isLocalCLIEnabled,
 } from '../../../lib/ai-config';
+import type { AIChatMessage } from '../../../types';
 
 type AIChatData = {
   messages: AIChatMessage[];
@@ -158,7 +160,7 @@ function AIChatNodeComponent({ id, data, selected }: NodeProps) {
         lineClassName="!border-blue-500"
         handleClassName="!w-2 !h-2 !bg-blue-500 !border-blue-500"
       />
-      <Handle type="target" position={Position.Top} className="!bg-gray-500 !w-2 !h-2" />
+      <Handle type="target" position={Position.Top} className="!h-2 !w-2 !bg-gray-500" />
 
       <div className="flex items-center justify-between border-b border-gray-800 px-3 py-2">
         <div className="flex items-center gap-2">
@@ -192,7 +194,7 @@ function AIChatNodeComponent({ id, data, selected }: NodeProps) {
                 nodeData.elementAnchor!.websiteNodeId
               );
             }}
-            className="inline-flex items-center gap-1 rounded-md bg-blue-500/15 px-2 py-0.5 text-[10px] font-medium text-blue-300 hover:bg-blue-500/25 transition-colors max-w-full"
+            className="inline-flex max-w-full items-center gap-1 rounded-md bg-blue-500/15 px-2 py-0.5 text-[10px] font-medium text-blue-300 transition-colors hover:bg-blue-500/25"
           >
             <span className="font-mono">[{nodeData.elementAnchor.tagName || 'el'}]</span>
             <span className="truncate">
@@ -251,7 +253,7 @@ function AIChatNodeComponent({ id, data, selected }: NodeProps) {
                 }
               }}
               placeholder={isReady ? 'Ask something...' : 'Configure AI in Reader settings'}
-              className="flex-1 rounded-lg border border-gray-700 bg-gray-950 px-2.5 py-1.5 text-xs text-gray-100 placeholder:text-gray-600 focus:outline-none focus:ring-1 focus:ring-blue-500"
+              className="flex-1 rounded-lg border border-gray-700 bg-gray-950 px-2.5 py-1.5 text-xs text-gray-100 placeholder:text-gray-600 focus:ring-1 focus:ring-blue-500 focus:outline-none"
             />
             {isStreaming ? (
               <button
@@ -276,7 +278,7 @@ function AIChatNodeComponent({ id, data, selected }: NodeProps) {
         </div>
       )}
 
-      <Handle type="source" position={Position.Bottom} className="!bg-gray-500 !w-2 !h-2" />
+      <Handle type="source" position={Position.Bottom} className="!h-2 !w-2 !bg-gray-500" />
     </div>
   );
 }

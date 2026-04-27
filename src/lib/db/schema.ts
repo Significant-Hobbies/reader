@@ -1,5 +1,6 @@
-import { integer, primaryKey, sqliteTable, text, index } from 'drizzle-orm/sqlite-core';
 import { sql } from 'drizzle-orm';
+import { index, integer, primaryKey, sqliteTable, text } from 'drizzle-orm/sqlite-core';
+
 import type { AIChatMessage, ArticleStatus, Note } from '../../types';
 
 // --- User table (shared by better-auth; legacy NextAuth columns kept for existing rows) ---

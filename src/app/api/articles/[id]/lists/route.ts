@@ -1,6 +1,8 @@
-import { NextRequest, NextResponse } from 'next/server';
-import { addArticleToList, removeArticleFromList } from '../../../../../lib/lists-db';
+import type { NextRequest } from 'next/server';
+import { NextResponse } from 'next/server';
+
 import { getAuthenticatedUserId } from '../../../../../lib/auth-api';
+import { addArticleToList, removeArticleFromList } from '../../../../../lib/lists-db';
 
 /**
  * Add an article to a list

@@ -1,22 +1,20 @@
 'use client';
 
-import { useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { Clock, FileText, Heart, LayoutDashboard, MoreVertical, Plus, X } from 'lucide-react';
+import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { formatDate } from '../lib/utils';
+import { useState } from 'react';
+
+import { getCategoryColor } from '../lib/category-utils';
 import { formatReadingTime } from '../lib/reading-time-utils';
-import { ArticleSummary, ArticleStatus, List } from '../types';
+import { getTagColor } from '../lib/tag-utils';
+import { formatDate } from '../lib/utils';
+import type { ArticleStatus, ArticleSummary, List } from '../types';
+import { AddArticleDialog } from './AddArticleDialog';
+import { Navbar } from './Navbar';
+import { Badge } from './ui/badge';
 import { Button } from './ui/button';
-import {
-  DropdownMenu,
-  DropdownMenuTrigger,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuSeparator,
-  DropdownMenuSub,
-  DropdownMenuSubTrigger,
-  DropdownMenuSubContent,
-} from './ui/dropdown-menu';
 import {
   Dialog,
   DialogContent,
@@ -25,15 +23,18 @@ import {
   DialogTitle,
   DialogTrigger,
 } from './ui/dialog';
-import { Label } from './ui/label';
-import { Badge } from './ui/badge';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuSub,
+  DropdownMenuSubContent,
+  DropdownMenuSubTrigger,
+  DropdownMenuTrigger,
+} from './ui/dropdown-menu';
 import { Input } from './ui/input';
-import { MoreVertical, X, Clock, FileText, Heart, Plus, LayoutDashboard } from 'lucide-react';
-import Link from 'next/link';
-import { Navbar } from './Navbar';
-import { getTagColor } from '../lib/tag-utils';
-import { getCategoryColor } from '../lib/category-utils';
-import { AddArticleDialog } from './AddArticleDialog';
+import { Label } from './ui/label';
 
 export default function HomeClient() {
   const [deletingId, setDeletingId] = useState<string | null>(null);
@@ -369,35 +370,35 @@ export default function HomeClient() {
       <Navbar />
       <div className="flex">
         {/* Sidebar for Lists */}
-        <aside className="w-64 min-h-screen border-r border-gray-800 p-6 space-y-4">
+        <aside className="min-h-screen w-64 space-y-4 border-r border-gray-800 p-6">
           <div className="mb-6">
-            <h3 className="text-sm font-medium text-gray-400 uppercase tracking-wide mb-3">
+            <h3 className="mb-3 text-sm font-medium tracking-wide text-gray-400 uppercase">
               Navigate
             </h3>
             <Link
               href="/"
-              className="w-full flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium bg-blue-600 text-white"
+              className="flex w-full items-center gap-3 rounded-lg bg-blue-600 px-3 py-2 text-sm font-medium text-white"
             >
               <FileText size={18} />
               Articles
             </Link>
             <Link
               href="/board"
-              className="w-full flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium text-gray-300 hover:bg-gray-800 transition-colors"
+              className="flex w-full items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium text-gray-300 transition-colors hover:bg-gray-800"
             >
               <LayoutDashboard size={18} />
               Boards
             </Link>
           </div>
-          <div className="border-t border-gray-700 mb-4" />
-          <div className="flex items-center justify-between mb-6">
-            <h3 className="text-sm font-medium text-gray-400 uppercase tracking-wide">Lists</h3>
+          <div className="mb-4 border-t border-gray-700" />
+          <div className="mb-6 flex items-center justify-between">
+            <h3 className="text-sm font-medium tracking-wide text-gray-400 uppercase">Lists</h3>
             <Dialog open={isListModalOpen} onOpenChange={setIsListModalOpen}>
               <DialogTrigger asChild>
                 <Button
                   size="sm"
                   variant="outline"
-                  className="h-7 gap-1 px-2 text-xs text-gray-300 border-gray-700 hover:bg-gray-800"
+                  className="h-7 gap-1 border-gray-700 px-2 text-xs text-gray-300 hover:bg-gray-800"
                 >
                   <Plus className="h-3.5 w-3.5" />
                   New
@@ -442,7 +443,7 @@ export default function HomeClient() {
           {/* All Articles */}
           <button
             onClick={() => setSelectedListId('all')}
-            className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
+            className={`flex w-full items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors ${
               selectedListId === 'all'
                 ? 'bg-blue-600 text-white'
                 : 'text-gray-300 hover:bg-gray-800'
@@ -459,7 +460,7 @@ export default function HomeClient() {
               <button
                 key={list.id}
                 onClick={() => setSelectedListId(list.id)}
-                className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
+                className={`flex w-full items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors ${
                   selectedListId === list.id
                     ? 'bg-blue-600 text-white'
                     : 'text-gray-300 hover:bg-gray-800'
@@ -474,20 +475,20 @@ export default function HomeClient() {
           {/* Custom Lists */}
           {lists.filter((list) => !list.isDefault).length > 0 && (
             <>
-              <div className="border-t border-gray-700 my-4" />
+              <div className="my-4 border-t border-gray-700" />
               {lists
                 .filter((list) => !list.isDefault)
                 .map((list) => (
                   <div key={list.id} className="flex items-center gap-2">
                     <button
                       onClick={() => setSelectedListId(list.id)}
-                      className={`flex-1 flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
+                      className={`flex flex-1 items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors ${
                         selectedListId === list.id
                           ? 'bg-blue-600 text-white'
                           : 'text-gray-300 hover:bg-gray-800'
                       }`}
                     >
-                      <div className={`w-2 h-2 rounded-full bg-${list.color || 'blue'}-500`} />
+                      <div className={`h-2 w-2 rounded-full bg-${list.color || 'blue'}-500`} />
                       {list.name}
                     </button>
                     {selectedListId === list.id && !list.isDefault && (
@@ -511,15 +512,15 @@ export default function HomeClient() {
 
         {/* Main Content */}
         <div className="flex-1 p-8">
-          <div className="max-w-6xl mx-auto space-y-6">
-            <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4">
+          <div className="mx-auto max-w-6xl space-y-6">
+            <div className="mb-8 flex flex-col items-start justify-between gap-4 md:flex-row md:items-center">
               <div>
                 <h1 className="text-3xl font-bold text-white">
                   {selectedListId === 'all'
                     ? 'All Articles'
                     : lists.find((l) => l.id === selectedListId)?.name || 'My Library'}
                 </h1>
-                <p className="text-gray-400 mt-1">Manage your annotated articles and PDFs</p>
+                <p className="mt-1 text-gray-400">Manage your annotated articles and PDFs</p>
               </div>
 
               <Button onClick={() => setShowAddArticleDialog(true)} className="gap-2">
@@ -529,15 +530,15 @@ export default function HomeClient() {
             </div>
 
             {allTags.length > 0 && (
-              <div className="bg-gray-900/70 border border-gray-800 rounded-xl p-4 shadow-lg backdrop-blur">
-                <div className="flex items-center gap-2 mb-3">
-                  <span className="text-xs uppercase tracking-wide text-gray-500">
+              <div className="rounded-xl border border-gray-800 bg-gray-900/70 p-4 shadow-lg backdrop-blur">
+                <div className="mb-3 flex items-center gap-2">
+                  <span className="text-xs tracking-wide text-gray-500 uppercase">
                     Filter by tag
                   </span>
                   {selectedTag && (
                     <button
                       onClick={() => setSelectedTag(null)}
-                      className="text-xs text-blue-400 hover:text-blue-300 transition-colors"
+                      className="text-xs text-blue-400 transition-colors hover:text-blue-300"
                     >
                       Clear filter
                     </button>
@@ -563,31 +564,31 @@ export default function HomeClient() {
             )}
 
             {articlesError && (
-              <div className="bg-red-950/80 border border-red-800 text-red-200 px-4 py-3 rounded-lg mb-6">
+              <div className="mb-6 rounded-lg border border-red-800 bg-red-950/80 px-4 py-3 text-red-200">
                 Failed to load articles. Please try again.
               </div>
             )}
 
             {isLoading ? (
               <div className="flex justify-center py-12">
-                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-white"></div>
+                <div className="h-8 w-8 animate-spin rounded-full border-b-2 border-white"></div>
               </div>
             ) : (
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
                 {articles.length === 0 ? (
-                  <div className="col-span-full text-center py-16 bg-gray-800 rounded-2xl border border-gray-700 border-dashed">
-                    <p className="text-gray-300 text-lg mb-4">Your library is empty.</p>
+                  <div className="col-span-full rounded-2xl border border-dashed border-gray-700 bg-gray-800 py-16 text-center">
+                    <p className="mb-4 text-lg text-gray-300">Your library is empty.</p>
                     <p className="text-gray-500">Import a URL or upload a PDF to get started.</p>
                   </div>
                 ) : filteredArticles.length === 0 ? (
-                  <div className="col-span-full text-center py-16 bg-gray-800 rounded-2xl border border-gray-700 border-dashed">
-                    <p className="text-gray-300 text-lg mb-4">No articles match your filters.</p>
+                  <div className="col-span-full rounded-2xl border border-dashed border-gray-700 bg-gray-800 py-16 text-center">
+                    <p className="mb-4 text-lg text-gray-300">No articles match your filters.</p>
                     <button
                       onClick={() => {
                         setSelectedListId('all');
                         setSelectedTag(null);
                       }}
-                      className="text-blue-400 hover:text-blue-300 transition-colors"
+                      className="text-blue-400 transition-colors hover:text-blue-300"
                     >
                       Clear all filters
                     </button>
@@ -602,12 +603,12 @@ export default function HomeClient() {
                       <div
                         key={article.id}
                         onClick={() => router.push(`/reader/${article.id}`)}
-                        className="group relative bg-gradient-to-br from-gray-900 to-gray-950 rounded-2xl border border-gray-800 shadow-xl hover:shadow-2xl hover:border-blue-600 cursor-pointer transition-all overflow-hidden flex flex-col h-full"
+                        className="group relative flex h-full cursor-pointer flex-col overflow-hidden rounded-2xl border border-gray-800 bg-gradient-to-br from-gray-900 to-gray-950 shadow-xl transition-all hover:border-blue-600 hover:shadow-2xl"
                       >
-                        <div className="p-6 flex-1 flex flex-col gap-3">
+                        <div className="flex flex-1 flex-col gap-3 p-6">
                           {/* Category Badge at Top */}
                           {article.category && (
-                            <div className="flex items-center gap-2 mb-1">
+                            <div className="mb-1 flex items-center gap-2">
                               <Badge
                                 variant={
                                   getCategoryColor(article.category) as
@@ -629,28 +630,28 @@ export default function HomeClient() {
                                 {article.category}
                               </Badge>
                               {isPDF && (
-                                <FileText className="h-4 w-4 text-blue-400 flex-shrink-0 ml-auto" />
+                                <FileText className="ml-auto h-4 w-4 flex-shrink-0 text-blue-400" />
                               )}
                             </div>
                           )}
 
                           <div className="flex items-start gap-2">
-                            <div className="flex-1 pr-2 min-w-0">
-                              <div className="flex items-center gap-2 mb-2">
+                            <div className="min-w-0 flex-1 pr-2">
+                              <div className="mb-2 flex items-center gap-2">
                                 <h2
-                                  className="text-xl font-semibold text-white line-clamp-2 break-words group-hover:text-blue-300 transition-colors flex-1"
+                                  className="line-clamp-2 flex-1 text-xl font-semibold break-words text-white transition-colors group-hover:text-blue-300"
                                   title={displayTitle}
                                 >
                                   {displayTitle}
                                 </h2>
                                 {!article.category && isPDF && (
-                                  <FileText className="h-5 w-5 text-blue-400 flex-shrink-0" />
+                                  <FileText className="h-5 w-5 flex-shrink-0 text-blue-400" />
                                 )}
                               </div>
-                              <p className="text-sm text-gray-400 truncate" title={article.url}>
+                              <p className="truncate text-sm text-gray-400" title={article.url}>
                                 {isPDF ? 'PDF Document' : article.url}
                               </p>
-                              <div className="flex items-center gap-2 mt-2 text-xs text-gray-300 flex-wrap">
+                              <div className="mt-2 flex flex-wrap items-center gap-2 text-xs text-gray-300">
                                 {article.status === 'read' && (
                                   <Badge
                                     variant="success"
@@ -676,7 +677,7 @@ export default function HomeClient() {
                                 )}
                               </div>
                               {article.tags && article.tags.length > 0 && (
-                                <div className="flex flex-wrap gap-1.5 mt-3">
+                                <div className="mt-3 flex flex-wrap gap-1.5">
                                   {article.tags.map((tag) => (
                                     <button
                                       key={tag}
@@ -705,7 +706,7 @@ export default function HomeClient() {
                                     e.preventDefault();
                                   }}
                                   aria-label="Article actions"
-                                  className="p-1.5 rounded-lg text-gray-500 hover:text-white hover:bg-gray-800 transition-colors"
+                                  className="rounded-lg p-1.5 text-gray-500 transition-colors hover:bg-gray-800 hover:text-white"
                                 >
                                   <MoreVertical className="h-4 w-4" />
                                 </button>
@@ -734,14 +735,14 @@ export default function HomeClient() {
                                           }
                                         >
                                           {list.icon === 'heart' && (
-                                            <Heart className="h-4 w-4 mr-2" />
+                                            <Heart className="mr-2 h-4 w-4" />
                                           )}
                                           {list.icon === 'clock' && (
-                                            <Clock className="h-4 w-4 mr-2" />
+                                            <Clock className="mr-2 h-4 w-4" />
                                           )}
                                           {list.icon === 'dot' && (
                                             <div
-                                              className={`w-2 h-2 rounded-full bg-${list.color || 'blue'}-500 mr-2`}
+                                              className={`h-2 w-2 rounded-full bg-${list.color || 'blue'}-500 mr-2`}
                                             />
                                           )}
                                           {list.name}
@@ -775,14 +776,14 @@ export default function HomeClient() {
                                             className="text-yellow-300 focus:text-yellow-100"
                                           >
                                             {list.icon === 'heart' && (
-                                              <Heart className="h-4 w-4 mr-2" />
+                                              <Heart className="mr-2 h-4 w-4" />
                                             )}
                                             {list.icon === 'clock' && (
-                                              <Clock className="h-4 w-4 mr-2" />
+                                              <Clock className="mr-2 h-4 w-4" />
                                             )}
                                             {list.icon === 'dot' && (
                                               <div
-                                                className={`w-2 h-2 rounded-full bg-${list.color || 'blue'}-500 mr-2`}
+                                                className={`h-2 w-2 rounded-full bg-${list.color || 'blue'}-500 mr-2`}
                                               />
                                             )}
                                             {list.name}
@@ -807,14 +808,14 @@ export default function HomeClient() {
                           </div>
                           {article.byline && (
                             <p
-                              className="text-sm text-gray-500 italic line-clamp-1"
+                              className="line-clamp-1 text-sm text-gray-500 italic"
                               title={article.byline}
                             >
                               By {article.byline}
                             </p>
                           )}
                         </div>
-                        <div className="px-6 py-4 bg-gray-900/60 border-t border-gray-700 flex flex-wrap items-center gap-3 justify-between text-sm text-gray-400">
+                        <div className="flex flex-wrap items-center justify-between gap-3 border-t border-gray-700 bg-gray-900/60 px-6 py-4 text-sm text-gray-400">
                           <Badge variant="default">{article.notesCount} notes</Badge>
                           <span className="text-gray-500">{formatDate(article.createdAt)}</span>
                         </div>
@@ -843,12 +844,12 @@ export default function HomeClient() {
             className="absolute inset-0 bg-black/70 backdrop-blur-sm"
             onClick={closeDeleteModal}
           />
-          <div className="relative bg-gray-900 border border-gray-700 rounded-2xl shadow-2xl w-full max-w-md mx-4 p-6 space-y-4">
+          <div className="relative mx-4 w-full max-w-md space-y-4 rounded-2xl border border-gray-700 bg-gray-900 p-6 shadow-2xl">
             <div>
               <h3 className="text-xl font-semibold text-white">
                 Delete {articlePendingDelete.type === 'pdf' ? 'PDF' : 'article'}?
               </h3>
-              <p className="text-sm text-gray-400 mt-2">
+              <p className="mt-2 text-sm text-gray-400">
                 {articlePendingDelete.title || articlePendingDelete.url}
               </p>
             </div>
@@ -861,7 +862,7 @@ export default function HomeClient() {
                 type="button"
                 onClick={closeDeleteModal}
                 disabled={Boolean(deletingId)}
-                className="px-4 py-2 rounded-lg border border-gray-600 text-gray-200 hover:bg-gray-800 transition disabled:opacity-40"
+                className="rounded-lg border border-gray-600 px-4 py-2 text-gray-200 transition hover:bg-gray-800 disabled:opacity-40"
               >
                 Cancel
               </button>
@@ -869,11 +870,11 @@ export default function HomeClient() {
                 type="button"
                 onClick={() => handleDelete(articlePendingDelete.id)}
                 disabled={deletingId === articlePendingDelete.id}
-                className="px-4 py-2 rounded-lg bg-red-600 text-white hover:bg-red-500 transition disabled:opacity-40 flex items-center gap-2"
+                className="flex items-center gap-2 rounded-lg bg-red-600 px-4 py-2 text-white transition hover:bg-red-500 disabled:opacity-40"
               >
                 {deletingId === articlePendingDelete.id ? (
                   <>
-                    <span className="h-4 w-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                    <span className="h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent" />
                     Deleting...
                   </>
                 ) : (

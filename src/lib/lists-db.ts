@@ -1,9 +1,10 @@
 import crypto from 'crypto';
 import { and, desc, eq } from 'drizzle-orm';
+
+import type { List } from '../types';
+import { sanitizePlainText } from './articles-db';
 import { db } from './db/client';
 import { articles, lists } from './db/schema';
-import { sanitizePlainText } from './articles-db';
-import type { List } from '../types';
 
 export function favouritesListId(userId: string): string {
   return `${userId}_favourites`;

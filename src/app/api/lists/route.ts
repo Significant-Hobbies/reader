@@ -1,6 +1,8 @@
-import { NextRequest, NextResponse } from 'next/server';
-import { createList, fetchLists } from '../../../lib/lists-db';
+import type { NextRequest } from 'next/server';
+import { NextResponse } from 'next/server';
+
 import { getAuthenticatedUserId } from '../../../lib/auth-api';
+import { createList, fetchLists } from '../../../lib/lists-db';
 
 export async function GET() {
   try {

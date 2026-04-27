@@ -1,6 +1,7 @@
-import { useEffect, useRef, useCallback } from 'react';
 import type { Node } from '@xyflow/react';
-import type { Note, AIChatMessage, NoteAnchor } from '../../../types';
+import { useCallback, useEffect, useRef } from 'react';
+
+import type { AIChatMessage, Note, NoteAnchor } from '../../../types';
 
 const SYNC_DEBOUNCE_MS = 2000;
 

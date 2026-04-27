@@ -1,7 +1,8 @@
-import { NextResponse } from 'next/server';
-import { getAuthenticatedUserId } from '@/lib/auth-api';
 import { handleModelsRequest } from '@saas-maker/ai/server';
+import { NextResponse } from 'next/server';
+
 import { normalizeApiKey, normalizeEndpointUrl } from '@/lib/ai-server';
+import { getAuthenticatedUserId } from '@/lib/auth-api';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';

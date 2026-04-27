@@ -1,6 +1,7 @@
 import { headers } from 'next/headers';
-import { auth } from './auth';
+
 import { API_KEY_PREFIX, verifyApiKey } from './api-keys';
+import { auth } from './auth';
 
 /**
  * Resolve the authenticated user for an API request.

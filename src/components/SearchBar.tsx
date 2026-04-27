@@ -1,11 +1,12 @@
 'use client';
 
-import { useState, useEffect, useCallback, useRef } from 'react';
+import { Loader2, Search, X } from 'lucide-react';
 import { useRouter } from 'next/navigation';
-import { Input } from './ui/input';
+import { useCallback, useEffect, useRef, useState } from 'react';
+
+import type { SearchResult } from '../types';
 import { Badge } from './ui/badge';
-import { Search, X, Loader2 } from 'lucide-react';
-import { SearchResult } from '../types';
+import { Input } from './ui/input';
 
 export function SearchBar() {
   const [query, setQuery] = useState('');
@@ -137,7 +138,7 @@ export function SearchBar() {
       <span>
         {parts.map((part, i) =>
           i % 2 === 1 ? (
-            <mark key={i} className="bg-yellow-300 text-gray-900 px-0.5 rounded">
+            <mark key={i} className="rounded bg-yellow-300 px-0.5 text-gray-900">
               {part}
             </mark>
           ) : (
@@ -166,19 +167,19 @@ export function SearchBar() {
   return (
     <div ref={searchRef} className="relative w-full max-w-md">
       <div className="relative">
-        <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+        <Search className="absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 text-gray-400" />
         <Input
           ref={inputRef}
           type="text"
           value={query}
           onChange={(e) => setQuery(e.target.value)}
           placeholder="Search articles, notes, and chats..."
-          className="pl-10 pr-10 bg-gray-900 border-gray-700 text-white placeholder-gray-400 focus:border-blue-500"
+          className="border-gray-700 bg-gray-900 pr-10 pl-10 text-white placeholder-gray-400 focus:border-blue-500"
         />
         {query && (
           <button
             onClick={handleClear}
-            className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-white"
+            className="absolute top-1/2 right-3 -translate-y-1/2 text-gray-400 hover:text-white"
             aria-label="Clear search"
           >
             {isLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : <X className="h-4 w-4" />}
@@ -187,15 +188,15 @@ export function SearchBar() {
       </div>
 
       {isOpen && query.trim().length >= 2 && (
-        <div className="absolute top-full mt-2 w-full bg-gray-900 border border-gray-700 rounded-lg shadow-2xl max-h-96 overflow-y-auto z-50">
+        <div className="absolute top-full z-50 mt-2 max-h-96 w-full overflow-y-auto rounded-lg border border-gray-700 bg-gray-900 shadow-2xl">
           {results.length === 0 ? (
             <div className="p-6 text-center text-gray-400">
               <p className="text-sm">No results found for &quot;{query}&quot;</p>
-              <p className="text-xs mt-1">Try different keywords</p>
+              <p className="mt-1 text-xs">Try different keywords</p>
             </div>
           ) : (
             <div className="py-2">
-              <div className="px-4 py-2 text-xs text-gray-500 border-b border-gray-800 flex items-center justify-between">
+              <div className="flex items-center justify-between border-b border-gray-800 px-4 py-2 text-xs text-gray-500">
                 <span>
                   {results.length} {results.length === 1 ? 'result' : 'results'}
                 </span>
@@ -205,32 +206,32 @@ export function SearchBar() {
                 <button
                   key={result.id}
                   onClick={() => handleResultClick(result.id)}
-                  className={`w-full text-left px-4 py-3 transition-colors border-b border-gray-800 last:border-b-0 ${
+                  className={`w-full border-b border-gray-800 px-4 py-3 text-left transition-colors last:border-b-0 ${
                     selectedIndex === index ? 'bg-gray-800' : 'hover:bg-gray-800'
                   }`}
                 >
                   <div className="flex items-start gap-3">
-                    <div className="flex-1 min-w-0">
-                      <h3 className="font-medium text-white text-sm line-clamp-1 mb-1">
+                    <div className="min-w-0 flex-1">
+                      <h3 className="mb-1 line-clamp-1 text-sm font-medium text-white">
                         {renderSnippet(
                           result.snippets.find((s) => s.field === 'title')?.text || result.title
                         )}
                       </h3>
-                      <p className="text-xs text-gray-500 truncate mb-2">{result.url}</p>
+                      <p className="mb-2 truncate text-xs text-gray-500">{result.url}</p>
                       {result.snippets
                         .filter((s) => s.field !== 'title')
                         .slice(0, 2)
                         .map((snippet, idx) => (
                           <div key={idx} className="mt-1">
-                            <Badge variant="secondary" className="text-xs mb-1">
+                            <Badge variant="secondary" className="mb-1 text-xs">
                               {getFieldLabel(snippet.field)}
                             </Badge>
-                            <p className="text-xs text-gray-400 line-clamp-2">
+                            <p className="line-clamp-2 text-xs text-gray-400">
                               {renderSnippet(snippet.text)}
                             </p>
                           </div>
                         ))}
-                      <div className="flex items-center gap-2 mt-2">
+                      <div className="mt-2 flex items-center gap-2">
                         <Badge variant="default" className="text-xs">
                           {result.notesCount} notes
                         </Badge>

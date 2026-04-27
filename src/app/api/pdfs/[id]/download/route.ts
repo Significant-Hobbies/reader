@@ -1,9 +1,10 @@
 export const dynamic = 'force-dynamic';
+import { eq } from 'drizzle-orm';
 import { NextResponse } from 'next/server';
+
 import { getAuthenticatedUserId } from '../../../../../lib/auth-api';
 import { db } from '../../../../../lib/db/client';
 import { articles } from '../../../../../lib/db/schema';
-import { eq } from 'drizzle-orm';
 import { fetchPdfBytes } from '../../../../../lib/storage';
 
 // Proxy route: streams PDF bytes from private Vercel Blob storage to an

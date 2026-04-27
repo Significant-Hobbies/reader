@@ -1,10 +1,11 @@
-import { redirect, notFound } from 'next/navigation';
 import { dehydrate } from '@tanstack/react-query';
+import { notFound, redirect } from 'next/navigation';
+
 import { BoardCanvasClient } from '../../../components/board/BoardCanvasClient';
-import { fetchBoardById } from '../../../lib/boards-db';
 import { ReactQueryHydrate } from '../../../components/ReactQueryHydrate';
-import { getQueryClient } from '../../../lib/get-query-client';
 import { getCurrentUser } from '../../../lib/auth-server';
+import { fetchBoardById } from '../../../lib/boards-db';
+import { getQueryClient } from '../../../lib/get-query-client';
 
 export const dynamic = 'force-dynamic';
 

@@ -1,7 +1,7 @@
-import { NextResponse } from 'next/server';
-import { streamText } from 'ai';
 import { createAIModel } from '@saas-maker/ai/server';
-import { getAuthenticatedUserId } from '@/lib/auth-api';
+import { streamText } from 'ai';
+import { NextResponse } from 'next/server';
+
 import { isLocalCLIEnabled } from '@/lib/ai-config';
 import {
   createLocalAITextStream,
@@ -14,6 +14,7 @@ import {
   TEXT_STREAM_HEADERS,
   toSDKMessages,
 } from '@/lib/ai-server';
+import { getAuthenticatedUserId } from '@/lib/auth-api';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';

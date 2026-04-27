@@ -1,6 +1,8 @@
-import { NextRequest, NextResponse } from 'next/server';
 import { Readability } from '@mozilla/readability';
 import { parseHTML } from 'linkedom';
+import type { NextRequest } from 'next/server';
+import { NextResponse } from 'next/server';
+
 import { getAuthenticatedUserId } from '../../../lib/auth-api';
 import { validateExternalUrl } from '../../../lib/url-validation';
 

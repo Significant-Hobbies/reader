@@ -1,10 +1,12 @@
 'use client';
 
-import { useState } from 'react';
-import { Document, Page, pdfjs } from 'react-pdf';
 import 'react-pdf/dist/Page/AnnotationLayer.css';
 import 'react-pdf/dist/Page/TextLayer.css';
-import { ReaderSettings } from '../types';
+
+import { useState } from 'react';
+import { Document, Page, pdfjs } from 'react-pdf';
+
+import type { ReaderSettings } from '../types';
 import { getThemeClasses } from './ReaderView';
 
 pdfjs.GlobalWorkerOptions.workerSrc = `//unpkg.com/pdfjs-dist@${pdfjs.version}/build/pdf.worker.min.mjs`;
@@ -57,23 +59,23 @@ export function PDFViewer({ pdfUrl, settings }: PDFViewerProps) {
 
   return (
     <div className={`min-h-full transition-colors duration-300 ${themeClasses}`}>
-      <div className="max-w-5xl mx-auto py-8 px-4">
-        <div className="mb-6 flex items-center justify-between gap-4 flex-wrap bg-gray-800/50 p-4 rounded-lg border border-gray-700">
+      <div className="mx-auto max-w-5xl px-4 py-8">
+        <div className="mb-6 flex flex-wrap items-center justify-between gap-4 rounded-lg border border-gray-700 bg-gray-800/50 p-4">
           <div className="flex items-center gap-2">
             <button
               onClick={goToPrevPage}
               disabled={pageNumber <= 1}
-              className="px-3 py-2 bg-blue-600 text-white rounded disabled:opacity-50 disabled:cursor-not-allowed hover:bg-blue-700 transition"
+              className="rounded bg-blue-600 px-3 py-2 text-white transition hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-50"
             >
               Previous
             </button>
-            <span className="text-sm text-gray-300 min-w-[120px] text-center">
+            <span className="min-w-[120px] text-center text-sm text-gray-300">
               Page {pageNumber} of {numPages || '...'}
             </span>
             <button
               onClick={goToNextPage}
               disabled={!numPages || pageNumber >= numPages}
-              className="px-3 py-2 bg-blue-600 text-white rounded disabled:opacity-50 disabled:cursor-not-allowed hover:bg-blue-700 transition"
+              className="rounded bg-blue-600 px-3 py-2 text-white transition hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-50"
             >
               Next
             </button>
@@ -82,21 +84,21 @@ export function PDFViewer({ pdfUrl, settings }: PDFViewerProps) {
           <div className="flex items-center gap-2">
             <button
               onClick={zoomOut}
-              className="px-3 py-2 bg-gray-700 text-white rounded hover:bg-gray-600 transition"
+              className="rounded bg-gray-700 px-3 py-2 text-white transition hover:bg-gray-600"
               title="Zoom out"
             >
               -
             </button>
             <button
               onClick={resetZoom}
-              className="px-3 py-2 bg-gray-700 text-white rounded hover:bg-gray-600 transition text-sm min-w-[60px]"
+              className="min-w-[60px] rounded bg-gray-700 px-3 py-2 text-sm text-white transition hover:bg-gray-600"
               title="Reset zoom"
             >
               {Math.round(scale * 100)}%
             </button>
             <button
               onClick={zoomIn}
-              className="px-3 py-2 bg-gray-700 text-white rounded hover:bg-gray-600 transition"
+              className="rounded bg-gray-700 px-3 py-2 text-white transition hover:bg-gray-600"
               title="Zoom in"
             >
               +
@@ -105,13 +107,13 @@ export function PDFViewer({ pdfUrl, settings }: PDFViewerProps) {
         </div>
 
         {isLoading && (
-          <div className="flex justify-center items-center py-20">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500"></div>
+          <div className="flex items-center justify-center py-20">
+            <div className="h-12 w-12 animate-spin rounded-full border-b-2 border-blue-500"></div>
           </div>
         )}
 
         {error && (
-          <div className="bg-red-900/50 border border-red-700 text-red-200 px-6 py-4 rounded-lg mb-6">
+          <div className="mb-6 rounded-lg border border-red-700 bg-red-900/50 px-6 py-4 text-red-200">
             {error}
           </div>
         )}
@@ -123,8 +125,8 @@ export function PDFViewer({ pdfUrl, settings }: PDFViewerProps) {
             onLoadSuccess={onDocumentLoadSuccess}
             onLoadError={onDocumentLoadError}
             loading={
-              <div className="flex justify-center items-center py-20">
-                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500"></div>
+              <div className="flex items-center justify-center py-20">
+                <div className="h-12 w-12 animate-spin rounded-full border-b-2 border-blue-500"></div>
               </div>
             }
             className="pdf-document"

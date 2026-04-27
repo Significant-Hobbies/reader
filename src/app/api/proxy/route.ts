@@ -1,4 +1,5 @@
-import { NextRequest } from 'next/server';
+import type { NextRequest } from 'next/server';
+
 import { getAuthenticatedUserId } from '../../../lib/auth-api';
 import { validateExternalUrl } from '../../../lib/url-validation';
 

@@ -1,10 +1,11 @@
-import { NextResponse } from 'next/server';
 import { desc, eq } from 'drizzle-orm';
-import { auth } from '@/lib/auth';
 import { headers } from 'next/headers';
+import { NextResponse } from 'next/server';
+
+import { generateApiKey } from '@/lib/api-keys';
+import { auth } from '@/lib/auth';
 import { db } from '@/lib/db/client';
 import { apiKeys } from '@/lib/db/schema';
-import { generateApiKey } from '@/lib/api-keys';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';

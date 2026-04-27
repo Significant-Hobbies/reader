@@ -1,7 +1,8 @@
 import { betterAuth } from 'better-auth';
 import { drizzleAdapter } from 'better-auth/adapters/drizzle';
+
 import { db } from './db/client';
-import { users, baSessions, baAccounts, baVerifications } from './db/schema';
+import { baAccounts, baSessions, baVerifications, users } from './db/schema';
 
 export const auth = betterAuth({
   secret: process.env.BETTER_AUTH_SECRET || process.env.AUTH_SECRET,

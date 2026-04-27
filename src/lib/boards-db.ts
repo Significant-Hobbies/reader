@@ -1,9 +1,10 @@
 import crypto from 'crypto';
 import { and, desc, eq } from 'drizzle-orm';
+
+import type { AIChatMessage, Board, BoardEdge, BoardNode, BoardSummary } from '../types';
+import { sanitizePlainText, sanitizeTitle } from './articles-db';
 import { db } from './db/client';
 import { boards } from './db/schema';
-import { sanitizePlainText, sanitizeTitle } from './articles-db';
-import type { Board, BoardEdge, BoardNode, BoardSummary, AIChatMessage } from '../types';
 
 // ---------------------------------------------------------------------------
 // Board sanitizers (previously in boards-service.ts)
@@ -21,10 +22,12 @@ function sanitizeElementAnchor(anchor: unknown): Record<string, unknown> | undef
   const articleId = typeof a.articleId === 'string' ? a.articleId.trim() : '';
   const websiteNodeId = typeof a.websiteNodeId === 'string' ? a.websiteNodeId.trim() : '';
   const elementIndex = Number(a.elementIndex);
-  if (!articleId || !websiteNodeId || !Number.isFinite(elementIndex) || elementIndex < 0) return undefined;
+  if (!articleId || !websiteNodeId || !Number.isFinite(elementIndex) || elementIndex < 0)
+    return undefined;
   const result: Record<string, unknown> = { articleId, websiteNodeId, elementIndex };
   if (typeof a.tagName === 'string') result.tagName = a.tagName.slice(0, 30);
-  if (typeof a.textPreview === 'string') result.textPreview = sanitizePlainText(a.textPreview).slice(0, 200);
+  if (typeof a.textPreview === 'string')
+    result.textPreview = sanitizePlainText(a.textPreview).slice(0, 200);
   return result;
 }
 
@@ -34,7 +37,14 @@ function sanitizeBoardNode(node: unknown): BoardNode | null {
   const id = typeof n.id === 'string' ? n.id.trim() : '';
   if (!id) return null;
   const type = n.type;
-  if (type !== 'website' && type !== 'note' && type !== 'aiChat' && type !== 'iframe' && type !== 'reader') return null;
+  if (
+    type !== 'website' &&
+    type !== 'note' &&
+    type !== 'aiChat' &&
+    type !== 'iframe' &&
+    type !== 'reader'
+  )
+    return null;
   const pos = n.position as Record<string, unknown> | undefined;
   const x = Number(pos?.x ?? 0);
   const y = Number(pos?.y ?? 0);
@@ -51,7 +61,8 @@ function sanitizeBoardNode(node: unknown): BoardNode | null {
       excerpt: sanitizePlainText(data.excerpt).slice(0, 500),
     };
     if (typeof data.favicon === 'string') websiteData.favicon = data.favicon.slice(0, 2048);
-    if (typeof data.articleId === 'string' && data.articleId.trim()) websiteData.articleId = data.articleId.trim();
+    if (typeof data.articleId === 'string' && data.articleId.trim())
+      websiteData.articleId = data.articleId.trim();
     return { ...base, type: 'website', data: websiteData } as unknown as BoardNode;
   }
   if (type === 'note') {
@@ -94,7 +105,8 @@ function sanitizeBoardNode(node: unknown): BoardNode | null {
     .filter((m): m is AIChatMessage => m !== null)
     .slice(-MAX_AI_MESSAGES_PER_NODE);
   const chatData: Record<string, unknown> = { messages: sanitizedMessages };
-  if (typeof data.contextLabel === 'string') chatData.contextLabel = sanitizePlainText(data.contextLabel).slice(0, 200);
+  if (typeof data.contextLabel === 'string')
+    chatData.contextLabel = sanitizePlainText(data.contextLabel).slice(0, 200);
   const chatAnchor = sanitizeElementAnchor(data.elementAnchor);
   if (chatAnchor) chatData.elementAnchor = chatAnchor;
   return { ...base, type: 'aiChat', data: chatData } as unknown as BoardNode;
@@ -107,19 +119,30 @@ function sanitizeBoardEdge(edge: unknown): BoardEdge | null {
   const source = typeof e.source === 'string' ? e.source.trim() : '';
   const target = typeof e.target === 'string' ? e.target.trim() : '';
   if (!id || !source || !target) return null;
-  const result: Record<string, unknown> = { id, source, target, style: e.style === 'dashed' ? 'dashed' : 'solid' };
+  const result: Record<string, unknown> = {
+    id,
+    source,
+    target,
+    style: e.style === 'dashed' ? 'dashed' : 'solid',
+  };
   if (typeof e.label === 'string') result.label = sanitizePlainText(e.label).slice(0, 200);
   return result as unknown as BoardEdge;
 }
 
 export function sanitizeNodes(nodes: unknown): BoardNode[] {
   if (!Array.isArray(nodes)) return [];
-  return nodes.map(sanitizeBoardNode).filter((n): n is BoardNode => n !== null).slice(0, MAX_NODES);
+  return nodes
+    .map(sanitizeBoardNode)
+    .filter((n): n is BoardNode => n !== null)
+    .slice(0, MAX_NODES);
 }
 
 export function sanitizeEdges(edges: unknown): BoardEdge[] {
   if (!Array.isArray(edges)) return [];
-  return edges.map(sanitizeBoardEdge).filter((e): e is BoardEdge => e !== null).slice(0, MAX_EDGES);
+  return edges
+    .map(sanitizeBoardEdge)
+    .filter((e): e is BoardEdge => e !== null)
+    .slice(0, MAX_EDGES);
 }
 
 function parseJsonColumn<T>(raw: unknown, fallback: T): T {

@@ -1,37 +1,38 @@
 'use client';
 
-import { useCallback, useEffect, useMemo, useState, useRef } from 'react';
-import {
-  ReactFlow,
-  ReactFlowProvider,
-  Background,
-  Controls,
-  MiniMap,
-  BackgroundVariant,
-  useNodesState,
-  useEdgesState,
-  useReactFlow,
-  addEdge,
-  type Connection,
-  type Node,
-  type Edge,
-  type NodeTypes,
-  type EdgeTypes,
-} from '@xyflow/react';
 import '@xyflow/react/dist/style.css';
 
-import { NoteNode } from './nodes/NoteNode';
-import { WebsiteNode } from './nodes/WebsiteNode';
+import {
+  addEdge,
+  Background,
+  BackgroundVariant,
+  type Connection,
+  Controls,
+  type Edge,
+  type EdgeTypes,
+  MiniMap,
+  type Node,
+  type NodeTypes,
+  ReactFlow,
+  ReactFlowProvider,
+  useEdgesState,
+  useNodesState,
+  useReactFlow,
+} from '@xyflow/react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+
+import type { AIChatMessage, Board, ElementAnchor } from '../../types';
+import { AddWebsiteDialog } from './AddWebsiteDialog';
+import { BoardToolbar } from './BoardToolbar';
+import { LabeledEdge } from './edges/LabeledEdge';
+import { ElementPickerPanel } from './ElementPickerPanel';
+import { useBoardArticleSync } from './hooks/useBoardArticleSync';
+import { useBoardAutoSave } from './hooks/useBoardAutoSave';
 import { AIChatNode } from './nodes/AIChatNode';
 import { IframeNode } from './nodes/IframeNode';
+import { NoteNode } from './nodes/NoteNode';
 import { ReaderNode } from './nodes/ReaderNode';
-import { LabeledEdge } from './edges/LabeledEdge';
-import { BoardToolbar } from './BoardToolbar';
-import { AddWebsiteDialog } from './AddWebsiteDialog';
-import { ElementPickerPanel } from './ElementPickerPanel';
-import { useBoardAutoSave } from './hooks/useBoardAutoSave';
-import { useBoardArticleSync } from './hooks/useBoardArticleSync';
-import type { Board, ElementAnchor, AIChatMessage } from '../../types';
+import { WebsiteNode } from './nodes/WebsiteNode';
 
 interface BoardCanvasClientProps {
   board: Board;
@@ -527,7 +528,7 @@ function BoardCanvas({ board, readOnly }: BoardCanvasClientProps) {
         <Background variant={BackgroundVariant.Dots} gap={20} size={1} color="#374151" />
         <Controls
           showInteractive={false}
-          className="!bg-gray-900 !border-gray-700 !shadow-lg [&>button]:!bg-gray-900 [&>button]:!border-gray-700 [&>button]:!text-gray-400 [&>button:hover]:!bg-gray-800"
+          className="!border-gray-700 !bg-gray-900 !shadow-lg [&>button]:!border-gray-700 [&>button]:!bg-gray-900 [&>button]:!text-gray-400 [&>button:hover]:!bg-gray-800"
         />
         <MiniMap
           nodeColor={(node) => {
@@ -537,13 +538,13 @@ function BoardCanvas({ board, readOnly }: BoardCanvasClientProps) {
             if (node.type === 'iframe') return '#34d399';
             return '#6b7280';
           }}
-          className="!bg-gray-900 !border-gray-700"
+          className="!border-gray-700 !bg-gray-900"
           maskColor="rgba(0,0,0,0.6)"
         />
       </ReactFlow>
 
       {readOnly ? (
-        <div className="absolute left-4 top-4 z-10 rounded-lg border border-gray-700 bg-gray-900/90 px-3 py-1.5 shadow-lg backdrop-blur">
+        <div className="absolute top-4 left-4 z-10 rounded-lg border border-gray-700 bg-gray-900/90 px-3 py-1.5 shadow-lg backdrop-blur">
           <span className="text-sm font-semibold text-white">{boardName}</span>
           <span className="ml-2 text-xs text-gray-500">Read-only</span>
         </div>

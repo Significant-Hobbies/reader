@@ -1,7 +1,9 @@
 'use client';
 
 import { useState } from 'react';
+
 import { signIn } from '@/lib/auth-client';
+
 import { Button } from './ui/button';
 
 export default function LoginClient() {
@@ -25,9 +27,9 @@ export default function LoginClient() {
 
   if (redirecting) {
     return (
-      <div className="min-h-screen bg-gradient-to-b from-black via-gray-950 to-gray-900 flex items-center justify-center">
+      <div className="flex min-h-screen items-center justify-center bg-gradient-to-b from-black via-gray-950 to-gray-900">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-white mx-auto mb-4"></div>
+          <div className="mx-auto mb-4 h-8 w-8 animate-spin rounded-full border-b-2 border-white"></div>
           <p className="text-gray-400">Loading your library...</p>
         </div>
       </div>
@@ -35,17 +37,17 @@ export default function LoginClient() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-black via-gray-950 to-gray-900 flex items-center justify-center p-8">
+    <div className="flex min-h-screen items-center justify-center bg-gradient-to-b from-black via-gray-950 to-gray-900 p-8">
       <div className="w-full max-w-sm space-y-8 text-center">
         <div>
           <h1 className="text-3xl font-bold text-white">Web Annotator</h1>
-          <p className="text-gray-400 mt-2">Sign in to access your library</p>
+          <p className="mt-2 text-gray-400">Sign in to access your library</p>
         </div>
 
         <Button onClick={handleSignIn} disabled={signingIn} className="w-full py-3 text-base">
           {signingIn ? (
             <span className="flex items-center justify-center gap-2">
-              <span className="h-4 w-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+              <span className="h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent" />
               Signing in...
             </span>
           ) : (

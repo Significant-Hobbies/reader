@@ -1,12 +1,13 @@
-import { redirect } from 'next/navigation';
 import { dehydrate } from '@tanstack/react-query';
+import { redirect } from 'next/navigation';
 import { notFound } from 'next/navigation';
-import ReaderClient from '../../../components/ReaderClient';
+
 import PDFReaderClient from '../../../components/PDFReaderClient';
-import { fetchArticleById } from '../../../lib/articles-db';
 import { ReactQueryHydrate } from '../../../components/ReactQueryHydrate';
-import { getQueryClient } from '../../../lib/get-query-client';
+import ReaderClient from '../../../components/ReaderClient';
+import { fetchArticleById } from '../../../lib/articles-db';
 import { getCurrentUser } from '../../../lib/auth-server';
+import { getQueryClient } from '../../../lib/get-query-client';
 
 export const dynamic = 'force-dynamic';
 
