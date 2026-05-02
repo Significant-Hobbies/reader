@@ -1,11 +1,10 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { Bot, Loader2, Send, Settings, Square, Trash2, X } from 'lucide-react';
+import { AlertTriangle, Bot, Loader2, Send, Square, Trash2 } from 'lucide-react';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import type { PageContent, AIChatMessage, AIConfig, AuthState } from '../lib/types';
-import { PROVIDER_LABELS } from '../lib/types';
+import type { ImportNotice } from '../lib/importQuality';
 import { streamChat } from '../lib/api';
-import { SettingsPanel } from './SettingsPanel';
 import { QuickActions } from './QuickActions';
 import { SaveButton } from './SaveButton';
 
@@ -14,8 +13,8 @@ interface ChatProps {
   messages: AIChatMessage[];
   setMessages: (messages: AIChatMessage[]) => void;
   config: AIConfig;
-  onConfigChange: (config: AIConfig) => void;
   auth: AuthState;
+  importNotice: ImportNotice | null;
 }
 
 const stripHTML = (html: string) =>
@@ -47,15 +46,12 @@ function buildSystemPrompt(page: PageContent | null): string {
     .join('\n');
 }
 
-export function Chat({ page, messages, setMessages, config, onConfigChange, auth }: ChatProps) {
+export function Chat({ page, messages, setMessages, config, auth, importNotice }: ChatProps) {
   const [input, setInput] = useState('');
   const [isStreaming, setIsStreaming] = useState(false);
-  const [showSettings, setShowSettings] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const chatEndRef = useRef<HTMLDivElement>(null);
   const abortRef = useRef<AbortController | null>(null);
-
-  const isReady = config.provider === 'gateway' || Boolean(config.apiKey.trim());
 
   useEffect(() => {
     chatEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -65,12 +61,6 @@ export function Chat({ page, messages, setMessages, config, onConfigChange, auth
     async (text?: string) => {
       const userMessage = (text ?? input).trim();
       if (!userMessage || isStreaming) return;
-
-      if (!isReady && auth.isAuthenticated) {
-        setShowSettings(true);
-        setError(`Add an API key for ${PROVIDER_LABELS[config.provider]}.`);
-        return;
-      }
 
       setError(null);
       if (!text) setInput('');
@@ -124,7 +114,7 @@ export function Chat({ page, messages, setMessages, config, onConfigChange, auth
         abortRef.current = null;
       }
     },
-    [input, isStreaming, isReady, auth, config, page, messages, setMessages]
+    [input, isStreaming, auth, config, page, messages, setMessages]
   );
 
   const stopStreaming = () => {
@@ -139,97 +129,93 @@ export function Chat({ page, messages, setMessages, config, onConfigChange, auth
 
   return (
     <div className="flex min-h-0 flex-1 flex-col">
-      {/* Header bar */}
-      <div className="border-b border-gray-800 bg-gray-900/80 px-4 py-2">
-        <div className="flex items-center justify-between gap-2">
-          <div className="flex items-center gap-2">
-            <div className="rounded-md bg-blue-500/15 p-1 text-blue-300">
-              <Bot className="h-3.5 w-3.5" />
-            </div>
-            <span className="text-xs text-gray-400">
-              {auth.isAuthenticated ? PROVIDER_LABELS[config.provider] : 'Free tier'}
-            </span>
-          </div>
-          <div className="flex items-center gap-1">
-            {page && auth.isAuthenticated && messages.length > 0 && (
+      <div className="flex-1 overflow-y-auto p-3">
+        <div className="space-y-4">
+          {page ? (
+            <div className="space-y-2">
+              {importNotice && (
+                <div className="flex gap-2 rounded-xl border border-amber-500/30 bg-amber-500/10 p-3 text-amber-100">
+                  <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" />
+                  <div className="min-w-0">
+                    <p className="text-xs font-medium">{importNotice.title}</p>
+                    <p className="mt-0.5 text-xs leading-4 text-amber-100/75">
+                      {importNotice.message}
+                    </p>
+                  </div>
+                </div>
+              )}
               <SaveButton page={page} messages={messages} />
-            )}
-            {messages.length > 0 && (
-              <button
-                type="button"
-                onClick={clearChat}
-                className="rounded-md p-1.5 text-gray-400 hover:bg-gray-800 hover:text-gray-200"
-                title="Clear chat"
-              >
-                <Trash2 className="h-3.5 w-3.5" />
-              </button>
-            )}
-            {auth.isAuthenticated && (
-              <button
-                type="button"
-                onClick={() => setShowSettings((prev) => !prev)}
-                className="rounded-md p-1.5 text-gray-400 hover:bg-gray-800 hover:text-gray-200"
-                title="Settings"
-              >
-                {showSettings ? (
-                  <X className="h-3.5 w-3.5" />
-                ) : (
-                  <Settings className="h-3.5 w-3.5" />
+            </div>
+          ) : (
+            <div className="rounded-xl border border-dashed border-gray-700 bg-gray-900/40 p-3 text-center text-xs text-gray-500">
+              Navigate to a page to import it.
+            </div>
+          )}
+
+          <div className="rounded-xl border border-gray-800 bg-gray-900/60 p-3">
+            <div className="mb-3 flex items-center justify-between gap-2">
+              <div className="flex items-center gap-2">
+                <div className="rounded-md bg-blue-500/15 p-1 text-blue-300">
+                  <Bot className="h-3.5 w-3.5" />
+                </div>
+                <span className="text-xs font-medium text-gray-300">Optional AI chat</span>
+              </div>
+              {messages.length > 0 && (
+                <button
+                  type="button"
+                  onClick={clearChat}
+                  className="rounded-md p-1.5 text-gray-400 hover:bg-gray-800 hover:text-gray-200"
+                  title="Clear chat"
+                >
+                  <Trash2 className="h-3.5 w-3.5" />
+                </button>
+              )}
+            </div>
+
+            {messages.length === 0 ? (
+              <div className="space-y-3">
+                <div className="rounded-lg border border-dashed border-gray-700 bg-gray-950/60 p-3 text-center text-xs text-gray-500">
+                  {page ? 'Ask about this page after or before opening it.' : 'No page detected.'}
+                </div>
+                {page && (
+                  <QuickActions
+                    onAction={(prompt) => void sendMessage(prompt)}
+                    disabled={isStreaming}
+                  />
                 )}
-              </button>
+              </div>
+            ) : (
+              <div className="max-h-[45vh] space-y-2.5 overflow-y-auto">
+                {messages.map((msg, i) => (
+                  <div
+                    key={`${msg.role}-${i}-${msg.content.length}`}
+                    className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}
+                  >
+                    <div
+                      className={`max-w-[88%] rounded-2xl px-3 py-2 text-sm ${
+                        msg.role === 'user'
+                          ? 'rounded-br-md bg-blue-600 text-white'
+                          : 'rounded-bl-md border border-gray-700 bg-gray-800 text-gray-100'
+                      }`}
+                    >
+                      {msg.role === 'assistant' ? (
+                        <div className="prose prose-invert prose-sm max-w-none break-words">
+                          <ReactMarkdown remarkPlugins={[remarkGfm]}>{msg.content}</ReactMarkdown>
+                        </div>
+                      ) : (
+                        <span className="whitespace-pre-wrap">{msg.content}</span>
+                      )}
+                      {isStreaming && i === messages.length - 1 && msg.role === 'assistant' && (
+                        <span className="ml-1 inline-block h-3 w-1 animate-pulse rounded-sm bg-blue-300" />
+                      )}
+                    </div>
+                  </div>
+                ))}
+                <div ref={chatEndRef} />
+              </div>
             )}
           </div>
         </div>
-
-        {showSettings && auth.isAuthenticated && (
-          <SettingsPanel config={config} onConfigChange={onConfigChange} />
-        )}
-      </div>
-
-      {/* Messages */}
-      <div className="flex-1 overflow-y-auto p-3">
-        {messages.length === 0 ? (
-          <div className="mt-6 space-y-3">
-            <div className="rounded-xl border border-dashed border-gray-700 bg-gray-900/40 p-3 text-center text-xs text-gray-500">
-              {page ? 'Ask anything about this page' : 'Navigate to a page to start chatting'}
-            </div>
-            {page && (
-              <QuickActions
-                onAction={(prompt) => void sendMessage(prompt)}
-                disabled={isStreaming}
-              />
-            )}
-          </div>
-        ) : (
-          <div className="space-y-2.5">
-            {messages.map((msg, i) => (
-              <div
-                key={`${msg.role}-${i}-${msg.content.length}`}
-                className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}
-              >
-                <div
-                  className={`max-w-[88%] rounded-2xl px-3 py-2 text-sm ${
-                    msg.role === 'user'
-                      ? 'rounded-br-md bg-blue-600 text-white'
-                      : 'rounded-bl-md border border-gray-700 bg-gray-800 text-gray-100'
-                  }`}
-                >
-                  {msg.role === 'assistant' ? (
-                    <div className="prose prose-invert prose-sm max-w-none break-words">
-                      <ReactMarkdown remarkPlugins={[remarkGfm]}>{msg.content}</ReactMarkdown>
-                    </div>
-                  ) : (
-                    <span className="whitespace-pre-wrap">{msg.content}</span>
-                  )}
-                  {isStreaming && i === messages.length - 1 && msg.role === 'assistant' && (
-                    <span className="ml-1 inline-block h-3 w-1 animate-pulse rounded-sm bg-blue-300" />
-                  )}
-                </div>
-              </div>
-            ))}
-            <div ref={chatEndRef} />
-          </div>
-        )}
       </div>
 
       {/* Input */}
@@ -250,15 +236,9 @@ export function Chat({ page, messages, setMessages, config, onConfigChange, auth
               }
             }}
             rows={2}
-            placeholder={
-              page
-                ? isReady || !auth.isAuthenticated
-                  ? 'Ask about this page...'
-                  : 'Add API key in settings'
-                : 'Navigate to a page first'
-            }
+            placeholder={page ? 'Ask about this page...' : 'Navigate to a page first'}
             disabled={!page}
-            className="min-h-[56px] flex-1 resize-none rounded-xl border border-gray-700 bg-gray-950 px-3 py-2 text-sm text-gray-100 placeholder:text-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-50"
+            className="min-h-[56px] flex-1 resize-none rounded-xl border border-gray-700 bg-gray-950 px-3 py-2 text-sm text-gray-100 placeholder:text-gray-500 focus:ring-2 focus:ring-blue-500 focus:outline-none disabled:opacity-50"
           />
           {isStreaming ? (
             <button

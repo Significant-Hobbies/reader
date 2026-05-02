@@ -1,0 +1,15 @@
+html,
+body {
+  width: 380px;
+  min-width: 380px;
+  max-width: 380px;
+  min-height: 160px;
+  overflow: hidden;
+}
+
+#root {
+  width: 380px;
+  min-width: 380px;
+  height: auto;
+  min-height: 160px;
+}

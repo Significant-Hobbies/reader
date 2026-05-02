@@ -51,13 +51,9 @@ describe('validateExternalUrl', () => {
     }
   });
 
-  it('blocks [::0] via DNS resolution (URL parser normalizes [::0] to [::])', async () => {
-    // Note: new URL('http://[::0]').hostname === '[::]', not '[::0]'
-    // So the localhost check doesn't catch it — it falls through to DNS,
-    // where the mock rejects it as a blocked IP
-    mockedLookup.mockResolvedValueOnce({ address: '::', family: 6 });
+  it('blocks [::0] as localhost (URL parser normalizes [::0] to [::])', async () => {
     const result = await validateExternalUrl('http://[::0]');
-    expect(result).toEqual({ ok: false, reason: 'Blocked: private or reserved IP' });
+    expect(result).toEqual({ ok: false, reason: 'Blocked: localhost' });
   });
 
   it('blocks private IPs after DNS resolution', async () => {

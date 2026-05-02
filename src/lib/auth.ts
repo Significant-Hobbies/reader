@@ -6,7 +6,7 @@ import { baAccounts, baSessions, baVerifications, users } from './db/schema';
 
 export const auth = betterAuth({
   secret: process.env.BETTER_AUTH_SECRET || process.env.AUTH_SECRET,
-  baseURL: process.env.BETTER_AUTH_URL || 'https://reader-4nu.pages.dev',
+  baseURL: process.env.BETTER_AUTH_URL || 'https://reader.sarthakagrawal927.workers.dev',
   database: drizzleAdapter(db, {
     provider: 'sqlite',
     schema: {

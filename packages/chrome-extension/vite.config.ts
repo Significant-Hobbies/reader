@@ -52,6 +52,7 @@ export default defineConfig({
     emptyOutDir: true,
     rollupOptions: {
       input: {
+        'popup/index': resolve(__dirname, 'popup/index.html'),
         'side-panel/index': resolve(__dirname, 'side-panel/index.html'),
         background: resolve(__dirname, 'src/background.ts'),
       },
@@ -60,8 +61,8 @@ export default defineConfig({
           if (chunk.name === 'background') return 'background.js';
           return '[name]-[hash].js';
         },
-        chunkFileNames: 'side-panel/chunks/[name]-[hash].js',
-        assetFileNames: 'side-panel/assets/[name]-[hash][extname]',
+        chunkFileNames: 'assets/chunks/[name]-[hash].js',
+        assetFileNames: 'assets/[name]-[hash][extname]',
       },
     },
   },

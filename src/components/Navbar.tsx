@@ -50,6 +50,9 @@ export function Navbar() {
               </button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
+              <DropdownMenuItem asChild>
+                <Link href="/extension">Chrome extension</Link>
+              </DropdownMenuItem>
               <DropdownMenuItem
                 onSelect={async () => {
                   await logout();

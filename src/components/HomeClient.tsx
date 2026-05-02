@@ -4,7 +4,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { Clock, FileText, Heart, LayoutDashboard, MoreVertical, Plus, X } from 'lucide-react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { useState } from 'react';
+import { type MouseEvent, useState } from 'react';
 
 import { getCategoryColor } from '../lib/category-utils';
 import { formatReadingTime } from '../lib/reading-time-utils';
@@ -48,6 +48,20 @@ export default function HomeClient() {
 
   const router = useRouter();
   const queryClient = useQueryClient();
+
+  const handleArticleCardClick = (event: MouseEvent<HTMLElement>, articleId: string) => {
+    if (event.defaultPrevented) return;
+
+    const target = event.target;
+    if (
+      target instanceof HTMLElement &&
+      target.closest('button, a, input, textarea, select, [role="menuitem"]')
+    ) {
+      return;
+    }
+
+    router.push(`/reader/${articleId}`);
+  };
 
   const {
     data: articles = [],
@@ -602,7 +616,7 @@ export default function HomeClient() {
                     return (
                       <div
                         key={article.id}
-                        onClick={() => router.push(`/reader/${article.id}`)}
+                        onClick={(event) => handleArticleCardClick(event, article.id)}
                         className="group relative flex h-full cursor-pointer flex-col overflow-hidden rounded-2xl border border-gray-800 bg-gradient-to-br from-gray-900 to-gray-950 shadow-xl transition-all hover:border-blue-600 hover:shadow-2xl"
                       >
                         <div className="flex flex-1 flex-col gap-3 p-6">
@@ -795,7 +809,12 @@ export default function HomeClient() {
                                 <DropdownMenuSeparator />
                                 <DropdownMenuItem
                                   className="text-red-300 focus:text-red-100"
-                                  onSelect={() => {
+                                  onClick={(event) => {
+                                    event.stopPropagation();
+                                  }}
+                                  onSelect={(event) => {
+                                    event.preventDefault();
+                                    event.stopPropagation();
                                     if (deletingId) return;
                                     setPendingDeleteId(article.id);
                                     setActiveToolbarId(null);
@@ -844,7 +863,12 @@ export default function HomeClient() {
             className="absolute inset-0 bg-black/70 backdrop-blur-sm"
             onClick={closeDeleteModal}
           />
-          <div className="relative mx-4 w-full max-w-md space-y-4 rounded-2xl border border-gray-700 bg-gray-900 p-6 shadow-2xl">
+          <div
+            className="relative mx-4 w-full max-w-md space-y-4 rounded-2xl border border-gray-700 bg-gray-900 p-6 shadow-2xl"
+            onClick={(event) => {
+              event.stopPropagation();
+            }}
+          >
             <div>
               <h3 className="text-xl font-semibold text-white">
                 Delete {articlePendingDelete.type === 'pdf' ? 'PDF' : 'article'}?
@@ -860,7 +884,10 @@ export default function HomeClient() {
             <div className="flex justify-end gap-3">
               <button
                 type="button"
-                onClick={closeDeleteModal}
+                onClick={(event) => {
+                  event.stopPropagation();
+                  closeDeleteModal();
+                }}
                 disabled={Boolean(deletingId)}
                 className="rounded-lg border border-gray-600 px-4 py-2 text-gray-200 transition hover:bg-gray-800 disabled:opacity-40"
               >
@@ -868,7 +895,10 @@ export default function HomeClient() {
               </button>
               <button
                 type="button"
-                onClick={() => handleDelete(articlePendingDelete.id)}
+                onClick={(event) => {
+                  event.stopPropagation();
+                  void handleDelete(articlePendingDelete.id);
+                }}
                 disabled={deletingId === articlePendingDelete.id}
                 className="flex items-center gap-2 rounded-lg bg-red-600 px-4 py-2 text-white transition hover:bg-red-500 disabled:opacity-40"
               >

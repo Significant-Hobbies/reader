@@ -1,11 +1,9 @@
-name: Deploy to Cloudflare Pages
+name: Deploy to Cloudflare Workers
 on:
   push:
     branches: [main, migrate-off-firebase]
   pull_request:
     branches: [main]
-  pull_request_target:
-    types: [closed]
 
 jobs:
   deploy-production:
@@ -28,14 +26,13 @@ jobs:
       - uses: cloudflare/wrangler-action@v3
         with:
           apiToken: ${{ secrets.CF_API_TOKEN }}
-          command: pages deploy --project-name=reader --branch=main
+          command: deploy
 
   deploy-preview:
     if: github.event_name == 'pull_request'
     runs-on: ubuntu-latest
     permissions:
       contents: read
-      pull-requests: write
     steps:
       - uses: actions/checkout@v4
       - uses: pnpm/action-setup@v4
@@ -47,26 +44,3 @@ jobs:
           cache: pnpm
       - run: pnpm install --frozen-lockfile --ignore-scripts
       - run: pnpm cf:build
-      - uses: cloudflare/wrangler-action@v3
-        with:
-          apiToken: ${{ secrets.CF_API_TOKEN }}
-          command: pages deploy --project-name=reader --branch=pr-${{ github.event.number }}
-      - name: Comment preview URL
-        uses: actions/github-script@v7
-        with:
-          script: |
-            github.rest.issues.createComment({
-              issue_number: context.issue.number,
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              body: `Preview: https://pr-${{ github.event.number }}.reader-4nu.pages.dev`
-            })
-
-  cleanup-preview:
-    if: github.event_name == 'pull_request_target' && github.event.pull_request.merged == true
-    runs-on: ubuntu-latest
-    steps:
-      - uses: cloudflare/wrangler-action@v3
-        with:
-          apiToken: ${{ secrets.CF_API_TOKEN }}
-          command: pages deployment delete --project-name=reader --branch=pr-${{ github.event.number }} --force

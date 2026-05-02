@@ -1,13 +1,9 @@
 import { useCallback, useEffect, useState } from 'react';
-import type { PageContent, AIChatMessage, AIConfig, AuthState } from './lib/types';
+import type { PageContent, AIChatMessage, AuthState } from './lib/types';
 import { DEFAULT_AI_CONFIG } from './lib/types';
-import {
-  loadAIConfig,
-  saveAIConfig,
-  loadChatHistory,
-  saveChatHistory as saveChatToStorage,
-} from './lib/storage';
+import { loadChatHistory, saveChatHistory as saveChatToStorage } from './lib/storage';
 import { checkAuth, getApiKey } from './lib/api';
+import { getImportNotice, type ImportNotice } from './lib/importQuality';
 import { Chat } from './components/Chat';
 import { PageHeader } from './components/PageHeader';
 
@@ -15,7 +11,7 @@ export function App() {
   const [page, setPage] = useState<PageContent | null>(null);
   const [loading, setLoading] = useState(true);
   const [messages, setMessages] = useState<AIChatMessage[]>([]);
-  const [config, setConfig] = useState<AIConfig>(DEFAULT_AI_CONFIG);
+  const [importNotice, setImportNotice] = useState<ImportNotice | null>(null);
   const [auth, setAuth] = useState<AuthState>({ isAuthenticated: false, user: null });
 
   const extractPage = useCallback(async () => {
@@ -24,13 +20,16 @@ export function App() {
       const response = await chrome.runtime.sendMessage({ type: 'GET_PAGE_CONTENT' });
       if (response?.data) {
         setPage(response.data);
+        setImportNotice(getImportNotice(response.data, Boolean(response.fallback)));
         const cached = await loadChatHistory(response.data.url);
         setMessages(cached);
       } else {
         setPage(null);
+        setImportNotice(getImportNotice(null, Boolean(response?.fallback)));
       }
     } catch {
       setPage(null);
+      setImportNotice(getImportNotice(null));
     } finally {
       setLoading(false);
     }
@@ -38,7 +37,6 @@ export function App() {
 
   useEffect(() => {
     // Load config; if an API key is stored, verify it and hydrate user.
-    loadAIConfig().then(setConfig);
     getApiKey().then((key) => {
       if (!key) return;
       checkAuth().then((user) => {
@@ -62,21 +60,12 @@ export function App() {
     return () => chrome.runtime.onMessage.removeListener(listener);
   }, [extractPage]);
 
-  // Persist config changes
-  useEffect(() => {
-    saveAIConfig(config);
-  }, [config]);
-
   // Persist chat history
   useEffect(() => {
     if (page?.url && messages.length > 0) {
       saveChatToStorage(page.url, messages);
     }
   }, [messages, page?.url]);
-
-  const handleConfigChange = useCallback((next: AIConfig) => {
-    setConfig(next);
-  }, []);
 
   const handleAuthChange = useCallback((next: AuthState) => {
     setAuth(next);
@@ -93,14 +82,20 @@ export function App() {
   return (
     <div className="flex h-screen flex-col">
       <PageHeader page={page} auth={auth} onAuthChange={handleAuthChange} />
-      <Chat
-        page={page}
-        messages={messages}
-        setMessages={setMessages}
-        config={config}
-        onConfigChange={handleConfigChange}
-        auth={auth}
-      />
+      {auth.isAuthenticated ? (
+        <Chat
+          page={page}
+          messages={messages}
+          setMessages={setMessages}
+          config={DEFAULT_AI_CONFIG}
+          auth={auth}
+          importNotice={importNotice}
+        />
+      ) : (
+        <div className="flex flex-1 items-center justify-center px-4 text-center text-sm text-gray-500">
+          Connect Reader to open pages in Web Annotator.
+        </div>
+      )}
     </div>
   );
 }

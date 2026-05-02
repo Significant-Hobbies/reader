@@ -1,10 +1,10 @@
 {
   "manifest_version": 3,
-  "name": "Web Annotator - Chat with Any Page",
+  "name": "Web Annotator",
   "version": "0.1.0",
-  "description": "Chat with any webpage using AI. Save pages and conversations to your Web Annotator library.",
-  "permissions": ["activeTab", "sidePanel", "storage"],
-  "host_permissions": ["https://web-annotator.vercel.app/*"],
+  "description": "Open the current webpage in Web Annotator, with optional page chat.",
+  "permissions": ["activeTab", "scripting", "sidePanel", "storage"],
+  "host_permissions": ["https://reader.sarthakagrawal927.workers.dev/*"],
   "side_panel": {
     "default_path": "side-panel/index.html"
   },
@@ -25,7 +25,8 @@
     "128": "icons/icon-128.png"
   },
   "action": {
-    "default_title": "Open Web Annotator"
+    "default_title": "Web Annotator",
+    "default_popup": "popup/index.html"
   },
   "content_security_policy": {
     "extension_pages": "script-src 'self'; object-src 'self'"

@@ -3,7 +3,7 @@ import type { AIChatMessage, AIConfig } from './types';
 const API_BASE =
   import.meta.env.VITE_API_BASE ||
   (typeof chrome !== 'undefined' && chrome.runtime?.id
-    ? 'https://web-annotator.vercel.app'
+    ? 'https://reader.sarthakagrawal927.workers.dev'
     : 'http://localhost:3000');
 
 const API_KEY_STORAGE_KEY = 'api-key';
@@ -89,11 +89,51 @@ export async function checkAuth(): Promise<{
 
     const response = await fetch(`${API_BASE}/api/auth/me`, {
       headers: auth,
+      cache: 'no-store',
     });
     if (!response.ok) return null;
     return response.json();
   } catch {
     return null;
+  }
+}
+
+export async function verifyApiKeyForUser(key: string): Promise<
+  | {
+      ok: true;
+      user: {
+        uid: string;
+        email: string;
+        displayName: string;
+        photoURL: string;
+      };
+    }
+  | { ok: false; error: string }
+> {
+  try {
+    const response = await fetch(`${API_BASE}/api/auth/me`, {
+      headers: { Authorization: `Bearer ${key}` },
+      cache: 'no-store',
+    });
+
+    if (!response.ok) {
+      const payload = (await response.json().catch(() => ({}))) as { error?: string };
+      return {
+        ok: false,
+        error:
+          payload.error ||
+          (response.status === 401
+            ? 'Reader rejected this key. Create a fresh extension key and paste the full token.'
+            : `Reader returned ${response.status} while checking this key.`),
+      };
+    }
+
+    return { ok: true, user: await response.json() };
+  } catch {
+    return {
+      ok: false,
+      error: `Could not reach Reader at ${API_BASE}. Reload the extension after rebuilding it.`,
+    };
   }
 }
 

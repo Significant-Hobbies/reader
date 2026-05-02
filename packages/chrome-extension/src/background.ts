@@ -1,30 +1,79 @@
-// Open side panel when the extension icon is clicked
-chrome.sidePanel.setPanelBehavior({ openPanelOnActionClick: true });
+chrome.sidePanel.setPanelBehavior({ openPanelOnActionClick: false });
+
+async function getActiveTab(): Promise<chrome.tabs.Tab | undefined> {
+  const tabs = await chrome.tabs.query({ active: true, currentWindow: true });
+  return tabs[0];
+}
+
+async function sendPageContentRequest(tabId: number, message: unknown) {
+  return chrome.tabs.sendMessage(tabId, message);
+}
+
+async function extractPageContent(tabId: number, message: unknown) {
+  try {
+    return await sendPageContentRequest(tabId, message);
+  } catch {
+    try {
+      await chrome.scripting.executeScript({
+        target: { tabId },
+        files: ['content-script.js'],
+      });
+      return await sendPageContentRequest(tabId, message);
+    } catch {
+      return { type: 'PAGE_CONTENT', data: null, fallback: true };
+    }
+  }
+}
 
 // Relay messages between content script and side panel
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   if (message.type === 'GET_PAGE_CONTENT') {
     // Forward to the active tab's content script
-    chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
-      const tabId = tabs[0]?.id;
+    getActiveTab().then(async (tab) => {
+      const tabId = tab?.id;
       if (!tabId) {
         sendResponse({ type: 'PAGE_CONTENT', data: null, fallback: true });
         return;
       }
-      chrome.tabs.sendMessage(tabId, message, (response) => {
-        if (chrome.runtime.lastError) {
-          sendResponse({ type: 'PAGE_CONTENT', data: null, fallback: true });
-          return;
-        }
-        sendResponse(response);
-      });
+      const response = await extractPageContent(tabId, message);
+      sendResponse(response);
     });
     return true; // Keep channel open for async response
   }
 
   if (message.type === 'GET_ACTIVE_TAB') {
-    chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
-      sendResponse({ tabId: tabs[0]?.id, url: tabs[0]?.url });
+    getActiveTab().then((tab) => {
+      sendResponse({ tabId: tab?.id, url: tab?.url });
+    });
+    return true;
+  }
+
+  if (message.type === 'OPEN_URL_IN_ACTIVE_TAB') {
+    getActiveTab().then((tab) => {
+      const tabId = tab?.id;
+      if (!tabId || typeof message.url !== 'string') {
+        sendResponse({ ok: false });
+        return;
+      }
+
+      chrome.tabs.update(tabId, { url: message.url }, () => {
+        sendResponse({ ok: !chrome.runtime.lastError });
+      });
+    });
+    return true;
+  }
+
+  if (message.type === 'OPEN_SIDE_PANEL') {
+    getActiveTab().then((tab) => {
+      const tabId = tab?.id;
+      if (!tabId) {
+        sendResponse({ ok: false });
+        return;
+      }
+
+      chrome.sidePanel.open({ tabId }, () => {
+        sendResponse({ ok: !chrome.runtime.lastError });
+      });
     });
     return true;
   }
