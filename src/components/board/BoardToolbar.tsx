@@ -125,7 +125,7 @@ export function BoardToolbar({
         />
         <ToolbarButton
           icon={<Globe className="h-4 w-4" />}
-          label="Add Website"
+          label="Add Source"
           onClick={onAddWebsite}
         />
         <ToolbarButton

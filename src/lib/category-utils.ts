@@ -17,12 +17,10 @@ export const SUGGESTED_CATEGORIES = [
 export function getCategoryColor(category: string): string {
   const colors = ['blue', 'cyan', 'green', 'yellow', 'orange', 'red', 'pink', 'purple', 'indigo'];
 
-  // Simple hash function to consistently map category names to colors
   let hash = 0;
-  for (let i = 0; i < category.length; i++) {
+  for (let i = 0; i < category.length; i += 1) {
     hash = category.charCodeAt(i) + ((hash << 5) - hash);
   }
 
-  const index = Math.abs(hash) % colors.length;
-  return colors[index];
+  return colors[Math.abs(hash) % colors.length];
 }

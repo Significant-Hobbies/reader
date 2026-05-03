@@ -4,7 +4,9 @@ import { Loader2, Search, X } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { useCallback, useEffect, useRef, useState } from 'react';
 
+import { getLocalArticles } from '../lib/local-library';
 import type { SearchResult } from '../types';
+import { useAuth } from './AuthProvider';
 import { Badge } from './ui/badge';
 import { Input } from './ui/input';
 
@@ -15,47 +17,90 @@ export function SearchBar() {
   const [isOpen, setIsOpen] = useState(false);
   const [selectedIndex, setSelectedIndex] = useState(-1);
   const router = useRouter();
+  const { user, loading: authLoading } = useAuth();
+  const isLocalMode = !authLoading && !user;
   const searchRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const abortControllerRef = useRef<AbortController | null>(null);
 
-  const performSearch = useCallback(async (searchQuery: string) => {
-    if (searchQuery.trim().length < 2) {
-      setResults([]);
-      setIsOpen(false);
-      return;
-    }
-
-    if (abortControllerRef.current) {
-      abortControllerRef.current.abort();
-    }
-
-    abortControllerRef.current = new AbortController();
-
-    setIsLoading(true);
-    try {
-      const response = await fetch(`/api/search?q=${encodeURIComponent(searchQuery)}`, {
-        signal: abortControllerRef.current.signal,
-      });
-
-      if (!response.ok) {
-        throw new Error('Search failed');
-      }
-
-      const data = await response.json();
-      setResults(data.results || []);
-      setIsOpen(true);
-      setSelectedIndex(-1);
-    } catch (error) {
-      if (error instanceof Error && error.name === 'AbortError') {
+  const performSearch = useCallback(
+    async (searchQuery: string) => {
+      const normalizedQuery = searchQuery.trim().toLowerCase();
+      if (normalizedQuery.length < 2) {
+        setResults([]);
+        setIsOpen(false);
         return;
       }
-      console.error('Search error:', error);
-      setResults([]);
-    } finally {
-      setIsLoading(false);
-    }
-  }, []);
+
+      if (isLocalMode) {
+        const articles = await getLocalArticles();
+        const matches = articles
+          .filter((article) => {
+            const haystack = `${article.title} ${article.url} ${article.byline ?? ''} ${
+              article.category ?? ''
+            } ${article.content.replace(/<[^>]*>/g, ' ')}`.toLowerCase();
+            return haystack.includes(normalizedQuery);
+          })
+          .slice(0, 12)
+          .map<SearchResult>((article) => ({
+            id: article.id,
+            url: article.url,
+            title: article.title,
+            byline: article.byline,
+            status: article.status,
+            notesCount: article.notesCount ?? article.notes?.length ?? 0,
+            createdAt: article.createdAt,
+            updatedAt: article.updatedAt,
+            matchedFields: ['local'],
+            snippets: [
+              {
+                field: 'title',
+                text: article.title,
+              },
+            ],
+            relevanceScore: 1,
+            listIds: article.listIds,
+            category: article.category,
+          }));
+
+        setResults(matches);
+        setIsOpen(true);
+        setSelectedIndex(-1);
+        return;
+      }
+
+      if (abortControllerRef.current) {
+        abortControllerRef.current.abort();
+      }
+
+      abortControllerRef.current = new AbortController();
+
+      setIsLoading(true);
+      try {
+        const response = await fetch(`/api/search?q=${encodeURIComponent(searchQuery)}`, {
+          signal: abortControllerRef.current.signal,
+        });
+
+        if (!response.ok) {
+          throw new Error('Search failed');
+        }
+
+        const data = await response.json();
+        setResults(data.results || []);
+        setIsOpen(true);
+        setSelectedIndex(-1);
+      } catch (error) {
+        if (error instanceof Error && error.name === 'AbortError') {
+          return;
+        }
+        console.error('Search error:', error);
+        setResults([]);
+      } finally {
+        setIsLoading(false);
+      }
+    },
+    [isLocalMode]
+  );
 
   const handleResultClick = useCallback(
     (articleId: string) => {
@@ -173,8 +218,8 @@ export function SearchBar() {
           type="text"
           value={query}
           onChange={(e) => setQuery(e.target.value)}
-          placeholder="Search articles, notes, and chats..."
-          className="border-gray-700 bg-gray-900 pr-10 pl-10 text-white placeholder-gray-400 focus:border-blue-500"
+          placeholder={isLocalMode ? 'Find saved sources...' : 'Find articles, notes, and chats...'}
+          className="border-[var(--gray-6)] bg-[var(--gray-2)] pr-10 pl-10 text-[var(--gray-12)] placeholder:text-[var(--gray-10)] focus:border-[var(--accent-8)]"
         />
         {query && (
           <button
@@ -188,7 +233,7 @@ export function SearchBar() {
       </div>
 
       {isOpen && query.trim().length >= 2 && (
-        <div className="absolute top-full z-50 mt-2 max-h-96 w-full overflow-y-auto rounded-lg border border-gray-700 bg-gray-900 shadow-2xl">
+        <div className="absolute top-full z-50 mt-2 max-h-96 w-full overflow-y-auto rounded-md border border-[var(--gray-6)] bg-[var(--gray-2)] shadow-2xl">
           {results.length === 0 ? (
             <div className="p-6 text-center text-gray-400">
               <p className="text-sm">No results found for &quot;{query}&quot;</p>
@@ -196,7 +241,7 @@ export function SearchBar() {
             </div>
           ) : (
             <div className="py-2">
-              <div className="flex items-center justify-between border-b border-gray-800 px-4 py-2 text-xs text-gray-500">
+              <div className="flex items-center justify-between border-b border-[var(--gray-5)] px-4 py-2 text-xs text-gray-500">
                 <span>
                   {results.length} {results.length === 1 ? 'result' : 'results'}
                 </span>
@@ -206,8 +251,8 @@ export function SearchBar() {
                 <button
                   key={result.id}
                   onClick={() => handleResultClick(result.id)}
-                  className={`w-full border-b border-gray-800 px-4 py-3 text-left transition-colors last:border-b-0 ${
-                    selectedIndex === index ? 'bg-gray-800' : 'hover:bg-gray-800'
+                  className={`w-full border-b border-[var(--gray-5)] px-4 py-3 text-left transition-colors last:border-b-0 ${
+                    selectedIndex === index ? 'bg-[var(--gray-4)]' : 'hover:bg-[var(--gray-3)]'
                   }`}
                 >
                   <div className="flex items-start gap-3">

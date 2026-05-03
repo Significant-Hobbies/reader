@@ -33,9 +33,10 @@ export async function POST(request: Request) {
     }
 
     const body = await request.json();
-    const { url, title, byline, content, projectId, tags, listIds, category } = body || {};
+    const { url, title, byline, content, projectId, tags, listIds, category, type } = body || {};
+    const articleType = type === 'pdf' || type === 'link' ? type : 'article';
 
-    if (!url || !content) {
+    if (!url || (articleType !== 'link' && !content)) {
       return NextResponse.json({ error: 'URL and content are required' }, { status: 400 });
     }
 
@@ -67,6 +68,7 @@ export async function POST(request: Request) {
       projectId,
       tags,
       userId,
+      type: articleType,
       listIds,
       category,
     });

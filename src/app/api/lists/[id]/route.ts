@@ -4,7 +4,7 @@ import { NextResponse } from 'next/server';
 import { getAuthenticatedUserId } from '../../../../lib/auth-api';
 import { deleteList, updateList } from '../../../../lib/lists-db';
 
-export async function DELETE(request: Request, { params }: { params: Promise<{ id: string }> }) {
+export async function DELETE(_request: Request, { params }: { params: Promise<{ id: string }> }) {
   try {
     const userId = await getAuthenticatedUserId();
     if (!userId) {

@@ -1,16 +1,25 @@
 import { useCallback, useEffect, useState } from 'react';
-import { AlertTriangle, ExternalLink, KeyRound, Loader2, MessageCircle, User } from 'lucide-react';
+import {
+  AlertTriangle,
+  BookmarkPlus,
+  ExternalLink,
+  KeyRound,
+  Loader2,
+  MessageCircle,
+  User,
+} from 'lucide-react';
 import type { AuthState, PageContent } from '../side-panel/lib/types';
 import {
   checkAuth,
   clearApiKey,
   getApiBase,
   getApiKey,
+  saveLinkToLibrary,
   saveToLibrary,
   setApiKey,
   verifyApiKeyForUser,
 } from '../side-panel/lib/api';
-import { getImportNotice, type ImportNotice } from '../side-panel/lib/importQuality';
+import { canImportPage, getImportNotice, type ImportNotice } from '../side-panel/lib/importQuality';
 
 type LoadState = 'loading' | 'ready';
 type ActionState = 'idle' | 'working' | 'error';
@@ -21,7 +30,11 @@ async function getCurrentPage(): Promise<{
 }> {
   const response = await chrome.runtime.sendMessage({ type: 'GET_PAGE_CONTENT' }).catch(() => null);
   const page = response?.data ?? null;
-  return { page, notice: getImportNotice(page, Boolean(response?.fallback)) };
+  const usedFallback = Boolean(response?.fallback);
+  return {
+    page: page ? { ...page, canImport: canImportPage(page, usedFallback) } : null,
+    notice: getImportNotice(page, usedFallback),
+  };
 }
 
 async function openUrlInActiveTab(url: string): Promise<boolean> {
@@ -104,6 +117,10 @@ export function App() {
       setError('No readable page detected.');
       return;
     }
+    if (page.canImport === false || importNotice?.blocking) {
+      setError('This page cannot be imported directly.');
+      return;
+    }
 
     setActionState('working');
     setError(null);
@@ -121,6 +138,27 @@ export function App() {
       window.close();
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to open page.');
+      setActionState('error');
+    }
+  };
+
+  const saveLink = async () => {
+    if (!page) {
+      setError('No page detected.');
+      return;
+    }
+
+    setActionState('working');
+    setError(null);
+    try {
+      await saveLinkToLibrary({
+        url: page.url,
+        title: page.title || page.url,
+      });
+      setActionState('idle');
+      window.close();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to save link.');
       setActionState('error');
     }
   };
@@ -214,16 +252,35 @@ export function App() {
         <div className="grid grid-cols-1 gap-2">
           <button
             type="button"
-            onClick={() => void openInAnnotator()}
+            onClick={() => void saveLink()}
             disabled={!page || actionState === 'working'}
             className="flex h-10 items-center justify-center gap-2 rounded-lg bg-blue-600 px-3 text-xs font-medium text-white hover:bg-blue-500 disabled:cursor-not-allowed disabled:opacity-50"
           >
             {actionState === 'working' ? (
               <Loader2 className="h-4 w-4 animate-spin" />
             ) : (
-              <ExternalLink className="h-4 w-4" />
+              <BookmarkPlus className="h-4 w-4" />
             )}
-            Open in Annotator
+            Save to Library
+          </button>
+          <button
+            type="button"
+            onClick={() => void openInAnnotator()}
+            disabled={
+              !page ||
+              page.canImport === false ||
+              importNotice?.blocking ||
+              actionState === 'working'
+            }
+            className="flex h-10 items-center justify-center gap-2 rounded-lg border border-gray-700 bg-gray-900 px-3 text-xs font-medium text-gray-100 hover:bg-gray-800 disabled:cursor-not-allowed disabled:opacity-50"
+            title={
+              page?.canImport === false || importNotice?.blocking
+                ? 'This page cannot be imported directly'
+                : 'Import and open in Reader'
+            }
+          >
+            <ExternalLink className="h-4 w-4" />
+            Import & Read
           </button>
           <button
             type="button"

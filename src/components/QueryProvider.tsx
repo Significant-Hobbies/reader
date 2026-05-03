@@ -5,7 +5,11 @@ import type { ReactNode } from 'react';
 import { useState } from 'react';
 
 function handle401() {
-  if (typeof window !== 'undefined' && window.location.pathname !== '/login') {
+  if (
+    typeof window !== 'undefined' &&
+    window.location.pathname !== '/' &&
+    window.location.pathname !== '/login'
+  ) {
     window.location.href = '/login';
   }
 }

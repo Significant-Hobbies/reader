@@ -59,6 +59,8 @@ const loadAIConfig = (): AIConfig => {
 export interface ReaderCoreProps {
   article: Article;
   readOnly?: boolean;
+  localMode?: boolean;
+  onArticleChange?: (patch: Partial<Article>) => Promise<void> | void;
   onSpawnNote?: (anchor: ElementAnchor, text: string) => void;
   onSpawnAIChat?: (anchor: ElementAnchor, text: string) => void;
   compact?: boolean;
@@ -72,6 +74,8 @@ export interface ReaderCoreProps {
 export function ReaderCore({
   article,
   readOnly = false,
+  localMode = false,
+  onArticleChange,
   onSpawnNote,
   onSpawnAIChat,
   compact = false,
@@ -128,6 +132,10 @@ export function ReaderCore({
   const { mutate: persistNotes, isPending: isNotesSaving } = useMutation({
     mutationFn: async (updatedNotes: Note[]) => {
       if (readOnly) return updatedNotes;
+      if (onArticleChange) {
+        await onArticleChange({ notes: updatedNotes, notesCount: updatedNotes.length });
+        return updatedNotes;
+      }
       const response = await fetch(`/api/articles/${id}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
@@ -156,6 +164,10 @@ export function ReaderCore({
   } = useMutation({
     mutationFn: async (newTitle: string) => {
       if (readOnly) return newTitle;
+      if (onArticleChange) {
+        await onArticleChange({ title: newTitle });
+        return newTitle;
+      }
       const response = await fetch(`/api/articles/${id}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
@@ -469,12 +481,13 @@ export function ReaderCore({
   }, [createNote, selectionMenu]);
 
   const askAIFromSelection = useCallback(() => {
+    if (localMode) return;
     if (!selectionMenu) return;
     const prompt = `Explain this selected excerpt in context:\n\n"${selectionMenu.text}"`;
     setActiveSidebarTab('ai');
     setQueuedAIPrompt(prompt);
     setSelectionMenu(null);
-  }, [selectionMenu]);
+  }, [localMode, selectionMenu]);
 
   const spawnNoteFromSelection = useCallback(() => {
     if (!selectionMenu || !onSpawnNote) return;
@@ -706,24 +719,25 @@ export function ReaderCore({
 
   const handleSummarySaved = useCallback(
     (summary: string, keyPoints: string[]) => {
+      onArticleChange?.({ aiSummary: summary, keyPoints });
       queryClient.setQueryData<Article>(['article', id], (prev) =>
         prev ? { ...prev, aiSummary: summary, keyPoints } : prev
       );
     },
-    [id, queryClient]
+    [id, onArticleChange, queryClient]
   );
 
   // ---- Render ----
 
   return (
-    <div className="relative flex h-full w-full overflow-hidden rounded-2xl">
+    <div className="relative flex h-full w-full overflow-hidden rounded-lg">
       {/* LEFT PANEL: Article Content */}
       <div
-        className="relative flex h-full flex-col overflow-hidden rounded-2xl border border-gray-800 bg-gray-900/70 shadow-2xl backdrop-blur"
+        className="relative flex h-full flex-col overflow-hidden rounded-lg border border-[var(--gray-5)] bg-[var(--gray-2)]/85 shadow-[0_18px_55px_rgba(0,0,0,0.22)] backdrop-blur"
         style={compact ? { flex: 1 } : { width: `${leftPanelWidth}%` }}
       >
         {/* Header */}
-        <div className="z-10 flex flex-wrap items-center gap-4 border-b border-gray-800 bg-gray-900/80 p-4 shadow-md backdrop-blur-md">
+        <div className="z-10 flex flex-wrap items-center gap-4 border-b border-[var(--gray-5)] bg-[var(--gray-2)]/90 p-4 shadow-md backdrop-blur-md">
           <div className="min-w-[220px] flex-1">
             {!readOnly && isTitleEditing ? (
               <input
@@ -745,10 +759,10 @@ export function ReaderCore({
                 placeholder={article?.title || article?.url || 'Untitled article'}
                 maxLength={120}
                 autoFocus
-                className="w-full border-b border-blue-500 bg-transparent pb-1 text-2xl font-semibold text-white transition-colors focus:outline-none"
+                className="w-full border-b border-[var(--accent-8)] bg-transparent pb-1 text-2xl font-semibold text-[var(--gray-12)] transition-colors focus:outline-none"
               />
             ) : readOnly ? (
-              <h1 className="text-2xl leading-snug font-semibold text-white">
+              <h1 className="text-2xl leading-snug font-semibold text-[var(--gray-12)]">
                 {titleDraft.trim() || article?.title || article?.url || 'Untitled article'}
               </h1>
             ) : (
@@ -758,7 +772,7 @@ export function ReaderCore({
                 className="group w-full text-left"
                 title="Click to edit title"
               >
-                <h1 className="text-2xl leading-snug font-semibold text-white transition-colors group-hover:text-blue-300">
+                <h1 className="text-2xl leading-snug font-semibold text-[var(--gray-12)] transition-colors group-hover:text-[var(--accent-11)]">
                   {titleDraft.trim() || article?.title || article?.url || 'Untitled article'}
                 </h1>
                 <p className="text-xs text-gray-500 opacity-0 transition-opacity group-hover:opacity-100">
@@ -781,7 +795,11 @@ export function ReaderCore({
             {!readOnly && <AppearanceToolbar settings={settings} onUpdate={updateSettings} />}
             {!readOnly && (
               <span
-                className={`rounded-full px-2 py-1 text-xs font-medium ${isNotesSaving ? 'bg-yellow-900/30 text-yellow-500' : 'bg-green-900/30 text-green-500'}`}
+                className={`rounded-sm border px-2 py-0.5 text-xs font-medium ${
+                  isNotesSaving
+                    ? 'border-yellow-800 bg-yellow-950/40 text-yellow-400'
+                    : 'border-green-800 bg-green-950/35 text-green-400'
+                }`}
               >
                 {isNotesSaving ? 'Saving...' : 'Saved'}
               </span>
@@ -800,18 +818,20 @@ export function ReaderCore({
           <div className="relative min-h-full">
             {/* AI Summary Section */}
             <div className="mx-auto max-w-3xl px-8 pt-8">
-              <ArticleSummary
-                articleId={article.id}
-                articleContent={article.content}
-                articleTitle={article.title}
-                initialSummary={article.aiSummary}
-                initialKeyPoints={article.keyPoints}
-                endpointUrl={aiConfig.endpointUrl}
-                model={aiConfig.model}
-                apiKey={aiConfig.apiKey}
-                theme={settings.theme}
-                onSummarySaved={handleSummarySaved}
-              />
+              {!localMode && (
+                <ArticleSummary
+                  articleId={article.id}
+                  articleContent={article.content}
+                  articleTitle={article.title}
+                  initialSummary={article.aiSummary}
+                  initialKeyPoints={article.keyPoints}
+                  endpointUrl={aiConfig.endpointUrl}
+                  model={aiConfig.model}
+                  apiKey={aiConfig.apiKey}
+                  theme={settings.theme}
+                  onSummarySaved={handleSummarySaved}
+                />
+              )}
             </div>
 
             <ReaderView
@@ -849,11 +869,11 @@ export function ReaderCore({
       {/* RESIZER - hidden in compact mode */}
       {!compact && (
         <div
-          className="group relative z-30 mx-1 flex w-1 cursor-col-resize items-center justify-center rounded-full bg-gray-800 transition-colors hover:bg-blue-500"
+          className="group relative z-30 mx-1 flex w-1 cursor-col-resize items-center justify-center rounded-sm bg-[var(--gray-4)] transition-colors hover:bg-[var(--accent-8)]"
           onMouseDown={startResizing}
         >
           <div className="absolute inset-y-0 -right-2 -left-2 z-30" />
-          <div className="h-8 w-1 rounded-full bg-gray-600 group-hover:bg-white" />
+          <div className="h-8 w-1 rounded-sm bg-[var(--gray-7)] group-hover:bg-[var(--accent-11)]" />
         </div>
       )}
 
@@ -861,7 +881,7 @@ export function ReaderCore({
       {compact && (
         <button
           onClick={() => setShowSidebar(!showSidebar)}
-          className="absolute top-2 right-2 z-40 rounded-lg border border-gray-700 bg-gray-800/80 px-2 py-1 text-xs text-gray-300 transition-colors hover:bg-gray-700"
+          className="absolute top-2 right-2 z-40 rounded-md border border-[var(--gray-6)] bg-[var(--gray-3)] px-2 py-1 text-xs text-gray-300 transition-colors hover:bg-[var(--gray-4)]"
         >
           {showSidebar ? 'Hide' : 'Notes'}
         </button>
@@ -870,14 +890,14 @@ export function ReaderCore({
       {/* RIGHT PANEL: Sidebar */}
       {(showSidebar || !compact) && (
         <div
-          className="z-20 flex h-full flex-col rounded-2xl border border-gray-800 bg-gray-900/70 shadow-2xl backdrop-blur"
+          className="z-20 flex h-full flex-col rounded-lg border border-[var(--gray-5)] bg-[var(--gray-2)]/85 shadow-[0_18px_55px_rgba(0,0,0,0.22)] backdrop-blur"
           style={
             compact
               ? { position: 'absolute', right: 0, top: 0, width: '300px', zIndex: 30 }
               : { width: `${100 - leftPanelWidth}%` }
           }
         >
-          <div className="border-b border-gray-800 bg-gray-900/80 p-4">
+          <div className="border-b border-[var(--gray-5)] bg-[var(--gray-2)]/90 p-4">
             <h2 className="text-lg font-semibold text-gray-100">Sidebar</h2>
             <p className="text-sm text-gray-500">
               {activeSidebarTab === 'notes'
@@ -886,39 +906,39 @@ export function ReaderCore({
                   ? 'Ask AI using your article and notes context'
                   : 'Organize with tags'}
             </p>
-            <div className="mt-3 grid grid-cols-3 gap-2">
+            <div className="mt-3 flex flex-wrap gap-2">
               <button
                 type="button"
                 onClick={() => setActiveSidebarTab('notes')}
-                className={`rounded-lg border px-3 py-2 text-sm font-medium transition-colors ${
+                className={`rounded-md border px-3 py-2 text-sm font-medium whitespace-nowrap transition-colors ${
                   activeSidebarTab === 'notes'
-                    ? 'border-blue-500/50 bg-blue-500/20 text-blue-200'
-                    : 'border-gray-700 bg-gray-800/70 text-gray-300 hover:bg-gray-700'
+                    ? 'border-[var(--accent-7)] bg-[var(--accent-4)] text-[var(--accent-12)]'
+                    : 'border-[var(--gray-6)] bg-[var(--gray-3)] text-[var(--gray-11)] hover:bg-[var(--gray-4)] hover:text-[var(--gray-12)]'
                 }`}
               >
                 Notes
               </button>
-              {!readOnly && (
+              {!readOnly && !localMode && (
                 <button
                   type="button"
                   onClick={() => setActiveSidebarTab('ai')}
-                  className={`rounded-lg border px-3 py-2 text-sm font-medium transition-colors ${
+                  className={`rounded-md border px-3 py-2 text-sm font-medium whitespace-nowrap transition-colors ${
                     activeSidebarTab === 'ai'
-                      ? 'border-blue-500/50 bg-blue-500/20 text-blue-200'
-                      : 'border-gray-700 bg-gray-800/70 text-gray-300 hover:bg-gray-700'
+                      ? 'border-[var(--accent-7)] bg-[var(--accent-4)] text-[var(--accent-12)]'
+                      : 'border-[var(--gray-6)] bg-[var(--gray-3)] text-[var(--gray-11)] hover:bg-[var(--gray-4)] hover:text-[var(--gray-12)]'
                   }`}
                 >
                   AI Chat
                 </button>
               )}
-              {!readOnly && (
+              {!readOnly && !localMode && (
                 <button
                   type="button"
                   onClick={() => setActiveSidebarTab('tags')}
-                  className={`rounded-lg border px-3 py-2 text-sm font-medium transition-colors ${
+                  className={`rounded-md border px-3 py-2 text-sm font-medium whitespace-nowrap transition-colors ${
                     activeSidebarTab === 'tags'
-                      ? 'border-blue-500/50 bg-blue-500/20 text-blue-200'
-                      : 'border-gray-700 bg-gray-800/70 text-gray-300 hover:bg-gray-700'
+                      ? 'border-[var(--accent-7)] bg-[var(--accent-4)] text-[var(--accent-12)]'
+                      : 'border-[var(--gray-6)] bg-[var(--gray-3)] text-[var(--gray-11)] hover:bg-[var(--gray-4)] hover:text-[var(--gray-12)]'
                   }`}
                 >
                   Tags
@@ -950,14 +970,14 @@ export function ReaderCore({
                 />
               ))}
             </div>
-          ) : activeSidebarTab === 'ai' && !readOnly ? (
+          ) : activeSidebarTab === 'ai' && !readOnly && !localMode ? (
             <NotesAIChat
               article={article}
               notes={notes}
               queuedPrompt={queuedAIPrompt}
               onQueuedPromptHandled={() => setQueuedAIPrompt(null)}
             />
-          ) : activeSidebarTab === 'tags' && !readOnly ? (
+          ) : activeSidebarTab === 'tags' && !readOnly && !localMode ? (
             <div className="flex-grow overflow-y-auto p-4">
               <ArticleTagEditor article={article} />
             </div>
@@ -976,7 +996,7 @@ export function ReaderCore({
         ? createPortal(
             <div
               data-selection-actions-menu="true"
-              className="fixed z-[120] min-w-[180px] rounded-xl border border-gray-700 bg-gray-950/95 p-1 shadow-2xl backdrop-blur"
+              className="fixed z-[120] min-w-[180px] rounded-md border border-[var(--gray-6)] bg-[var(--gray-2)]/95 p-1 shadow-2xl backdrop-blur"
               style={{
                 left: Math.min(selectionMenu.x, window.innerWidth - 200),
                 top: Math.min(selectionMenu.y, window.innerHeight - 120),
@@ -985,22 +1005,24 @@ export function ReaderCore({
               <button
                 type="button"
                 onClick={addNoteFromSelection}
-                className="block w-full rounded-lg px-3 py-2 text-left text-sm text-gray-100 transition-colors hover:bg-gray-800"
+                className="block w-full rounded-sm px-3 py-2 text-left text-sm text-gray-100 transition-colors hover:bg-[var(--gray-3)]"
               >
                 Add note
               </button>
-              <button
-                type="button"
-                onClick={askAIFromSelection}
-                className="block w-full rounded-lg px-3 py-2 text-left text-sm text-gray-100 transition-colors hover:bg-gray-800"
-              >
-                Ask AI
-              </button>
+              {!localMode && (
+                <button
+                  type="button"
+                  onClick={askAIFromSelection}
+                  className="block w-full rounded-sm px-3 py-2 text-left text-sm text-gray-100 transition-colors hover:bg-[var(--gray-3)]"
+                >
+                  Ask AI
+                </button>
+              )}
               {onSpawnNote && (
                 <button
                   type="button"
                   onClick={spawnNoteFromSelection}
-                  className="block w-full rounded-lg px-3 py-2 text-left text-sm text-gray-100 transition-colors hover:bg-gray-800"
+                  className="block w-full rounded-sm px-3 py-2 text-left text-sm text-gray-100 transition-colors hover:bg-[var(--gray-3)]"
                 >
                   Add to Board
                 </button>
@@ -1009,7 +1031,7 @@ export function ReaderCore({
                 <button
                   type="button"
                   onClick={spawnAIChatFromSelection}
-                  className="block w-full rounded-lg px-3 py-2 text-left text-sm text-gray-100 transition-colors hover:bg-gray-800"
+                  className="block w-full rounded-sm px-3 py-2 text-left text-sm text-gray-100 transition-colors hover:bg-[var(--gray-3)]"
                 >
                   Ask AI on Board
                 </button>

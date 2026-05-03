@@ -4,7 +4,7 @@ import { NextResponse } from 'next/server';
 
 import { createArticleRecord } from '../../../../lib/articles-db';
 import { getAuthenticatedUserId } from '../../../../lib/auth-api';
-import { extractTextFromPDF, validatePDFFile } from '../../../../lib/pdf-service';
+import { validatePDFFile } from '../../../../lib/pdf-service';
 import { getPdfDownloadUrl, uploadPdf } from '../../../../lib/storage';
 
 export async function POST(request: NextRequest) {
@@ -55,15 +55,12 @@ export async function POST(request: NextRequest) {
     const arrayBuffer = await file.arrayBuffer();
     const buffer = Buffer.from(arrayBuffer);
 
-    const extraction = await extractTextFromPDF(buffer);
-
     const { storageKey, sizeBytes } = await uploadPdf(buffer, {
       filename: file.name,
       userId,
     });
 
-    const title = extraction.metadata?.title || file.name.replace(/\.pdf$/i, '');
-    const byline = extraction.metadata?.author;
+    const title = file.name.replace(/\.pdf$/i, '') || file.name;
 
     // Store the blob key as the article's `url` so lookups / dedup don't clash
     // with the private blob URL — the actual download URL is generated on read.
@@ -72,14 +69,11 @@ export async function POST(request: NextRequest) {
     const id = await createArticleRecord({
       url: urlKey,
       title,
-      byline: byline || undefined,
-      content: extraction.text,
+      content: `<p>${title}</p>`,
       projectId: projectId || undefined,
       userId,
       type: 'pdf',
-      extractedText: extraction.text,
       pdfMetadata: {
-        pageCount: extraction.pageCount,
         fileSize: sizeBytes,
         storagePath: storageKey,
       },
@@ -90,7 +84,6 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({
       id,
       title,
-      pageCount: extraction.pageCount,
       pdfUrl: getPdfDownloadUrl(id),
     });
   } catch (error) {

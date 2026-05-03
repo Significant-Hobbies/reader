@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { getImportNotice } from '../importQuality';
+import { canImportPage, getImportNotice } from '../importQuality';
 import type { PageContent } from '../types';
 
 function page(overrides: Partial<PageContent> = {}): PageContent {
@@ -17,16 +17,20 @@ function page(overrides: Partial<PageContent> = {}): PageContent {
 describe('getImportNotice', () => {
   it('flags missing page content', () => {
     expect(getImportNotice(null)?.title).toContain('cannot be imported');
+    expect(getImportNotice(null)?.blocking).toBe(true);
+    expect(canImportPage(null)).toBe(false);
   });
 
   it('flags restricted browser protocols', () => {
-    expect(getImportNotice(page({ url: 'chrome://extensions' }))?.message).toContain(
-      'Chrome blocks'
-    );
+    const restrictedPage = page({ url: 'chrome://extensions' });
+    expect(getImportNotice(restrictedPage)?.message).toContain('Chrome blocks');
+    expect(getImportNotice(restrictedPage)?.blocking).toBe(true);
+    expect(canImportPage(restrictedPage)).toBe(false);
   });
 
   it('flags fallback extraction', () => {
     expect(getImportNotice(page(), true)?.title).toContain('cleanup');
+    expect(canImportPage(page(), true)).toBe(true);
   });
 
   it('flags likely authenticated app pages', () => {

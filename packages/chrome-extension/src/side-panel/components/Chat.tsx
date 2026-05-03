@@ -52,6 +52,7 @@ export function Chat({ page, messages, setMessages, config, auth, importNotice }
   const [error, setError] = useState<string | null>(null);
   const chatEndRef = useRef<HTMLDivElement>(null);
   const abortRef = useRef<AbortController | null>(null);
+  const canImport = page?.canImport !== false && importNotice?.blocking !== true;
 
   useEffect(() => {
     chatEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -144,7 +145,13 @@ export function Chat({ page, messages, setMessages, config, auth, importNotice }
                   </div>
                 </div>
               )}
-              <SaveButton page={page} messages={messages} />
+              {auth.isAuthenticated ? (
+                <SaveButton page={page} messages={messages} canImport={canImport} />
+              ) : (
+                <div className="rounded-xl border border-gray-800 bg-gray-900/60 p-3 text-xs text-gray-400">
+                  Connect Reader to save or import this page. Chat still works for the current tab.
+                </div>
+              )}
             </div>
           ) : (
             <div className="rounded-xl border border-dashed border-gray-700 bg-gray-900/40 p-3 text-center text-xs text-gray-500">

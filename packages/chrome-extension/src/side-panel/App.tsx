@@ -82,20 +82,14 @@ export function App() {
   return (
     <div className="flex h-screen flex-col">
       <PageHeader page={page} auth={auth} onAuthChange={handleAuthChange} />
-      {auth.isAuthenticated ? (
-        <Chat
-          page={page}
-          messages={messages}
-          setMessages={setMessages}
-          config={DEFAULT_AI_CONFIG}
-          auth={auth}
-          importNotice={importNotice}
-        />
-      ) : (
-        <div className="flex flex-1 items-center justify-center px-4 text-center text-sm text-gray-500">
-          Connect Reader to open pages in Web Annotator.
-        </div>
-      )}
+      <Chat
+        page={page}
+        messages={messages}
+        setMessages={setMessages}
+        config={DEFAULT_AI_CONFIG}
+        auth={auth}
+        importNotice={importNotice}
+      />
     </div>
   );
 }

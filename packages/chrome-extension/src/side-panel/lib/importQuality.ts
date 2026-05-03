@@ -3,6 +3,7 @@ import type { PageContent } from './types';
 export interface ImportNotice {
   title: string;
   message: string;
+  blocking?: boolean;
 }
 
 const RESTRICTED_PROTOCOLS = new Set([
@@ -26,6 +27,7 @@ export function getImportNotice(
       title: 'This page cannot be imported yet',
       message:
         'Chrome may block extension access on browser pages, PDF viewers, or protected tabs.',
+      blocking: true,
     };
   }
 
@@ -36,6 +38,7 @@ export function getImportNotice(
     return {
       title: 'This page may not import cleanly',
       message: 'The page URL is unusual, so the saved article may need manual cleanup.',
+      blocking: true,
     };
   }
 
@@ -43,6 +46,7 @@ export function getImportNotice(
     return {
       title: 'This page cannot be imported directly',
       message: 'Chrome blocks extensions from reading browser, extension, and internal pages.',
+      blocking: true,
     };
   }
 
@@ -70,4 +74,8 @@ export function getImportNotice(
   }
 
   return null;
+}
+
+export function canImportPage(page: PageContent | null, usedFallback = false): boolean {
+  return getImportNotice(page, usedFallback)?.blocking !== true;
 }

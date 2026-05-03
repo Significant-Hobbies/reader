@@ -422,16 +422,16 @@ export function NotesAIChat({
 
   return (
     <div className="flex h-full min-h-0 flex-col">
-      <div className="border-b border-gray-800 bg-gray-900/80 px-4 py-3">
+      <div className="border-b border-[var(--gray-5)] bg-[var(--gray-2)]/85 px-4 py-3">
         <div className="flex items-center justify-between gap-2">
           <div className="flex items-center gap-2">
-            <div className="rounded-md bg-blue-500/15 p-1.5 text-blue-300">
+            <div className="rounded-md bg-[var(--accent-4)] p-1.5 text-[var(--accent-11)]">
               <Bot className="h-4 w-4" />
             </div>
             <div>
-              <p className="text-sm font-semibold text-gray-100">AI Chat</p>
+              <p className="text-sm font-semibold text-[var(--gray-12)]">AI Chat</p>
               {config.model && !useLocalAI && (
-                <p className="text-xs text-gray-500">{config.model}</p>
+                <p className="text-xs text-[var(--gray-9)]">{config.model}</p>
               )}
               {useLocalAI && <p className="text-xs text-emerald-400">Local AI</p>}
             </div>
@@ -441,7 +441,7 @@ export function NotesAIChat({
               <button
                 type="button"
                 onClick={clearChat}
-                className="rounded-md p-2 text-gray-400 transition-colors hover:bg-gray-800 hover:text-gray-200"
+                className="rounded-md p-2 text-[var(--gray-10)] transition-colors hover:bg-[var(--gray-3)] hover:text-[var(--gray-12)]"
                 title="Clear chat"
               >
                 <Trash2 className="h-4 w-4" />
@@ -450,7 +450,7 @@ export function NotesAIChat({
             <button
               type="button"
               onClick={() => setShowSettings((prev) => !prev)}
-              className="rounded-md p-2 text-gray-400 transition-colors hover:bg-gray-800 hover:text-gray-200"
+              className="rounded-md p-2 text-[var(--gray-10)] transition-colors hover:bg-[var(--gray-3)] hover:text-[var(--gray-12)]"
               title="Chat settings"
             >
               {showSettings ? <X className="h-4 w-4" /> : <Settings className="h-4 w-4" />}
@@ -459,14 +459,14 @@ export function NotesAIChat({
         </div>
 
         {showSettings && (
-          <div className="mt-3 space-y-3 rounded-xl border border-gray-800 bg-gray-950/80 p-3">
+          <div className="mt-3 space-y-3 rounded-lg border border-[var(--gray-5)] bg-[var(--gray-1)]/80 p-3">
             {allowLocalAI && (
-              <label className="flex items-center gap-2 text-xs text-gray-400">
+              <label className="flex items-center gap-2 text-xs text-[var(--gray-10)]">
                 <input
                   type="checkbox"
                   checked={useLocalAI}
                   onChange={(event) => setUseLocalAI(event.target.checked)}
-                  className="rounded border-gray-600 bg-gray-800"
+                  className="rounded border-[var(--gray-6)] bg-[var(--gray-3)] accent-[var(--accent-9)]"
                 />
                 <span>Use local AI (dev mode)</span>
               </label>
@@ -474,7 +474,7 @@ export function NotesAIChat({
 
             {!useLocalAI && (
               <>
-                <label className="space-y-1 text-xs text-gray-400">
+                <label className="space-y-1 text-xs text-[var(--gray-10)]">
                   <span>Endpoint URL</span>
                   <input
                     type="text"
@@ -486,11 +486,11 @@ export function NotesAIChat({
                       }))
                     }
                     placeholder="https://api.openai.com/v1"
-                    className="h-10 w-full rounded-lg border border-gray-700 bg-gray-900 px-3 text-sm text-gray-100 placeholder:text-gray-500 focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                    className="h-10 w-full rounded-md border border-[var(--gray-6)] bg-[var(--gray-2)] px-3 text-sm text-[var(--gray-12)] placeholder:text-[var(--gray-8)] focus:ring-2 focus:ring-[var(--accent-8)] focus:outline-none"
                   />
                 </label>
 
-                <label className="space-y-1 text-xs text-gray-400">
+                <label className="space-y-1 text-xs text-[var(--gray-10)]">
                   <span>API Key (stored in your browser only)</span>
                   <input
                     type="password"
@@ -502,14 +502,16 @@ export function NotesAIChat({
                       }))
                     }
                     placeholder="Paste your API key"
-                    className="h-10 w-full rounded-lg border border-gray-700 bg-gray-900 px-3 text-sm text-gray-100 placeholder:text-gray-500 focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                    className="h-10 w-full rounded-md border border-[var(--gray-6)] bg-[var(--gray-2)] px-3 text-sm text-[var(--gray-12)] placeholder:text-[var(--gray-8)] focus:ring-2 focus:ring-[var(--accent-8)] focus:outline-none"
                   />
                 </label>
 
-                <label className="space-y-1 text-xs text-gray-400">
+                <label className="space-y-1 text-xs text-[var(--gray-10)]">
                   <span>
                     Model{' '}
-                    {isModelsLoading ? <span className="text-gray-500">(loading...)</span> : null}
+                    {isModelsLoading ? (
+                      <span className="text-[var(--gray-9)]">(loading...)</span>
+                    ) : null}
                   </span>
                   <div className="relative">
                     <input
@@ -528,7 +530,7 @@ export function NotesAIChat({
                           ? 'Select or type a model name'
                           : 'Enter model name'
                       }
-                      className="h-10 w-full rounded-lg border border-gray-700 bg-gray-900 px-3 text-sm text-gray-100 placeholder:text-gray-500 focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                      className="h-10 w-full rounded-md border border-[var(--gray-6)] bg-[var(--gray-2)] px-3 text-sm text-[var(--gray-12)] placeholder:text-[var(--gray-8)] focus:ring-2 focus:ring-[var(--accent-8)] focus:outline-none"
                     />
                     <datalist id="ai-model-options">
                       {availableModels.map((modelId) => (
@@ -554,7 +556,7 @@ export function NotesAIChat({
 
       <div className="flex-1 overflow-y-auto p-4">
         {messages.length === 0 ? (
-          <div className="mt-8 rounded-xl border border-dashed border-gray-700 bg-gray-900/40 p-4 text-center text-sm text-gray-500">
+          <div className="mt-8 rounded-lg border border-dashed border-[var(--gray-6)] bg-[var(--gray-2)]/60 p-4 text-center text-sm text-[var(--gray-10)]">
             Ask for summaries, critique your notes, extract action items, or generate study
             questions.
           </div>
@@ -566,10 +568,10 @@ export function NotesAIChat({
                 className={`flex ${message.role === 'user' ? 'justify-end' : 'justify-start'}`}
               >
                 <div
-                  className={`max-w-[88%] rounded-2xl px-3 py-2 text-sm ${
+                  className={`max-w-[88%] rounded-lg px-3 py-2 text-sm ${
                     message.role === 'user'
-                      ? 'rounded-br-md bg-blue-600 text-white'
-                      : 'rounded-bl-md border border-gray-700 bg-gray-800 text-gray-100'
+                      ? 'rounded-br-sm bg-[var(--accent-9)] text-white'
+                      : 'rounded-bl-sm border border-[var(--gray-5)] bg-[var(--gray-3)] text-[var(--gray-12)]'
                   }`}
                 >
                   {message.role === 'assistant' ? (
@@ -580,7 +582,7 @@ export function NotesAIChat({
                     <span className="whitespace-pre-wrap">{message.content}</span>
                   )}
                   {isStreaming && index === messages.length - 1 && message.role === 'assistant' && (
-                    <span className="ml-1 inline-block h-3 w-1 animate-pulse rounded-sm bg-blue-300" />
+                    <span className="ml-1 inline-block h-3 w-1 animate-pulse rounded-sm bg-[var(--accent-10)]" />
                   )}
                 </div>
               </div>
@@ -590,9 +592,9 @@ export function NotesAIChat({
         )}
       </div>
 
-      <div className="border-t border-gray-800 bg-gray-900/70 p-3">
+      <div className="border-t border-[var(--gray-5)] bg-[var(--gray-2)]/80 p-3">
         {error && (
-          <p className="mb-2 rounded-lg border border-red-500/30 bg-red-500/10 px-3 py-2 text-xs text-red-200">
+          <p className="mb-2 rounded-md border border-red-500/30 bg-red-500/10 px-3 py-2 text-xs text-red-200">
             {error}
           </p>
         )}
@@ -612,14 +614,14 @@ export function NotesAIChat({
                 ? 'Ask about this article or your notes...'
                 : 'Configure AI endpoint in settings'
             }
-            className="min-h-[68px] flex-1 resize-none rounded-xl border border-gray-700 bg-gray-950 px-3 py-2 text-sm text-gray-100 placeholder:text-gray-500 focus:ring-2 focus:ring-blue-500 focus:outline-none"
+            className="min-h-[68px] flex-1 resize-none rounded-md border border-[var(--gray-6)] bg-[var(--gray-1)] px-3 py-2 text-sm text-[var(--gray-12)] placeholder:text-[var(--gray-8)] focus:ring-2 focus:ring-[var(--accent-8)] focus:outline-none"
           />
 
           {isStreaming ? (
             <button
               type="button"
               onClick={stopStreaming}
-              className="flex h-10 w-10 items-center justify-center rounded-xl border border-red-500/40 bg-red-500/15 text-red-300 transition-colors hover:bg-red-500/25"
+              className="flex h-10 w-10 items-center justify-center rounded-md border border-red-500/40 bg-red-500/15 text-red-300 transition-colors hover:bg-red-500/25"
               title="Stop"
             >
               <Square className="h-4 w-4" />
@@ -629,7 +631,7 @@ export function NotesAIChat({
               type="button"
               onClick={() => void sendMessage()}
               disabled={!input.trim() || !isReady}
-              className="flex h-10 w-10 items-center justify-center rounded-xl bg-blue-600 text-white transition-colors hover:bg-blue-500 disabled:cursor-not-allowed disabled:opacity-50"
+              className="flex h-10 w-10 items-center justify-center rounded-md bg-[var(--accent-9)] text-white transition-colors hover:bg-[var(--accent-10)] disabled:cursor-not-allowed disabled:opacity-50"
               title="Send"
             >
               {isStreaming ? (

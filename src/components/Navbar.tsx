@@ -1,5 +1,6 @@
 'use client';
 
+import { Box, Text } from '@radix-ui/themes';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 
@@ -17,13 +18,23 @@ export function Navbar() {
   const router = useRouter();
 
   return (
-    <nav className="sticky top-0 z-40 border-b border-gray-800 bg-gray-950/80 backdrop-blur">
+    <nav className="sticky top-0 z-40 border-b border-[var(--gray-5)] bg-[#11100d]/85 backdrop-blur-xl">
       <div className="mx-auto flex max-w-6xl items-center justify-between gap-4 px-6 py-3">
         <Link
           href="/"
-          className="text-lg font-semibold whitespace-nowrap text-white transition-colors hover:text-blue-300"
+          className="flex items-center gap-3 whitespace-nowrap transition-colors hover:text-[var(--accent-11)]"
         >
-          Web Annotator
+          <span className="flex h-9 w-9 items-center justify-center rounded-md border border-[var(--gray-6)] bg-[var(--gray-3)] text-sm font-semibold text-[var(--accent-11)]">
+            L
+          </span>
+          <Box>
+            <Text as="p" size="3" weight="bold" className="leading-none text-[var(--gray-12)]">
+              Library
+            </Text>
+            <Text as="p" size="1" color="gray" className="leading-none">
+              Reader
+            </Text>
+          </Box>
         </Link>
 
         <div className="flex max-w-2xl flex-1 items-center gap-4">
@@ -33,7 +44,7 @@ export function Navbar() {
         {user ? (
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <button className="h-8 w-8 flex-shrink-0 overflow-hidden rounded-full focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 focus:ring-offset-gray-950 focus:outline-none">
+              <button className="h-8 w-8 flex-shrink-0 overflow-hidden rounded-full focus:ring-2 focus:ring-[var(--accent-8)] focus:ring-offset-2 focus:ring-offset-[#11100d] focus:outline-none">
                 {user.image ? (
                   // eslint-disable-next-line @next/next/no-img-element
                   <img
@@ -43,7 +54,7 @@ export function Navbar() {
                     referrerPolicy="no-referrer"
                   />
                 ) : (
-                  <div className="flex h-8 w-8 items-center justify-center rounded-full bg-gray-700 text-sm font-medium text-gray-300">
+                  <div className="flex h-8 w-8 items-center justify-center rounded-full bg-[var(--gray-4)] text-sm font-medium text-[var(--gray-11)]">
                     {(user.email?.[0] ?? '?').toUpperCase()}
                   </div>
                 )}
@@ -65,7 +76,14 @@ export function Navbar() {
           </DropdownMenu>
         ) : loading ? (
           <div className="h-8 w-8 flex-shrink-0 animate-pulse rounded-full bg-gray-700/50" />
-        ) : null}
+        ) : (
+          <Link
+            href="/login"
+            className="rounded-md border border-[var(--gray-6)] bg-[var(--gray-3)] px-3 py-1.5 text-sm font-medium text-[var(--gray-12)] transition-colors hover:bg-[var(--gray-4)]"
+          >
+            Sign in
+          </Link>
+        )}
       </div>
     </nav>
   );

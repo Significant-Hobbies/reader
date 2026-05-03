@@ -46,9 +46,9 @@ export default function PDFReaderClient({ articleId }: { articleId: string }) {
 
   if (isArticleLoading) {
     return (
-      <div className="flex h-screen items-center justify-center bg-gray-900">
+      <div className="flex h-screen items-center justify-center bg-[#15130f]">
         <div className="text-center">
-          <div className="mx-auto mb-4 h-12 w-12 animate-spin rounded-full border-b-2 border-blue-500"></div>
+          <div className="mx-auto mb-4 h-12 w-12 animate-spin rounded-full border-b-2 border-[var(--accent-10)]"></div>
           <p className="text-gray-400">Loading PDF...</p>
         </div>
       </div>
@@ -57,11 +57,11 @@ export default function PDFReaderClient({ articleId }: { articleId: string }) {
 
   if (articleError && !article) {
     return (
-      <div className="flex h-screen flex-col items-center justify-center gap-4 bg-gray-900 text-gray-200">
+      <div className="flex h-screen flex-col items-center justify-center gap-4 bg-[#15130f] text-gray-200">
         <p>{articleError.message === 'NOT_FOUND' ? 'PDF not found.' : 'Failed to load PDF.'}</p>
         <button
           onClick={() => router.push('/')}
-          className="rounded-lg bg-blue-600 px-4 py-2 text-white transition hover:bg-blue-500"
+          className="rounded-md bg-[var(--accent-9)] px-4 py-2 text-white transition hover:bg-[var(--accent-10)]"
         >
           Back to Library
         </button>
@@ -72,16 +72,16 @@ export default function PDFReaderClient({ articleId }: { articleId: string }) {
   if (!article || !article.pdfUrl) return null;
 
   return (
-    <div className="flex h-screen flex-col overflow-hidden bg-gradient-to-b from-black via-gray-950 to-gray-900 font-sans text-gray-100">
+    <div className="flex h-screen flex-col overflow-hidden bg-[#15130f] bg-[radial-gradient(circle_at_top_left,rgba(180,140,92,0.10),transparent_32rem)] font-sans text-gray-100">
       <Navbar />
       <div className="flex flex-1 gap-4 overflow-hidden p-4 md:p-6">
         {/* LEFT PANEL: PDF Viewer */}
-        <div className="flex h-full flex-1 flex-col overflow-hidden rounded-2xl border border-gray-800 bg-gray-900/70 shadow-2xl backdrop-blur">
+        <div className="flex h-full flex-1 flex-col overflow-hidden rounded-lg border border-[var(--gray-5)] bg-[var(--gray-2)]/85 shadow-[0_18px_55px_rgba(0,0,0,0.22)] backdrop-blur">
           {/* Header */}
-          <div className="z-10 flex flex-wrap items-center gap-4 border-b border-gray-800 bg-gray-900/80 p-4 shadow-md backdrop-blur-md">
+          <div className="z-10 flex flex-wrap items-center gap-4 border-b border-[var(--gray-5)] bg-[var(--gray-2)]/90 p-4 shadow-md backdrop-blur-md">
             <button
               onClick={() => router.push('/')}
-              className="rounded-lg border border-gray-700 bg-gray-800/60 p-2 text-gray-200 transition-colors hover:bg-gray-800"
+              className="rounded-md border border-[var(--gray-6)] bg-[var(--gray-3)] p-2 text-gray-200 transition-colors hover:bg-[var(--gray-4)]"
               title="Back to Library"
             >
               ←
@@ -108,25 +108,25 @@ export default function PDFReaderClient({ articleId }: { articleId: string }) {
         </div>
 
         {/* RIGHT PANEL: Notes & AI Chat */}
-        <div className="z-20 flex h-full w-[400px] flex-col rounded-2xl border border-gray-800 bg-gray-900/70 shadow-2xl backdrop-blur">
-          <div className="border-b border-gray-800 bg-gray-900/80 p-4">
+        <div className="z-20 flex h-full w-[400px] flex-col rounded-lg border border-[var(--gray-5)] bg-[var(--gray-2)]/85 shadow-[0_18px_55px_rgba(0,0,0,0.22)] backdrop-blur">
+          <div className="border-b border-[var(--gray-5)] bg-[var(--gray-2)]/90 p-4">
             <div className="flex gap-2">
               <button
                 onClick={() => setActiveSidebarTab('notes')}
-                className={`flex-1 rounded-lg px-4 py-2 font-medium transition-colors ${
+                className={`flex-1 rounded-md px-4 py-2 font-medium transition-colors ${
                   activeSidebarTab === 'notes'
-                    ? 'bg-blue-600 text-white'
-                    : 'bg-gray-800/50 text-gray-400 hover:bg-gray-800/80 hover:text-gray-200'
+                    ? 'bg-[var(--accent-9)] text-white'
+                    : 'bg-[var(--gray-3)] text-gray-400 hover:bg-[var(--gray-4)] hover:text-gray-200'
                 }`}
               >
                 Notes
               </button>
               <button
                 onClick={() => setActiveSidebarTab('ai')}
-                className={`flex-1 rounded-lg px-4 py-2 font-medium transition-colors ${
+                className={`flex-1 rounded-md px-4 py-2 font-medium transition-colors ${
                   activeSidebarTab === 'ai'
-                    ? 'bg-blue-600 text-white'
-                    : 'bg-gray-800/50 text-gray-400 hover:bg-gray-800/80 hover:text-gray-200'
+                    ? 'bg-[var(--accent-9)] text-white'
+                    : 'bg-[var(--gray-3)] text-gray-400 hover:bg-[var(--gray-4)] hover:text-gray-200'
                 }`}
               >
                 AI Chat

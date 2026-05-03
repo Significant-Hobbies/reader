@@ -9,7 +9,7 @@ import type { FontFamily, FontSize, ReaderSettings, Theme } from '../types';
 export const getThemeClasses = (theme: Theme) => {
   switch (theme) {
     case 'dark':
-      return 'bg-gray-900 text-gray-100 prose-invert';
+      return 'bg-[var(--gray-1)] text-[var(--gray-12)] prose-invert';
     case 'sepia':
       return 'bg-[#f4ecd8] text-[#5b4636] prose-amber';
     default:
@@ -71,7 +71,7 @@ const ReaderViewComponent = ({
     <div className={`min-h-full transition-colors duration-300 ${themeClasses}`}>
       <div className={`mx-auto max-w-3xl px-8 py-12 ${fontClasses}`}>
         <h1
-          className={`mb-4 text-4xl font-bold ${settings.theme === 'dark' ? 'text-white' : 'text-gray-900'}`}
+          className={`mb-4 text-4xl font-bold ${settings.theme === 'dark' ? 'text-[var(--gray-12)]' : 'text-gray-900'}`}
         >
           {title}
         </h1>

@@ -20,7 +20,25 @@ async function extractPageContent(tabId: number, message: unknown) {
       });
       return await sendPageContentRequest(tabId, message);
     } catch {
-      return { type: 'PAGE_CONTENT', data: null, fallback: true };
+      const tab = await chrome.tabs.get(tabId).catch(() => null);
+      const url = tab?.url || '';
+      const title = tab?.title || url || 'Unsupported page';
+
+      return {
+        type: 'PAGE_CONTENT',
+        data: url
+          ? {
+              title,
+              byline: null,
+              content: '',
+              textContent: '',
+              siteName: null,
+              url,
+              canImport: false,
+            }
+          : null,
+        fallback: true,
+      };
     }
   }
 }

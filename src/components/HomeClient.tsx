@@ -1,19 +1,53 @@
 'use client';
 
+import {
+  Badge as ThemeBadge,
+  Box,
+  Button as ThemeButton,
+  Card,
+  Flex,
+  Heading,
+  SegmentedControl,
+  Text,
+} from '@radix-ui/themes';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { Clock, FileText, Heart, LayoutDashboard, MoreVertical, Plus, X } from 'lucide-react';
+import {
+  BookOpen,
+  Clock,
+  ExternalLink,
+  FileText,
+  Heart,
+  LayoutDashboard,
+  type LucideIcon,
+  MoreVertical,
+  Plus,
+  X,
+} from 'lucide-react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { type MouseEvent, useState } from 'react';
 
-import { getCategoryColor } from '../lib/category-utils';
+import {
+  addLocalArticleToList,
+  createLocalList,
+  deleteLocalArticle,
+  deleteLocalList,
+  estimateReadingTimeFromHtml,
+  fileToDataUrl,
+  getLocalArticles,
+  getLocalLists,
+  getLocalTags,
+  removeLocalArticleFromList,
+  saveLocalArticle,
+  updateLocalStatus,
+} from '../lib/local-library';
 import { formatReadingTime } from '../lib/reading-time-utils';
 import { getTagColor } from '../lib/tag-utils';
 import { formatDate } from '../lib/utils';
 import type { ArticleStatus, ArticleSummary, List } from '../types';
 import { AddArticleDialog } from './AddArticleDialog';
+import { useAuth } from './AuthProvider';
 import { Navbar } from './Navbar';
-import { Badge } from './ui/badge';
 import { Button } from './ui/button';
 import {
   Dialog,
@@ -36,18 +70,92 @@ import {
 import { Input } from './ui/input';
 import { Label } from './ui/label';
 
+type ContentFilter = 'all' | 'imported' | 'links' | 'pdfs';
+
+const contentFilters: Array<{ id: ContentFilter; label: string }> = [
+  { id: 'all', label: 'All' },
+  { id: 'imported', label: 'Imported' },
+  { id: 'links', label: 'Links' },
+  { id: 'pdfs', label: 'PDFs' },
+];
+
+function getArticleKind(article: ArticleSummary): {
+  label: string;
+  description: string;
+  icon: LucideIcon;
+  primaryAction: string;
+} {
+  if (article.type === 'link') {
+    return {
+      label: 'Link',
+      description: 'Read outside',
+      icon: ExternalLink,
+      primaryAction: 'Open original',
+    };
+  }
+  if (article.type === 'pdf') {
+    return {
+      label: 'PDF',
+      description: 'Imported document',
+      icon: FileText,
+      primaryAction: 'Read PDF',
+    };
+  }
+  return {
+    label: 'Article',
+    description: 'Imported article',
+    icon: BookOpen,
+    primaryAction: 'Read in Reader',
+  };
+}
+
+function getArticleOrigin(article: ArticleSummary) {
+  if (article.type === 'pdf') return 'Stored PDF';
+
+  try {
+    return new URL(article.url).hostname.replace(/^www\./, '');
+  } catch {
+    return article.url;
+  }
+}
+
+function formatFileSize(bytes?: number) {
+  if (!bytes) return null;
+  if (bytes < 1024 * 1024) return `${Math.round(bytes / 1024)} KB`;
+  return `${(bytes / (1024 * 1024)).toFixed(bytes < 10 * 1024 * 1024 ? 1 : 0)} MB`;
+}
+
+function getContextLine(article: ArticleSummary) {
+  if (article.type === 'link') {
+    return `Outside link saved from ${getArticleOrigin(article)}`;
+  }
+  if (article.type === 'pdf') {
+    const details = [
+      article.pdfMetadata?.pageCount ? `${article.pdfMetadata.pageCount} pages` : null,
+      formatFileSize(article.pdfMetadata?.fileSize),
+    ].filter(Boolean);
+    return details.length > 0 ? `Research PDF · ${details.join(' · ')}` : 'Research PDF';
+  }
+  return article.readingTimeMinutes
+    ? `Reader article · ${formatReadingTime(article.readingTimeMinutes)}`
+    : 'Reader article';
+}
+
 export default function HomeClient() {
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [activeToolbarId, setActiveToolbarId] = useState<string | null>(null);
   const [pendingDeleteId, setPendingDeleteId] = useState<string | null>(null);
   const [selectedListId, setSelectedListId] = useState<string>('all');
   const [selectedTag, setSelectedTag] = useState<string | null>(null);
+  const [contentFilter, setContentFilter] = useState<ContentFilter>('all');
   const [newListName, setNewListName] = useState('');
   const [isListModalOpen, setIsListModalOpen] = useState(false);
   const [showAddArticleDialog, setShowAddArticleDialog] = useState(false);
 
   const router = useRouter();
   const queryClient = useQueryClient();
+  const { user, loading: authLoading } = useAuth();
+  const isLocalMode = !authLoading && !user;
 
   const handleArticleCardClick = (event: MouseEvent<HTMLElement>, articleId: string) => {
     if (event.defaultPrevented) return;
@@ -68,8 +176,16 @@ export default function HomeClient() {
     isLoading,
     error: articlesError,
   } = useQuery<ArticleSummary[]>({
-    queryKey: ['articles'],
+    queryKey: ['articles', isLocalMode ? 'local' : 'cloud'],
     queryFn: async () => {
+      if (isLocalMode) {
+        const localArticles = await getLocalArticles();
+        return localArticles.map((article) => ({
+          ...article,
+          notesCount: article.notesCount ?? article.notes?.length ?? 0,
+        }));
+      }
+
       const response = await fetch('/api/articles', { cache: 'no-store' });
       if (!response.ok) {
         const err = new Error('Failed to fetch articles');
@@ -78,11 +194,16 @@ export default function HomeClient() {
       }
       return response.json();
     },
+    enabled: !authLoading,
   });
 
   const { data: lists = [], error: listsError } = useQuery<List[]>({
-    queryKey: ['lists'],
+    queryKey: ['lists', isLocalMode ? 'local' : 'cloud'],
     queryFn: async () => {
+      if (isLocalMode) {
+        return getLocalLists();
+      }
+
       const response = await fetch('/api/lists', { cache: 'no-store' });
       if (!response.ok) {
         const err = new Error('Failed to fetch lists');
@@ -91,11 +212,16 @@ export default function HomeClient() {
       }
       return response.json();
     },
+    enabled: !authLoading,
   });
 
   const { data: allTags = [] } = useQuery<string[]>({
-    queryKey: ['tags'],
+    queryKey: ['tags', isLocalMode ? 'local' : 'cloud'],
     queryFn: async () => {
+      if (isLocalMode) {
+        return getLocalTags();
+      }
+
       const response = await fetch('/api/tags', { cache: 'no-store' });
       if (!response.ok) {
         throw new Error('Failed to fetch tags');
@@ -103,6 +229,7 @@ export default function HomeClient() {
       const data = await response.json();
       return data.tags;
     },
+    enabled: !authLoading,
   });
 
   const importMutation = useMutation({
@@ -121,6 +248,20 @@ export default function HomeClient() {
       const data = await response.json();
       const article = data.snapshot;
       const snapshotTitle = (article.title || '').trim() || properUrl;
+
+      if (isLocalMode) {
+        const saved = await saveLocalArticle({
+          url: properUrl,
+          title: snapshotTitle,
+          byline: article.byline,
+          content: article.content,
+          type: 'article',
+          listIds: selectedListId !== 'all' ? [selectedListId] : [],
+          category,
+          readingTimeMinutes: estimateReadingTimeFromHtml(article.content),
+        });
+        return saved.id;
+      }
 
       const saveResponse = await fetch('/api/articles', {
         method: 'POST',
@@ -151,45 +292,40 @@ export default function HomeClient() {
 
   const pdfUploadMutation = useMutation({
     mutationFn: async ({ file, category }: { file: File; category?: string }) => {
-      // Extract text client-side using pdfjs-dist
-      const pdfjsLib = await import('pdfjs-dist');
-      pdfjsLib.GlobalWorkerOptions.workerSrc = `//unpkg.com/pdfjs-dist@${pdfjsLib.version}/build/pdf.worker.min.mjs`;
-
-      const arrayBuffer = await file.arrayBuffer();
-      const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
-
-      const pages: string[] = [];
-      for (let i = 1; i <= pdf.numPages; i++) {
-        const page = await pdf.getPage(i);
-        const textContent = await page.getTextContent();
-        const pageText = textContent.items.map((item) => ('str' in item ? item.str : '')).join(' ');
-        pages.push(pageText);
+      const formData = new FormData();
+      formData.append('file', file);
+      formData.append('listIds', JSON.stringify(selectedListId !== 'all' ? [selectedListId] : []));
+      if (category) {
+        formData.append('category', category);
       }
 
-      const extractedText = pages.join('\n\n');
-      const metadata = await pdf.getMetadata().catch(() => null);
-      const info = metadata?.info as Record<string, unknown> | undefined;
-      const title =
-        (typeof info?.Title === 'string' ? info.Title : '') || file.name.replace('.pdf', '');
-
-      // Save as article via existing API (no server upload needed)
-      const response = await fetch('/api/articles', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          url: `pdf://${file.name}`,
-          title,
-          content: extractedText,
+      if (isLocalMode) {
+        const pdfDataUrl = await fileToDataUrl(file);
+        const saved = await saveLocalArticle({
+          url: `local-pdf://${file.name}`,
+          title: file.name.replace(/\.pdf$/i, '') || file.name,
+          byline: null,
+          content: `<p>${file.name}</p>`,
           type: 'pdf',
-          extractedText,
-          pdfMetadata: { pageCount: pdf.numPages, fileSize: file.size },
+          pdfUrl: pdfDataUrl,
+          pdfDataUrl,
           listIds: selectedListId !== 'all' ? [selectedListId] : [],
           category,
-        }),
+          pdfMetadata: {
+            fileSize: file.size,
+          },
+        });
+        return saved.id;
+      }
+
+      const response = await fetch('/api/pdf/upload', {
+        method: 'POST',
+        body: formData,
       });
 
       if (!response.ok) {
-        throw new Error('Failed to save PDF article');
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.error || 'Failed to import PDF');
       }
 
       const data = await response.json();
@@ -197,12 +333,71 @@ export default function HomeClient() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['articles'] });
+      queryClient.invalidateQueries({ queryKey: ['tags'] });
+      setShowAddArticleDialog(false);
+    },
+  });
+
+  const saveLinkMutation = useMutation({
+    mutationFn: async ({
+      url: rawUrl,
+      title,
+      category,
+    }: {
+      url: string;
+      title?: string;
+      category?: string;
+    }) => {
+      let properUrl = rawUrl;
+      if (!/^https?:\/\//i.test(rawUrl)) {
+        properUrl = `https://${rawUrl}`;
+      }
+
+      if (isLocalMode) {
+        return saveLocalArticle({
+          url: properUrl,
+          title: title?.trim() || properUrl,
+          content: '',
+          type: 'link',
+          listIds: selectedListId !== 'all' ? [selectedListId] : [],
+          category,
+        });
+      }
+
+      const response = await fetch('/api/articles', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          url: properUrl,
+          title: title?.trim() || properUrl,
+          content: '',
+          type: 'link',
+          listIds: selectedListId !== 'all' ? [selectedListId] : [],
+          category,
+        }),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.error || 'Failed to save link');
+      }
+
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['articles'] });
+      queryClient.invalidateQueries({ queryKey: ['tags'] });
       setShowAddArticleDialog(false);
     },
   });
 
   const deleteMutation = useMutation({
     mutationFn: async (articleId: string) => {
+      if (isLocalMode) {
+        await deleteLocalArticle(articleId);
+        return;
+      }
+
       const response = await fetch(`/api/articles/${articleId}`, {
         method: 'DELETE',
       });
@@ -239,10 +434,25 @@ export default function HomeClient() {
     }
   };
 
-  const isImporting = importMutation.isPending || pdfUploadMutation.isPending;
+  const handleSaveLink = async (url: string, title?: string, category?: string) => {
+    try {
+      await saveLinkMutation.mutateAsync({ url, title, category });
+    } catch (error) {
+      console.error('Save link failed:', error);
+      throw error;
+    }
+  };
+
+  const isImporting =
+    importMutation.isPending || pdfUploadMutation.isPending || saveLinkMutation.isPending;
 
   const toggleStatus = useMutation({
     mutationFn: async ({ id, status }: { id: string; status: ArticleStatus }) => {
+      if (isLocalMode) {
+        await updateLocalStatus(id, status);
+        return { id, status };
+      }
+
       const response = await fetch(`/api/articles/${id}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
@@ -254,6 +464,11 @@ export default function HomeClient() {
       return { id, status };
     },
     onSuccess: ({ id, status }) => {
+      if (isLocalMode) {
+        queryClient.invalidateQueries({ queryKey: ['articles'] });
+        return;
+      }
+
       queryClient.setQueryData<ArticleSummary[]>(['articles'], (prev) =>
         Array.isArray(prev)
           ? prev.map((article) => (article.id === id ? { ...article, status } : article))
@@ -264,6 +479,11 @@ export default function HomeClient() {
 
   const createListMutation = useMutation({
     mutationFn: async (name: string) => {
+      if (isLocalMode) {
+        await createLocalList(name);
+        return;
+      }
+
       const response = await fetch('/api/lists', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -282,6 +502,11 @@ export default function HomeClient() {
 
   const deleteListMutation = useMutation({
     mutationFn: async (listId: string) => {
+      if (isLocalMode) {
+        await deleteLocalList(listId);
+        return;
+      }
+
       const response = await fetch(`/api/lists/${listId}`, {
         method: 'DELETE',
       });
@@ -299,6 +524,11 @@ export default function HomeClient() {
 
   const addToListMutation = useMutation({
     mutationFn: async ({ articleId, listId }: { articleId: string; listId: string }) => {
+      if (isLocalMode) {
+        await addLocalArticleToList(articleId, listId);
+        return { articleId, listId };
+      }
+
       const response = await fetch(`/api/articles/${articleId}/lists`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -310,6 +540,11 @@ export default function HomeClient() {
       return { articleId, listId };
     },
     onSuccess: ({ articleId, listId }) => {
+      if (isLocalMode) {
+        queryClient.invalidateQueries({ queryKey: ['articles'] });
+        return;
+      }
+
       queryClient.setQueryData<ArticleSummary[]>(['articles'], (prev) =>
         Array.isArray(prev)
           ? prev.map((article) =>
@@ -327,6 +562,11 @@ export default function HomeClient() {
 
   const removeFromListMutation = useMutation({
     mutationFn: async ({ articleId, listId }: { articleId: string; listId: string }) => {
+      if (isLocalMode) {
+        await removeLocalArticleFromList(articleId, listId);
+        return { articleId, listId };
+      }
+
       const response = await fetch(`/api/articles/${articleId}/lists?listId=${listId}`, {
         method: 'DELETE',
       });
@@ -336,6 +576,11 @@ export default function HomeClient() {
       return { articleId, listId };
     },
     onSuccess: ({ articleId, listId }) => {
+      if (isLocalMode) {
+        queryClient.invalidateQueries({ queryKey: ['articles'] });
+        return;
+      }
+
       queryClient.setQueryData<ArticleSummary[]>(['articles'], (prev) =>
         Array.isArray(prev)
           ? prev.map((article) =>
@@ -377,46 +622,55 @@ export default function HomeClient() {
     .filter((article) =>
       selectedListId === 'all' ? true : article.listIds?.includes(selectedListId)
     )
+    .filter((article) => {
+      if (contentFilter === 'all') return true;
+      if (contentFilter === 'imported') return article.type !== 'link';
+      if (contentFilter === 'links') return article.type === 'link';
+      return article.type === 'pdf';
+    })
     .filter((article) => (selectedTag ? article.tags?.includes(selectedTag) : true));
 
+  const filterCounts = {
+    all: articles.length,
+    imported: articles.filter((article) => article.type !== 'link').length,
+    links: articles.filter((article) => article.type === 'link').length,
+    pdfs: articles.filter((article) => article.type === 'pdf').length,
+  };
+
   return (
-    <div className="min-h-screen bg-gradient-to-b from-black via-gray-950 to-gray-900 font-sans text-gray-100">
+    <div className="min-h-screen bg-[#15130f] font-sans text-gray-100">
       <Navbar />
-      <div className="flex">
+      <div className="flex bg-[radial-gradient(circle_at_top_left,rgba(180,140,92,0.10),transparent_32rem)]">
         {/* Sidebar for Lists */}
-        <aside className="min-h-screen w-64 space-y-4 border-r border-gray-800 p-6">
+        <aside className="min-h-screen w-64 space-y-4 border-r border-[#2c2923] bg-[#11100d]/70 p-6">
           <div className="mb-6">
             <h3 className="mb-3 text-sm font-medium tracking-wide text-gray-400 uppercase">
               Navigate
             </h3>
             <Link
               href="/"
-              className="flex w-full items-center gap-3 rounded-lg bg-blue-600 px-3 py-2 text-sm font-medium text-white"
+              className="flex w-full items-center gap-3 rounded-md bg-[var(--accent-4)] px-3 py-2 text-sm font-medium text-[var(--accent-12)]"
             >
               <FileText size={18} />
-              Articles
+              Library
             </Link>
             <Link
               href="/board"
-              className="flex w-full items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium text-gray-300 transition-colors hover:bg-gray-800"
+              className="flex w-full items-center gap-3 rounded-md px-3 py-2 text-sm font-medium text-[var(--gray-11)] transition-colors hover:bg-[var(--gray-3)] hover:text-[var(--gray-12)]"
             >
               <LayoutDashboard size={18} />
               Boards
             </Link>
           </div>
-          <div className="mb-4 border-t border-gray-700" />
+          <div className="mb-4 border-t border-[var(--gray-5)]" />
           <div className="mb-6 flex items-center justify-between">
-            <h3 className="text-sm font-medium tracking-wide text-gray-400 uppercase">Lists</h3>
+            <h3 className="text-sm font-medium tracking-wide text-gray-400 uppercase">Library</h3>
             <Dialog open={isListModalOpen} onOpenChange={setIsListModalOpen}>
               <DialogTrigger asChild>
-                <Button
-                  size="sm"
-                  variant="outline"
-                  className="h-7 gap-1 border-gray-700 px-2 text-xs text-gray-300 hover:bg-gray-800"
-                >
+                <ThemeButton size="1" variant="outline" className="h-7 gap-1 px-2 text-xs">
                   <Plus className="h-3.5 w-3.5" />
                   New
-                </Button>
+                </ThemeButton>
               </DialogTrigger>
               <DialogContent>
                 <DialogHeader>
@@ -457,14 +711,14 @@ export default function HomeClient() {
           {/* All Articles */}
           <button
             onClick={() => setSelectedListId('all')}
-            className={`flex w-full items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors ${
+            className={`flex w-full items-center gap-3 rounded-md px-3 py-2 text-sm font-medium transition-colors ${
               selectedListId === 'all'
-                ? 'bg-blue-600 text-white'
-                : 'text-gray-300 hover:bg-gray-800'
+                ? 'bg-[var(--accent-4)] text-[var(--accent-12)]'
+                : 'text-[var(--gray-11)] hover:bg-[var(--gray-3)] hover:text-[var(--gray-12)]'
             }`}
           >
             <FileText size={18} />
-            All Articles
+            All Items
           </button>
 
           {/* Default Lists */}
@@ -474,10 +728,10 @@ export default function HomeClient() {
               <button
                 key={list.id}
                 onClick={() => setSelectedListId(list.id)}
-                className={`flex w-full items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors ${
+                className={`flex w-full items-center gap-3 rounded-md px-3 py-2 text-sm font-medium transition-colors ${
                   selectedListId === list.id
-                    ? 'bg-blue-600 text-white'
-                    : 'text-gray-300 hover:bg-gray-800'
+                    ? 'bg-[var(--accent-4)] text-[var(--accent-12)]'
+                    : 'text-[var(--gray-11)] hover:bg-[var(--gray-3)] hover:text-[var(--gray-12)]'
                 }`}
               >
                 {list.icon === 'heart' && <Heart size={18} />}
@@ -489,20 +743,20 @@ export default function HomeClient() {
           {/* Custom Lists */}
           {lists.filter((list) => !list.isDefault).length > 0 && (
             <>
-              <div className="my-4 border-t border-gray-700" />
+              <div className="my-4 border-t border-[var(--gray-5)]" />
               {lists
                 .filter((list) => !list.isDefault)
                 .map((list) => (
                   <div key={list.id} className="flex items-center gap-2">
                     <button
                       onClick={() => setSelectedListId(list.id)}
-                      className={`flex flex-1 items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors ${
+                      className={`flex flex-1 items-center gap-3 rounded-md px-3 py-2 text-sm font-medium transition-colors ${
                         selectedListId === list.id
-                          ? 'bg-blue-600 text-white'
-                          : 'text-gray-300 hover:bg-gray-800'
+                          ? 'bg-[var(--accent-4)] text-[var(--accent-12)]'
+                          : 'text-[var(--gray-11)] hover:bg-[var(--gray-3)] hover:text-[var(--gray-12)]'
                       }`}
                     >
-                      <div className={`h-2 w-2 rounded-full bg-${list.color || 'blue'}-500`} />
+                      <div className="h-2 w-2 rounded-full bg-gray-500" />
                       {list.name}
                     </button>
                     {selectedListId === list.id && !list.isDefault && (
@@ -526,33 +780,66 @@ export default function HomeClient() {
 
         {/* Main Content */}
         <div className="flex-1 p-8">
-          <div className="mx-auto max-w-6xl space-y-6">
+          <div className="mx-auto max-w-7xl space-y-6">
             <div className="mb-8 flex flex-col items-start justify-between gap-4 md:flex-row md:items-center">
-              <div>
-                <h1 className="text-3xl font-bold text-white">
+              <Box>
+                <Text as="p" size="2" weight="medium" color="gray" className="mb-2 uppercase">
+                  Personal research library
+                </Text>
+                <Heading as="h1" size="8" weight="bold" className="text-white">
                   {selectedListId === 'all'
-                    ? 'All Articles'
+                    ? 'Library'
                     : lists.find((l) => l.id === selectedListId)?.name || 'My Library'}
-                </h1>
-                <p className="mt-1 text-gray-400">Manage your annotated articles and PDFs</p>
-              </div>
+                </Heading>
+                <Text as="p" size="3" color="gray" className="mt-2 max-w-2xl">
+                  Keep outside links separate from imported articles and research PDFs.
+                </Text>
+                {isLocalMode && (
+                  <ThemeBadge color="bronze" variant="surface" className="mt-3">
+                    Local only on this browser
+                  </ThemeBadge>
+                )}
+              </Box>
 
-              <Button onClick={() => setShowAddArticleDialog(true)} className="gap-2">
+              <ThemeButton size="3" onClick={() => setShowAddArticleDialog(true)} className="gap-2">
                 <Plus className="h-4 w-4" />
-                Add Content
-              </Button>
+                Add Source
+              </ThemeButton>
             </div>
 
+            <Card className="border border-[var(--gray-5)] bg-[var(--gray-2)]/80">
+              <Flex align="center" justify="between" gap="4" wrap="wrap">
+                <SegmentedControl.Root
+                  value={contentFilter}
+                  onValueChange={(value) => setContentFilter(value as ContentFilter)}
+                  size="3"
+                >
+                  {contentFilters.map((filter) => (
+                    <SegmentedControl.Item key={filter.id} value={filter.id}>
+                      {filter.label}
+                    </SegmentedControl.Item>
+                  ))}
+                </SegmentedControl.Root>
+                <Flex gap="2" wrap="wrap">
+                  {contentFilters.map((filter) => (
+                    <ThemeBadge key={filter.id} variant="surface" color="gray" size="2">
+                      {filter.label} {filterCounts[filter.id]}
+                    </ThemeBadge>
+                  ))}
+                </Flex>
+              </Flex>
+            </Card>
+
             {allTags.length > 0 && (
-              <div className="rounded-xl border border-gray-800 bg-gray-900/70 p-4 shadow-lg backdrop-blur">
+              <Card className="border border-[var(--gray-5)] bg-[var(--gray-2)]/70">
                 <div className="mb-3 flex items-center gap-2">
-                  <span className="text-xs tracking-wide text-gray-500 uppercase">
+                  <Text as="span" size="1" weight="medium" color="gray" className="uppercase">
                     Filter by tag
-                  </span>
+                  </Text>
                   {selectedTag && (
                     <button
                       onClick={() => setSelectedTag(null)}
-                      className="text-xs text-blue-400 transition-colors hover:text-blue-300"
+                      className="text-xs text-gray-300 transition-colors hover:text-white"
                     >
                       Clear filter
                     </button>
@@ -563,9 +850,9 @@ export default function HomeClient() {
                     <button
                       key={tag}
                       onClick={() => setSelectedTag(selectedTag === tag ? null : tag)}
-                      className={`inline-flex items-center rounded-full border px-3 py-1.5 text-xs font-semibold transition-all ${
+                      className={`inline-flex items-center rounded-sm border px-2.5 py-1 text-xs font-medium transition-all ${
                         selectedTag === tag
-                          ? 'ring-2 ring-blue-500 ring-offset-2 ring-offset-gray-950'
+                          ? 'ring-2 ring-gray-500 ring-offset-2 ring-offset-gray-950'
                           : ''
                       } ${getTagColor(tag)} hover:opacity-80`}
                     >
@@ -574,220 +861,299 @@ export default function HomeClient() {
                     </button>
                   ))}
                 </div>
-              </div>
+              </Card>
             )}
 
             {articlesError && (
-              <div className="mb-6 rounded-lg border border-red-800 bg-red-950/80 px-4 py-3 text-red-200">
+              <div className="mb-6 rounded-md border border-red-800 bg-red-950/80 px-4 py-3 text-red-200">
                 Failed to load articles. Please try again.
               </div>
             )}
 
-            {isLoading ? (
+            {authLoading || isLoading ? (
               <div className="flex justify-center py-12">
                 <div className="h-8 w-8 animate-spin rounded-full border-b-2 border-white"></div>
               </div>
             ) : (
-              <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
+              <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">
                 {articles.length === 0 ? (
-                  <div className="col-span-full rounded-2xl border border-dashed border-gray-700 bg-gray-800 py-16 text-center">
-                    <p className="mb-4 text-lg text-gray-300">Your library is empty.</p>
-                    <p className="text-gray-500">Import a URL or upload a PDF to get started.</p>
-                  </div>
+                  <Card className="col-span-full border border-dashed border-[var(--gray-6)] bg-[var(--gray-2)]/70 p-0">
+                    <div className="mx-auto flex max-w-xl flex-col items-center px-6 py-16 text-center">
+                      <div className="mb-5 flex h-12 w-12 items-center justify-center rounded-md border border-[var(--gray-6)] bg-[var(--gray-3)] text-[var(--accent-11)]">
+                        <BookOpen className="h-5 w-5" />
+                      </div>
+                      <Text as="p" size="2" weight="medium" color="gray" className="mb-2 uppercase">
+                        Start your library
+                      </Text>
+                      <Heading as="h2" size="5" weight="medium" className="text-[var(--gray-12)]">
+                        Add your first source
+                      </Heading>
+                      <Text as="p" size="3" color="gray" className="mt-3 max-w-md">
+                        Save an outside link, import a readable article, or keep a research PDF in
+                        this browser.
+                      </Text>
+                      <ThemeButton
+                        size="3"
+                        onClick={() => setShowAddArticleDialog(true)}
+                        className="mt-6 gap-2"
+                      >
+                        <Plus className="h-4 w-4" />
+                        Add Source
+                      </ThemeButton>
+                    </div>
+                  </Card>
                 ) : filteredArticles.length === 0 ? (
-                  <div className="col-span-full rounded-2xl border border-dashed border-gray-700 bg-gray-800 py-16 text-center">
-                    <p className="mb-4 text-lg text-gray-300">No articles match your filters.</p>
-                    <button
-                      onClick={() => {
-                        setSelectedListId('all');
-                        setSelectedTag(null);
-                      }}
-                      className="text-blue-400 transition-colors hover:text-blue-300"
-                    >
-                      Clear all filters
-                    </button>
-                  </div>
+                  <Card className="col-span-full border border-dashed border-[var(--gray-6)] bg-[var(--gray-2)]/70 p-0">
+                    <div className="mx-auto flex max-w-xl flex-col items-center px-6 py-16 text-center">
+                      <Text as="p" size="2" weight="medium" color="gray" className="mb-2 uppercase">
+                        No matching sources
+                      </Text>
+                      <Heading as="h2" size="5" weight="medium" className="text-[var(--gray-12)]">
+                        Nothing matches this view
+                      </Heading>
+                      <Text as="p" size="3" color="gray" className="mt-3">
+                        Adjust the type, list, or tag filters to bring sources back into view.
+                      </Text>
+                      <ThemeButton
+                        variant="soft"
+                        className="mt-6"
+                        onClick={() => {
+                          setSelectedListId('all');
+                          setSelectedTag(null);
+                          setContentFilter('all');
+                        }}
+                      >
+                        Clear all filters
+                      </ThemeButton>
+                    </div>
+                  </Card>
                 ) : (
                   filteredArticles.map((article) => {
                     const nextStatus: ArticleStatus =
                       article.status === 'read' ? 'in_progress' : 'read';
                     const displayTitle = article.title || article.url;
                     const isPDF = article.type === 'pdf';
+                    const isLink = article.type === 'link';
+                    const kind = getArticleKind(article);
+                    const KindIcon = kind.icon;
+                    const origin = getArticleOrigin(article);
+                    const contextLine = isLink ? null : getContextLine(article);
+                    const attachedLists = lists.filter((list) =>
+                      article.listIds?.includes(list.id)
+                    );
+                    const hasMetadata =
+                      (!isLink && Boolean(article.readingTimeMinutes)) ||
+                      (isPDF && Boolean(article.pdfMetadata?.pageCount)) ||
+                      (isPDF && Boolean(formatFileSize(article.pdfMetadata?.fileSize))) ||
+                      article.notesCount > 0;
+                    const cardTone = isLink
+                      ? 'border-l-[3px] border-l-[var(--gray-7)]'
+                      : isPDF
+                        ? 'border-l-[3px] border-l-[var(--accent-8)]'
+                        : 'border-l-[3px] border-l-[var(--gray-5)]';
                     return (
-                      <div
+                      <Card
+                        asChild
                         key={article.id}
-                        onClick={(event) => handleArticleCardClick(event, article.id)}
-                        className="group relative flex h-full cursor-pointer flex-col overflow-hidden rounded-2xl border border-gray-800 bg-gradient-to-br from-gray-900 to-gray-950 shadow-xl transition-all hover:border-blue-600 hover:shadow-2xl"
+                        className={`group border border-[var(--gray-5)] bg-[var(--gray-2)]/85 p-0 shadow-[0_18px_55px_rgba(0,0,0,0.22)] transition hover:-translate-y-0.5 hover:border-[var(--accent-7)] hover:bg-[var(--gray-3)] ${cardTone}`}
                       >
-                        <div className="flex flex-1 flex-col gap-3 p-6">
-                          {/* Category Badge at Top */}
-                          {article.category && (
-                            <div className="mb-1 flex items-center gap-2">
-                              <Badge
-                                variant={
-                                  getCategoryColor(article.category) as
-                                    | 'default'
-                                    | 'secondary'
-                                    | 'blue'
-                                    | 'success'
-                                    | 'warning'
-                                    | 'cyan'
-                                    | 'green'
-                                    | 'yellow'
-                                    | 'orange'
-                                    | 'red'
-                                    | 'pink'
-                                    | 'purple'
-                                    | 'indigo'
-                                }
-                              >
-                                {article.category}
-                              </Badge>
-                              {isPDF && (
-                                <FileText className="ml-auto h-4 w-4 flex-shrink-0 text-blue-400" />
-                              )}
-                            </div>
-                          )}
+                        <article
+                          onClick={(event) => {
+                            if (!isLink) {
+                              handleArticleCardClick(event, article.id);
+                              return;
+                            }
+                            if (event.defaultPrevented) return;
+                            const target = event.target;
+                            if (
+                              target instanceof HTMLElement &&
+                              target.closest(
+                                'button, a, input, textarea, select, [role="menuitem"]'
+                              )
+                            ) {
+                              return;
+                            }
+                            window.open(article.url, '_blank', 'noopener,noreferrer');
+                          }}
+                          className="flex h-full cursor-pointer flex-col overflow-hidden rounded-[inherit]"
+                        >
+                          <div className="flex flex-1 flex-col gap-4 p-5">
+                            <Flex align="center" justify="between" gap="3">
+                              <Flex align="center" gap="2" className="min-w-0">
+                                <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-md border border-[var(--gray-6)] bg-[var(--gray-3)] text-[var(--accent-11)]">
+                                  <KindIcon className="h-4 w-4" />
+                                </div>
+                                <Box className="min-w-0">
+                                  <Text
+                                    as="p"
+                                    size="2"
+                                    weight="medium"
+                                    color="gray"
+                                    className="truncate"
+                                    title={`${kind.label} · ${origin}`}
+                                  >
+                                    {kind.label} · {origin}
+                                  </Text>
+                                </Box>
+                              </Flex>
+                              <ThemeBadge color="gray" variant="soft" className="shrink-0">
+                                {article.status === 'read'
+                                  ? isLink
+                                    ? 'Done'
+                                    : 'Read'
+                                  : isLink
+                                    ? 'Pending'
+                                    : 'Unread'}
+                              </ThemeBadge>
+                            </Flex>
 
-                          <div className="flex items-start gap-2">
-                            <div className="min-w-0 flex-1 pr-2">
-                              <div className="mb-2 flex items-center gap-2">
-                                <h2
-                                  className="line-clamp-2 flex-1 text-xl font-semibold break-words text-white transition-colors group-hover:text-blue-300"
+                            <div className="flex items-start gap-2">
+                              <div className="min-w-0 flex-1 pr-2">
+                                <Heading
+                                  as="h2"
+                                  size="4"
+                                  weight="medium"
+                                  className="line-clamp-2 break-words text-[var(--gray-12)]"
                                   title={displayTitle}
                                 >
                                   {displayTitle}
-                                </h2>
-                                {!article.category && isPDF && (
-                                  <FileText className="h-5 w-5 flex-shrink-0 text-blue-400" />
+                                </Heading>
+                                {contextLine && (
+                                  <Text
+                                    as="p"
+                                    size="2"
+                                    color="gray"
+                                    className="mt-2 line-clamp-2"
+                                    title={contextLine}
+                                  >
+                                    {contextLine}
+                                  </Text>
+                                )}
+                                {hasMetadata && (
+                                  <div className="mt-3 flex flex-wrap items-center gap-2 text-xs text-gray-300">
+                                    {!isLink && article.readingTimeMinutes && (
+                                      <ThemeBadge color="gray" variant="surface" className="gap-1">
+                                        <Clock className="h-3 w-3" />
+                                        {formatReadingTime(article.readingTimeMinutes)}
+                                      </ThemeBadge>
+                                    )}
+                                    {isPDF && article.pdfMetadata?.pageCount && (
+                                      <ThemeBadge color="gray" variant="surface">
+                                        {article.pdfMetadata.pageCount} pages
+                                      </ThemeBadge>
+                                    )}
+                                    {isPDF && formatFileSize(article.pdfMetadata?.fileSize) && (
+                                      <ThemeBadge color="gray" variant="surface">
+                                        {formatFileSize(article.pdfMetadata?.fileSize)}
+                                      </ThemeBadge>
+                                    )}
+                                    {article.notesCount > 0 && (
+                                      <ThemeBadge color="gray" variant="surface">
+                                        {article.notesCount} notes
+                                      </ThemeBadge>
+                                    )}
+                                  </div>
+                                )}
+                                {(article.category ||
+                                  attachedLists.length > 0 ||
+                                  Boolean(article.tags?.length)) && (
+                                  <div className="mt-3 flex flex-wrap gap-1.5">
+                                    {article.category && (
+                                      <ThemeBadge
+                                        color="gray"
+                                        variant="surface"
+                                        className="max-w-[9rem] truncate"
+                                        title={article.category}
+                                      >
+                                        {article.category}
+                                      </ThemeBadge>
+                                    )}
+                                    {attachedLists.slice(0, 2).map((list) => (
+                                      <ThemeBadge
+                                        key={list.id}
+                                        color="gray"
+                                        variant="soft"
+                                        className="max-w-[8rem] truncate"
+                                        title={list.name}
+                                      >
+                                        {list.name}
+                                      </ThemeBadge>
+                                    ))}
+                                    {(article.tags ?? []).map((tag) => (
+                                      <button
+                                        key={tag}
+                                        onClick={(e) => {
+                                          e.stopPropagation();
+                                          setSelectedTag(tag);
+                                        }}
+                                        className={`inline-flex items-center rounded-sm border px-2 py-0.5 text-xs font-medium transition-colors ${getTagColor(tag)} hover:opacity-80`}
+                                      >
+                                        {tag}
+                                      </button>
+                                    ))}
+                                    {attachedLists.length > 2 && (
+                                      <ThemeBadge color="gray" variant="soft">
+                                        +{attachedLists.length - 2}
+                                      </ThemeBadge>
+                                    )}
+                                  </div>
                                 )}
                               </div>
-                              <p className="truncate text-sm text-gray-400" title={article.url}>
-                                {isPDF ? 'PDF Document' : article.url}
-                              </p>
-                              <div className="mt-2 flex flex-wrap items-center gap-2 text-xs text-gray-300">
-                                {article.status === 'read' && (
-                                  <Badge
-                                    variant="success"
-                                    className="cursor-pointer"
+                              <DropdownMenu
+                                open={activeToolbarId === article.id}
+                                onOpenChange={(open) => {
+                                  setActiveToolbarId(open ? article.id : null);
+                                }}
+                              >
+                                <DropdownMenuTrigger asChild>
+                                  <button
                                     onClick={(e) => {
                                       e.stopPropagation();
+                                      e.preventDefault();
+                                    }}
+                                    aria-label="Article actions"
+                                    className="rounded-md p-1.5 text-gray-500 transition-colors hover:bg-[var(--gray-3)] hover:text-white"
+                                  >
+                                    <MoreVertical className="h-4 w-4" />
+                                  </button>
+                                </DropdownMenuTrigger>
+                                <DropdownMenuContent align="end" className="w-48">
+                                  <DropdownMenuItem
+                                    onSelect={() => {
                                       toggleStatus.mutate({ id: article.id, status: nextStatus });
                                     }}
                                   >
-                                    Read
-                                  </Badge>
-                                )}
-                                {article.readingTimeMinutes && (
-                                  <Badge variant="blue" className="flex items-center gap-1">
-                                    <Clock className="h-3 w-3" />
-                                    {formatReadingTime(article.readingTimeMinutes)}
-                                  </Badge>
-                                )}
-                                {article.type === 'pdf' && article.pdfMetadata?.pageCount && (
-                                  <Badge variant="secondary">
-                                    {article.pdfMetadata.pageCount} pages
-                                  </Badge>
-                                )}
-                              </div>
-                              {article.tags && article.tags.length > 0 && (
-                                <div className="mt-3 flex flex-wrap gap-1.5">
-                                  {article.tags.map((tag) => (
-                                    <button
-                                      key={tag}
-                                      onClick={(e) => {
-                                        e.stopPropagation();
-                                        setSelectedTag(tag);
+                                    {article.status === 'read'
+                                      ? isLink
+                                        ? 'Mark Pending'
+                                        : 'Mark In Progress'
+                                      : isLink
+                                        ? 'Mark Done'
+                                        : 'Mark Read'}
+                                  </DropdownMenuItem>
+                                  {isLink && (
+                                    <DropdownMenuItem
+                                      onSelect={() => {
+                                        window.open(article.url, '_blank', 'noopener,noreferrer');
                                       }}
-                                      className={`inline-flex items-center rounded-full border px-2 py-0.5 text-xs font-semibold transition-colors ${getTagColor(tag)} hover:opacity-80`}
                                     >
-                                      {tag}
-                                    </button>
-                                  ))}
-                                </div>
-                              )}
-                            </div>
-                            <DropdownMenu
-                              open={activeToolbarId === article.id}
-                              onOpenChange={(open) => {
-                                setActiveToolbarId(open ? article.id : null);
-                              }}
-                            >
-                              <DropdownMenuTrigger asChild>
-                                <button
-                                  onClick={(e) => {
-                                    e.stopPropagation();
-                                    e.preventDefault();
-                                  }}
-                                  aria-label="Article actions"
-                                  className="rounded-lg p-1.5 text-gray-500 transition-colors hover:bg-gray-800 hover:text-white"
-                                >
-                                  <MoreVertical className="h-4 w-4" />
-                                </button>
-                              </DropdownMenuTrigger>
-                              <DropdownMenuContent align="end" className="w-48">
-                                <DropdownMenuItem
-                                  onSelect={() => {
-                                    toggleStatus.mutate({ id: article.id, status: nextStatus });
-                                  }}
-                                >
-                                  {article.status === 'read' ? 'Mark In Progress' : 'Mark Read'}
-                                </DropdownMenuItem>
-                                <DropdownMenuSub>
-                                  <DropdownMenuSubTrigger>Add to list</DropdownMenuSubTrigger>
-                                  <DropdownMenuSubContent>
-                                    {lists
-                                      .filter((list) => !article.listIds?.includes(list.id))
-                                      .map((list) => (
-                                        <DropdownMenuItem
-                                          key={list.id}
-                                          onSelect={() =>
-                                            addToListMutation.mutate({
-                                              articleId: article.id,
-                                              listId: list.id,
-                                            })
-                                          }
-                                        >
-                                          {list.icon === 'heart' && (
-                                            <Heart className="mr-2 h-4 w-4" />
-                                          )}
-                                          {list.icon === 'clock' && (
-                                            <Clock className="mr-2 h-4 w-4" />
-                                          )}
-                                          {list.icon === 'dot' && (
-                                            <div
-                                              className={`h-2 w-2 rounded-full bg-${list.color || 'blue'}-500 mr-2`}
-                                            />
-                                          )}
-                                          {list.name}
-                                        </DropdownMenuItem>
-                                      ))}
-                                    {lists.filter((list) => !article.listIds?.includes(list.id))
-                                      .length === 0 && (
-                                      <DropdownMenuItem disabled>
-                                        Already in all lists
-                                      </DropdownMenuItem>
-                                    )}
-                                  </DropdownMenuSubContent>
-                                </DropdownMenuSub>
-                                {article.listIds && article.listIds.length > 0 && (
+                                      Open Link
+                                    </DropdownMenuItem>
+                                  )}
                                   <DropdownMenuSub>
-                                    <DropdownMenuSubTrigger>
-                                      Remove from list
-                                    </DropdownMenuSubTrigger>
+                                    <DropdownMenuSubTrigger>Add to list</DropdownMenuSubTrigger>
                                     <DropdownMenuSubContent>
                                       {lists
-                                        .filter((list) => article.listIds?.includes(list.id))
+                                        .filter((list) => !article.listIds?.includes(list.id))
                                         .map((list) => (
                                           <DropdownMenuItem
                                             key={list.id}
                                             onSelect={() =>
-                                              removeFromListMutation.mutate({
+                                              addToListMutation.mutate({
                                                 articleId: article.id,
                                                 listId: list.id,
                                               })
                                             }
-                                            className="text-yellow-300 focus:text-yellow-100"
                                           >
                                             {list.icon === 'heart' && (
                                               <Heart className="mr-2 h-4 w-4" />
@@ -796,49 +1162,129 @@ export default function HomeClient() {
                                               <Clock className="mr-2 h-4 w-4" />
                                             )}
                                             {list.icon === 'dot' && (
-                                              <div
-                                                className={`h-2 w-2 rounded-full bg-${list.color || 'blue'}-500 mr-2`}
-                                              />
+                                              <div className="mr-2 h-2 w-2 rounded-full bg-gray-500" />
                                             )}
                                             {list.name}
                                           </DropdownMenuItem>
                                         ))}
+                                      {lists.filter((list) => !article.listIds?.includes(list.id))
+                                        .length === 0 && (
+                                        <DropdownMenuItem disabled>
+                                          Already in all lists
+                                        </DropdownMenuItem>
+                                      )}
                                     </DropdownMenuSubContent>
                                   </DropdownMenuSub>
+                                  {article.listIds && article.listIds.length > 0 && (
+                                    <DropdownMenuSub>
+                                      <DropdownMenuSubTrigger>
+                                        Remove from list
+                                      </DropdownMenuSubTrigger>
+                                      <DropdownMenuSubContent>
+                                        {lists
+                                          .filter((list) => article.listIds?.includes(list.id))
+                                          .map((list) => (
+                                            <DropdownMenuItem
+                                              key={list.id}
+                                              onSelect={() =>
+                                                removeFromListMutation.mutate({
+                                                  articleId: article.id,
+                                                  listId: list.id,
+                                                })
+                                              }
+                                              className="text-yellow-300 focus:text-yellow-100"
+                                            >
+                                              {list.icon === 'heart' && (
+                                                <Heart className="mr-2 h-4 w-4" />
+                                              )}
+                                              {list.icon === 'clock' && (
+                                                <Clock className="mr-2 h-4 w-4" />
+                                              )}
+                                              {list.icon === 'dot' && (
+                                                <div className="mr-2 h-2 w-2 rounded-full bg-gray-500" />
+                                              )}
+                                              {list.name}
+                                            </DropdownMenuItem>
+                                          ))}
+                                      </DropdownMenuSubContent>
+                                    </DropdownMenuSub>
+                                  )}
+                                  <DropdownMenuSeparator />
+                                  <DropdownMenuItem
+                                    className="text-red-300 focus:text-red-100"
+                                    onClick={(event) => {
+                                      event.stopPropagation();
+                                    }}
+                                    onSelect={(event) => {
+                                      event.preventDefault();
+                                      event.stopPropagation();
+                                      if (deletingId) return;
+                                      setPendingDeleteId(article.id);
+                                      setActiveToolbarId(null);
+                                    }}
+                                  >
+                                    Delete
+                                  </DropdownMenuItem>
+                                </DropdownMenuContent>
+                              </DropdownMenu>
+                            </div>
+                            {article.byline && (
+                              <p
+                                className="line-clamp-1 text-sm text-gray-500 italic"
+                                title={article.byline}
+                              >
+                                By {article.byline}
+                              </p>
+                            )}
+                          </div>
+                          <Flex
+                            align="center"
+                            justify="between"
+                            gap="3"
+                            wrap="wrap"
+                            className="border-t border-[var(--gray-5)] bg-[var(--gray-1)]/40 px-5 py-3"
+                          >
+                            <Flex align="center" gap="2">
+                              <ThemeButton
+                                size="1"
+                                variant={isLink ? 'solid' : 'soft'}
+                                className="h-8 gap-1.5 px-3 text-xs"
+                                onClick={(event) => {
+                                  event.stopPropagation();
+                                  if (isLink) {
+                                    window.open(article.url, '_blank', 'noopener,noreferrer');
+                                    return;
+                                  }
+                                  router.push(`/reader/${article.id}`);
+                                }}
+                              >
+                                {isLink ? (
+                                  <ExternalLink className="h-3.5 w-3.5" />
+                                ) : (
+                                  <BookOpen className="h-3.5 w-3.5" />
                                 )}
-                                <DropdownMenuSeparator />
-                                <DropdownMenuItem
-                                  className="text-red-300 focus:text-red-100"
+                                {kind.primaryAction}
+                              </ThemeButton>
+                              {!isLink && (
+                                <ThemeButton
+                                  size="1"
+                                  variant="ghost"
+                                  className="h-8 gap-1.5 px-2 text-xs"
                                   onClick={(event) => {
                                     event.stopPropagation();
-                                  }}
-                                  onSelect={(event) => {
-                                    event.preventDefault();
-                                    event.stopPropagation();
-                                    if (deletingId) return;
-                                    setPendingDeleteId(article.id);
-                                    setActiveToolbarId(null);
+                                    toggleStatus.mutate({ id: article.id, status: nextStatus });
                                   }}
                                 >
-                                  Delete
-                                </DropdownMenuItem>
-                              </DropdownMenuContent>
-                            </DropdownMenu>
-                          </div>
-                          {article.byline && (
-                            <p
-                              className="line-clamp-1 text-sm text-gray-500 italic"
-                              title={article.byline}
-                            >
-                              By {article.byline}
-                            </p>
-                          )}
-                        </div>
-                        <div className="flex flex-wrap items-center justify-between gap-3 border-t border-gray-700 bg-gray-900/60 px-6 py-4 text-sm text-gray-400">
-                          <Badge variant="default">{article.notesCount} notes</Badge>
-                          <span className="text-gray-500">{formatDate(article.createdAt)}</span>
-                        </div>
-                      </div>
+                                  {article.status === 'read' ? 'Mark unread' : 'Mark read'}
+                                </ThemeButton>
+                              )}
+                            </Flex>
+                            <Text as="span" size="1" color="gray">
+                              {formatDate(article.createdAt)}
+                            </Text>
+                          </Flex>
+                        </article>
+                      </Card>
                     );
                   })
                 )}
@@ -853,6 +1299,7 @@ export default function HomeClient() {
         open={showAddArticleDialog}
         onOpenChange={setShowAddArticleDialog}
         onSubmitUrl={handleUrlSubmit}
+        onSaveLink={handleSaveLink}
         onUploadPDF={handlePDFUpload}
         isSubmitting={isImporting}
       />
@@ -864,22 +1311,33 @@ export default function HomeClient() {
             onClick={closeDeleteModal}
           />
           <div
-            className="relative mx-4 w-full max-w-md space-y-4 rounded-2xl border border-gray-700 bg-gray-900 p-6 shadow-2xl"
+            className="relative mx-4 w-full max-w-md space-y-4 rounded-lg border border-[var(--gray-6)] bg-[var(--gray-2)] p-6 shadow-2xl"
             onClick={(event) => {
               event.stopPropagation();
             }}
           >
             <div>
               <h3 className="text-xl font-semibold text-white">
-                Delete {articlePendingDelete.type === 'pdf' ? 'PDF' : 'article'}?
+                Delete{' '}
+                {articlePendingDelete.type === 'pdf'
+                  ? 'PDF'
+                  : articlePendingDelete.type === 'link'
+                    ? 'saved link'
+                    : 'article'}
+                ?
               </h3>
               <p className="mt-2 text-sm text-gray-400">
                 {articlePendingDelete.title || articlePendingDelete.url}
               </p>
             </div>
             <p className="text-sm text-gray-500">
-              This removes the {articlePendingDelete.type === 'pdf' ? 'PDF' : 'article'} and all of
-              its notes permanently. This action cannot be undone.
+              This removes the{' '}
+              {articlePendingDelete.type === 'pdf'
+                ? 'PDF'
+                : articlePendingDelete.type === 'link'
+                  ? 'saved link'
+                  : 'article'}{' '}
+              and all of its notes permanently. This action cannot be undone.
             </p>
             <div className="flex justify-end gap-3">
               <button
@@ -889,7 +1347,7 @@ export default function HomeClient() {
                   closeDeleteModal();
                 }}
                 disabled={Boolean(deletingId)}
-                className="rounded-lg border border-gray-600 px-4 py-2 text-gray-200 transition hover:bg-gray-800 disabled:opacity-40"
+                className="rounded-md border border-[var(--gray-6)] px-4 py-2 text-gray-200 transition hover:bg-[var(--gray-3)] disabled:opacity-40"
               >
                 Cancel
               </button>
@@ -900,7 +1358,7 @@ export default function HomeClient() {
                   void handleDelete(articlePendingDelete.id);
                 }}
                 disabled={deletingId === articlePendingDelete.id}
-                className="flex items-center gap-2 rounded-lg bg-red-600 px-4 py-2 text-white transition hover:bg-red-500 disabled:opacity-40"
+                className="flex items-center gap-2 rounded-md bg-red-600 px-4 py-2 text-white transition hover:bg-red-500 disabled:opacity-40"
               >
                 {deletingId === articlePendingDelete.id ? (
                   <>

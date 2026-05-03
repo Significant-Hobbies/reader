@@ -7,6 +7,7 @@ interface ExtractionResult {
   textContent: string;
   siteName: string | null;
   url: string;
+  canImport?: boolean;
 }
 
 interface ExtractionResponse {

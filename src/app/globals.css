@@ -1,5 +1,5 @@
 @import 'tailwindcss';
-@plugin "@tailwindcss/typography";
+@plugin '@tailwindcss/typography';
 
 :root {
   --background: #0a0a0a;
@@ -23,7 +23,8 @@ body {
 @layer base {
   /* Footnotes */
   sup {
-    @apply text-blue-500 font-bold ml-0.5 cursor-pointer hover:underline;
+    @apply ml-0.5 cursor-pointer font-bold hover:underline;
+    color: var(--accent-11);
     font-size: 0.75em;
     vertical-align: super;
   }
@@ -38,40 +39,44 @@ body {
 
   /* Blockquotes */
   .prose blockquote {
-    @apply relative border-l-4 border-blue-500 bg-gray-800/50 py-6 px-8 italic rounded-r-xl text-gray-300 shadow-md my-8;
+    @apply relative my-8 rounded-r-md border-l-4 bg-gray-800/50 px-8 py-6 text-gray-300 italic shadow-sm;
+    border-left-color: var(--accent-8);
   }
 
   .prose blockquote::before {
     content: '"';
-    @apply absolute top-2 left-4 text-4xl text-blue-500/20 font-serif pointer-events-none;
+    @apply pointer-events-none absolute top-2 left-4 font-serif text-4xl;
+    color: var(--accent-8);
+    opacity: 0.22;
   }
 
   /* Images */
   .prose img {
-    @apply rounded-xl shadow-lg my-8 mx-auto;
+    @apply mx-auto my-8 rounded-lg shadow-lg;
   }
 
   /* Links */
   .prose a {
-    @apply text-blue-600 no-underline hover:underline transition-colors;
+    @apply no-underline transition-colors hover:underline;
+    color: var(--accent-11);
   }
 
   /* Code Blocks */
   .prose pre {
-    @apply bg-gray-100 dark:bg-gray-800 text-gray-800 dark:text-gray-100 rounded-lg p-4 overflow-x-auto border border-gray-200 dark:border-gray-700;
+    @apply overflow-x-auto rounded-lg border border-gray-200 bg-gray-100 p-4 text-gray-800 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-100;
   }
 
   .prose code {
-    @apply bg-gray-100 dark:bg-gray-800 text-pink-600 dark:text-pink-400 px-1 py-0.5 rounded font-mono text-sm;
+    @apply rounded bg-gray-100 px-1 py-0.5 font-mono text-sm text-pink-600 dark:bg-gray-800 dark:text-pink-400;
   }
 
   .prose pre code {
-    @apply bg-transparent text-inherit p-0 border-none;
+    @apply border-none bg-transparent p-0 text-inherit;
   }
 
   /* Sepia Mode Overrides */
   .prose-amber pre {
-    @apply bg-[#e3dccb] border-[#d4cbb0] text-[#5b4636];
+    @apply border-[#d4cbb0] bg-[#e3dccb] text-[#5b4636];
   }
 
   .prose-amber code {

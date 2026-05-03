@@ -171,11 +171,11 @@ export function sanitizeArticlePayload(payload: {
   url: string;
   title?: string;
   byline?: string;
-  content: string;
+  content?: string;
   projectId?: string;
   tags?: string[];
   userId: string;
-  type?: 'article' | 'pdf';
+  type?: 'article' | 'pdf' | 'link';
   pdfUrl?: string;
   extractedText?: string;
   pdfMetadata?: { pageCount?: number; fileSize?: number; storagePath?: string };
@@ -197,7 +197,7 @@ export function sanitizeArticlePayload(payload: {
     url: sanitizedUrl,
     title: sanitizeTitle(payload.title, sanitizedUrl),
     byline: sanitizePlainText(payload.byline || ''),
-    content: sanitizeHTML(payload.content),
+    content: sanitizeHTML(payload.content || ''),
     projectId: sanitizePlainText(payload.projectId || defProjectId) || defProjectId,
     tags: normalizeTags(payload.tags),
     userId: payload.userId,
@@ -262,8 +262,8 @@ type ArticleRow = typeof articles.$inferSelect;
 
 type PdfMetadata = { pageCount?: number; fileSize?: number; storagePath?: string };
 
-function normalizeArticleType(value: unknown): 'article' | 'pdf' {
-  return value === 'pdf' ? 'pdf' : 'article';
+function normalizeArticleType(value: unknown): 'article' | 'pdf' | 'link' {
+  return value === 'pdf' || value === 'link' ? value : 'article';
 }
 
 function rowToArticle(row: ArticleRow): Article {
@@ -403,11 +403,11 @@ export async function createArticleRecord(payload: {
   url: string;
   title?: string;
   byline?: string;
-  content: string;
+  content?: string;
   projectId?: string;
   tags?: string[];
   userId: string;
-  type?: 'article' | 'pdf';
+  type?: 'article' | 'pdf' | 'link';
   pdfUrl?: string;
   extractedText?: string;
   pdfMetadata?: {

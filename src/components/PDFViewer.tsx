@@ -60,22 +60,22 @@ export function PDFViewer({ pdfUrl, settings }: PDFViewerProps) {
   return (
     <div className={`min-h-full transition-colors duration-300 ${themeClasses}`}>
       <div className="mx-auto max-w-5xl px-4 py-8">
-        <div className="mb-6 flex flex-wrap items-center justify-between gap-4 rounded-lg border border-gray-700 bg-gray-800/50 p-4">
+        <div className="mb-6 flex flex-wrap items-center justify-between gap-4 rounded-lg border border-[var(--gray-5)] bg-[var(--gray-2)]/80 p-4">
           <div className="flex items-center gap-2">
             <button
               onClick={goToPrevPage}
               disabled={pageNumber <= 1}
-              className="rounded bg-blue-600 px-3 py-2 text-white transition hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-50"
+              className="rounded-md bg-[var(--accent-9)] px-3 py-2 text-white transition hover:bg-[var(--accent-10)] disabled:cursor-not-allowed disabled:opacity-50"
             >
               Previous
             </button>
-            <span className="min-w-[120px] text-center text-sm text-gray-300">
+            <span className="min-w-[120px] text-center text-sm text-[var(--gray-11)]">
               Page {pageNumber} of {numPages || '...'}
             </span>
             <button
               onClick={goToNextPage}
               disabled={!numPages || pageNumber >= numPages}
-              className="rounded bg-blue-600 px-3 py-2 text-white transition hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-50"
+              className="rounded-md bg-[var(--accent-9)] px-3 py-2 text-white transition hover:bg-[var(--accent-10)] disabled:cursor-not-allowed disabled:opacity-50"
             >
               Next
             </button>
@@ -84,21 +84,21 @@ export function PDFViewer({ pdfUrl, settings }: PDFViewerProps) {
           <div className="flex items-center gap-2">
             <button
               onClick={zoomOut}
-              className="rounded bg-gray-700 px-3 py-2 text-white transition hover:bg-gray-600"
+              className="rounded-md border border-[var(--gray-6)] bg-[var(--gray-3)] px-3 py-2 text-[var(--gray-12)] transition hover:bg-[var(--gray-4)]"
               title="Zoom out"
             >
               -
             </button>
             <button
               onClick={resetZoom}
-              className="min-w-[60px] rounded bg-gray-700 px-3 py-2 text-sm text-white transition hover:bg-gray-600"
+              className="min-w-[60px] rounded-md border border-[var(--gray-6)] bg-[var(--gray-3)] px-3 py-2 text-sm text-[var(--gray-12)] transition hover:bg-[var(--gray-4)]"
               title="Reset zoom"
             >
               {Math.round(scale * 100)}%
             </button>
             <button
               onClick={zoomIn}
-              className="rounded bg-gray-700 px-3 py-2 text-white transition hover:bg-gray-600"
+              className="rounded-md border border-[var(--gray-6)] bg-[var(--gray-3)] px-3 py-2 text-[var(--gray-12)] transition hover:bg-[var(--gray-4)]"
               title="Zoom in"
             >
               +
@@ -108,7 +108,7 @@ export function PDFViewer({ pdfUrl, settings }: PDFViewerProps) {
 
         {isLoading && (
           <div className="flex items-center justify-center py-20">
-            <div className="h-12 w-12 animate-spin rounded-full border-b-2 border-blue-500"></div>
+            <div className="h-12 w-12 animate-spin rounded-full border-b-2 border-[var(--accent-10)]"></div>
           </div>
         )}
 
@@ -126,7 +126,7 @@ export function PDFViewer({ pdfUrl, settings }: PDFViewerProps) {
             onLoadError={onDocumentLoadError}
             loading={
               <div className="flex items-center justify-center py-20">
-                <div className="h-12 w-12 animate-spin rounded-full border-b-2 border-blue-500"></div>
+                <div className="h-12 w-12 animate-spin rounded-full border-b-2 border-[var(--accent-10)]"></div>
               </div>
             }
             className="pdf-document"

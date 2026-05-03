@@ -1,16 +1,17 @@
 import { useState } from 'react';
-import { ExternalLink, Loader2 } from 'lucide-react';
+import { BookmarkPlus, ExternalLink, Loader2 } from 'lucide-react';
 import type { PageContent, AIChatMessage } from '../lib/types';
-import { saveToLibrary, saveChatHistory, getApiBase } from '../lib/api';
+import { saveToLibrary, saveChatHistory, getApiBase, saveLinkToLibrary } from '../lib/api';
 
 interface SaveButtonProps {
   page: PageContent;
   messages: AIChatMessage[];
+  canImport: boolean;
 }
 
 type SaveState = 'idle' | 'saving' | 'saved' | 'error';
 
-export function SaveButton({ page, messages }: SaveButtonProps) {
+export function SaveButton({ page, messages, canImport }: SaveButtonProps) {
   const [state, setState] = useState<SaveState>('idle');
   const [savedId, setSavedId] = useState<string | null>(null);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
@@ -27,6 +28,13 @@ export function SaveButton({ page, messages }: SaveButtonProps) {
   };
 
   const handleSave = async () => {
+    if (!canImport) {
+      setErrorMsg('This page cannot be imported directly.');
+      setState('error');
+      setTimeout(() => setState('idle'), 3000);
+      return;
+    }
+
     setState('saving');
     setErrorMsg(null);
 
@@ -56,6 +64,25 @@ export function SaveButton({ page, messages }: SaveButtonProps) {
     }
   };
 
+  const handleSaveLink = async () => {
+    setState('saving');
+    setErrorMsg(null);
+
+    try {
+      const result = await saveLinkToLibrary({
+        url: page.url,
+        title: page.title || page.url,
+      });
+      setSavedId(result.id);
+      setState('saved');
+    } catch (err) {
+      const message = err instanceof Error ? err.message : 'Failed to save link';
+      setErrorMsg(message);
+      setState('error');
+      setTimeout(() => setState('idle'), 3000);
+    }
+  };
+
   if (state === 'saved' && savedId) {
     return (
       <a
@@ -64,31 +91,49 @@ export function SaveButton({ page, messages }: SaveButtonProps) {
         rel="noopener noreferrer"
         className="flex w-full items-center justify-center gap-2 rounded-xl border border-emerald-500/30 bg-emerald-500/10 px-3 py-2.5 text-sm font-medium text-emerald-200 hover:bg-emerald-500/15"
       >
-        Open in Web Annotator
+        Open in Reader Library
         <ExternalLink className="h-4 w-4" />
       </a>
     );
   }
 
   return (
-    <button
-      type="button"
-      onClick={() => void handleSave()}
-      disabled={state === 'saving'}
-      className="flex w-full items-center justify-center gap-2 rounded-xl bg-blue-600 px-3 py-2.5 text-sm font-medium text-white hover:bg-blue-500 disabled:opacity-50"
-      title={state === 'error' ? errorMsg || 'Error' : 'Open in Web Annotator'}
-    >
-      {state === 'saving' ? (
-        <>
-          <Loader2 className="h-4 w-4 animate-spin" />
-          Importing...
-        </>
-      ) : (
-        <>
-          <ExternalLink className="h-4 w-4" />
-          Open in Web Annotator
-        </>
-      )}
-    </button>
+    <div className="grid grid-cols-1 gap-2">
+      <button
+        type="button"
+        onClick={() => void handleSaveLink()}
+        disabled={state === 'saving'}
+        className="flex w-full items-center justify-center gap-2 rounded-xl bg-blue-600 px-3 py-2.5 text-sm font-medium text-white hover:bg-blue-500 disabled:opacity-50"
+        title={state === 'error' ? errorMsg || 'Error' : 'Save to Reader Library'}
+      >
+        {state === 'saving' ? (
+          <>
+            <Loader2 className="h-4 w-4 animate-spin" />
+            Saving...
+          </>
+        ) : (
+          <>
+            <BookmarkPlus className="h-4 w-4" />
+            Save to Library
+          </>
+        )}
+      </button>
+      <button
+        type="button"
+        onClick={() => void handleSave()}
+        disabled={state === 'saving' || !canImport}
+        className="flex w-full items-center justify-center gap-2 rounded-xl border border-gray-700 bg-gray-900 px-3 py-2.5 text-sm font-medium text-gray-100 hover:bg-gray-800 disabled:opacity-50"
+        title={
+          !canImport
+            ? 'This page cannot be imported directly'
+            : state === 'error'
+              ? errorMsg || 'Error'
+              : 'Import and open in Reader'
+        }
+      >
+        <ExternalLink className="h-4 w-4" />
+        Import & Read
+      </button>
+    </div>
   );
 }

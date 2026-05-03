@@ -43,22 +43,24 @@ export async function streamChat(
   signal?: AbortSignal,
   isAuthenticated = false
 ): Promise<ReadableStream<Uint8Array> | null> {
-  const endpoint = isAuthenticated ? '/api/ai/chat' : '/api/ext/chat';
+  const usesReaderGateway = config.provider === 'gateway' && !config.apiKey;
+  const endpoint = usesReaderGateway ? '/api/ext/chat' : '/api/ai/chat';
 
-  const body = isAuthenticated
-    ? {
-        provider: config.provider,
-        model: config.model,
-        apiKey: config.apiKey,
-        systemPrompt,
-        messages,
-      }
-    : {
-        systemPrompt,
-        messages: messages.slice(-6),
-      };
+  const body =
+    endpoint === '/api/ai/chat'
+      ? {
+          provider: config.provider,
+          model: config.model,
+          apiKey: config.apiKey,
+          systemPrompt,
+          messages,
+        }
+      : {
+          systemPrompt,
+          messages: messages.slice(-6),
+        };
 
-  const auth = isAuthenticated ? await authHeaders() : {};
+  const auth = endpoint === '/api/ai/chat' || isAuthenticated ? await authHeaders() : {};
 
   const response = await fetch(`${API_BASE}${endpoint}`, {
     method: 'POST',
@@ -153,6 +155,30 @@ export async function saveToLibrary(article: {
   if (!response.ok) {
     const payload = await response.json().catch(() => ({}));
     throw new Error((payload as { error?: string }).error || 'Failed to save article');
+  }
+
+  return response.json();
+}
+
+export async function saveLinkToLibrary(link: {
+  url: string;
+  title: string;
+}): Promise<{ id: string; existing: boolean }> {
+  const auth = await authHeaders();
+  const response = await fetch(`${API_BASE}/api/articles`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...auth },
+    body: JSON.stringify({
+      url: link.url,
+      title: link.title,
+      content: '',
+      type: 'link',
+    }),
+  });
+
+  if (!response.ok) {
+    const payload = await response.json().catch(() => ({}));
+    throw new Error((payload as { error?: string }).error || 'Failed to save link');
   }
 
   return response.json();

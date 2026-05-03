@@ -85,18 +85,15 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: 'At least one message is required' }, { status: 400 });
   }
 
-  const apiKey = process.env.AI_GATEWAY_API_KEY || '';
-  const gatewayUrl = process.env.AI_GATEWAY_URL || 'https://gateway.vercel.ai/v1';
-
   try {
     const result = streamText({
-      // When AI_GATEWAY_API_KEY (Vercel) is explicitly set, use that gateway.
-      // Otherwise route through free-ai-gateway, which is the Fleet-wide
-      // single AI chokepoint with daily Neuron budget enforcement.
+      // Route through free-ai-gateway, the Fleet-wide single AI chokepoint
+      // with daily Neuron budget enforcement. getLanguageModel owns the
+      // AI_BASE_URL / AI_GATEWAY_API_KEY env resolution.
       model: getLanguageModel({
-        endpointUrl: apiKey ? gatewayUrl : '',
-        apiKey,
-        model: apiKey ? 'openai/gpt-4.1-mini' : 'auto',
+        endpointUrl: '',
+        apiKey: '',
+        model: 'auto',
         headers: { 'x-gateway-project-id': 'reader' },
       }),
       system: systemPrompt,

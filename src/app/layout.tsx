@@ -1,5 +1,7 @@
+import '@radix-ui/themes/styles.css';
 import './globals.css';
 
+import { Theme } from '@radix-ui/themes';
 import type { Metadata } from 'next';
 import { Geist, Geist_Mono } from 'next/font/google';
 
@@ -54,11 +56,13 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body className={`${geistSans.variable} ${geistMono.variable} antialiased`}>
-        <AuthProvider>
-          <QueryProvider>{children}</QueryProvider>
-          <SaaSMakerFeedback />
-          <SaasMakerAnalytics />
-        </AuthProvider>
+        <Theme appearance="dark" accentColor="bronze" grayColor="sand" radius="small" scaling="95%">
+          <AuthProvider>
+            <QueryProvider>{children}</QueryProvider>
+            <SaaSMakerFeedback />
+            <SaasMakerAnalytics />
+          </AuthProvider>
+        </Theme>
       </body>
     </html>
   );

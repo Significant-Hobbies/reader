@@ -1,10 +1,9 @@
 'use client';
 
+import { Box, Button as ThemeButton, Card, Heading, Text } from '@radix-ui/themes';
 import { useState } from 'react';
 
 import { signIn } from '@/lib/auth-client';
-
-import { Button } from './ui/button';
 
 export default function LoginClient() {
   const [error, setError] = useState<string | null>(null);
@@ -27,24 +26,36 @@ export default function LoginClient() {
 
   if (redirecting) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-gradient-to-b from-black via-gray-950 to-gray-900">
+      <div className="flex min-h-screen items-center justify-center bg-[#15130f]">
         <div className="text-center">
-          <div className="mx-auto mb-4 h-8 w-8 animate-spin rounded-full border-b-2 border-white"></div>
-          <p className="text-gray-400">Loading your library...</p>
+          <div className="mx-auto mb-4 h-8 w-8 animate-spin rounded-full border-b-2 border-[var(--accent-10)]" />
+          <Text color="gray">Loading your library...</Text>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-gradient-to-b from-black via-gray-950 to-gray-900 p-8">
-      <div className="w-full max-w-sm space-y-8 text-center">
-        <div>
-          <h1 className="text-3xl font-bold text-white">Web Annotator</h1>
-          <p className="mt-2 text-gray-400">Sign in to access your library</p>
-        </div>
+    <div className="flex min-h-screen items-center justify-center bg-[#15130f] bg-[radial-gradient(circle_at_top,rgba(180,140,92,0.16),transparent_30rem)] p-8">
+      <Card className="w-full max-w-md border border-[var(--gray-5)] bg-[var(--gray-2)]/85 p-8 text-center shadow-[0_24px_90px_rgba(0,0,0,0.35)]">
+        <Box className="mb-8">
+          <Text as="p" size="2" weight="medium" color="gray" className="mb-2 uppercase">
+            Personal research library
+          </Text>
+          <Heading as="h1" size="8" className="text-[var(--gray-12)]">
+            Library
+          </Heading>
+          <Text as="p" size="3" color="gray" className="mt-3">
+            Sign in to organize imported articles, outside links, and research PDFs.
+          </Text>
+        </Box>
 
-        <Button onClick={handleSignIn} disabled={signingIn} className="w-full py-3 text-base">
+        <ThemeButton
+          size="3"
+          onClick={handleSignIn}
+          disabled={signingIn}
+          className="w-full justify-center"
+        >
           {signingIn ? (
             <span className="flex items-center justify-center gap-2">
               <span className="h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent" />
@@ -53,10 +64,14 @@ export default function LoginClient() {
           ) : (
             'Sign in with Google'
           )}
-        </Button>
+        </ThemeButton>
 
-        {error && <p className="text-sm text-red-400">{error}</p>}
-      </div>
+        {error && (
+          <Text as="p" size="2" color="red" className="mt-4">
+            {error}
+          </Text>
+        )}
+      </Card>
     </div>
   );
 }

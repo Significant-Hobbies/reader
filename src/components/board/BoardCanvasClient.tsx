@@ -566,6 +566,7 @@ function BoardCanvas({ board, readOnly }: BoardCanvasClientProps) {
             onClose={() => setShowWebsiteDialog(false)}
             onAdd={addWebsiteNode}
             onAddIframe={addIframeNode}
+            onAddReader={({ articleId, url, title }) => addReaderNode(articleId, url, title)}
           />
 
           {pickerState && (

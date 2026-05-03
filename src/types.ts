@@ -45,7 +45,7 @@ export interface Article {
   readingTimeMinutes?: number;
   createdAt?: string;
   updatedAt?: string;
-  type?: 'article' | 'pdf';
+  type?: 'article' | 'pdf' | 'link';
   pdfUrl?: string;
   extractedText?: string;
   pdfMetadata?: {

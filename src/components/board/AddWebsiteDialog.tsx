@@ -1,7 +1,7 @@
 'use client';
 
 import { Loader2, X } from 'lucide-react';
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 
 interface AddWebsiteDialogProps {
   open: boolean;
@@ -14,18 +14,72 @@ interface AddWebsiteDialogProps {
     articleId?: string;
   }) => void;
   onAddIframe: (data: { url: string; title?: string }) => void;
+  onAddReader: (data: { articleId: string; url: string; title: string }) => void;
 }
 
-export function AddWebsiteDialog({ open, onClose, onAdd, onAddIframe }: AddWebsiteDialogProps) {
+export function AddWebsiteDialog({
+  open,
+  onClose,
+  onAdd,
+  onAddIframe,
+  onAddReader,
+}: AddWebsiteDialogProps) {
   const [url, setUrl] = useState('');
-  const [mode, setMode] = useState<'card' | 'iframe'>('card');
+  const [mode, setMode] = useState<'card' | 'iframe' | 'pdf'>('card');
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   if (!open) return null;
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (mode === 'pdf') {
+      if (!selectedFile) return;
+      setLoading(true);
+      setError(null);
+
+      try {
+        const formData = new FormData();
+        formData.append('file', selectedFile);
+        formData.append('category', 'Paper');
+
+        const response = await fetch('/api/pdf/upload', {
+          method: 'POST',
+          body: formData,
+        });
+
+        if (!response.ok) {
+          const errorData = await response.json().catch(() => ({}));
+          throw new Error(errorData.error || 'Failed to import PDF');
+        }
+
+        const data = (await response.json()) as {
+          id: string;
+          title?: string;
+          pdfUrl?: string;
+        };
+
+        onAddReader({
+          articleId: data.id,
+          url: data.pdfUrl || `pdf://${selectedFile.name}`,
+          title: data.title || selectedFile.name.replace(/\.pdf$/i, ''),
+        });
+
+        setSelectedFile(null);
+        if (fileInputRef.current) {
+          fileInputRef.current.value = '';
+        }
+        onClose();
+      } catch (err) {
+        setError(err instanceof Error ? err.message : 'Failed to import PDF');
+      } finally {
+        setLoading(false);
+      }
+      return;
+    }
+
     let trimmedUrl = url.trim();
     if (!trimmedUrl) return;
 
@@ -105,7 +159,7 @@ export function AddWebsiteDialog({ open, onClose, onAdd, onAddIframe }: AddWebsi
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm">
       <div className="w-full max-w-md rounded-xl border border-gray-700 bg-gray-900 p-6 shadow-2xl">
         <div className="mb-4 flex items-center justify-between">
-          <h3 className="text-lg font-semibold text-white">Add Website</h3>
+          <h3 className="text-lg font-semibold text-white">Add Source</h3>
           <button
             onClick={onClose}
             className="rounded-md p-1 text-gray-400 hover:bg-gray-800 hover:text-white"
@@ -115,16 +169,29 @@ export function AddWebsiteDialog({ open, onClose, onAdd, onAddIframe }: AddWebsi
         </div>
 
         <form onSubmit={(e) => void handleSubmit(e)}>
-          <input
-            type="url"
-            value={url}
-            onChange={(e) => setUrl(e.target.value)}
-            placeholder="https://example.com"
-            autoFocus
-            className="mb-3 h-10 w-full rounded-lg border border-gray-700 bg-gray-950 px-3 text-sm text-gray-100 placeholder:text-gray-500 focus:ring-2 focus:ring-blue-500 focus:outline-none"
-          />
+          {mode !== 'pdf' ? (
+            <input
+              type="url"
+              value={url}
+              onChange={(e) => setUrl(e.target.value)}
+              placeholder="https://example.com"
+              autoFocus
+              className="mb-3 h-10 w-full rounded-lg border border-gray-700 bg-gray-950 px-3 text-sm text-gray-100 placeholder:text-gray-500 focus:ring-2 focus:ring-blue-500 focus:outline-none"
+            />
+          ) : (
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept="application/pdf"
+              onChange={(e) => {
+                setError(null);
+                setSelectedFile(e.target.files?.[0] ?? null);
+              }}
+              className="mb-3 h-10 w-full rounded-lg border border-gray-700 bg-gray-950 px-3 py-2 text-sm text-gray-100 file:mr-3 file:rounded-md file:border-0 file:bg-gray-800 file:px-3 file:py-1 file:text-xs file:text-gray-200"
+            />
+          )}
 
-          <div className="mb-3 flex gap-2">
+          <div className="mb-3 grid grid-cols-3 gap-2">
             <button
               type="button"
               onClick={() => setMode('card')}
@@ -134,8 +201,8 @@ export function AddWebsiteDialog({ open, onClose, onAdd, onAddIframe }: AddWebsi
                   : 'border border-gray-700 text-gray-400 hover:text-gray-200'
               }`}
             >
-              Save as Card
-              <span className="mt-0.5 block text-[10px] opacity-70">Extract title & excerpt</span>
+              Import Site
+              <span className="mt-0.5 block text-[10px] opacity-70">Readable source</span>
             </button>
             <button
               type="button"
@@ -146,8 +213,20 @@ export function AddWebsiteDialog({ open, onClose, onAdd, onAddIframe }: AddWebsi
                   : 'border border-gray-700 text-gray-400 hover:text-gray-200'
               }`}
             >
-              Embed as Iframe
-              <span className="mt-0.5 block text-[10px] opacity-70">Live preview on canvas</span>
+              Embed Site
+              <span className="mt-0.5 block text-[10px] opacity-70">Live preview</span>
+            </button>
+            <button
+              type="button"
+              onClick={() => setMode('pdf')}
+              className={`flex-1 rounded-lg px-3 py-2 text-xs font-medium transition-colors ${
+                mode === 'pdf'
+                  ? 'bg-blue-600 text-white'
+                  : 'border border-gray-700 text-gray-400 hover:text-gray-200'
+              }`}
+            >
+              PDF/Paper
+              <span className="mt-0.5 block text-[10px] opacity-70">Original PDF</span>
             </button>
           </div>
 
@@ -163,7 +242,7 @@ export function AddWebsiteDialog({ open, onClose, onAdd, onAddIframe }: AddWebsi
             </button>
             <button
               type="submit"
-              disabled={!url.trim() || loading}
+              disabled={(mode === 'pdf' ? !selectedFile : !url.trim()) || loading}
               className="flex items-center gap-2 rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-500 disabled:opacity-50"
             >
               {loading && <Loader2 className="h-4 w-4 animate-spin" />}

@@ -6,7 +6,8 @@ import { Handle, NodeResizeControl, Position } from '@xyflow/react';
 import { GripVertical } from 'lucide-react';
 import { memo, useCallback } from 'react';
 
-import type { Article, ElementAnchor } from '../../../types';
+import type { Article, ElementAnchor, ReaderSettings } from '../../../types';
+import { PDFViewer } from '../../PDFViewer';
 import { ReaderCore } from '../../reader/ReaderCore';
 
 type ReaderData = {
@@ -16,6 +17,12 @@ type ReaderData = {
   readOnly?: boolean;
   onSpawnNote?: (anchor: ElementAnchor, text: string) => void;
   onSpawnAIChat?: (anchor: ElementAnchor, text: string) => void;
+};
+
+const compactPdfSettings: ReaderSettings = {
+  fontSize: 'medium',
+  theme: 'dark',
+  fontFamily: 'sans',
 };
 
 function ReaderNodeComponent({ id, data, selected }: NodeProps) {
@@ -81,7 +88,24 @@ function ReaderNodeComponent({ id, data, selected }: NodeProps) {
             Failed to load article
           </div>
         )}
-        {article && (
+        {article?.type === 'pdf' && article.pdfUrl && (
+          <div className="nodrag nowheel h-full">
+            <div className="border-b border-gray-800 bg-gray-950/95 px-4 py-3">
+              <p className="truncate text-sm font-semibold text-white" title={article.title}>
+                {article.title || 'PDF'}
+              </p>
+              {article.pdfMetadata?.pageCount && (
+                <p className="mt-0.5 text-xs text-gray-500">
+                  {article.pdfMetadata.pageCount} pages
+                </p>
+              )}
+            </div>
+            <div className="h-[calc(100%-57px)]">
+              <PDFViewer pdfUrl={article.pdfUrl} settings={compactPdfSettings} />
+            </div>
+          </div>
+        )}
+        {article && article.type !== 'pdf' && (
           <div className="nodrag nowheel h-full">
             <ReaderCore
               article={article}

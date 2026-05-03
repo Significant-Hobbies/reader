@@ -13,12 +13,10 @@ export function getTagColor(tag: string): string {
     'bg-teal-900/50 text-teal-200 border-teal-700',
   ];
 
-  // Simple hash function to consistently map tag names to colors
   let hash = 0;
-  for (let i = 0; i < tag.length; i++) {
+  for (let i = 0; i < tag.length; i += 1) {
     hash = tag.charCodeAt(i) + ((hash << 5) - hash);
   }
 
-  const index = Math.abs(hash) % colors.length;
-  return colors[index];
+  return colors[Math.abs(hash) % colors.length];
 }

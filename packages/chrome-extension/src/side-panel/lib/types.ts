@@ -5,6 +5,7 @@ export interface PageContent {
   textContent: string;
   siteName: string | null;
   url: string;
+  canImport?: boolean;
 }
 
 export interface AIChatMessage {
