@@ -27,8 +27,7 @@ type CreatedKey = {
   createdAt: number;
 };
 
-const EXTENSION_DIST_PATH =
-  '/Users/sarthakagrawal/Desktop/Fleet/reader/packages/chrome-extension/dist';
+const EXTENSION_DIST_PATH = 'packages/chrome-extension/dist';
 
 function formatDate(value: ApiKeySummary['createdAt']): string {
   const date = new Date(value);

@@ -2,6 +2,7 @@
   "name": "web-annotator",
   "version": "0.1.0",
   "private": true,
+  "type": "module",
   "scripts": {
     "dev": "concurrently -k -n app,ai -c cyan,magenta \"npm:dev:app\" \"npm:local-ai\"",
     "dev:app": "next dev --hostname 127.0.0.1 --port 3000",
