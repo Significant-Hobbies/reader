@@ -1,7 +1,15 @@
-import { useState } from 'react';
-import { BookmarkPlus, ExternalLink, Loader2 } from 'lucide-react';
+import { useEffect, useMemo, useState } from 'react';
+import { BookmarkPlus, CheckCircle2, ExternalLink, Loader2 } from 'lucide-react';
 import type { PageContent, AIChatMessage } from '../lib/types';
-import { saveToLibrary, saveChatHistory, getApiBase, saveLinkToLibrary } from '../lib/api';
+import {
+  findLibraryItemByUrl,
+  saveToLibrary,
+  saveChatHistory,
+  getApiBase,
+  saveLinkToLibrary,
+  updateLibraryItemCategory,
+  type ReaderLibraryItem,
+} from '../lib/api';
 
 interface SaveButtonProps {
   page: PageContent;
@@ -10,11 +18,47 @@ interface SaveButtonProps {
 }
 
 type SaveState = 'idle' | 'saving' | 'saved' | 'error';
+type LookupState = 'checking' | 'found' | 'missing' | 'error';
+
+const CATEGORY_SUGGESTIONS = [
+  'Read later',
+  'Research papers',
+  'Blogs',
+  'Products to try',
+  'AI and ML',
+  'Engineering',
+];
 
 export function SaveButton({ page, messages, canImport }: SaveButtonProps) {
   const [state, setState] = useState<SaveState>('idle');
   const [savedId, setSavedId] = useState<string | null>(null);
+  const [savedWasExisting, setSavedWasExisting] = useState(false);
+  const [category, setCategory] = useState('');
+  const [lookupState, setLookupState] = useState<LookupState>('checking');
+  const [existingItem, setExistingItem] = useState<ReaderLibraryItem | null>(null);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
+  const trimmedCategory = useMemo(() => category.trim(), [category]);
+
+  useEffect(() => {
+    let cancelled = false;
+    setLookupState('checking');
+    setExistingItem(null);
+
+    findLibraryItemByUrl(page.url)
+      .then((item) => {
+        if (cancelled) return;
+        setExistingItem(item);
+        setLookupState(item ? 'found' : 'missing');
+      })
+      .catch(() => {
+        if (cancelled) return;
+        setLookupState('error');
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [page.url]);
 
   const openInActiveTab = async (articleId: string) => {
     const url = `${getApiBase()}/reader/${articleId}`;
@@ -25,6 +69,14 @@ export function SaveButton({ page, messages, canImport }: SaveButtonProps) {
     if (!response?.ok) {
       window.open(url, '_blank', 'noopener,noreferrer');
     }
+  };
+
+  const applyCategory = async (articleId: string) => {
+    if (!trimmedCategory) return;
+    await updateLibraryItemCategory(articleId, trimmedCategory);
+    setExistingItem((item) =>
+      item?.id === articleId ? { ...item, category: trimmedCategory } : item
+    );
   };
 
   const handleSave = async () => {
@@ -44,7 +96,9 @@ export function SaveButton({ page, messages, canImport }: SaveButtonProps) {
         title: page.title,
         byline: page.byline,
         content: page.content,
+        category: trimmedCategory || undefined,
       });
+      await applyCategory(result.id);
 
       // Save chat history alongside the article
       if (messages.length > 0) {
@@ -54,7 +108,16 @@ export function SaveButton({ page, messages, canImport }: SaveButtonProps) {
       }
 
       setSavedId(result.id);
+      setSavedWasExisting(result.existing);
       setState('saved');
+      setExistingItem({
+        id: result.id,
+        url: page.url,
+        title: page.title,
+        type: 'article',
+        category: trimmedCategory || existingItem?.category,
+      });
+      setLookupState('found');
       await openInActiveTab(result.id);
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Failed to save';
@@ -72,9 +135,20 @@ export function SaveButton({ page, messages, canImport }: SaveButtonProps) {
       const result = await saveLinkToLibrary({
         url: page.url,
         title: page.title || page.url,
+        category: trimmedCategory || undefined,
       });
+      await applyCategory(result.id);
       setSavedId(result.id);
+      setSavedWasExisting(result.existing);
       setState('saved');
+      setExistingItem({
+        id: result.id,
+        url: page.url,
+        title: page.title || page.url,
+        type: 'link',
+        category: trimmedCategory || existingItem?.category,
+      });
+      setLookupState('found');
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Failed to save link';
       setErrorMsg(message);
@@ -85,20 +159,69 @@ export function SaveButton({ page, messages, canImport }: SaveButtonProps) {
 
   if (state === 'saved' && savedId) {
     return (
-      <a
-        href={`${getApiBase()}/reader/${savedId}`}
-        target="_blank"
-        rel="noopener noreferrer"
-        className="flex w-full items-center justify-center gap-2 rounded-xl border border-emerald-500/30 bg-emerald-500/10 px-3 py-2.5 text-sm font-medium text-emerald-200 hover:bg-emerald-500/15"
-      >
-        Open in Reader Library
-        <ExternalLink className="h-4 w-4" />
-      </a>
+      <div className="grid grid-cols-1 gap-2">
+        <div className="flex items-start gap-2 rounded-xl border border-emerald-500/25 bg-emerald-500/10 px-3 py-2.5 text-emerald-100">
+          <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0" />
+          <div className="min-w-0">
+            <p className="text-sm font-medium">
+              {savedWasExisting ? 'Already in Library' : 'Saved to Library'}
+            </p>
+            {trimmedCategory && (
+              <p className="truncate text-xs text-emerald-100/70">Category: {trimmedCategory}</p>
+            )}
+          </div>
+        </div>
+        <a
+          href={`${getApiBase()}/reader/${savedId}`}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="flex w-full items-center justify-center gap-2 rounded-xl border border-emerald-500/30 bg-emerald-500/10 px-3 py-2.5 text-sm font-medium text-emerald-200 hover:bg-emerald-500/15"
+        >
+          Open in Reader Library
+          <ExternalLink className="h-4 w-4" />
+        </a>
+      </div>
     );
   }
 
   return (
     <div className="grid grid-cols-1 gap-2">
+      <div className="grid gap-1.5">
+        <label htmlFor="reader-category" className="text-xs font-medium text-gray-300">
+          Category
+        </label>
+        <input
+          id="reader-category"
+          list="reader-category-suggestions"
+          value={category}
+          onChange={(event) => setCategory(event.target.value)}
+          placeholder={existingItem?.category || 'Read later, papers, products...'}
+          className="h-9 w-full rounded-lg border border-gray-700 bg-gray-950 px-2.5 text-sm text-gray-100 outline-none placeholder:text-gray-500 focus:border-blue-400 focus:ring-2 focus:ring-blue-500/30"
+        />
+        <datalist id="reader-category-suggestions">
+          {CATEGORY_SUGGESTIONS.map((suggestion) => (
+            <option key={suggestion} value={suggestion} />
+          ))}
+        </datalist>
+      </div>
+      {lookupState === 'checking' && (
+        <p className="rounded-lg border border-gray-800 bg-gray-950 px-2.5 py-2 text-xs text-gray-400">
+          Checking Reader Library...
+        </p>
+      )}
+      {lookupState === 'found' && existingItem && (
+        <a
+          href={`${getApiBase()}/reader/${existingItem.id}`}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="flex items-center justify-between gap-2 rounded-lg border border-emerald-500/25 bg-emerald-500/10 px-2.5 py-2 text-xs text-emerald-100 hover:bg-emerald-500/15"
+        >
+          <span className="min-w-0 truncate">
+            Already in Library{existingItem.category ? ` · ${existingItem.category}` : ''}
+          </span>
+          <ExternalLink className="h-3.5 w-3.5 shrink-0" />
+        </a>
+      )}
       <button
         type="button"
         onClick={() => void handleSaveLink()}

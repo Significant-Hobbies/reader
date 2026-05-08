@@ -873,7 +873,7 @@ export async function updateArticle(
     );
   }
 
-  const { notes, aiChat, title, status, tags, aiSummary, keyPoints } = payload;
+  const { notes, aiChat, title, status, tags, aiSummary, keyPoints, category } = payload;
   const updates: Partial<typeof articles.$inferInsert> = {
     updatedAt: new Date(),
   };
@@ -903,6 +903,11 @@ export async function updateArticle(
   if (tags !== undefined) {
     const normalized = normalizeTags(tags);
     updates.tags = serializeJsonColumn(normalized) as unknown as string[];
+  }
+
+  if (typeof category === 'string') {
+    const trimmedCategory = sanitizePlainText(category).slice(0, 50);
+    updates.category = trimmedCategory.length > 0 ? trimmedCategory : null;
   }
 
   if (typeof aiSummary === 'string') {
