@@ -1,15 +1,22 @@
 'use client';
 
-import { BookOpenCheck, FileText, HelpCircle, Quote } from 'lucide-react';
+import { BookOpenCheck, FileText, GitCompareArrows, HelpCircle, Quote } from 'lucide-react';
 
-import type { ResearchBrief } from '../lib/research-brief';
+import type { ResearchBrief, SourceRelationshipMap } from '../lib/research-brief';
 
 interface ResearchBriefPanelProps {
   brief: ResearchBrief;
+  sourceMap?: SourceRelationshipMap | null;
+  isSourceMapLoading?: boolean;
   theme?: 'light' | 'dark' | 'sepia';
 }
 
-export function ResearchBriefPanel({ brief, theme = 'dark' }: ResearchBriefPanelProps) {
+export function ResearchBriefPanel({
+  brief,
+  sourceMap,
+  isSourceMapLoading = false,
+  theme = 'dark',
+}: ResearchBriefPanelProps) {
   const textColor =
     theme === 'dark' ? 'text-gray-100' : theme === 'sepia' ? 'text-[#5b4636]' : 'text-gray-900';
   const mutedColor =
@@ -99,6 +106,57 @@ export function ResearchBriefPanel({ brief, theme = 'dark' }: ResearchBriefPanel
           </div>
         )}
 
+        {(isSourceMapLoading ||
+          Boolean(sourceMap?.consensus.length) ||
+          Boolean(sourceMap?.contradictions.length)) && (
+          <div className={`rounded-md border ${borderColor} ${panelBg} p-4`}>
+            <h4 className={`mb-3 flex items-center gap-2 text-sm font-semibold ${textColor}`}>
+              <GitCompareArrows className="h-4 w-4" />
+              Source map
+            </h4>
+            {isSourceMapLoading ? (
+              <p className={`text-sm ${mutedColor}`}>Mapping saved sources...</p>
+            ) : (
+              <div className="space-y-4">
+                {sourceMap && sourceMap.consensus.length > 0 && (
+                  <div>
+                    <div className={`mb-2 text-xs font-semibold uppercase ${mutedColor}`}>
+                      Consensus
+                    </div>
+                    <ul className="space-y-2">
+                      {sourceMap.consensus.map((item) => (
+                        <li key={item.id} className={`text-sm leading-6 ${textColor}`}>
+                          <span className="font-medium">{item.topic}:</span> {item.summary}
+                          <SourceCount count={item.sourceIds.length} className={mutedColor} />
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
+                {sourceMap && sourceMap.contradictions.length > 0 && (
+                  <div>
+                    <div className={`mb-2 text-xs font-semibold uppercase ${mutedColor}`}>
+                      Contradictions
+                    </div>
+                    <div className="space-y-3">
+                      {sourceMap.contradictions.map((item) => (
+                        <div key={item.id} className={`rounded-md border ${borderColor} p-3`}>
+                          <div className={`mb-2 text-sm font-medium ${textColor}`}>
+                            {item.topic}
+                            <SourceCount count={item.sourceIds.length} className={mutedColor} />
+                          </div>
+                          <p className={`text-xs leading-5 ${mutedColor}`}>{item.claimA}</p>
+                          <p className={`mt-2 text-xs leading-5 ${mutedColor}`}>{item.claimB}</p>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
+        )}
+
         <div className={`rounded-md border ${borderColor} ${panelBg} p-4`}>
           <h4 className={`mb-3 flex items-center gap-2 text-sm font-semibold ${textColor}`}>
             <HelpCircle className="h-4 w-4" />
@@ -115,4 +173,8 @@ export function ResearchBriefPanel({ brief, theme = 'dark' }: ResearchBriefPanel
       </div>
     </section>
   );
+}
+
+function SourceCount({ count, className }: { count: number; className: string }) {
+  return <span className={`ml-2 text-xs ${className}`}>({count} sources)</span>;
 }

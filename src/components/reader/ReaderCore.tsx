@@ -1,13 +1,13 @@
 'use client';
 
-import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { startTransition, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 
 import type { AIConfig } from '../../lib/ai-config';
 import { AI_CONFIG_STORAGE_KEY, DEFAULT_AI_CONFIG } from '../../lib/ai-config';
 import { ANNOTATABLE_SELECTOR } from '../../lib/annotatable';
-import { buildResearchBrief } from '../../lib/research-brief';
+import { buildResearchBrief, type SourceRelationshipMap } from '../../lib/research-brief';
 import type { Article, ElementAnchor, Note, ReaderSettings } from '../../types';
 import { AppearanceToolbar } from '../AppearanceToolbar';
 import { ArticleSummary } from '../ArticleSummary';
@@ -720,6 +720,18 @@ export function ReaderCore({
   }, [notes]);
 
   const researchBrief = useMemo(() => buildResearchBrief({ ...article, notes }), [article, notes]);
+  const sourceMapQuery = useQuery({
+    queryKey: ['source-map', article.id],
+    queryFn: async () => {
+      const response = await fetch(
+        `/api/research/source-map?focusId=${encodeURIComponent(article.id)}`
+      );
+      if (!response.ok) throw new Error('Failed to load source map');
+      return (await response.json()) as SourceRelationshipMap;
+    },
+    enabled: !readOnly && !localMode,
+    staleTime: 60_000,
+  });
 
   const handleSummarySaved = useCallback(
     (summary: string, keyPoints: string[]) => {
@@ -836,7 +848,12 @@ export function ReaderCore({
                     theme={settings.theme}
                     onSummarySaved={handleSummarySaved}
                   />
-                  <ResearchBriefPanel brief={researchBrief} theme={settings.theme} />
+                  <ResearchBriefPanel
+                    brief={researchBrief}
+                    sourceMap={sourceMapQuery.data}
+                    isSourceMapLoading={sourceMapQuery.isLoading}
+                    theme={settings.theme}
+                  />
                 </>
               )}
             </div>

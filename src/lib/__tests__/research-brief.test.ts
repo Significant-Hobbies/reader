@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 
 import type { Article } from '../../types';
-import { buildResearchBrief } from '../research-brief';
+import { buildResearchBrief, buildSourceRelationshipMap } from '../research-brief';
 
 const baseArticle: Article = {
   id: 'article-1',
@@ -41,5 +41,43 @@ describe('buildResearchBrief', () => {
     expect(brief.claims).toEqual([]);
     expect(brief.thesis).toContain('Research source');
     expect(brief.openQuestions[0]).toContain('what evidence supports it');
+  });
+});
+
+describe('buildSourceRelationshipMap', () => {
+  it('maps consensus across saved sources that share a topic', () => {
+    const map = buildSourceRelationshipMap([
+      baseArticle,
+      {
+        ...baseArticle,
+        id: 'article-2',
+        title: 'Operational source',
+        content:
+          'The research shows faster feedback loops improve reliability because teams fix defects before release.',
+      },
+    ]);
+
+    expect(map.consensus[0].sourceIds).toEqual(['article-1', 'article-2']);
+    expect(map.consensus[0].summary).toContain('feedback');
+  });
+
+  it('maps contradictions across saved sources on shared topics', () => {
+    const map = buildSourceRelationshipMap([
+      {
+        ...baseArticle,
+        id: 'article-positive',
+        content:
+          'Automation improves deployment reliability when teams review failures and respond quickly.',
+      },
+      {
+        ...baseArticle,
+        id: 'article-negative',
+        content:
+          'Automation does not improve deployment reliability without process changes and careful failure review.',
+      },
+    ]);
+
+    expect(map.contradictions[0].sourceIds).toEqual(['article-positive', 'article-negative']);
+    expect(map.contradictions[0].topic).toBe('Automation');
   });
 });

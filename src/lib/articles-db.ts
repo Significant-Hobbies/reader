@@ -372,6 +372,22 @@ export async function fetchArticleSummaries(
   }
 }
 
+export async function fetchArticlesForSourceMap(userId: string): Promise<Article[]> {
+  try {
+    const rows = await db
+      .select()
+      .from(articles)
+      .where(eq(articles.userId, userId))
+      .orderBy(desc(articles.updatedAt))
+      .limit(50);
+
+    return rows.map(rowToArticle);
+  } catch (error) {
+    console.error('articles-db: fetchArticlesForSourceMap failed', error);
+    throw error;
+  }
+}
+
 export async function fetchArticleById(id: string, userId: string): Promise<Article | null> {
   try {
     const rows = await db.select().from(articles).where(eq(articles.id, id)).limit(1);
