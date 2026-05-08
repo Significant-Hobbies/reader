@@ -7,12 +7,14 @@ import { createPortal } from 'react-dom';
 import type { AIConfig } from '../../lib/ai-config';
 import { AI_CONFIG_STORAGE_KEY, DEFAULT_AI_CONFIG } from '../../lib/ai-config';
 import { ANNOTATABLE_SELECTOR } from '../../lib/annotatable';
+import { buildResearchBrief } from '../../lib/research-brief';
 import type { Article, ElementAnchor, Note, ReaderSettings } from '../../types';
 import { AppearanceToolbar } from '../AppearanceToolbar';
 import { ArticleSummary } from '../ArticleSummary';
 import { ArticleTagEditor } from '../ArticleTagEditor';
 import { NotesAIChat } from '../NotesAIChat';
 import { getThemeClasses, ReaderView } from '../ReaderView';
+import { ResearchBriefPanel } from '../ResearchBriefPanel';
 import { NoteCard } from './NoteCard';
 import { NoteMarkerGroupMemo } from './NoteMarkerGroup';
 
@@ -717,6 +719,8 @@ export function ReaderCore({
     return grouped;
   }, [notes]);
 
+  const researchBrief = useMemo(() => buildResearchBrief({ ...article, notes }), [article, notes]);
+
   const handleSummarySaved = useCallback(
     (summary: string, keyPoints: string[]) => {
       onArticleChange?.({ aiSummary: summary, keyPoints });
@@ -819,18 +823,21 @@ export function ReaderCore({
             {/* AI Summary Section */}
             <div className="mx-auto max-w-3xl px-8 pt-8">
               {!localMode && (
-                <ArticleSummary
-                  articleId={article.id}
-                  articleContent={article.content}
-                  articleTitle={article.title}
-                  initialSummary={article.aiSummary}
-                  initialKeyPoints={article.keyPoints}
-                  endpointUrl={aiConfig.endpointUrl}
-                  model={aiConfig.model}
-                  apiKey={aiConfig.apiKey}
-                  theme={settings.theme}
-                  onSummarySaved={handleSummarySaved}
-                />
+                <>
+                  <ArticleSummary
+                    articleId={article.id}
+                    articleContent={article.content}
+                    articleTitle={article.title}
+                    initialSummary={article.aiSummary}
+                    initialKeyPoints={article.keyPoints}
+                    endpointUrl={aiConfig.endpointUrl}
+                    model={aiConfig.model}
+                    apiKey={aiConfig.apiKey}
+                    theme={settings.theme}
+                    onSummarySaved={handleSummarySaved}
+                  />
+                  <ResearchBriefPanel brief={researchBrief} theme={settings.theme} />
+                </>
               )}
             </div>
 
