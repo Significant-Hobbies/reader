@@ -1,5 +1,8 @@
 name: AI Code Review
-on: [pull_request]
+on: workflow_dispatch
+
+# Temporarily manual-only: the referenced reviewer action has no `v1` tag,
+# which made every PR show a failed review check before code ran.
 
 permissions:
   contents: read
