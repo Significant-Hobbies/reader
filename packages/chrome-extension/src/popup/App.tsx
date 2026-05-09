@@ -2,6 +2,7 @@ import { useCallback, useEffect, useState } from 'react';
 import {
   AlertTriangle,
   BookmarkPlus,
+  CheckCircle2,
   ExternalLink,
   KeyRound,
   Loader2,
@@ -12,17 +13,30 @@ import type { AuthState, PageContent } from '../side-panel/lib/types';
 import {
   checkAuth,
   clearApiKey,
+  findLibraryItemByUrl,
   getApiBase,
   getApiKey,
   saveLinkToLibrary,
   saveToLibrary,
   setApiKey,
+  updateLibraryItemCategory,
   verifyApiKeyForUser,
+  type ReaderLibraryItem,
 } from '../side-panel/lib/api';
 import { canImportPage, getImportNotice, type ImportNotice } from '../side-panel/lib/importQuality';
 
 type LoadState = 'loading' | 'ready';
 type ActionState = 'idle' | 'working' | 'error';
+type LookupState = 'idle' | 'checking' | 'found' | 'missing' | 'error';
+
+const CATEGORY_SUGGESTIONS = [
+  'Read later',
+  'Research papers',
+  'Blogs',
+  'Products to try',
+  'AI and ML',
+  'Engineering',
+];
 
 async function getCurrentPage(): Promise<{
   page: PageContent | null;
@@ -65,6 +79,9 @@ export function App() {
   const [importNotice, setImportNotice] = useState<ImportNotice | null>(null);
   const [showConnect, setShowConnect] = useState(false);
   const [keyValue, setKeyValue] = useState('');
+  const [category, setCategory] = useState('');
+  const [lookupState, setLookupState] = useState<LookupState>('idle');
+  const [existingItem, setExistingItem] = useState<ReaderLibraryItem | null>(null);
   const [actionState, setActionState] = useState<ActionState>('idle');
   const [error, setError] = useState<string | null>(null);
 
@@ -87,6 +104,33 @@ export function App() {
   useEffect(() => {
     void refresh();
   }, [refresh]);
+
+  useEffect(() => {
+    if (!auth.isAuthenticated || !page?.url) {
+      setLookupState('idle');
+      setExistingItem(null);
+      return;
+    }
+
+    let cancelled = false;
+    setLookupState('checking');
+    setExistingItem(null);
+
+    findLibraryItemByUrl(page.url)
+      .then((item) => {
+        if (cancelled) return;
+        setExistingItem(item);
+        setLookupState(item ? 'found' : 'missing');
+      })
+      .catch(() => {
+        if (cancelled) return;
+        setLookupState('error');
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [auth.isAuthenticated, page?.url]);
 
   const connect = async () => {
     const trimmed = keyValue.trim();
@@ -125,12 +169,17 @@ export function App() {
     setActionState('working');
     setError(null);
     try {
+      const trimmedCategory = category.trim();
       const article = await saveToLibrary({
         url: page.url,
         title: page.title,
         byline: page.byline,
         content: page.content,
+        category: trimmedCategory || undefined,
       });
+      if (trimmedCategory) {
+        await updateLibraryItemCategory(article.id, trimmedCategory);
+      }
       const opened = await openUrlInActiveTab(`${getApiBase()}/reader/${article.id}`);
       if (!opened) {
         chrome.tabs.create({ url: `${getApiBase()}/reader/${article.id}` });
@@ -151,10 +200,15 @@ export function App() {
     setActionState('working');
     setError(null);
     try {
-      await saveLinkToLibrary({
+      const trimmedCategory = category.trim();
+      const result = await saveLinkToLibrary({
         url: page.url,
         title: page.title || page.url,
+        category: trimmedCategory || undefined,
       });
+      if (trimmedCategory) {
+        await updateLibraryItemCategory(result.id, trimmedCategory);
+      }
       setActionState('idle');
       window.close();
     } catch (err) {
@@ -250,6 +304,43 @@ export function App() {
         </div>
       ) : (
         <div className="grid grid-cols-1 gap-2">
+          <div className="grid gap-1.5">
+            <label htmlFor="reader-popup-category" className="text-xs font-medium text-gray-300">
+              Category
+            </label>
+            <input
+              id="reader-popup-category"
+              list="reader-popup-category-suggestions"
+              value={category}
+              onChange={(event) => setCategory(event.target.value)}
+              placeholder={existingItem?.category || 'Read later, papers, products...'}
+              className="h-9 w-full rounded-lg border border-gray-700 bg-gray-900 px-2 text-xs text-gray-100 outline-none placeholder:text-gray-500 focus:ring-2 focus:ring-blue-500"
+            />
+            <datalist id="reader-popup-category-suggestions">
+              {CATEGORY_SUGGESTIONS.map((suggestion) => (
+                <option key={suggestion} value={suggestion} />
+              ))}
+            </datalist>
+          </div>
+          {lookupState === 'checking' && (
+            <p className="rounded-lg border border-gray-800 bg-gray-900 px-2 py-1.5 text-xs text-gray-400">
+              Checking Reader Library...
+            </p>
+          )}
+          {lookupState === 'found' && existingItem && (
+            <a
+              href={`${getApiBase()}/reader/${existingItem.id}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex items-center justify-between gap-2 rounded-lg border border-emerald-500/25 bg-emerald-500/10 px-2 py-1.5 text-xs text-emerald-100 hover:bg-emerald-500/15"
+            >
+              <span className="min-w-0 truncate">
+                <CheckCircle2 className="mr-1 inline h-3.5 w-3.5 align-[-2px]" />
+                Already in Library{existingItem.category ? ` · ${existingItem.category}` : ''}
+              </span>
+              <ExternalLink className="h-3.5 w-3.5 shrink-0" />
+            </a>
+          )}
           <button
             type="button"
             onClick={() => void saveLink()}

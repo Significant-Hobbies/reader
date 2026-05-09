@@ -36,6 +36,48 @@ async function authHeaders(): Promise<Record<string, string>> {
   return { Authorization: `Bearer ${key}` };
 }
 
+export interface ReaderLibraryItem {
+  id: string;
+  url: string;
+  title: string;
+  type?: 'article' | 'pdf' | 'link';
+  category?: string;
+  createdAt?: string;
+}
+
+function normalizeUrlForLookup(value: string): string {
+  try {
+    const url = new URL(value);
+    url.hash = '';
+    const normalized = url.toString();
+    return normalized.endsWith('/') ? normalized.slice(0, -1) : normalized;
+  } catch {
+    return value.trim().replace(/\/$/, '');
+  }
+}
+
+export async function listLibraryItems(): Promise<ReaderLibraryItem[]> {
+  const auth = await authHeaders();
+  const response = await fetch(`${API_BASE}/api/articles`, {
+    headers: auth,
+    cache: 'no-store',
+  });
+
+  if (!response.ok) {
+    const payload = await response.json().catch(() => ({}));
+    throw new Error((payload as { error?: string }).error || 'Failed to check library');
+  }
+
+  const payload = (await response.json()) as unknown;
+  return Array.isArray(payload) ? (payload as ReaderLibraryItem[]) : [];
+}
+
+export async function findLibraryItemByUrl(url: string): Promise<ReaderLibraryItem | null> {
+  const normalizedTarget = normalizeUrlForLookup(url);
+  const items = await listLibraryItems();
+  return items.find((item) => normalizeUrlForLookup(item.url) === normalizedTarget) ?? null;
+}
+
 export async function streamChat(
   config: AIConfig,
   systemPrompt: string,
@@ -144,6 +186,7 @@ export async function saveToLibrary(article: {
   title: string;
   byline?: string | null;
   content: string;
+  category?: string;
 }): Promise<{ id: string; existing: boolean }> {
   const auth = await authHeaders();
   const response = await fetch(`${API_BASE}/api/articles`, {
@@ -163,6 +206,7 @@ export async function saveToLibrary(article: {
 export async function saveLinkToLibrary(link: {
   url: string;
   title: string;
+  category?: string;
 }): Promise<{ id: string; existing: boolean }> {
   const auth = await authHeaders();
   const response = await fetch(`${API_BASE}/api/articles`, {
@@ -173,6 +217,7 @@ export async function saveLinkToLibrary(link: {
       title: link.title,
       content: '',
       type: 'link',
+      category: link.category,
     }),
   });
 
@@ -182,6 +227,23 @@ export async function saveLinkToLibrary(link: {
   }
 
   return response.json();
+}
+
+export async function updateLibraryItemCategory(
+  articleId: string,
+  category: string
+): Promise<void> {
+  const auth = await authHeaders();
+  const response = await fetch(`${API_BASE}/api/articles/${articleId}`, {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json', ...auth },
+    body: JSON.stringify({ category }),
+  });
+
+  if (!response.ok) {
+    const payload = await response.json().catch(() => ({}));
+    throw new Error((payload as { error?: string }).error || 'Failed to update category');
+  }
 }
 
 export async function saveChatHistory(articleId: string, messages: AIChatMessage[]): Promise<void> {

@@ -64,3 +64,4 @@ cache.bin
 
 # CF Pages build output
 .cf-pages-bundle/
+node_modules/
