@@ -7,7 +7,8 @@
     "dev": "vite build --watch",
     "build": "vite build",
     "type-check": "tsc --noEmit",
-    "test": "vitest run"
+    "test": "vitest run",
+    "pack:zip": "pnpm run build && cd dist && zip -qr ../web-annotator-extension-$npm_package_version.zip ."
   },
   "dependencies": {
     "@mozilla/readability": "0.6.0",
