@@ -43,9 +43,6 @@ importers:
       '@saas-maker/ai':
         specifier: ^0.1.0
         version: 0.1.0(@ai-sdk/openai-compatible@2.0.41(zod@4.3.6))(ai@6.0.168(zod@4.3.6))(react-dom@19.2.5(react@19.2.5))(react@19.2.5)
-      '@saas-maker/changelog-widget':
-        specifier: ^0.2.1
-        version: 0.2.1(react-dom@19.2.5(react@19.2.5))(react@19.2.5)
       '@saas-maker/feedback':
         specifier: ^0.2.1
         version: 0.2.1(react-dom@19.2.5(react@19.2.5))(react@19.2.5)
@@ -3027,12 +3024,6 @@ packages:
       ai:
         optional: true
 
-  '@saas-maker/changelog-widget@0.2.1':
-    resolution: {integrity: sha512-tAQb6hr5mOzbyQxKUNWePlllsdNDquHW0G2FG7u9Um2BzgNNi8WF94M5Khz/SlvVoSYvKl1yMFX6sxnj07kynw==}
-    peerDependencies:
-      react: '>=18'
-      react-dom: '>=18'
-
   '@saas-maker/eslint-config@1.0.4':
     resolution: {integrity: sha512-k7xjpLoTpNyaE3wYvGetc+Zw3ib7n4AR1LXPOngLtAw/GNfMNexMsrFxmtglSBwMao9xCeYOQw+DRVLYXuGKww==}
     peerDependencies:
@@ -3645,6 +3636,7 @@ packages:
 
   '@ungap/structured-clone@1.3.0':
     resolution: {integrity: sha512-WmoN8qaIAo7WTYWbAZuG8PYEhn5fkz7dZrqTBZ7dtt//lL2Gwms1IcnQ5yHqjDfX8Ft5j4YzDM23f87zBfDe9g==}
+    deprecated: Potential CWE-502 - Update to 1.3.1 or higher
 
   '@unrs/resolver-binding-android-arm-eabi@1.11.1':
     resolution: {integrity: sha512-ppLRUgHVaGRWUx0R0Ut06Mjo9gBaBkg3v/8AxusGLhsIotbBLuRk51rAzqLC8gq6NyyAojEXglNjzf6R948DNw==}
@@ -9621,11 +9613,6 @@ snapshots:
     optionalDependencies:
       '@ai-sdk/openai-compatible': 2.0.41(zod@4.3.6)
       ai: 6.0.168(zod@4.3.6)
-
-  '@saas-maker/changelog-widget@0.2.1(react-dom@19.2.5(react@19.2.5))(react@19.2.5)':
-    dependencies:
-      react: 19.2.5
-      react-dom: 19.2.5(react@19.2.5)
 
   '@saas-maker/eslint-config@1.0.4(@typescript-eslint/parser@8.58.0(eslint@10.2.1(jiti@2.6.1))(typescript@6.0.3))(eslint-config-next@16.2.4(@typescript-eslint/parser@8.58.0(eslint@10.2.1(jiti@2.6.1))(typescript@6.0.3))(eslint@10.2.1(jiti@2.6.1))(typescript@6.0.3))(eslint@10.2.1(jiti@2.6.1))(typescript@6.0.3)':
     dependencies:

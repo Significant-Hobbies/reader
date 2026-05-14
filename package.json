@@ -50,7 +50,6 @@
     "@radix-ui/react-slot": "1.2.4",
     "@radix-ui/themes": "^3.3.0",
     "@saas-maker/ai": "^0.1.0",
-    "@saas-maker/changelog-widget": "^0.2.1",
     "@saas-maker/feedback": "^0.2.1",
     "@saas-maker/sdk": "^0.3.1",
     "@saas-maker/testimonials": "^0.2.1",
