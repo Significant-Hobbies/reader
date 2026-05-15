@@ -141,6 +141,41 @@ function getContextLine(article: ArticleSummary) {
     : 'Reader article';
 }
 
+function LoadingLibrarySkeleton() {
+  return (
+    <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">
+      {Array.from({ length: 6 }).map((_, index) => (
+        <Card
+          key={index}
+          className="border border-white/10 bg-[#171717]/80 p-0 shadow-[0_18px_55px_rgba(0,0,0,0.22)]"
+        >
+          <div className="space-y-5 p-5">
+            <div className="flex items-center justify-between gap-3">
+              <div className="flex items-center gap-2">
+                <div className="h-8 w-8 animate-pulse rounded-md bg-white/10" />
+                <div className="h-3 w-28 animate-pulse rounded-full bg-white/10" />
+              </div>
+              <div className="h-5 w-14 animate-pulse rounded-full bg-white/10" />
+            </div>
+            <div className="space-y-2">
+              <div className="h-5 w-11/12 animate-pulse rounded-full bg-white/15" />
+              <div className="h-5 w-7/12 animate-pulse rounded-full bg-white/10" />
+            </div>
+            <div className="flex gap-2">
+              <div className="h-5 w-16 animate-pulse rounded-full bg-white/10" />
+              <div className="h-5 w-20 animate-pulse rounded-full bg-white/10" />
+            </div>
+          </div>
+          <div className="flex items-center justify-between border-t border-white/10 px-5 py-3">
+            <div className="h-8 w-24 animate-pulse rounded-md bg-white/10" />
+            <div className="h-3 w-20 animate-pulse rounded-full bg-white/10" />
+          </div>
+        </Card>
+      ))}
+    </div>
+  );
+}
+
 export default function HomeClient() {
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [activeToolbarId, setActiveToolbarId] = useState<string | null>(null);
@@ -156,6 +191,8 @@ export default function HomeClient() {
   const queryClient = useQueryClient();
   const { user, loading: authLoading } = useAuth();
   const isLocalMode = !authLoading && !user;
+  const dataMode = isLocalMode ? 'local' : 'cloud';
+  const articleQueryKey = ['articles', dataMode] as const;
 
   const handleArticleCardClick = (event: MouseEvent<HTMLElement>, articleId: string) => {
     if (event.defaultPrevented) return;
@@ -176,7 +213,7 @@ export default function HomeClient() {
     isLoading,
     error: articlesError,
   } = useQuery<ArticleSummary[]>({
-    queryKey: ['articles', isLocalMode ? 'local' : 'cloud'],
+    queryKey: articleQueryKey,
     queryFn: async () => {
       if (isLocalMode) {
         const localArticles = await getLocalArticles();
@@ -198,7 +235,7 @@ export default function HomeClient() {
   });
 
   const { data: lists = [], error: listsError } = useQuery<List[]>({
-    queryKey: ['lists', isLocalMode ? 'local' : 'cloud'],
+    queryKey: ['lists', dataMode],
     queryFn: async () => {
       if (isLocalMode) {
         return getLocalLists();
@@ -216,7 +253,7 @@ export default function HomeClient() {
   });
 
   const { data: allTags = [] } = useQuery<string[]>({
-    queryKey: ['tags', isLocalMode ? 'local' : 'cloud'],
+    queryKey: ['tags', dataMode],
     queryFn: async () => {
       if (isLocalMode) {
         return getLocalTags();
@@ -469,7 +506,7 @@ export default function HomeClient() {
         return;
       }
 
-      queryClient.setQueryData<ArticleSummary[]>(['articles'], (prev) =>
+      queryClient.setQueryData<ArticleSummary[]>(articleQueryKey, (prev) =>
         Array.isArray(prev)
           ? prev.map((article) => (article.id === id ? { ...article, status } : article))
           : prev
@@ -545,7 +582,7 @@ export default function HomeClient() {
         return;
       }
 
-      queryClient.setQueryData<ArticleSummary[]>(['articles'], (prev) =>
+      queryClient.setQueryData<ArticleSummary[]>(articleQueryKey, (prev) =>
         Array.isArray(prev)
           ? prev.map((article) =>
               article.id === articleId
@@ -581,7 +618,7 @@ export default function HomeClient() {
         return;
       }
 
-      queryClient.setQueryData<ArticleSummary[]>(['articles'], (prev) =>
+      queryClient.setQueryData<ArticleSummary[]>(articleQueryKey, (prev) =>
         Array.isArray(prev)
           ? prev.map((article) =>
               article.id === articleId
@@ -637,19 +674,24 @@ export default function HomeClient() {
     pdfs: articles.filter((article) => article.type === 'pdf').length,
   };
 
+  const activeListName =
+    selectedListId === 'all' ? 'Library' : lists.find((l) => l.id === selectedListId)?.name;
+  const unreadCount = articles.filter((article) => article.status !== 'read').length;
+  const notesCount = articles.reduce((total, article) => total + article.notesCount, 0);
+
   return (
-    <div className="min-h-screen bg-[#15130f] font-sans text-gray-100">
+    <div className="min-h-screen bg-[#0d0d0c] font-sans text-gray-100">
       <Navbar />
-      <div className="flex bg-[radial-gradient(circle_at_top_left,rgba(180,140,92,0.10),transparent_32rem)]">
+      <div className="flex bg-[linear-gradient(180deg,rgba(255,255,255,0.045),rgba(255,255,255,0)_18rem)]">
         {/* Sidebar for Lists */}
-        <aside className="min-h-screen w-64 space-y-4 border-r border-[#2c2923] bg-[#11100d]/70 p-6">
+        <aside className="sticky top-[65px] hidden h-[calc(100vh-65px)] w-[17rem] shrink-0 space-y-4 overflow-y-auto border-r border-white/10 bg-[#111111]/82 p-6 backdrop-blur-xl lg:block">
           <div className="mb-6">
-            <h3 className="mb-3 text-sm font-medium tracking-wide text-gray-400 uppercase">
+            <h3 className="mb-3 text-sm font-medium tracking-wide text-gray-500 uppercase">
               Navigate
             </h3>
             <Link
               href="/"
-              className="flex w-full items-center gap-3 rounded-md bg-[var(--accent-4)] px-3 py-2 text-sm font-medium text-[var(--accent-12)]"
+              className="flex w-full items-center gap-3 rounded-md border border-[var(--accent-7)] bg-[var(--accent-4)] px-3 py-2 text-sm font-medium text-[var(--accent-12)] shadow-[0_8px_24px_rgba(168,124,75,0.12)]"
             >
               <FileText size={18} />
               Library
@@ -664,7 +706,7 @@ export default function HomeClient() {
           </div>
           <div className="mb-4 border-t border-[var(--gray-5)]" />
           <div className="mb-6 flex items-center justify-between">
-            <h3 className="text-sm font-medium tracking-wide text-gray-400 uppercase">Library</h3>
+            <h3 className="text-sm font-medium tracking-wide text-gray-500 uppercase">Library</h3>
             <Dialog open={isListModalOpen} onOpenChange={setIsListModalOpen}>
               <DialogTrigger asChild>
                 <ThemeButton size="1" variant="outline" className="h-7 gap-1 px-2 text-xs">
@@ -779,17 +821,15 @@ export default function HomeClient() {
         </aside>
 
         {/* Main Content */}
-        <div className="flex-1 p-8">
+        <div className="min-w-0 flex-1 p-5 sm:p-8">
           <div className="mx-auto max-w-7xl space-y-6">
-            <div className="mb-8 flex flex-col items-start justify-between gap-4 md:flex-row md:items-center">
+            <div className="mb-8 flex flex-col items-start justify-between gap-4 border-b border-white/10 pb-7 md:flex-row md:items-end">
               <Box>
                 <Text as="p" size="2" weight="medium" color="gray" className="mb-2 uppercase">
                   Personal research library
                 </Text>
-                <Heading as="h1" size="8" weight="bold" className="text-white">
-                  {selectedListId === 'all'
-                    ? 'Library'
-                    : lists.find((l) => l.id === selectedListId)?.name || 'My Library'}
+                <Heading as="h1" size="8" weight="bold" className="text-balance text-white">
+                  {activeListName || 'My Library'}
                 </Heading>
                 <Text as="p" size="3" color="gray" className="mt-2 max-w-2xl">
                   Keep outside links separate from imported articles and research PDFs.
@@ -807,7 +847,29 @@ export default function HomeClient() {
               </ThemeButton>
             </div>
 
-            <Card className="border border-[var(--gray-5)] bg-[var(--gray-2)]/80">
+            <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
+              {[
+                ['Sources', articles.length],
+                ['Unread', unreadCount],
+                ['Notes', notesCount],
+              ].map(([label, value]) => (
+                <Card
+                  key={label}
+                  className="border border-white/10 bg-[#171717]/75 p-0 shadow-[0_18px_55px_rgba(0,0,0,0.18)]"
+                >
+                  <div className="px-4 py-3">
+                    <Text as="p" size="1" weight="medium" color="gray" className="uppercase">
+                      {label}
+                    </Text>
+                    <Text as="p" size="6" weight="bold" className="mt-1 text-white">
+                      {value}
+                    </Text>
+                  </div>
+                </Card>
+              ))}
+            </div>
+
+            <Card className="border border-white/10 bg-[#171717]/80 shadow-[0_18px_55px_rgba(0,0,0,0.18)]">
               <Flex align="center" justify="between" gap="4" wrap="wrap">
                 <SegmentedControl.Root
                   value={contentFilter}
@@ -831,7 +893,7 @@ export default function HomeClient() {
             </Card>
 
             {allTags.length > 0 && (
-              <Card className="border border-[var(--gray-5)] bg-[var(--gray-2)]/70">
+              <Card className="border border-white/10 bg-[#171717]/70">
                 <div className="mb-3 flex items-center gap-2">
                   <Text as="span" size="1" weight="medium" color="gray" className="uppercase">
                     Filter by tag
@@ -871,9 +933,7 @@ export default function HomeClient() {
             )}
 
             {authLoading || isLoading ? (
-              <div className="flex justify-center py-12">
-                <div className="h-8 w-8 animate-spin rounded-full border-b-2 border-white"></div>
-              </div>
+              <LoadingLibrarySkeleton />
             ) : (
               <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">
                 {articles.length === 0 ? (

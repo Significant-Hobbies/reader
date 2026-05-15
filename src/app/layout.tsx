@@ -10,9 +10,6 @@ import { QueryProvider } from '../components/QueryProvider';
 import { SaaSMakerFeedback } from '../components/saasmaker-feedback';
 import { SaasMakerAnalytics } from '../components/SaasMakerAnalytics';
 
-export const dynamic = 'force-dynamic';
-export const fetchCache = 'force-no-store';
-
 const geistSans = Geist({
   variable: '--font-geist-sans',
   subsets: ['latin'],

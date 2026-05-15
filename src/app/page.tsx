@@ -1,28 +1,7 @@
-import { dehydrate } from '@tanstack/react-query';
-
 import HomeClient from '../components/HomeClient';
-import { ReactQueryHydrate } from '../components/ReactQueryHydrate';
-import { fetchArticleSummaries } from '../lib/articles-db';
-import { getCurrentUser } from '../lib/auth-server';
-import { getQueryClient } from '../lib/get-query-client';
 
-export const dynamic = 'force-dynamic';
+export const dynamic = 'force-static';
 
-export default async function Page() {
-  const user = await getCurrentUser();
-
-  const queryClient = getQueryClient();
-
-  if (user) {
-    await queryClient.prefetchQuery({
-      queryKey: ['articles'],
-      queryFn: () => fetchArticleSummaries(user.id),
-    });
-  }
-
-  return (
-    <ReactQueryHydrate state={dehydrate(queryClient)}>
-      <HomeClient />
-    </ReactQueryHydrate>
-  );
+export default function Page() {
+  return <HomeClient />;
 }
