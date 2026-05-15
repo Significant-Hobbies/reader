@@ -1,5 +1,7 @@
 import Link from "next/link";
 
+import { ExportDataButton } from "../../components/ExportDataButton";
+
 export const metadata = {
   title: "About — Web Annotator",
   description:
@@ -41,6 +43,15 @@ export default function AboutPage() {
         Chat queries are sent only to the AI provider you configure. See{" "}
         <Link href="/privacy" className="underline">/privacy</Link>.
       </p>
+
+      <h2 className="mt-8 text-base font-semibold">Your data</h2>
+      <p className="mt-2 text-stone-600">
+        Download every article, board, and list scoped to your account as one
+        JSON file. PDF blobs aren&rsquo;t embedded &mdash; only their storage
+        keys &mdash; so the file stays small. API keys and auth records are
+        excluded.
+      </p>
+      <ExportDataButton />
     </main>
   );
 }
