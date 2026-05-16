@@ -6,6 +6,7 @@ import type { Metadata } from 'next';
 import { Geist, Geist_Mono } from 'next/font/google';
 
 import { AuthProvider } from '../components/AuthProvider';
+import { AnalyticsProvider } from '../components/posthog-provider';
 import { QueryProvider } from '../components/QueryProvider';
 import { SaaSMakerFeedback } from '../components/saasmaker-feedback';
 import { SaasMakerAnalytics } from '../components/SaasMakerAnalytics';
@@ -54,11 +55,13 @@ export default function RootLayout({
     <html lang="en">
       <body className={`${geistSans.variable} ${geistMono.variable} antialiased`}>
         <Theme appearance="dark" accentColor="bronze" grayColor="sand" radius="small" scaling="95%">
-          <AuthProvider>
-            <QueryProvider>{children}</QueryProvider>
-            <SaaSMakerFeedback />
-            <SaasMakerAnalytics />
-          </AuthProvider>
+          <AnalyticsProvider>
+            <AuthProvider>
+              <QueryProvider>{children}</QueryProvider>
+              <SaaSMakerFeedback />
+              <SaasMakerAnalytics />
+            </AuthProvider>
+          </AnalyticsProvider>
         </Theme>
       </body>
     </html>

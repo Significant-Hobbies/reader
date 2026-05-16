@@ -4,6 +4,7 @@ import { Box, Button as ThemeButton, Card, Heading, Text } from '@radix-ui/theme
 import { useState } from 'react';
 
 import { signIn } from '@/lib/auth-client';
+import { captureAuthFailure } from '@/lib/foundry-monitoring';
 
 export default function LoginClient() {
   const [error, setError] = useState<string | null>(null);
@@ -15,8 +16,25 @@ export default function LoginClient() {
     setSigningIn(true);
     try {
       setRedirecting(true);
-      await signIn.social({ provider: 'google', callbackURL: '/' });
+      const result = await signIn.social({ provider: 'google', callbackURL: '/' });
+      if (result?.error) {
+        captureAuthFailure({
+          provider: 'google',
+          stage: 'signin',
+          reason: result.error.message ?? 'Google sign-in failed',
+          source: 'login-client',
+        });
+        setError('Failed to sign in. Please try again.');
+        setSigningIn(false);
+        setRedirecting(false);
+      }
     } catch (err) {
+      captureAuthFailure({
+        provider: 'google',
+        stage: 'signin',
+        reason: err instanceof Error ? err.message : 'Google sign-in failed',
+        source: 'login-client',
+      });
       console.error('Sign-in error:', err);
       setError('Failed to sign in. Please try again.');
       setSigningIn(false);
