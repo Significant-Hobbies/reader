@@ -42,7 +42,7 @@ jobs:
           REQUIRED_SECRETS: BETTER_AUTH_SECRET GOOGLE_CLIENT_ID GOOGLE_CLIENT_SECRET TURSO_AUTH_TOKEN TURSO_DATABASE_URL
         run: |
           set -euo pipefail
-          secret_names="$(pnpm exec wrangler secret list --json | node -e "let input='';process.stdin.on('data',c=>input+=c);process.stdin.on('end',()=>{const parsed=JSON.parse(input);console.log(parsed.map((item)=>item.name).join('\n'))})")"
+          secret_names="$(pnpm exec wrangler secret list --format json | node -e "let input='';process.stdin.on('data',c=>input+=c);process.stdin.on('end',()=>{const parsed=JSON.parse(input);console.log(parsed.map((item)=>item.name).join('\n'))})")"
           for required in $REQUIRED_SECRETS; do
             if ! grep -qx "$required" <<< "$secret_names"; then
               echo "Missing Cloudflare runtime secret: $required"
