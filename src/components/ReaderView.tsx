@@ -67,40 +67,46 @@ const ReaderViewComponent = ({
   const fontClasses = getFontClasses(settings.fontFamily);
   const sizeClasses = getSizeClasses(settings.fontSize);
 
+  const isDark = settings.theme === 'dark';
+  const headingClass = isDark ? 'text-[var(--gray-12)]' : 'text-gray-900';
+  const metaClass = isDark ? 'text-gray-400' : 'text-gray-600';
+  const dividerClass = isDark ? 'border-[var(--gray-5)]' : 'border-gray-200';
+
   return (
     <div className={`min-h-full transition-colors duration-300 ${themeClasses}`}>
-      <div className={`mx-auto max-w-3xl px-8 py-12 ${fontClasses}`}>
-        <h1
-          className={`mb-4 text-4xl font-bold ${settings.theme === 'dark' ? 'text-[var(--gray-12)]' : 'text-gray-900'}`}
-        >
-          {title}
-        </h1>
-        {(byline || readingTimeMinutes) && (
-          <div className="mb-8 space-y-2">
-            {byline && (
-              <p
-                className={`italic ${settings.theme === 'dark' ? 'text-gray-400' : 'text-gray-600'}`}
-              >
-                {byline}
-              </p>
-            )}
-            {readingTimeMinutes && (
-              <div
-                className={`flex items-center gap-1.5 text-sm ${settings.theme === 'dark' ? 'text-gray-400' : 'text-gray-600'}`}
-              >
-                <Clock className="h-4 w-4" />
-                <span>{formatReadingTime(readingTimeMinutes)}</span>
-              </div>
-            )}
-          </div>
-        )}
+      <article className={`mx-auto max-w-3xl px-6 py-12 sm:px-8 ${fontClasses}`}>
+        <header className={`mb-10 border-b pb-6 ${dividerClass}`}>
+          <h1
+            className={`text-4xl leading-tight font-bold tracking-tight text-pretty md:text-[2.75rem] ${headingClass}`}
+          >
+            {title}
+          </h1>
+          {(byline || readingTimeMinutes) && (
+            <div
+              className={`mt-4 flex flex-wrap items-center gap-x-3 gap-y-1.5 text-sm ${metaClass}`}
+            >
+              {byline && <span className="italic">{byline}</span>}
+              {byline && readingTimeMinutes && (
+                <span aria-hidden="true" className="opacity-50">
+                  ·
+                </span>
+              )}
+              {readingTimeMinutes && (
+                <span className="inline-flex items-center gap-1.5">
+                  <Clock className="h-4 w-4" />
+                  {formatReadingTime(readingTimeMinutes)}
+                </span>
+              )}
+            </div>
+          )}
+        </header>
         <div
           suppressHydrationWarning
           className={`prose max-w-none transition-all duration-300 ${sizeClasses} ${themeClasses}`}
           ref={contentRef}
           dangerouslySetInnerHTML={{ __html: content }}
         />
-      </div>
+      </article>
     </div>
   );
 };

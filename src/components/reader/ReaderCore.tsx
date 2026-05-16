@@ -94,6 +94,7 @@ export function ReaderCore({
   const [selectionMenu, setSelectionMenu] = useState<SelectionActionMenuState | null>(null);
   const [queuedAIPrompt, setQueuedAIPrompt] = useState<string | null>(null);
   const [aiConfig] = useState<AIConfig>(() => loadAIConfig());
+  const [recentlySaved, setRecentlySaved] = useState(false);
 
   // Layout
   const [leftPanelWidth, setLeftPanelWidth] = useState(66.66);
@@ -154,8 +155,16 @@ export function ReaderCore({
         prev ? { ...prev, notes: updatedNotes, notesCount: updatedNotes.length } : prev
       );
       queryClient.invalidateQueries({ queryKey: ['articles'] });
+      setRecentlySaved(true);
     },
   });
+
+  // Clear the "Saved" indicator a moment after a successful save
+  useEffect(() => {
+    if (!recentlySaved) return;
+    const timer = setTimeout(() => setRecentlySaved(false), 1800);
+    return () => clearTimeout(timer);
+  }, [recentlySaved]);
 
   const {
     mutate: persistTitle,
@@ -788,12 +797,9 @@ export function ReaderCore({
                 className="group w-full text-left"
                 title="Click to edit title"
               >
-                <h1 className="text-2xl leading-snug font-semibold text-[var(--gray-12)] transition-colors group-hover:text-[var(--accent-11)]">
+                <h1 className="truncate text-2xl leading-snug font-semibold text-[var(--gray-12)] decoration-[var(--accent-8)] decoration-2 underline-offset-4 transition-colors group-hover:underline">
                   {titleDraft.trim() || article?.title || article?.url || 'Untitled article'}
                 </h1>
-                <p className="text-xs text-gray-500 opacity-0 transition-opacity group-hover:opacity-100">
-                  Click to edit title
-                </p>
               </button>
             )}
             {!readOnly && (isTitleError || isTitleSaving) && (
@@ -807,17 +813,16 @@ export function ReaderCore({
             )}
           </div>
 
-          <div className="ml-auto flex items-center gap-4">
+          <div className="ml-auto flex items-center gap-3">
             {!readOnly && <AppearanceToolbar settings={settings} onUpdate={updateSettings} />}
-            {!readOnly && (
+            {!readOnly && (isNotesSaving || recentlySaved) && (
               <span
-                className={`rounded-sm border px-2 py-0.5 text-xs font-medium ${
-                  isNotesSaving
-                    ? 'border-yellow-800 bg-yellow-950/40 text-yellow-400'
-                    : 'border-green-800 bg-green-950/35 text-green-400'
+                aria-live="polite"
+                className={`hidden text-xs font-medium transition-opacity sm:inline ${
+                  isNotesSaving ? 'text-yellow-400' : 'text-[var(--gray-10)]'
                 }`}
               >
-                {isNotesSaving ? 'Saving...' : 'Saved'}
+                {isNotesSaving ? 'Saving…' : 'Saved'}
               </span>
             )}
             {headerActions}
@@ -974,10 +979,12 @@ export function ReaderCore({
           {activeSidebarTab === 'notes' ? (
             <div className="flex-grow space-y-4 overflow-y-auto p-4">
               {notes.length === 0 && (
-                <div className="mt-10 text-center text-gray-500">
-                  <p>No notes yet.</p>
+                <div className="mx-auto mt-12 max-w-xs rounded-md border border-dashed border-[var(--gray-6)] bg-[var(--gray-2)]/60 p-5 text-center">
+                  <p className="text-sm font-medium text-[var(--gray-12)]">No notes yet</p>
                   {!readOnly && (
-                    <p className="text-sm">Select text, then use Add note from the actions menu.</p>
+                    <p className="mt-1.5 text-xs leading-5 text-[var(--gray-10)]">
+                      Select any text in the article to add a note or ask AI about it.
+                    </p>
                   )}
                 </div>
               )}

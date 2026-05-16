@@ -147,9 +147,9 @@ function LoadingLibrarySkeleton() {
       {Array.from({ length: 6 }).map((_, index) => (
         <Card
           key={index}
-          className="border border-white/10 bg-[#171717]/80 p-0 shadow-[0_18px_55px_rgba(0,0,0,0.22)]"
+          className="border border-l-2 border-[var(--gray-5)] border-l-[var(--gray-6)] bg-[var(--gray-2)]/75 p-0"
         >
-          <div className="space-y-5 p-5">
+          <div className="space-y-4 p-5">
             <div className="flex items-center justify-between gap-3">
               <div className="flex items-center gap-2">
                 <div className="h-8 w-8 animate-pulse rounded-md bg-white/10" />
@@ -166,7 +166,7 @@ function LoadingLibrarySkeleton() {
               <div className="h-5 w-20 animate-pulse rounded-full bg-white/10" />
             </div>
           </div>
-          <div className="flex items-center justify-between border-t border-white/10 px-5 py-3">
+          <div className="flex items-center justify-between border-t border-[var(--gray-5)] px-5 py-3">
             <div className="h-8 w-24 animate-pulse rounded-md bg-white/10" />
             <div className="h-3 w-20 animate-pulse rounded-full bg-white/10" />
           </div>
@@ -682,9 +682,9 @@ export default function HomeClient() {
   return (
     <div className="min-h-screen bg-[#0d0d0c] font-sans text-gray-100">
       <Navbar />
-      <div className="flex bg-[linear-gradient(180deg,rgba(255,255,255,0.045),rgba(255,255,255,0)_18rem)]">
+      <div className="flex">
         {/* Sidebar for Lists */}
-        <aside className="sticky top-[65px] hidden h-[calc(100vh-65px)] w-[17rem] shrink-0 space-y-4 overflow-y-auto border-r border-white/10 bg-[#111111]/82 p-6 backdrop-blur-xl lg:block">
+        <aside className="sticky top-[65px] hidden h-[calc(100vh-65px)] w-[16rem] shrink-0 space-y-4 overflow-y-auto border-r border-white/10 bg-[#101010]/90 p-5 backdrop-blur-xl lg:block">
           <div className="mb-6">
             <h3 className="mb-3 text-sm font-medium tracking-wide text-gray-500 uppercase">
               Navigate
@@ -822,108 +822,94 @@ export default function HomeClient() {
 
         {/* Main Content */}
         <div className="min-w-0 flex-1 p-5 sm:p-8">
-          <div className="mx-auto max-w-7xl space-y-6">
-            <div className="mb-8 flex flex-col items-start justify-between gap-4 border-b border-white/10 pb-7 md:flex-row md:items-end">
-              <Box>
-                <Text as="p" size="2" weight="medium" color="gray" className="mb-2 uppercase">
-                  Personal research library
-                </Text>
-                <Heading as="h1" size="8" weight="bold" className="text-balance text-white">
-                  {activeListName || 'My Library'}
+          <div className="mx-auto max-w-6xl space-y-6">
+            <header className="flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
+              <div className="min-w-0">
+                <Heading
+                  as="h1"
+                  size="7"
+                  weight="bold"
+                  className="text-balance text-[var(--gray-12)]"
+                >
+                  {activeListName || 'Library'}
                 </Heading>
-                <Text as="p" size="3" color="gray" className="mt-2 max-w-2xl">
-                  Keep outside links separate from imported articles and research PDFs.
+                <Text as="p" size="2" color="gray" className="mt-1.5">
+                  {articles.length === 0
+                    ? 'Save links, import articles, and read PDFs in one place.'
+                    : `${articles.length} ${articles.length === 1 ? 'source' : 'sources'}${
+                        unreadCount > 0 ? ` · ${unreadCount} unread` : ''
+                      }${notesCount > 0 ? ` · ${notesCount} ${notesCount === 1 ? 'note' : 'notes'}` : ''}`}
                 </Text>
                 {isLocalMode && (
                   <ThemeBadge color="bronze" variant="surface" className="mt-3">
                     Local only on this browser
                   </ThemeBadge>
                 )}
-              </Box>
+              </div>
 
-              <ThemeButton size="3" onClick={() => setShowAddArticleDialog(true)} className="gap-2">
+              <ThemeButton
+                size="3"
+                onClick={() => setShowAddArticleDialog(true)}
+                className="shrink-0 gap-2"
+              >
                 <Plus className="h-4 w-4" />
                 Add Source
               </ThemeButton>
-            </div>
+            </header>
 
-            <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
-              {[
-                ['Sources', articles.length],
-                ['Unread', unreadCount],
-                ['Notes', notesCount],
-              ].map(([label, value]) => (
-                <Card
-                  key={label}
-                  className="border border-white/10 bg-[#171717]/75 p-0 shadow-[0_18px_55px_rgba(0,0,0,0.18)]"
+            <div className="flex flex-wrap items-center justify-between gap-3">
+              <SegmentedControl.Root
+                value={contentFilter}
+                onValueChange={(value) => setContentFilter(value as ContentFilter)}
+                size="2"
+              >
+                {contentFilters.map((filter) => (
+                  <SegmentedControl.Item key={filter.id} value={filter.id}>
+                    {filter.label}
+                    <span className="ml-1.5 text-[var(--gray-10)]">{filterCounts[filter.id]}</span>
+                  </SegmentedControl.Item>
+                ))}
+              </SegmentedControl.Root>
+              {(selectedTag || contentFilter !== 'all' || selectedListId !== 'all') && (
+                <button
+                  onClick={() => {
+                    setSelectedListId('all');
+                    setSelectedTag(null);
+                    setContentFilter('all');
+                  }}
+                  className="text-xs text-[var(--gray-11)] underline-offset-2 transition-colors hover:text-[var(--gray-12)] hover:underline"
                 >
-                  <div className="px-4 py-3">
-                    <Text as="p" size="1" weight="medium" color="gray" className="uppercase">
-                      {label}
-                    </Text>
-                    <Text as="p" size="6" weight="bold" className="mt-1 text-white">
-                      {value}
-                    </Text>
-                  </div>
-                </Card>
-              ))}
+                  Clear filters
+                </button>
+              )}
             </div>
-
-            <Card className="border border-white/10 bg-[#171717]/80 shadow-[0_18px_55px_rgba(0,0,0,0.18)]">
-              <Flex align="center" justify="between" gap="4" wrap="wrap">
-                <SegmentedControl.Root
-                  value={contentFilter}
-                  onValueChange={(value) => setContentFilter(value as ContentFilter)}
-                  size="3"
-                >
-                  {contentFilters.map((filter) => (
-                    <SegmentedControl.Item key={filter.id} value={filter.id}>
-                      {filter.label}
-                    </SegmentedControl.Item>
-                  ))}
-                </SegmentedControl.Root>
-                <Flex gap="2" wrap="wrap">
-                  {contentFilters.map((filter) => (
-                    <ThemeBadge key={filter.id} variant="surface" color="gray" size="2">
-                      {filter.label} {filterCounts[filter.id]}
-                    </ThemeBadge>
-                  ))}
-                </Flex>
-              </Flex>
-            </Card>
 
             {allTags.length > 0 && (
-              <Card className="border border-white/10 bg-[#171717]/70">
-                <div className="mb-3 flex items-center gap-2">
-                  <Text as="span" size="1" weight="medium" color="gray" className="uppercase">
-                    Filter by tag
-                  </Text>
-                  {selectedTag && (
-                    <button
-                      onClick={() => setSelectedTag(null)}
-                      className="text-xs text-gray-300 transition-colors hover:text-white"
-                    >
-                      Clear filter
-                    </button>
-                  )}
-                </div>
-                <div className="flex flex-wrap gap-2">
-                  {allTags.map((tag) => (
-                    <button
-                      key={tag}
-                      onClick={() => setSelectedTag(selectedTag === tag ? null : tag)}
-                      className={`inline-flex items-center rounded-sm border px-2.5 py-1 text-xs font-medium transition-all ${
-                        selectedTag === tag
-                          ? 'ring-2 ring-gray-500 ring-offset-2 ring-offset-gray-950'
-                          : ''
-                      } ${getTagColor(tag)} hover:opacity-80`}
-                    >
-                      {tag}
-                      {selectedTag === tag && <X className="ml-1 h-3 w-3" />}
-                    </button>
-                  ))}
-                </div>
-              </Card>
+              <div className="-mx-2 flex flex-nowrap items-center gap-2 overflow-x-auto px-2 pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+                <Text
+                  as="span"
+                  size="1"
+                  weight="medium"
+                  color="gray"
+                  className="shrink-0 tracking-wide uppercase"
+                >
+                  Tags
+                </Text>
+                {allTags.map((tag) => (
+                  <button
+                    key={tag}
+                    onClick={() => setSelectedTag(selectedTag === tag ? null : tag)}
+                    className={`inline-flex shrink-0 items-center rounded-full border px-2.5 py-0.5 text-xs font-medium transition-all ${
+                      selectedTag === tag
+                        ? 'ring-1 ring-[var(--accent-9)] ring-offset-1 ring-offset-[#0d0d0c]'
+                        : ''
+                    } ${getTagColor(tag)} hover:opacity-80`}
+                  >
+                    {tag}
+                    {selectedTag === tag && <X className="ml-1 h-3 w-3" />}
+                  </button>
+                ))}
+              </div>
             )}
 
             {articlesError && (
@@ -1007,15 +993,15 @@ export default function HomeClient() {
                       (isPDF && Boolean(formatFileSize(article.pdfMetadata?.fileSize))) ||
                       article.notesCount > 0;
                     const cardTone = isLink
-                      ? 'border-l-[3px] border-l-[var(--gray-7)]'
+                      ? 'border-l-2 border-l-[var(--gray-6)]'
                       : isPDF
-                        ? 'border-l-[3px] border-l-[var(--accent-8)]'
-                        : 'border-l-[3px] border-l-[var(--gray-5)]';
+                        ? 'border-l-2 border-l-[var(--accent-8)]'
+                        : 'border-l-2 border-l-[var(--accent-6)]/60';
                     return (
                       <Card
                         asChild
                         key={article.id}
-                        className={`group border border-[var(--gray-5)] bg-[var(--gray-2)]/85 p-0 shadow-[0_18px_55px_rgba(0,0,0,0.22)] transition hover:-translate-y-0.5 hover:border-[var(--accent-7)] hover:bg-[var(--gray-3)] ${cardTone}`}
+                        className={`group border border-[var(--gray-5)] bg-[var(--gray-2)]/75 p-0 transition-colors duration-150 hover:border-[var(--gray-7)] hover:bg-[var(--gray-3)]/85 ${cardTone}`}
                       >
                         <article
                           onClick={(event) => {
