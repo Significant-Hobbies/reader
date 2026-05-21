@@ -22,6 +22,8 @@ export function PDFViewer({ pdfUrl, settings }: PDFViewerProps) {
   const [scale, setScale] = useState(1.0);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  // Bumped on retry to force <Document> to remount and re-fetch the PDF.
+  const [reloadKey, setReloadKey] = useState(0);
 
   const themeClasses = getThemeClasses(settings.theme);
 
@@ -33,8 +35,16 @@ export function PDFViewer({ pdfUrl, settings }: PDFViewerProps) {
 
   function onDocumentLoadError(error: Error) {
     console.error('Error loading PDF:', error);
-    setError('Failed to load PDF. Please try again.');
+    setError("Couldn't load this PDF. It may be unavailable, or your connection dropped.");
     setIsLoading(false);
+  }
+
+  function retryLoad() {
+    setError(null);
+    setIsLoading(true);
+    setNumPages(null);
+    setPageNumber(1);
+    setReloadKey((key) => key + 1);
   }
 
   const goToPrevPage = () => {
@@ -113,33 +123,41 @@ export function PDFViewer({ pdfUrl, settings }: PDFViewerProps) {
         )}
 
         {error && (
-          <div className="mb-6 rounded-lg border border-red-700 bg-red-900/50 px-6 py-4 text-red-200">
-            {error}
+          <div className="mb-6 flex flex-wrap items-center justify-between gap-3 rounded-lg border border-red-700 bg-red-900/50 px-6 py-4 text-red-200">
+            <span className="text-sm">{error}</span>
+            <button
+              onClick={retryLoad}
+              className="rounded-md border border-red-500/50 bg-red-500/20 px-3 py-1.5 text-sm font-medium text-red-100 transition hover:bg-red-500/30"
+            >
+              Try again
+            </button>
           </div>
         )}
 
-        <div className="flex justify-center">
-          <Document
-            key={pdfUrl}
-            file={pdfUrl}
-            onLoadSuccess={onDocumentLoadSuccess}
-            onLoadError={onDocumentLoadError}
-            loading={
-              <div className="flex items-center justify-center py-20">
-                <div className="h-12 w-12 animate-spin rounded-full border-b-2 border-[var(--accent-10)]"></div>
-              </div>
-            }
-            className="pdf-document"
-          >
-            <Page
-              pageNumber={pageNumber}
-              scale={scale}
-              renderTextLayer={true}
-              renderAnnotationLayer={true}
-              className="shadow-2xl"
-            />
-          </Document>
-        </div>
+        {!error && (
+          <div className="flex justify-center">
+            <Document
+              key={`${pdfUrl}-${reloadKey}`}
+              file={pdfUrl}
+              onLoadSuccess={onDocumentLoadSuccess}
+              onLoadError={onDocumentLoadError}
+              loading={
+                <div className="flex items-center justify-center py-20">
+                  <div className="h-12 w-12 animate-spin rounded-full border-b-2 border-[var(--accent-10)]"></div>
+                </div>
+              }
+              className="pdf-document"
+            >
+              <Page
+                pageNumber={pageNumber}
+                scale={scale}
+                renderTextLayer={true}
+                renderAnnotationLayer={true}
+                className="shadow-2xl"
+              />
+            </Document>
+          </div>
+        )}
 
         <style jsx global>{`
           .pdf-document {

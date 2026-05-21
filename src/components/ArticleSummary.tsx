@@ -2,6 +2,7 @@
 
 import { useCallback, useState } from 'react';
 
+import { trackCoreAction } from '../lib/analytics';
 import type { SummaryLength } from '../types';
 
 interface ArticleSummaryProps {
@@ -62,6 +63,9 @@ export function ArticleSummary({
       const data = await response.json();
       setSummary(data.summary);
       setKeyPoints(data.keyPoints || []);
+
+      // Analytics — core action: an AI summary was generated.
+      trackCoreAction('summary_generated');
 
       // Save to database
       await fetch(`/api/articles/${articleId}`, {

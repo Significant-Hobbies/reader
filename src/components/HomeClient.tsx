@@ -27,6 +27,7 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { type MouseEvent, useState } from 'react';
 
+import { trackActivatedOnce, trackCoreAction } from '../lib/analytics';
 import {
   addLocalArticleToList,
   createLocalList,
@@ -321,6 +322,9 @@ export default function HomeClient() {
       return savedData.id as string;
     },
     onSuccess: () => {
+      // Analytics — core action: a source was saved. `activated` once.
+      trackActivatedOnce();
+      trackCoreAction('source_saved');
       queryClient.invalidateQueries({ queryKey: ['articles'] });
       queryClient.invalidateQueries({ queryKey: ['tags'] });
       setShowAddArticleDialog(false);
@@ -369,6 +373,9 @@ export default function HomeClient() {
       return data.id as string;
     },
     onSuccess: () => {
+      // Analytics — core action: a PDF source was saved. `activated` once.
+      trackActivatedOnce();
+      trackCoreAction('source_saved');
       queryClient.invalidateQueries({ queryKey: ['articles'] });
       queryClient.invalidateQueries({ queryKey: ['tags'] });
       setShowAddArticleDialog(false);
@@ -422,6 +429,9 @@ export default function HomeClient() {
       return response.json();
     },
     onSuccess: () => {
+      // Analytics — core action: a link source was saved. `activated` once.
+      trackActivatedOnce();
+      trackCoreAction('source_saved');
       queryClient.invalidateQueries({ queryKey: ['articles'] });
       queryClient.invalidateQueries({ queryKey: ['tags'] });
       setShowAddArticleDialog(false);
@@ -946,6 +956,12 @@ export default function HomeClient() {
                         <Plus className="h-4 w-4" />
                         Add Source
                       </ThemeButton>
+                      <Link
+                        href="/welcome"
+                        className="mt-4 text-xs text-[var(--gray-11)] underline-offset-2 hover:text-[var(--gray-12)] hover:underline"
+                      >
+                        New here? See what Web Annotator does
+                      </Link>
                     </div>
                   </Card>
                 ) : filteredArticles.length === 0 ? (

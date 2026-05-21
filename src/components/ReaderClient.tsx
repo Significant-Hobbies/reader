@@ -3,17 +3,35 @@
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { Share2 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 
 import type { Article } from '../types';
 import { Navbar } from './Navbar';
 import { ArticleShareDialog } from './reader/ArticleShareDialog';
 import { ReaderCore } from './reader/ReaderCore';
 
+/**
+ * True below the `md` breakpoint (768px). On mobile the reader must show the
+ * article OR the annotation sidebar — never both side-by-side — so we pass
+ * `compact` to ReaderCore, which then overlays the sidebar via a toggle.
+ */
+function useIsMobileViewport(): boolean {
+  const [isMobile, setIsMobile] = useState(false);
+  useEffect(() => {
+    const mql = window.matchMedia('(max-width: 767px)');
+    const update = () => setIsMobile(mql.matches);
+    update();
+    mql.addEventListener('change', update);
+    return () => mql.removeEventListener('change', update);
+  }, []);
+  return isMobile;
+}
+
 export default function ReaderClient({ articleId }: { articleId: string }) {
   const router = useRouter();
   const queryClient = useQueryClient();
   const [shareOpen, setShareOpen] = useState(false);
+  const isMobile = useIsMobileViewport();
 
   const {
     data: article,
@@ -66,9 +84,10 @@ export default function ReaderClient({ articleId }: { articleId: string }) {
   return (
     <div className="flex h-screen flex-col overflow-hidden bg-[#15130f] bg-[radial-gradient(circle_at_top_left,rgba(180,140,92,0.10),transparent_32rem)] font-sans text-gray-100">
       <Navbar />
-      <div className="flex flex-1 overflow-hidden p-4 md:p-6">
+      <div className="flex flex-1 overflow-hidden p-2 md:p-6">
         <ReaderCore
           article={article}
+          compact={isMobile}
           headerActions={
             <button
               onClick={() => setShareOpen(true)}

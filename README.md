@@ -5,6 +5,17 @@
 
 A modern web application for capturing and annotating articles with a distraction-free reading experience.
 
+## Deployment & External Services
+
+| Concern      | Service                                                                                      |
+| ------------ | -------------------------------------------------------------------------------------------- |
+| Hosting      | Cloudflare Workers (`reader`) via `@opennextjs/cloudflare`                                   |
+| Database     | Turso (libSQL) via Drizzle ORM                                                               |
+| Auth         | better-auth + Google OAuth                                                                   |
+| File storage | Cloudflare R2 (`reader-pdfs`, bound as `PDFS_BUCKET`)                                        |
+| AI           | free-ai-gateway (Workers AI chokepoint); BYOK providers (OpenAI/Anthropic/Gemini) + local AI |
+| CI/CD        | GitHub Actions — auto-deploy to Cloudflare on push to `main`                                 |
+
 ## Problem
 
 Information overload is real. You find valuable articles across the web, but there's no easy way to save them in a clean format, annotate them with your thoughts, and organize them for future reference. Browser bookmarks are cluttered, read-it-later apps lack annotation capabilities, and note-taking tools don't handle web content well.

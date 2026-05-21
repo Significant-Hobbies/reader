@@ -6,6 +6,7 @@ import { createPortal } from 'react-dom';
 
 import type { AIConfig } from '../../lib/ai-config';
 import { AI_CONFIG_STORAGE_KEY, DEFAULT_AI_CONFIG } from '../../lib/ai-config';
+import { trackCoreAction } from '../../lib/analytics';
 import { ANNOTATABLE_SELECTOR } from '../../lib/annotatable';
 import { buildResearchBrief, type SourceRelationshipMap } from '../../lib/research-brief';
 import type { Article, ElementAnchor, Note, ReaderSettings } from '../../types';
@@ -404,6 +405,8 @@ export function ReaderCore({
       anchor,
     };
     setNotes((prev) => [...prev, newNote]);
+    // Analytics — core action: a note / highlight was added while reading.
+    trackCoreAction('note_added');
   }, []);
 
   const openSelectionActionsMenu = useCallback(
@@ -910,7 +913,8 @@ export function ReaderCore({
       {compact && (
         <button
           onClick={() => setShowSidebar(!showSidebar)}
-          className="absolute top-2 right-2 z-40 rounded-md border border-[var(--gray-6)] bg-[var(--gray-3)] px-2 py-1 text-xs text-gray-300 transition-colors hover:bg-[var(--gray-4)]"
+          aria-label={showSidebar ? 'Hide notes sidebar' : 'Show notes sidebar'}
+          className="absolute top-2 right-2 z-40 inline-flex h-11 min-w-11 items-center justify-center rounded-md border border-[var(--gray-6)] bg-[var(--gray-3)] px-3 text-xs font-medium text-gray-300 transition-colors hover:bg-[var(--gray-4)]"
         >
           {showSidebar ? 'Hide' : 'Notes'}
         </button>
@@ -922,7 +926,15 @@ export function ReaderCore({
           className="z-20 flex h-full flex-col rounded-lg border border-[var(--gray-5)] bg-[var(--gray-2)]/85 shadow-[0_18px_55px_rgba(0,0,0,0.22)] backdrop-blur"
           style={
             compact
-              ? { position: 'absolute', right: 0, top: 0, width: '300px', zIndex: 30 }
+              ? {
+                  position: 'absolute',
+                  right: 0,
+                  top: 0,
+                  // Never wider than the viewport — avoids horizontal scroll
+                  // on a 390px phone while staying usable.
+                  width: 'min(320px, 92vw)',
+                  zIndex: 30,
+                }
               : { width: `${100 - leftPanelWidth}%` }
           }
         >

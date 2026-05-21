@@ -13,7 +13,13 @@ export default defineConfig({
     baseURL,
     trace: 'on-first-retry',
   },
-  projects: [{ name: 'chromium', use: { ...devices['Desktop Chrome'] } }],
+  projects: [
+    // Desktop baseline.
+    { name: 'desktop', use: { ...devices['Desktop Chrome'] } },
+    // Mobile-viewport project — iPhone 13 is 390px wide, the Wave 1 target.
+    // The reader / annotation view is the reader project's mobile focus.
+    { name: 'mobile', use: { ...devices['iPhone 13'] } },
+  ],
   webServer: {
     command: `pnpm dev:app`,
     url: baseURL,
