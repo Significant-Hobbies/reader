@@ -96,6 +96,7 @@ export function ReaderCore({
   const [queuedAIPrompt, setQueuedAIPrompt] = useState<string | null>(null);
   const [aiConfig] = useState<AIConfig>(() => loadAIConfig());
   const [recentlySaved, setRecentlySaved] = useState(false);
+  const [hasUnsavedNoteChanges, setHasUnsavedNoteChanges] = useState(false);
 
   // Layout
   const [leftPanelWidth, setLeftPanelWidth] = useState(66.66);
@@ -133,7 +134,13 @@ export function ReaderCore({
 
   // ---- Mutations (skipped in readOnly mode) ----
 
-  const { mutate: persistNotes, isPending: isNotesSaving } = useMutation({
+  const {
+    mutate: persistNotes,
+    isPending: isNotesSaving,
+    isError: isNotesError,
+    error: notesMutationError,
+    reset: resetNotesMutation,
+  } = useMutation({
     mutationFn: async (updatedNotes: Note[]) => {
       if (readOnly) return updatedNotes;
       if (onArticleChange) {
@@ -152,6 +159,7 @@ export function ReaderCore({
     },
     onSuccess: (updatedNotes) => {
       if (readOnly) return;
+      setHasUnsavedNoteChanges(false);
       queryClient.setQueryData<Article>(['article', id], (prev) =>
         prev ? { ...prev, notes: updatedNotes, notesCount: updatedNotes.length } : prev
       );
@@ -211,6 +219,9 @@ export function ReaderCore({
       setNotes(article.notes ?? []);
       setTitleDraft(article.title || article.url || '');
       setIsTitleEditing(false);
+      setHasUnsavedNoteChanges(false);
+      setRecentlySaved(false);
+      resetNotesMutation();
     });
 
     const maxExistingId = (article.notes ?? []).reduce(
@@ -219,7 +230,7 @@ export function ReaderCore({
     );
     nextNoteIdRef.current = maxExistingId;
     hasInitializedNotesRef.current = false;
-  }, [article]);
+  }, [article, resetNotesMutation]);
 
   // Debounced title save
   useEffect(() => {
@@ -396,18 +407,30 @@ export function ReaderCore({
     };
   }, []);
 
-  const createNote = useCallback((text = '', anchor?: Note['anchor']) => {
-    nextNoteIdRef.current += 1;
-    const noteId = nextNoteIdRef.current;
-    const newNote: Note = {
-      id: noteId,
-      text,
-      anchor,
-    };
-    setNotes((prev) => [...prev, newNote]);
-    // Analytics — core action: a note / highlight was added while reading.
-    trackCoreAction('note_added');
-  }, []);
+  const markNotesChanged = useCallback(() => {
+    resetNotesMutation();
+    setRecentlySaved(false);
+    setHasUnsavedNoteChanges(true);
+  }, [resetNotesMutation]);
+
+  const createNote = useCallback(
+    (text = '', anchor?: Note['anchor']) => {
+      nextNoteIdRef.current += 1;
+      const noteId = nextNoteIdRef.current;
+      const newNote: Note = {
+        id: noteId,
+        text,
+        anchor,
+      };
+      markNotesChanged();
+      setNotes((prev) => [...prev, newNote]);
+      setActiveSidebarTab('notes');
+      setShowSidebar(true);
+      // Analytics — core action: a note / highlight was added while reading.
+      trackCoreAction('note_added');
+    },
+    [markNotesChanged]
+  );
 
   const openSelectionActionsMenu = useCallback(
     (clientX: number, clientY: number) => {
@@ -529,13 +552,21 @@ export function ReaderCore({
     setSelectionMenu(null);
   }, [selectionMenu, onSpawnAIChat, article.id]);
 
-  const handleNoteChange = useCallback((noteId: number, text: string) => {
-    setNotes((prev) => prev.map((n) => (n.id === noteId ? { ...n, text } : n)));
-  }, []);
+  const handleNoteChange = useCallback(
+    (noteId: number, text: string) => {
+      markNotesChanged();
+      setNotes((prev) => prev.map((n) => (n.id === noteId ? { ...n, text } : n)));
+    },
+    [markNotesChanged]
+  );
 
-  const handleDeleteNote = useCallback((noteId: number) => {
-    setNotes((prev) => prev.filter((n) => n.id !== noteId));
-  }, []);
+  const handleDeleteNote = useCallback(
+    (noteId: number) => {
+      markNotesChanged();
+      setNotes((prev) => prev.filter((n) => n.id !== noteId));
+    },
+    [markNotesChanged]
+  );
 
   const scrollToNote = useCallback(
     (note: Note) => {
@@ -590,6 +621,13 @@ export function ReaderCore({
 
   const titleErrorMessage =
     titleMutationError instanceof Error ? titleMutationError.message : 'Failed to save title';
+  const notesErrorMessage =
+    notesMutationError instanceof Error ? notesMutationError.message : 'Failed to save notes';
+
+  const retryNoteSave = useCallback(() => {
+    resetNotesMutation();
+    persistNotes(notes);
+  }, [notes, persistNotes, resetNotesMutation]);
 
   const registerMarker = useCallback((noteId: number, el: HTMLElement | null) => {
     const map = markerRefs.current;
@@ -698,7 +736,10 @@ export function ReaderCore({
         setNotes((prev) => {
           const next = prev.map((n) => (n.id === draggedId ? { ...n, anchor: newAnchor } : n));
           hasInitializedNotesRef.current = true;
-          if (!readOnly) persistNotes(next);
+          if (!readOnly) {
+            markNotesChanged();
+            persistNotes(next);
+          }
           return next;
         });
         dragMovedRef.current = false;
@@ -711,7 +752,14 @@ export function ReaderCore({
       document.addEventListener('mousemove', handleMove);
       document.addEventListener('mouseup', handleUp);
     },
-    [buildAnchorPayload, getAnchorElementFromPoint, hideTooltip, persistNotes, readOnly]
+    [
+      buildAnchorPayload,
+      getAnchorElementFromPoint,
+      hideTooltip,
+      markNotesChanged,
+      persistNotes,
+      readOnly,
+    ]
   );
 
   // ---- Memos ----
@@ -818,16 +866,36 @@ export function ReaderCore({
 
           <div className="ml-auto flex items-center gap-3">
             {!readOnly && <AppearanceToolbar settings={settings} onUpdate={updateSettings} />}
-            {!readOnly && (isNotesSaving || recentlySaved) && (
-              <span
-                aria-live="polite"
-                className={`hidden text-xs font-medium transition-opacity sm:inline ${
-                  isNotesSaving ? 'text-yellow-400' : 'text-[var(--gray-10)]'
-                }`}
-              >
-                {isNotesSaving ? 'Saving…' : 'Saved'}
-              </span>
-            )}
+            {!readOnly &&
+              (isNotesError || isNotesSaving || recentlySaved || hasUnsavedNoteChanges) && (
+                <div
+                  aria-live="polite"
+                  className={`text-xs font-medium transition-opacity ${
+                    isNotesError
+                      ? 'text-red-400'
+                      : isNotesSaving || hasUnsavedNoteChanges
+                        ? 'text-yellow-400'
+                        : 'text-[var(--gray-10)]'
+                  }`}
+                >
+                  {isNotesError ? (
+                    <button
+                      type="button"
+                      onClick={retryNoteSave}
+                      className="rounded-sm underline-offset-2 hover:underline"
+                      title={notesErrorMessage}
+                    >
+                      Notes not saved. Retry
+                    </button>
+                  ) : isNotesSaving ? (
+                    'Saving notes...'
+                  ) : hasUnsavedNoteChanges ? (
+                    'Unsaved notes'
+                  ) : (
+                    'Notes saved'
+                  )}
+                </div>
+              )}
             {headerActions}
           </div>
         </div>
@@ -947,6 +1015,39 @@ export function ReaderCore({
                   ? 'Ask AI using your article and notes context'
                   : 'Organize with tags'}
             </p>
+            {!readOnly &&
+              activeSidebarTab === 'notes' &&
+              (isNotesError || isNotesSaving || recentlySaved || hasUnsavedNoteChanges) && (
+                <div
+                  aria-live="polite"
+                  className={`mt-2 rounded-md border px-3 py-2 text-xs ${
+                    isNotesError
+                      ? 'border-red-500/30 bg-red-500/10 text-red-300'
+                      : isNotesSaving || hasUnsavedNoteChanges
+                        ? 'border-yellow-500/30 bg-yellow-500/10 text-yellow-300'
+                        : 'border-[var(--gray-6)] bg-[var(--gray-3)] text-[var(--gray-10)]'
+                  }`}
+                >
+                  {isNotesError ? (
+                    <div className="flex items-center justify-between gap-3">
+                      <span>{notesErrorMessage}</span>
+                      <button
+                        type="button"
+                        onClick={retryNoteSave}
+                        className="shrink-0 font-medium underline-offset-2 hover:underline"
+                      >
+                        Retry
+                      </button>
+                    </div>
+                  ) : isNotesSaving ? (
+                    'Saving notes...'
+                  ) : hasUnsavedNoteChanges ? (
+                    'Saving soon...'
+                  ) : (
+                    'Notes saved'
+                  )}
+                </div>
+              )}
             <div className="mt-3 flex flex-wrap gap-2">
               <button
                 type="button"
