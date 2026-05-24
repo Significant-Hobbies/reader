@@ -19,7 +19,7 @@ export function Navbar() {
 
   return (
     <nav className="sticky top-0 z-40 border-b border-[var(--gray-5)] bg-[#11100d]/85 backdrop-blur-xl">
-      <div className="mx-auto flex max-w-6xl items-center justify-between gap-4 px-6 py-3">
+      <div className="mx-auto flex max-w-6xl flex-wrap items-center justify-between gap-3 px-5 py-3 sm:flex-nowrap sm:gap-4 sm:px-6">
         <Link
           href="/"
           className="flex items-center gap-3 whitespace-nowrap transition-colors hover:text-[var(--accent-11)]"
@@ -37,7 +37,7 @@ export function Navbar() {
           </Box>
         </Link>
 
-        <div className="flex max-w-2xl flex-1 items-center gap-4">
+        <div className="order-3 flex w-full items-center gap-4 sm:order-none sm:max-w-2xl sm:flex-1">
           <SearchBar />
         </div>
 

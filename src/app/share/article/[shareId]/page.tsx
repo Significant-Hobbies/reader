@@ -1,6 +1,6 @@
 import { notFound } from 'next/navigation';
 
-import { ReaderCore } from '../../../../components/reader/ReaderCore';
+import { SharedArticleReader } from '../../../../components/reader/SharedArticleReader';
 import { fetchArticleByShareId } from '../../../../lib/articles-db';
 import type { Article } from '../../../../types';
 
@@ -25,9 +25,5 @@ export default async function SharedArticlePage({
     aiChat: [],
   };
 
-  return (
-    <div className="flex h-full overflow-hidden p-4 md:p-6">
-      <ReaderCore article={readOnlyArticle} readOnly />
-    </div>
-  );
+  return <SharedArticleReader article={readOnlyArticle} />;
 }

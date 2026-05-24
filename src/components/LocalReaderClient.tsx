@@ -4,6 +4,7 @@ import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { ExternalLink } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 
+import { useIsMobileViewport } from '../hooks/useIsMobileViewport';
 import { getLocalArticle, updateLocalArticle } from '../lib/local-library';
 import type { Article } from '../types';
 import { Navbar } from './Navbar';
@@ -12,6 +13,7 @@ import { ReaderCore } from './reader/ReaderCore';
 export default function LocalReaderClient({ articleId }: { articleId: string }) {
   const router = useRouter();
   const queryClient = useQueryClient();
+  const isMobile = useIsMobileViewport();
 
   const {
     data: article,
@@ -109,6 +111,7 @@ export default function LocalReaderClient({ articleId }: { articleId: string }) 
         <ReaderCore
           article={article}
           localMode
+          compact={isMobile}
           onArticleChange={async (patch) => {
             const updated = await updateLocalArticle(article.id, patch);
             queryClient.setQueryData(['article', articleId, 'local'], updated);

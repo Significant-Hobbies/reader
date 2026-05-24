@@ -1,6 +1,16 @@
 'use client';
 
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import {
+  ArrowUp,
+  ChevronDown,
+  ChevronUp,
+  Highlighter,
+  MessageSquare,
+  Sparkles,
+  Tag,
+  X,
+} from 'lucide-react';
 import { startTransition, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 
@@ -104,6 +114,11 @@ export function ReaderCore({
 
   // Sidebar visibility for compact mode
   const [showSidebar, setShowSidebar] = useState(!compact);
+
+  // Scroll-to-top affordance for long articles.
+  const [isScrolled, setIsScrolled] = useState(false);
+  const [scrollProgress, setScrollProgress] = useState(0);
+  const [activeNoteId, setActiveNoteId] = useState<number | null>(null);
 
   // Settings
   const [settings, setSettings] = useState<ReaderSettings>({
@@ -221,6 +236,7 @@ export function ReaderCore({
       setIsTitleEditing(false);
       setHasUnsavedNoteChanges(false);
       setRecentlySaved(false);
+      setActiveNoteId(null);
       resetNotesMutation();
     });
 
@@ -299,6 +315,24 @@ export function ReaderCore({
   useEffect(() => {
     refreshAnnotationTargets();
   }, [notes, refreshAnnotationTargets]);
+
+  // Track article scroll for scroll-to-top affordance and reading progress.
+  useEffect(() => {
+    const container = snapshotContainerRef.current;
+    if (!container) return;
+    const handleScroll = () => {
+      const maxScroll = container.scrollHeight - container.clientHeight;
+      setIsScrolled(container.scrollTop > 320);
+      setScrollProgress(maxScroll > 0 ? Math.min(container.scrollTop / maxScroll, 1) : 0);
+    };
+    container.addEventListener('scroll', handleScroll, { passive: true });
+    handleScroll();
+    return () => container.removeEventListener('scroll', handleScroll);
+  }, [article?.id]);
+
+  const scrollToTop = useCallback(() => {
+    snapshotContainerRef.current?.scrollTo({ top: 0, behavior: 'smooth' });
+  }, []);
 
   // Selection menu dismiss
   useEffect(() => {
@@ -522,6 +556,7 @@ export function ReaderCore({
     if (!selectionMenu) return;
     const prompt = `Explain this selected excerpt in context:\n\n"${selectionMenu.text}"`;
     setActiveSidebarTab('ai');
+    setShowSidebar(true);
     setQueuedAIPrompt(prompt);
     setSelectionMenu(null);
   }, [localMode, selectionMenu]);
@@ -573,6 +608,11 @@ export function ReaderCore({
       const container = snapshotContainerRef.current;
       if (!container) return;
 
+      setActiveNoteId(note.id);
+      if (compact) {
+        setShowSidebar(false);
+      }
+
       const markerEl = markerRefs.current.get(note.id);
       if (markerEl) {
         const markerRect = markerEl.getBoundingClientRect();
@@ -605,7 +645,26 @@ export function ReaderCore({
         });
       }
     },
-    [refreshAnnotationTargets]
+    [refreshAnnotationTargets, compact]
+  );
+
+  const navigateNote = useCallback(
+    (direction: 'prev' | 'next') => {
+      if (notes.length === 0) return;
+      const currentIndex =
+        activeNoteId !== null ? notes.findIndex((note) => note.id === activeNoteId) : -1;
+      const startIndex =
+        currentIndex >= 0 ? currentIndex : direction === 'next' ? -1 : notes.length;
+      const nextIndex =
+        direction === 'next'
+          ? Math.min(startIndex + 1, notes.length - 1)
+          : Math.max(startIndex - 1, 0);
+      const target = notes[nextIndex];
+      if (target) {
+        scrollToNote(target);
+      }
+    },
+    [activeNoteId, notes, scrollToNote]
   );
 
   const updateSettings = (newSettings: Partial<ReaderSettings>) => {
@@ -890,7 +949,7 @@ export function ReaderCore({
                   ) : isNotesSaving ? (
                     'Saving notes...'
                   ) : hasUnsavedNoteChanges ? (
-                    'Unsaved notes'
+                    'Pending save'
                   ) : (
                     'Notes saved'
                   )}
@@ -907,6 +966,15 @@ export function ReaderCore({
           onMouseUp={!readOnly ? handleSelectionMouseUp : undefined}
           onContextMenu={!readOnly ? handleSelectionContextMenu : undefined}
         >
+          <div
+            aria-hidden
+            className="pointer-events-none sticky top-0 z-20 h-0.5 bg-[var(--gray-4)]"
+          >
+            <div
+              className="h-full bg-[var(--accent-9)] transition-[width] duration-150"
+              style={{ width: `${scrollProgress * 100}%` }}
+            />
+          </div>
           <div className="relative min-h-full">
             {/* AI Summary Section */}
             <div className="mx-auto max-w-3xl px-8 pt-8">
@@ -966,6 +1034,19 @@ export function ReaderCore({
         </div>
       </div>
 
+      {/* Scroll-to-top affordance — visible after some scroll on either mode. */}
+      {isScrolled && (
+        <button
+          type="button"
+          onClick={scrollToTop}
+          aria-label="Scroll to top of article"
+          className="absolute bottom-4 left-4 z-30 inline-flex h-10 w-10 items-center justify-center rounded-full border border-[var(--gray-6)] bg-[var(--gray-2)]/95 text-[var(--gray-12)] shadow-lg backdrop-blur transition-colors hover:bg-[var(--gray-3)] focus-visible:ring-2 focus-visible:ring-[var(--accent-8)] focus-visible:outline-none"
+          style={compact ? { right: 'auto', left: '1rem' } : undefined}
+        >
+          <ArrowUp className="h-4 w-4" />
+        </button>
+      )}
+
       {/* RESIZER - hidden in compact mode */}
       {!compact && (
         <div
@@ -978,14 +1059,30 @@ export function ReaderCore({
       )}
 
       {/* Sidebar toggle button for compact mode */}
-      {compact && (
+      {compact && !showSidebar && (
         <button
-          onClick={() => setShowSidebar(!showSidebar)}
-          aria-label={showSidebar ? 'Hide notes sidebar' : 'Show notes sidebar'}
-          className="absolute top-2 right-2 z-40 inline-flex h-11 min-w-11 items-center justify-center rounded-md border border-[var(--gray-6)] bg-[var(--gray-3)] px-3 text-xs font-medium text-gray-300 transition-colors hover:bg-[var(--gray-4)]"
+          onClick={() => setShowSidebar(true)}
+          aria-label={`Show notes sidebar${notes.length > 0 ? ` (${notes.length})` : ''}`}
+          className="absolute top-2 right-2 z-40 inline-flex h-11 min-w-11 items-center gap-1.5 rounded-md border border-[var(--gray-6)] bg-[var(--gray-3)]/95 px-3 text-xs font-medium text-gray-200 shadow-md backdrop-blur transition-colors hover:bg-[var(--gray-4)] focus-visible:ring-2 focus-visible:ring-[var(--accent-8)] focus-visible:outline-none"
         >
-          {showSidebar ? 'Hide' : 'Notes'}
+          <Highlighter className="h-3.5 w-3.5" />
+          Notes
+          {notes.length > 0 && (
+            <span className="ml-0.5 inline-flex h-5 min-w-5 items-center justify-center rounded-full bg-[var(--accent-9)] px-1.5 text-[10px] font-semibold text-[var(--accent-12)]">
+              {notes.length}
+            </span>
+          )}
         </button>
+      )}
+
+      {/* Backdrop scrim for compact mode — closes sidebar on tap. */}
+      {compact && showSidebar && (
+        <button
+          type="button"
+          aria-label="Close notes sidebar"
+          onClick={() => setShowSidebar(false)}
+          className="absolute inset-0 z-20 bg-black/40 backdrop-blur-[1px] transition-opacity"
+        />
       )}
 
       {/* RIGHT PANEL: Sidebar */}
@@ -1007,20 +1104,42 @@ export function ReaderCore({
           }
         >
           <div className="border-b border-[var(--gray-5)] bg-[var(--gray-2)]/90 p-4">
-            <h2 className="text-lg font-semibold text-gray-100">Sidebar</h2>
-            <p className="text-sm text-gray-500">
-              {activeSidebarTab === 'notes'
-                ? `${notes.length} notes added`
-                : activeSidebarTab === 'ai'
-                  ? 'Ask AI using your article and notes context'
-                  : 'Organize with tags'}
-            </p>
+            <div className="flex items-start justify-between gap-3">
+              <div className="min-w-0">
+                <h2 className="text-lg font-semibold text-gray-100">
+                  {activeSidebarTab === 'notes'
+                    ? 'Notes'
+                    : activeSidebarTab === 'ai'
+                      ? 'AI Chat'
+                      : 'Tags'}
+                </h2>
+                <p className="mt-0.5 text-sm text-gray-500">
+                  {activeSidebarTab === 'notes'
+                    ? notes.length === 0
+                      ? 'Highlight text to add a note'
+                      : `${notes.length} ${notes.length === 1 ? 'note' : 'notes'}`
+                    : activeSidebarTab === 'ai'
+                      ? 'Grounded in this article and your notes'
+                      : 'Organize this article'}
+                </p>
+              </div>
+              {compact && (
+                <button
+                  type="button"
+                  onClick={() => setShowSidebar(false)}
+                  aria-label="Close sidebar"
+                  className="-mr-1 inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-md text-[var(--gray-11)] transition-colors hover:bg-[var(--gray-3)] hover:text-[var(--gray-12)] focus-visible:ring-2 focus-visible:ring-[var(--accent-8)] focus-visible:outline-none"
+                >
+                  <X className="h-4 w-4" />
+                </button>
+              )}
+            </div>
             {!readOnly &&
               activeSidebarTab === 'notes' &&
               (isNotesError || isNotesSaving || recentlySaved || hasUnsavedNoteChanges) && (
                 <div
                   aria-live="polite"
-                  className={`mt-2 rounded-md border px-3 py-2 text-xs ${
+                  className={`mt-3 rounded-md border px-3 py-2 text-xs ${
                     isNotesError
                       ? 'border-red-500/30 bg-red-500/10 text-red-300'
                       : isNotesSaving || hasUnsavedNoteChanges
@@ -1042,47 +1161,71 @@ export function ReaderCore({
                   ) : isNotesSaving ? (
                     'Saving notes...'
                   ) : hasUnsavedNoteChanges ? (
-                    'Saving soon...'
+                    'Pending save'
                   ) : (
                     'Notes saved'
                   )}
                 </div>
               )}
-            <div className="mt-3 flex flex-wrap gap-2">
+            <div
+              role="tablist"
+              aria-label="Sidebar sections"
+              className="mt-3 inline-flex rounded-md border border-[var(--gray-6)] bg-[var(--gray-3)]/60 p-0.5"
+            >
               <button
                 type="button"
+                role="tab"
+                aria-selected={activeSidebarTab === 'notes'}
                 onClick={() => setActiveSidebarTab('notes')}
-                className={`rounded-md border px-3 py-2 text-sm font-medium whitespace-nowrap transition-colors ${
+                className={`inline-flex items-center gap-1.5 rounded px-2.5 py-1.5 text-xs font-medium transition-colors ${
                   activeSidebarTab === 'notes'
-                    ? 'border-[var(--accent-7)] bg-[var(--accent-4)] text-[var(--accent-12)]'
-                    : 'border-[var(--gray-6)] bg-[var(--gray-3)] text-[var(--gray-11)] hover:bg-[var(--gray-4)] hover:text-[var(--gray-12)]'
+                    ? 'bg-[var(--accent-4)] text-[var(--accent-12)] shadow-sm'
+                    : 'text-[var(--gray-11)] hover:text-[var(--gray-12)]'
                 }`}
               >
+                <Highlighter className="h-3.5 w-3.5" />
                 Notes
+                {notes.length > 0 && (
+                  <span
+                    className={`inline-flex h-4 min-w-4 items-center justify-center rounded-full px-1 text-[10px] font-semibold ${
+                      activeSidebarTab === 'notes'
+                        ? 'bg-[var(--accent-9)] text-[var(--accent-12)]'
+                        : 'bg-[var(--gray-5)] text-[var(--gray-11)]'
+                    }`}
+                  >
+                    {notes.length}
+                  </span>
+                )}
               </button>
               {!readOnly && !localMode && (
                 <button
                   type="button"
+                  role="tab"
+                  aria-selected={activeSidebarTab === 'ai'}
                   onClick={() => setActiveSidebarTab('ai')}
-                  className={`rounded-md border px-3 py-2 text-sm font-medium whitespace-nowrap transition-colors ${
+                  className={`inline-flex items-center gap-1.5 rounded px-2.5 py-1.5 text-xs font-medium transition-colors ${
                     activeSidebarTab === 'ai'
-                      ? 'border-[var(--accent-7)] bg-[var(--accent-4)] text-[var(--accent-12)]'
-                      : 'border-[var(--gray-6)] bg-[var(--gray-3)] text-[var(--gray-11)] hover:bg-[var(--gray-4)] hover:text-[var(--gray-12)]'
+                      ? 'bg-[var(--accent-4)] text-[var(--accent-12)] shadow-sm'
+                      : 'text-[var(--gray-11)] hover:text-[var(--gray-12)]'
                   }`}
                 >
-                  AI Chat
+                  <MessageSquare className="h-3.5 w-3.5" />
+                  AI
                 </button>
               )}
               {!readOnly && !localMode && (
                 <button
                   type="button"
+                  role="tab"
+                  aria-selected={activeSidebarTab === 'tags'}
                   onClick={() => setActiveSidebarTab('tags')}
-                  className={`rounded-md border px-3 py-2 text-sm font-medium whitespace-nowrap transition-colors ${
+                  className={`inline-flex items-center gap-1.5 rounded px-2.5 py-1.5 text-xs font-medium transition-colors ${
                     activeSidebarTab === 'tags'
-                      ? 'border-[var(--accent-7)] bg-[var(--accent-4)] text-[var(--accent-12)]'
-                      : 'border-[var(--gray-6)] bg-[var(--gray-3)] text-[var(--gray-11)] hover:bg-[var(--gray-4)] hover:text-[var(--gray-12)]'
+                      ? 'bg-[var(--accent-4)] text-[var(--accent-12)] shadow-sm'
+                      : 'text-[var(--gray-11)] hover:text-[var(--gray-12)]'
                   }`}
                 >
+                  <Tag className="h-3.5 w-3.5" />
                   Tags
                 </button>
               )}
@@ -1090,29 +1233,69 @@ export function ReaderCore({
           </div>
 
           {activeSidebarTab === 'notes' ? (
-            <div className="flex-grow space-y-4 overflow-y-auto p-4">
-              {notes.length === 0 && (
-                <div className="mx-auto mt-12 max-w-xs rounded-md border border-dashed border-[var(--gray-6)] bg-[var(--gray-2)]/60 p-5 text-center">
-                  <p className="text-sm font-medium text-[var(--gray-12)]">No notes yet</p>
-                  {!readOnly && (
-                    <p className="mt-1.5 text-xs leading-5 text-[var(--gray-10)]">
-                      Select any text in the article to add a note or ask AI about it.
-                    </p>
-                  )}
+            <div className="flex min-h-0 flex-grow flex-col overflow-hidden">
+              <div className="flex-grow space-y-4 overflow-y-auto p-4">
+                {notes.length === 0 && (
+                  <div className="mx-auto mt-12 max-w-xs rounded-lg border border-dashed border-[var(--gray-6)] bg-[var(--gray-2)]/60 p-6 text-center">
+                    <div className="mx-auto mb-3 flex h-10 w-10 items-center justify-center rounded-full border border-[var(--gray-6)] bg-[var(--gray-3)] text-[var(--accent-11)]">
+                      <Highlighter className="h-4 w-4" />
+                    </div>
+                    <p className="text-sm font-medium text-[var(--gray-12)]">No notes yet</p>
+                    {!readOnly ? (
+                      <p className="mt-1.5 text-xs leading-5 text-[var(--gray-10)]">
+                        Select any text in the article — a menu will appear to add a note or ask AI.
+                      </p>
+                    ) : (
+                      <p className="mt-1.5 text-xs leading-5 text-[var(--gray-10)]">
+                        This shared article has no notes yet.
+                      </p>
+                    )}
+                  </div>
+                )}
+
+                {notes.map((note, index) => (
+                  <NoteCard
+                    key={note.id}
+                    note={note}
+                    index={index}
+                    onScrollTo={scrollToNote}
+                    onDelete={handleDeleteNote}
+                    onChange={handleNoteChange}
+                    readOnly={readOnly}
+                    isActive={activeNoteId === note.id}
+                  />
+                ))}
+              </div>
+
+              {notes.length > 1 && (
+                <div className="shrink-0 border-t border-[var(--gray-5)] bg-[var(--gray-2)]/95 px-4 py-3 backdrop-blur">
+                  <div className="flex items-center justify-between gap-2">
+                    <button
+                      type="button"
+                      onClick={() => navigateNote('prev')}
+                      disabled={
+                        activeNoteId !== null && notes.findIndex((n) => n.id === activeNoteId) <= 0
+                      }
+                      className="inline-flex flex-1 items-center justify-center gap-1 rounded-md border border-[var(--gray-6)] bg-[var(--gray-3)] px-3 py-2 text-xs font-medium text-[var(--gray-12)] transition-colors hover:bg-[var(--gray-4)] disabled:cursor-not-allowed disabled:opacity-40"
+                    >
+                      <ChevronUp className="h-3.5 w-3.5" />
+                      Previous
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => navigateNote('next')}
+                      disabled={
+                        activeNoteId !== null &&
+                        notes.findIndex((n) => n.id === activeNoteId) >= notes.length - 1
+                      }
+                      className="inline-flex flex-1 items-center justify-center gap-1 rounded-md border border-[var(--gray-6)] bg-[var(--gray-3)] px-3 py-2 text-xs font-medium text-[var(--gray-12)] transition-colors hover:bg-[var(--gray-4)] disabled:cursor-not-allowed disabled:opacity-40"
+                    >
+                      Next
+                      <ChevronDown className="h-3.5 w-3.5" />
+                    </button>
+                  </div>
                 </div>
               )}
-
-              {notes.map((note, index) => (
-                <NoteCard
-                  key={note.id}
-                  note={note}
-                  index={index}
-                  onScrollTo={scrollToNote}
-                  onDelete={handleDeleteNote}
-                  onChange={handleNoteChange}
-                  readOnly={readOnly}
-                />
-              ))}
             </div>
           ) : activeSidebarTab === 'ai' && !readOnly && !localMode ? (
             <NotesAIChat
@@ -1140,7 +1323,7 @@ export function ReaderCore({
         ? createPortal(
             <div
               data-selection-actions-menu="true"
-              className="fixed z-[120] min-w-[180px] rounded-md border border-[var(--gray-6)] bg-[var(--gray-2)]/95 p-1 shadow-2xl backdrop-blur"
+              className="fixed z-[120] min-w-[196px] overflow-hidden rounded-lg border border-[var(--gray-6)] bg-[var(--gray-2)]/95 p-1 shadow-2xl backdrop-blur"
               style={{
                 left: Math.min(selectionMenu.x, window.innerWidth - 200),
                 top: Math.min(selectionMenu.y, window.innerHeight - 120),
@@ -1149,16 +1332,18 @@ export function ReaderCore({
               <button
                 type="button"
                 onClick={addNoteFromSelection}
-                className="block w-full rounded-sm px-3 py-2 text-left text-sm text-gray-100 transition-colors hover:bg-[var(--gray-3)]"
+                className="flex w-full items-center gap-2 rounded-md px-3 py-2 text-left text-sm text-gray-100 transition-colors hover:bg-[var(--gray-3)]"
               >
+                <Highlighter className="h-3.5 w-3.5 text-[var(--accent-11)]" />
                 Add note
               </button>
               {!localMode && (
                 <button
                   type="button"
                   onClick={askAIFromSelection}
-                  className="block w-full rounded-sm px-3 py-2 text-left text-sm text-gray-100 transition-colors hover:bg-[var(--gray-3)]"
+                  className="flex w-full items-center gap-2 rounded-md px-3 py-2 text-left text-sm text-gray-100 transition-colors hover:bg-[var(--gray-3)]"
                 >
+                  <Sparkles className="h-3.5 w-3.5 text-[var(--accent-11)]" />
                   Ask AI
                 </button>
               )}
