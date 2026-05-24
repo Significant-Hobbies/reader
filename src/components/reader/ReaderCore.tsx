@@ -19,7 +19,7 @@ import { AI_CONFIG_STORAGE_KEY, DEFAULT_AI_CONFIG } from '../../lib/ai-config';
 import { trackCoreAction } from '../../lib/analytics';
 import { ANNOTATABLE_SELECTOR } from '../../lib/annotatable';
 import { buildResearchBrief, type SourceRelationshipMap } from '../../lib/research-brief';
-import type { Article, ElementAnchor, Note, ReaderSettings } from '../../types';
+import type { Article, ElementAnchor, Note, ReaderSettings, SessionReview } from '../../types';
 import { AppearanceToolbar } from '../AppearanceToolbar';
 import { ArticleSummary } from '../ArticleSummary';
 import { ArticleTagEditor } from '../ArticleTagEditor';
@@ -28,6 +28,7 @@ import { getThemeClasses, ReaderView } from '../ReaderView';
 import { ResearchBriefPanel } from '../ResearchBriefPanel';
 import { NoteCard } from './NoteCard';
 import { NoteMarkerGroupMemo } from './NoteMarkerGroup';
+import { SessionReviewPanel } from './SessionReviewPanel';
 
 // ---------------------------------------------------------------------------
 // Constants & types
@@ -107,6 +108,13 @@ export function ReaderCore({
   const [aiConfig] = useState<AIConfig>(() => loadAIConfig());
   const [recentlySaved, setRecentlySaved] = useState(false);
   const [hasUnsavedNoteChanges, setHasUnsavedNoteChanges] = useState(false);
+
+  // Session review state
+  const [sessionReview, setSessionReview] = useState<SessionReview | null>(
+    article.sessionReview ?? null
+  );
+  const [isGeneratingReview, setIsGeneratingReview] = useState(false);
+  const [reviewError, setReviewError] = useState<string | null>(null);
 
   // Layout
   const [leftPanelWidth, setLeftPanelWidth] = useState(66.66);
@@ -688,6 +696,33 @@ export function ReaderCore({
     persistNotes(notes);
   }, [notes, persistNotes, resetNotesMutation]);
 
+  const generateReview = useCallback(async () => {
+    setIsGeneratingReview(true);
+    setReviewError(null);
+    try {
+      const aiCfg = loadAIConfig();
+      const res = await fetch(`/api/articles/${id}/session-review`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          endpointUrl: aiCfg.endpointUrl,
+          model: aiCfg.model,
+          apiKey: aiCfg.apiKey,
+        }),
+      });
+      if (!res.ok) {
+        const err = (await res.json().catch(() => ({}))) as { error?: string };
+        throw new Error(err.error ?? `Request failed (${res.status})`);
+      }
+      const data = (await res.json()) as { review: SessionReview };
+      setSessionReview(data.review);
+    } catch (err) {
+      setReviewError(err instanceof Error ? err.message : 'Failed to generate review');
+    } finally {
+      setIsGeneratingReview(false);
+    }
+  }, [id]);
+
   const registerMarker = useCallback((noteId: number, el: HTMLElement | null) => {
     const map = markerRefs.current;
     if (el) {
@@ -1265,6 +1300,33 @@ export function ReaderCore({
                     isActive={activeNoteId === note.id}
                   />
                 ))}
+
+                {!readOnly && notes.length > 0 && (
+                  <div className="pt-1">
+                    {sessionReview ? (
+                      <SessionReviewPanel
+                        review={sessionReview}
+                        isRegenerating={isGeneratingReview}
+                        onRegenerate={generateReview}
+                      />
+                    ) : (
+                      <div className="space-y-1.5">
+                        <button
+                          type="button"
+                          onClick={generateReview}
+                          disabled={isGeneratingReview}
+                          className="inline-flex w-full items-center justify-center gap-2 rounded-lg border border-dashed border-[var(--accent-7)] bg-[var(--accent-2)]/40 px-3 py-2.5 text-xs font-medium text-[var(--accent-11)] transition-colors hover:border-[var(--accent-8)] hover:bg-[var(--accent-3)]/60 disabled:cursor-not-allowed disabled:opacity-50"
+                        >
+                          <Sparkles className="h-3.5 w-3.5" />
+                          {isGeneratingReview ? 'Generating review…' : 'Generate Session Review'}
+                        </button>
+                        {reviewError && (
+                          <p className="text-center text-[11px] text-red-400">{reviewError}</p>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                )}
               </div>
 
               {notes.length > 1 && (

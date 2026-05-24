@@ -3,7 +3,14 @@ import { and, desc, eq } from 'drizzle-orm';
 import type { IOptions } from 'sanitize-html';
 import sanitizeHtml from 'sanitize-html';
 
-import type { AIChatMessage, Article, ArticleStatus, ArticleSummary, Note } from '../types';
+import type {
+  AIChatMessage,
+  Article,
+  ArticleStatus,
+  ArticleSummary,
+  Note,
+  SessionReview,
+} from '../types';
 import { db } from './db/client';
 import { articles } from './db/schema';
 import { getPdfDownloadUrl } from './storage';
@@ -274,6 +281,7 @@ function rowToArticle(row: ArticleRow): Article {
   const summary = parseJsonColumn<Record<string, string> | string | null>(row.summary, null);
   const keyPoints = parseJsonColumn<string[] | null>(row.keyPoints, null);
   const pdfMetadata = parseJsonColumn<PdfMetadata | null>(row.pdfMetadata, null);
+  const sessionReview = parseJsonColumn<SessionReview | null>(row.sessionReview, null);
 
   const aiSummary =
     typeof summary === 'string'
@@ -306,6 +314,7 @@ function rowToArticle(row: ArticleRow): Article {
     extractedText: row.extractedText ?? undefined,
     pdfMetadata: pdfMetadata ?? undefined,
     category: row.category ?? undefined,
+    sessionReview: sessionReview ?? undefined,
     notesCount: Array.isArray(notes) ? notes.length : 0,
     listIds: Array.isArray(listIds) ? listIds : [],
     userId: row.userId,
@@ -873,7 +882,8 @@ export async function updateArticle(
     );
   }
 
-  const { notes, aiChat, title, status, tags, aiSummary, keyPoints, category } = payload;
+  const { notes, aiChat, title, status, tags, aiSummary, keyPoints, category, sessionReview } =
+    payload;
   const updates: Partial<typeof articles.$inferInsert> = {
     updatedAt: new Date(),
   };
@@ -927,6 +937,10 @@ export async function updateArticle(
     updates.keyPoints = normalizedKeyPoints
       ? (serializeJsonColumn(normalizedKeyPoints) as unknown as string[])
       : null;
+  }
+
+  if (sessionReview !== undefined && sessionReview !== null && typeof sessionReview === 'object') {
+    updates.sessionReview = serializeJsonColumn(sessionReview) as unknown as SessionReview;
   }
 
   try {

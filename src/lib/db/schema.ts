@@ -1,7 +1,7 @@
 import { sql } from 'drizzle-orm';
 import { index, integer, primaryKey, sqliteTable, text } from 'drizzle-orm/sqlite-core';
 
-import type { AIChatMessage, ArticleStatus, Note } from '../../types';
+import type { AIChatMessage, ArticleStatus, Note, SessionReview } from '../../types';
 
 // --- User table (shared by better-auth; legacy NextAuth columns kept for existing rows) ---
 export const users = sqliteTable('user', {
@@ -139,6 +139,7 @@ export const articles = sqliteTable(
       fileSize?: number;
       storagePath?: string;
     }>(),
+    sessionReview: text('session_review').$type<SessionReview>(),
     category: text('category'),
     createdAt: integer('created_at', { mode: 'timestamp_ms' })
       .notNull()

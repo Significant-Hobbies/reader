@@ -27,6 +27,14 @@ export interface AIChatMessage {
 
 export type SummaryLength = 'short' | 'medium' | 'long';
 
+export interface SessionReview {
+  generatedAt: string;
+  summary: string;
+  keyThemes: string[];
+  actionItems: string[];
+  notesSummary: string;
+}
+
 export interface Article {
   id: string;
   url: string;
@@ -37,6 +45,7 @@ export interface Article {
   aiChat?: AIChatMessage[];
   aiSummary?: string;
   keyPoints?: string[];
+  sessionReview?: SessionReview;
   notesCount?: number;
   userId?: string;
   projectId?: string; // DEPRECATED: Keep for migration compatibility, use listIds instead
