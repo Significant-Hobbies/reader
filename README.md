@@ -261,3 +261,23 @@ For comprehensive development documentation, see [AGENTS.md](./AGENTS.md).
 ## License
 
 This project is private and not licensed for public use.
+
+<!-- ACTIVE-AI-TASK-LOG:START -->
+
+## Active AI Task Log
+
+This section is maintained by the SaaS Maker Active-AI product/design loop so future agents do not reopen duplicate UI tasks.
+
+- Business lane: P0 Can make money
+- Rule: do not create another broad "improve the UI" task unless the acceptance criteria differ materially from the tasks listed here.
+- Source of truth for task status: SaaS Maker task board. README entries are durable context only.
+
+| Task                                                                    | Status | Priority | Last known note     |
+| ----------------------------------------------------------------------- | ------ | -------- | ------------------- |
+| `cad24fee` reader: add empty-source import checklist                    | done   | medium   | 2026-05-26          |
+| `c346ed01` reader: add annotation export preview before signup          | done   | high     | 2026-05-26          |
+| `87ef7ce1` reader: add sample reading loop proof above the fold         | done   | high     | 2026-05-26          |
+| `907a1c6e` reader: review and ship local first-run UI change            | done   | high     | 2026-05-25 18:52:12 |
+| `07045aff` reader: library empty state should explain value + focus CTA | done   | high     | 2026-05-25 17:07:15 |
+
+<!-- ACTIVE-AI-TASK-LOG:END -->

@@ -1277,9 +1277,29 @@ export function ReaderCore({
                     </div>
                     <p className="text-sm font-medium text-[var(--gray-12)]">No notes yet</p>
                     {!readOnly ? (
-                      <p className="mt-1.5 text-xs leading-5 text-[var(--gray-10)]">
-                        Select any text in the article — a menu will appear to add a note or ask AI.
-                      </p>
+                      <>
+                        <p className="mt-1.5 text-xs leading-5 text-[var(--gray-10)]">
+                          Select any text in the article — a menu will appear to add a note or ask
+                          AI.
+                        </p>
+                        <div className="mt-4 space-y-2 text-left">
+                          <p className="text-[10px] font-semibold tracking-wide text-[var(--gray-9)] uppercase">
+                            Example notes
+                          </p>
+                          <div className="rounded-md border border-green-500/20 bg-green-500/5 px-2.5 py-1.5">
+                            <p className="text-[11px] leading-4 text-[var(--gray-11)]">
+                              <span className="font-medium text-green-400">✓</span>{' '}
+                              &ldquo;Contradicts the Q3 report — check if the dataset
+                              differs.&rdquo;
+                            </p>
+                          </div>
+                          <div className="rounded-md border border-[var(--gray-6)] bg-[var(--gray-3)]/60 px-2.5 py-1.5">
+                            <p className="text-[11px] leading-4 text-[var(--gray-10)] line-through">
+                              &ldquo;Interesting.&rdquo;
+                            </p>
+                          </div>
+                        </div>
+                      </>
                     ) : (
                       <p className="mt-1.5 text-xs leading-5 text-[var(--gray-10)]">
                         This shared article has no notes yet.

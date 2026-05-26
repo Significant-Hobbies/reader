@@ -49,6 +49,7 @@ import type { ArticleStatus, ArticleSummary, List } from '../types';
 import { AddArticleDialog } from './AddArticleDialog';
 import { useAuth } from './AuthProvider';
 import { Navbar } from './Navbar';
+import { ReviewPackBanner } from './ReviewPackBanner';
 import { Button } from './ui/button';
 import {
   Dialog,
@@ -688,6 +689,13 @@ export default function HomeClient() {
     selectedListId === 'all' ? 'Library' : lists.find((l) => l.id === selectedListId)?.name;
   const unreadCount = articles.filter((article) => article.status !== 'read').length;
   const notesCount = articles.reduce((total, article) => total + article.notesCount, 0);
+  const readCount = articles.length - unreadCount;
+  const unreadMinutes = articles
+    .filter((article) => article.status !== 'read')
+    .reduce((sum, article) => sum + (article.readingTimeMinutes ?? 0), 0);
+  const nextUnreadArticle =
+    articles.find((article) => article.status !== 'read' && article.type !== 'link') ??
+    articles.find((article) => article.status !== 'read');
 
   return (
     <div className="min-h-screen bg-[#0d0d0c] font-sans text-gray-100">
@@ -857,15 +865,77 @@ export default function HomeClient() {
                 )}
               </div>
 
-              <ThemeButton
-                size="3"
-                onClick={() => setShowAddArticleDialog(true)}
-                className="shrink-0 gap-2"
-              >
-                <Plus className="h-4 w-4" />
-                Add Source
-              </ThemeButton>
+              {articles.length > 0 && (
+                <ThemeButton
+                  size="3"
+                  onClick={() => setShowAddArticleDialog(true)}
+                  className="shrink-0 gap-2"
+                >
+                  <Plus className="h-4 w-4" />
+                  Add Source
+                </ThemeButton>
+              )}
             </header>
+
+            {articles.length > 0 && (
+              <div className="rounded-xl border border-[var(--gray-5)] bg-[var(--gray-2)]/50 px-5 py-4">
+                <div className="flex flex-wrap items-center gap-x-8 gap-y-3">
+                  <div>
+                    <Text size="1" color="gray" className="tracking-wide uppercase">
+                      Read
+                    </Text>
+                    <div className="mt-0.5 flex items-baseline gap-1">
+                      <Text size="5" weight="bold" className="text-[var(--gray-12)]">
+                        {readCount}
+                      </Text>
+                      <Text size="2" color="gray">
+                        / {articles.length}
+                      </Text>
+                    </div>
+                  </div>
+                  <div>
+                    <Text size="1" color="gray" className="tracking-wide uppercase">
+                      Highlights
+                    </Text>
+                    <Text size="5" weight="bold" className="mt-0.5 block text-[var(--gray-12)]">
+                      {notesCount}
+                    </Text>
+                  </div>
+                  {unreadMinutes > 0 && (
+                    <div>
+                      <Text size="1" color="gray" className="tracking-wide uppercase">
+                        Left to read
+                      </Text>
+                      <Text size="5" weight="bold" className="mt-0.5 block text-[var(--gray-12)]">
+                        {unreadMinutes < 60
+                          ? `${unreadMinutes} min`
+                          : `${Math.floor(unreadMinutes / 60)} hr${unreadMinutes % 60 > 0 ? ` ${unreadMinutes % 60} min` : ''}`}
+                      </Text>
+                    </div>
+                  )}
+                  {nextUnreadArticle && (
+                    <div className="ml-auto">
+                      <Link
+                        href={
+                          nextUnreadArticle.type === 'link'
+                            ? nextUnreadArticle.url
+                            : `/reader/${nextUnreadArticle.id}`
+                        }
+                        target={nextUnreadArticle.type === 'link' ? '_blank' : undefined}
+                        rel={nextUnreadArticle.type === 'link' ? 'noopener noreferrer' : undefined}
+                      >
+                        <ThemeButton size="2" variant="soft" className="gap-1.5">
+                          <BookOpen className="h-3.5 w-3.5" />
+                          Continue reading
+                        </ThemeButton>
+                      </Link>
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
+
+            {articles.length > 0 && <ReviewPackBanner />}
 
             <div className="flex flex-wrap items-center justify-between gap-3">
               <SegmentedControl.Root
@@ -935,33 +1005,111 @@ export default function HomeClient() {
                 {articles.length === 0 ? (
                   <Card className="col-span-full border border-dashed border-[var(--gray-6)] bg-[var(--gray-2)]/70 p-0">
                     <div className="mx-auto flex max-w-xl flex-col items-center px-6 py-16 text-center">
-                      <div className="mb-5 flex h-12 w-12 items-center justify-center rounded-md border border-[var(--gray-6)] bg-[var(--gray-3)] text-[var(--accent-11)]">
-                        <BookOpen className="h-5 w-5" />
+                      {/* Sample doc artifact — proof of the core read/annotate loop */}
+                      <div className="mb-8 w-full overflow-hidden rounded-xl border border-[var(--accent-6)]/40 bg-[var(--gray-1)] text-left shadow-md">
+                        <div className="px-5 py-4">
+                          <Text
+                            as="p"
+                            size="1"
+                            weight="medium"
+                            className="mb-2 tracking-widest text-[var(--accent-11)] uppercase"
+                          >
+                            Sample article · 4 min read
+                          </Text>
+                          <Text
+                            as="p"
+                            size="3"
+                            weight="bold"
+                            className="mb-3 leading-snug text-[var(--gray-12)]"
+                          >
+                            How to Learn Anything Fast
+                          </Text>
+                          <Text as="p" size="2" color="gray" className="leading-relaxed">
+                            The best way to learn is to teach.{' '}
+                            <span className="rounded-sm bg-[var(--accent-4)] px-0.5 text-[var(--gray-12)]">
+                              When you explain it simply, you find the gaps.
+                            </span>{' '}
+                            That&apos;s when real understanding kicks in.
+                          </Text>
+                          <div className="mt-3 flex items-center gap-3">
+                            <Text size="1" color="gray">
+                              3 highlights
+                            </Text>
+                            <Text size="1" color="gray">
+                              ·
+                            </Text>
+                            <Text size="1" color="gray">
+                              2 notes
+                            </Text>
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-3 border-t border-[var(--gray-4)] bg-[var(--gray-2)] px-5 py-3">
+                          <Link href="/sample">
+                            <ThemeButton size="2" className="gap-1.5">
+                              <BookOpen className="h-3.5 w-3.5" />
+                              Try sample doc
+                            </ThemeButton>
+                          </Link>
+                        </div>
                       </div>
-                      <Text as="p" size="2" weight="medium" color="gray" className="mb-2 uppercase">
-                        Start your library
-                      </Text>
-                      <Heading as="h2" size="5" weight="medium" className="text-[var(--gray-12)]">
-                        Add your first source
+
+                      <Heading
+                        as="h1"
+                        size="7"
+                        weight="bold"
+                        className="text-balance text-[var(--gray-12)]"
+                      >
+                        Your library is empty
                       </Heading>
                       <Text as="p" size="3" color="gray" className="mt-3 max-w-md">
-                        Save an outside link, import a readable article, or keep a research PDF in
-                        this browser.
+                        Save articles, PDFs, and links to read and annotate in one place.
                       </Text>
+                      <ol className="mt-6 w-full max-w-sm space-y-3 text-left">
+                        {[
+                          {
+                            title: 'Paste a URL',
+                            body: 'Drop any article link into Add Source — we strip the clutter.',
+                          },
+                          {
+                            title: 'Read distraction-free',
+                            body: 'Open it in the focused reader view, your way.',
+                          },
+                          {
+                            title: 'Highlight & annotate',
+                            body: 'Select text to capture quotes and add personal notes.',
+                          },
+                        ].map((step, index) => (
+                          <li
+                            key={step.title}
+                            className="flex items-start gap-3 rounded-lg border border-[var(--gray-5)] bg-[var(--gray-1)]/60 px-3 py-2.5"
+                          >
+                            <span className="mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-full border border-[var(--accent-6)] bg-[var(--accent-3)] text-xs font-semibold text-[var(--accent-11)]">
+                              {index + 1}
+                            </span>
+                            <div>
+                              <Text
+                                as="p"
+                                size="2"
+                                weight="medium"
+                                className="text-[var(--gray-12)]"
+                              >
+                                {step.title}
+                              </Text>
+                              <Text as="p" size="1" color="gray" className="mt-0.5">
+                                {step.body}
+                              </Text>
+                            </div>
+                          </li>
+                        ))}
+                      </ol>
                       <ThemeButton
                         size="3"
                         onClick={() => setShowAddArticleDialog(true)}
                         className="mt-6 gap-2"
                       >
                         <Plus className="h-4 w-4" />
-                        Add Source
+                        Add your first source
                       </ThemeButton>
-                      <Link
-                        href="/welcome"
-                        className="mt-4 text-xs text-[var(--gray-11)] underline-offset-2 hover:text-[var(--gray-12)] hover:underline"
-                      >
-                        New here? See what Web Annotator does
-                      </Link>
                     </div>
                   </Card>
                 ) : filteredArticles.length === 0 ? (
