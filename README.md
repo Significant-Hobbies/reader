@@ -1,8 +1,5 @@
 # Web Annotator
 
-![AI Generated](https://ai-percentage-pin.vercel.app/api/ai-percentage?value=80)
-![AI PRs Welcome](https://ai-percentage-pin.vercel.app/api/ai-prs?welcome=yes)
-
 A modern web application for capturing and annotating articles with a distraction-free reading experience.
 
 ## Deployment & External Services
@@ -279,5 +276,6 @@ This section is maintained by the SaaS Maker Active-AI product/design loop so fu
 | `87ef7ce1` reader: add sample reading loop proof above the fold         | done   | high     | 2026-05-26          |
 | `907a1c6e` reader: review and ship local first-run UI change            | done   | high     | 2026-05-25 18:52:12 |
 | `07045aff` reader: library empty state should explain value + focus CTA | done   | high     | 2026-05-25 17:07:15 |
+| `0babffde` reader: make mobile import CTA impossible to miss            | done   | medium   | 2026-05-27          |
 
 <!-- ACTIVE-AI-TASK-LOG:END -->

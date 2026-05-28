@@ -54,7 +54,7 @@
 
 - [ ] **No rate limiting on API routes**
   - AI endpoints (`/api/ai/*`), snapshot, and proxy could be abused for cost amplification or SSRF scanning.
-  - **Recommendation:** Add rate limiting via Vercel Edge config or middleware.
+  - **Recommendation:** Keep rate limiting conservative. Prefer ownership checks, input validation, and cost controls first; only add Cloudflare rate limiting for a specific abused endpoint with explicit approval.
 
 - [ ] **Base tag injection in proxy** — `src/app/api/proxy/route.ts:68`
   - Injects `<base href="${parsed.origin}/">` into proxied HTML. The `parsed.origin` comes from a validated URL, so XSS risk is low.
@@ -65,8 +65,8 @@
 
 ## Deployment Notes
 
-- **Platform:** Vercel (serverless)
-- **Auth:** Firebase session cookies (HTTP-only, secure, sameSite=lax, 14-day expiry)
-- **Secrets:** Loaded via `FIREBASE_SERVICE_ACCOUNT_KEY` env var (base64), never file-based in prod
+- **Platform:** Cloudflare Workers via OpenNext
+- **Auth:** better-auth + Google OAuth, backed by Turso/Drizzle tables
+- **Secrets:** Loaded from Cloudflare Worker secrets and local `.env*` files that must stay uncommitted
 - **No `vercel.json`** — relies on Vercel project defaults
 - **Firestore rules** — deny-all rules added, deploy via `firebase deploy --only firestore:rules`

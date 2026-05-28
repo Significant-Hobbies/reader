@@ -865,16 +865,14 @@ export default function HomeClient() {
                 )}
               </div>
 
-              {articles.length > 0 && (
-                <ThemeButton
-                  size="3"
-                  onClick={() => setShowAddArticleDialog(true)}
-                  className="shrink-0 gap-2"
-                >
-                  <Plus className="h-4 w-4" />
-                  Add Source
-                </ThemeButton>
-              )}
+              <ThemeButton
+                size="3"
+                onClick={() => setShowAddArticleDialog(true)}
+                className={`shrink-0 gap-2 ${articles.length === 0 ? 'w-full border-[var(--accent-7)] bg-[var(--accent-3)] md:w-auto' : ''}`}
+              >
+                <Plus className="h-4 w-4" />
+                {articles.length === 0 ? 'Save a link or import a PDF' : 'Add Source'}
+              </ThemeButton>
             </header>
 
             {articles.length > 0 && (
@@ -937,34 +935,38 @@ export default function HomeClient() {
 
             {articles.length > 0 && <ReviewPackBanner />}
 
-            <div className="flex flex-wrap items-center justify-between gap-3">
-              <SegmentedControl.Root
-                value={contentFilter}
-                onValueChange={(value) => setContentFilter(value as ContentFilter)}
-                size="2"
-              >
-                {contentFilters.map((filter) => (
-                  <SegmentedControl.Item key={filter.id} value={filter.id}>
-                    {filter.label}
-                    <span className="ml-1.5 text-[var(--gray-10)]">{filterCounts[filter.id]}</span>
-                  </SegmentedControl.Item>
-                ))}
-              </SegmentedControl.Root>
-              {(selectedTag || contentFilter !== 'all' || selectedListId !== 'all') && (
-                <button
-                  onClick={() => {
-                    setSelectedListId('all');
-                    setSelectedTag(null);
-                    setContentFilter('all');
-                  }}
-                  className="text-xs text-[var(--gray-11)] underline-offset-2 transition-colors hover:text-[var(--gray-12)] hover:underline"
+            {articles.length > 0 && (
+              <div className="flex flex-wrap items-center justify-between gap-3">
+                <SegmentedControl.Root
+                  value={contentFilter}
+                  onValueChange={(value) => setContentFilter(value as ContentFilter)}
+                  size="2"
                 >
-                  Clear filters
-                </button>
-              )}
-            </div>
+                  {contentFilters.map((filter) => (
+                    <SegmentedControl.Item key={filter.id} value={filter.id}>
+                      {filter.label}
+                      <span className="ml-1.5 text-[var(--gray-10)]">
+                        {filterCounts[filter.id]}
+                      </span>
+                    </SegmentedControl.Item>
+                  ))}
+                </SegmentedControl.Root>
+                {(selectedTag || contentFilter !== 'all' || selectedListId !== 'all') && (
+                  <button
+                    onClick={() => {
+                      setSelectedListId('all');
+                      setSelectedTag(null);
+                      setContentFilter('all');
+                    }}
+                    className="text-xs text-[var(--gray-11)] underline-offset-2 transition-colors hover:text-[var(--gray-12)] hover:underline"
+                  >
+                    Clear filters
+                  </button>
+                )}
+              </div>
+            )}
 
-            {allTags.length > 0 && (
+            {articles.length > 0 && allTags.length > 0 && (
               <div className="-mx-2 flex flex-nowrap items-center gap-2 overflow-x-auto px-2 pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
                 <Text
                   as="span"
