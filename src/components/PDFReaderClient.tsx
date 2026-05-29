@@ -9,6 +9,7 @@ import { AppearanceToolbar } from './AppearanceToolbar';
 import { Navbar } from './Navbar';
 import { NotesAIChat } from './NotesAIChat';
 import { PDFViewer } from './PDFViewer';
+import { TTSPlayer } from './TTSPlayer';
 
 export default function PDFReaderClient({ articleId }: { articleId: string }) {
   const id = articleId;
@@ -96,7 +97,13 @@ export default function PDFReaderClient({ articleId }: { articleId: string }) {
               )}
             </div>
 
-            <div className="ml-auto flex items-center gap-4">
+            <div className="ml-auto flex items-center gap-2">
+              <TTSPlayer
+                getText={() => {
+                  const layer = document.querySelector('.react-pdf__Page__textContent');
+                  return layer?.textContent?.trim() ?? '';
+                }}
+              />
               <AppearanceToolbar settings={settings} onUpdate={updateSettings} />
             </div>
           </div>

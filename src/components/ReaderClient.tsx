@@ -10,6 +10,7 @@ import type { Article } from '../types';
 import { Navbar } from './Navbar';
 import { ArticleShareDialog } from './reader/ArticleShareDialog';
 import { ReaderCore } from './reader/ReaderCore';
+import { TTSPlayer } from './TTSPlayer';
 
 export default function ReaderClient({ articleId }: { articleId: string }) {
   const router = useRouter();
@@ -73,13 +74,19 @@ export default function ReaderClient({ articleId }: { articleId: string }) {
           article={article}
           compact={isMobile}
           headerActions={
-            <button
-              onClick={() => setShareOpen(true)}
-              className="rounded-md p-2 text-gray-400 transition-colors hover:bg-[var(--gray-3)] hover:text-white"
-              title="Share article"
-            >
-              <Share2 className="h-4 w-4" />
-            </button>
+            <>
+              <TTSPlayer
+                compact={isMobile}
+                getText={() => `${article.title?.trim() ?? ''}\n\n${article.content ?? ''}`}
+              />
+              <button
+                onClick={() => setShareOpen(true)}
+                className="rounded-md p-2 text-gray-400 transition-colors hover:bg-[var(--gray-3)] hover:text-white"
+                title="Share article"
+              >
+                <Share2 className="h-4 w-4" />
+              </button>
+            </>
           }
         />
       </div>

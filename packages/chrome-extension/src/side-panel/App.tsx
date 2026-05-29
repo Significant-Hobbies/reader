@@ -6,6 +6,7 @@ import { checkAuth, getApiKey } from './lib/api';
 import { getImportNotice, type ImportNotice } from './lib/importQuality';
 import { Chat } from './components/Chat';
 import { PageHeader } from './components/PageHeader';
+import { TTSPlayer } from './components/TTSPlayer';
 
 export function App() {
   const [page, setPage] = useState<PageContent | null>(null);
@@ -82,6 +83,14 @@ export function App() {
   return (
     <div className="flex h-screen flex-col">
       <PageHeader page={page} auth={auth} onAuthChange={handleAuthChange} />
+      <TTSPlayer
+        getText={() => {
+          if (!page) return '';
+          const title = page.title?.trim();
+          const body = (page.textContent ?? '').trim();
+          return title ? `${title}.\n\n${body}` : body;
+        }}
+      />
       <Chat
         page={page}
         messages={messages}
