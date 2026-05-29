@@ -23,26 +23,37 @@ const geistMono = Geist_Mono({
 
 export const metadata: Metadata = {
   title: {
-    template: '%s | Web Annotator',
-    default: 'Web Annotator | Capture and comment on the web',
+    template: '%s | Library Reader',
+    default: 'Library Reader — save, read, highlight, and listen',
   },
-  description: 'Turn any web page into a readable snapshot, annotate it, and revisit your notes.',
-  keywords: ['web annotation', 'readability', 'research', 'highlights', 'notes', 'firestore'],
-  applicationName: 'Web Annotator',
+  description:
+    'A personal research library for articles and PDFs. Clean typography, persistent highlights, text-to-speech, and AI chat over your own sources.',
+  keywords: [
+    'reader',
+    'web annotation',
+    'pdf annotation',
+    'readability',
+    'highlights',
+    'notes',
+    'text to speech',
+    'research library',
+  ],
+  applicationName: 'Library Reader',
   alternates: {
     canonical: '/',
   },
   openGraph: {
-    title: 'Web Annotator | Capture and comment on the web',
+    title: 'Library Reader — save, read, highlight, and listen',
     description:
-      'Snapshot web pages into readable copies, add notes, and keep everything in one library.',
+      'A personal research library for articles and PDFs. Clean typography, persistent highlights, text-to-speech, and AI chat over your own sources.',
     type: 'website',
+    siteName: 'Library Reader',
   },
   twitter: {
     card: 'summary_large_image',
-    title: 'Web Annotator | Capture and comment on the web',
+    title: 'Library Reader — save, read, highlight, and listen',
     description:
-      'Snapshot web pages into readable copies, add notes, and keep everything in one library.',
+      'A personal research library for articles and PDFs. Clean typography, highlights, text-to-speech, and AI chat over your own sources.',
   },
 };
 
