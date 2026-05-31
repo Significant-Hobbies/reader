@@ -3,7 +3,7 @@ import { ImageResponse } from 'next/og';
 // Static OG share card for `/`. No fabricated social proof, ratings, or counts —
 // just the product name and one-line value prop on the app's brand surface.
 
-export const runtime = 'edge';
+export const runtime = 'nodejs';
 export const alt = 'Library Reader — save, read, highlight, and listen';
 export const size = { width: 1200, height: 630 };
 export const contentType = 'image/png';
