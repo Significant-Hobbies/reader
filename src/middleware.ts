@@ -21,18 +21,10 @@ export function middleware(req: NextRequest) {
     return NextResponse.redirect(new URL('/library', req.url));
   }
 
-  // CF Edge was returning cf-cache-status: DYNAMIC on the static homepage
-  // because OpenNext emits s-maxage but no max-age. Adding the browser
-  // max-age via a Cache-Control override flips CF to actually cache HTML.
-  if (req.nextUrl.pathname === '/' && !hasSession) {
-    const res = NextResponse.next();
-    res.headers.set(
-      'Cache-Control',
-      'public, max-age=3600, s-maxage=86400, stale-while-revalidate=604800'
-    );
-    res.headers.set('CDN-Cache-Control', 'public, s-maxage=86400, stale-while-revalidate=604800');
-    return res;
-  }
+  // Cache-Control for `/` is set in next.config headers() — middleware-set
+  // headers were being concatenated with the page handler's emitted
+  // s-maxage, producing a doubled Cache-Control. headers() runs at the
+  // route-config layer and CF respects the resulting single value.
 }
 
 export const config = {
