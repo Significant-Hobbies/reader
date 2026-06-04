@@ -1,7 +1,7 @@
 name = "reader"
 compatibility_date = "2025-04-01"
 compatibility_flags = ["nodejs_compat_v2"]
-main = ".open-next/worker.js"
+main = "worker.mjs"
 assets = { directory = ".open-next/assets", binding = "ASSETS" }
 
 # psi-swarm flagged TTFB > 1s as the dominant LCP contributor. Smart
