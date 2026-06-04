@@ -20,6 +20,19 @@ export function middleware(req: NextRequest) {
   if (hasSession && req.nextUrl.pathname === '/') {
     return NextResponse.redirect(new URL('/library', req.url));
   }
+
+  // CF Edge was returning cf-cache-status: DYNAMIC on the static homepage
+  // because OpenNext emits s-maxage but no max-age. Adding the browser
+  // max-age via a Cache-Control override flips CF to actually cache HTML.
+  if (req.nextUrl.pathname === '/' && !hasSession) {
+    const res = NextResponse.next();
+    res.headers.set(
+      'Cache-Control',
+      'public, max-age=3600, s-maxage=86400, stale-while-revalidate=604800'
+    );
+    res.headers.set('CDN-Cache-Control', 'public, s-maxage=86400, stale-while-revalidate=604800');
+    return res;
+  }
 }
 
 export const config = {
