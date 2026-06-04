@@ -1,0 +1,18 @@
+{
+  "snapshots": [
+    {
+      "url": "https://example.com/articles/browser-memory-prototype",
+      "title": "Browser memory import prototype",
+      "byline": "Fleet Reader",
+      "siteName": "Example",
+      "content": "<article><p>Queryable readable content for search and AI chat.</p></article>",
+      "textContent": "Queryable readable content for search and AI chat.",
+      "visitedAt": "2026-06-04T10:00:00.000Z"
+    },
+    {
+      "url": "https://news.example.org/story?token=secret-session-id&topic=ai",
+      "title": "Story with sensitive query params",
+      "content": "<p>Params should be stripped from the stored URL.</p>"
+    }
+  ]
+}
