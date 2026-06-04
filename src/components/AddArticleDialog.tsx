@@ -11,12 +11,15 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from './ui/dialog';
 import { Input } from './ui/input';
 import { Label } from './ui/label';
 
+export type AddArticleMode = 'url' | 'link' | 'pdf';
+
 interface AddArticleDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   onSubmitUrl: (url: string, category?: string) => Promise<void>;
   onSaveLink: (url: string, title?: string, category?: string) => Promise<void>;
   onUploadPDF: (file: File, category?: string) => Promise<void>;
+  initialMode?: AddArticleMode;
   isSubmitting?: boolean;
   uploadProgress?: number | null;
 }
@@ -27,9 +30,10 @@ export function AddArticleDialog({
   onSubmitUrl,
   onSaveLink,
   onUploadPDF,
+  initialMode = 'url',
   isSubmitting = false,
 }: AddArticleDialogProps) {
-  const [tab, setTab] = useState<'url' | 'link' | 'pdf'>('url');
+  const [tab, setTab] = useState<AddArticleMode>(initialMode);
   const [url, setUrl] = useState('');
   const [linkTitle, setLinkTitle] = useState('');
   const [category, setCategory] = useState('');
@@ -109,7 +113,7 @@ export function AddArticleDialog({
         setCategory('');
         setSelectedFile(null);
         setError(null);
-        setTab('url');
+        setTab(initialMode);
         if (fileInputRef.current) {
           fileInputRef.current.value = '';
         }
@@ -164,7 +168,7 @@ export function AddArticleDialog({
           <SegmentedControl.Root
             value={tab}
             onValueChange={(value) => {
-              setTab(value as 'url' | 'link' | 'pdf');
+              setTab(value as AddArticleMode);
               setError(null);
             }}
             size="3"

@@ -46,7 +46,7 @@ import { formatReadingTime } from '../lib/reading-time-utils';
 import { getTagColor } from '../lib/tag-utils';
 import { formatDate } from '../lib/utils';
 import type { ArticleStatus, ArticleSummary, List } from '../types';
-import { AddArticleDialog } from './AddArticleDialog';
+import { AddArticleDialog, type AddArticleMode } from './AddArticleDialog';
 import { useAuth } from './AuthProvider';
 import { Navbar } from './Navbar';
 import { ReviewPackBanner } from './ReviewPackBanner';
@@ -79,6 +79,40 @@ const contentFilters: Array<{ id: ContentFilter; label: string }> = [
   { id: 'imported', label: 'Imported' },
   { id: 'links', label: 'Links' },
   { id: 'pdfs', label: 'PDFs' },
+];
+
+const importOnboardingActions: Array<{
+  mode: AddArticleMode;
+  label: string;
+  title: string;
+  description: string;
+  cta: string;
+  icon: LucideIcon;
+}> = [
+  {
+    mode: 'url',
+    label: 'Import article',
+    title: 'Readable article',
+    description: 'Paste a URL and Reader saves the clean article for focused reading and notes.',
+    cta: 'Import article',
+    icon: BookOpen,
+  },
+  {
+    mode: 'pdf',
+    label: 'Import PDF',
+    title: 'Research PDF',
+    description: 'Upload a PDF so it stays with the rest of your reading queue.',
+    cta: 'Import PDF',
+    icon: FileText,
+  },
+  {
+    mode: 'link',
+    label: 'Save link',
+    title: 'Outside link',
+    description: 'Keep products, references, and future reading without importing the page.',
+    cta: 'Save link',
+    icon: ExternalLink,
+  },
 ];
 
 function getArticleKind(article: ArticleSummary): {
@@ -188,6 +222,7 @@ export default function HomeClient() {
   const [newListName, setNewListName] = useState('');
   const [isListModalOpen, setIsListModalOpen] = useState(false);
   const [showAddArticleDialog, setShowAddArticleDialog] = useState(false);
+  const [addArticleMode, setAddArticleMode] = useState<AddArticleMode>('url');
 
   const router = useRouter();
   const queryClient = useQueryClient();
@@ -195,6 +230,11 @@ export default function HomeClient() {
   const isLocalMode = !authLoading && !user;
   const dataMode = isLocalMode ? 'local' : 'cloud';
   const articleQueryKey = ['articles', dataMode] as const;
+
+  const openAddArticleDialog = (mode: AddArticleMode = 'url') => {
+    setAddArticleMode(mode);
+    setShowAddArticleDialog(true);
+  };
 
   const handleArticleCardClick = (event: MouseEvent<HTMLElement>, articleId: string) => {
     if (event.defaultPrevented) return;
@@ -867,11 +907,11 @@ export default function HomeClient() {
 
               <ThemeButton
                 size="3"
-                onClick={() => setShowAddArticleDialog(true)}
+                onClick={() => openAddArticleDialog('url')}
                 className={`shrink-0 gap-2 ${articles.length === 0 ? 'w-full border-[var(--accent-7)] bg-[var(--accent-3)] md:w-auto' : ''}`}
               >
                 <Plus className="h-4 w-4" />
-                {articles.length === 0 ? 'Save a link or import a PDF' : 'Add Source'}
+                Add Source
               </ThemeButton>
             </header>
 
@@ -1005,115 +1045,142 @@ export default function HomeClient() {
             ) : (
               <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">
                 {articles.length === 0 ? (
-                  <Card className="col-span-full border border-dashed border-[var(--gray-6)] bg-[var(--gray-2)]/70 p-0">
-                    <div className="mx-auto flex max-w-xl flex-col items-center px-6 py-16 text-center">
-                      {/* Sample doc artifact — proof of the core read/annotate loop */}
-                      <div className="mb-8 w-full overflow-hidden rounded-xl border border-[var(--accent-6)]/40 bg-[var(--gray-1)] text-left shadow-md">
-                        <div className="px-5 py-4">
-                          <Text
-                            as="p"
-                            size="1"
-                            weight="medium"
-                            className="mb-2 tracking-widest text-[var(--accent-11)] uppercase"
-                          >
-                            Sample article · 4 min read
-                          </Text>
-                          <Text
-                            as="p"
+                  <section className="col-span-full overflow-hidden rounded-xl border border-[var(--gray-5)] bg-[var(--gray-2)]/70">
+                    <div className="grid gap-0 lg:grid-cols-[minmax(0,1fr)_22rem]">
+                      <div className="px-5 py-8 sm:px-8 lg:py-10">
+                        <Text
+                          as="p"
+                          size="1"
+                          weight="medium"
+                          className="mb-3 tracking-widest text-[var(--accent-11)] uppercase"
+                        >
+                          Empty library
+                        </Text>
+                        <Heading
+                          as="h2"
+                          size="7"
+                          weight="bold"
+                          className="max-w-2xl text-balance text-[var(--gray-12)]"
+                        >
+                          Add your first source
+                        </Heading>
+                        <Text as="p" size="3" color="gray" className="mt-3 max-w-2xl leading-7">
+                          Start by saving something real: import a readable article, upload a PDF,
+                          or keep an outside link for later.
+                        </Text>
+                        <div className="mt-6 flex flex-col gap-3 sm:flex-row sm:items-center">
+                          <ThemeButton
                             size="3"
-                            weight="bold"
-                            className="mb-3 leading-snug text-[var(--gray-12)]"
+                            onClick={() => openAddArticleDialog('url')}
+                            className="w-full gap-2 sm:w-auto"
                           >
-                            How to Learn Anything Fast
-                          </Text>
-                          <Text as="p" size="2" color="gray" className="leading-relaxed">
-                            The best way to learn is to teach.{' '}
-                            <span className="rounded-sm bg-[var(--accent-4)] px-0.5 text-[var(--gray-12)]">
-                              When you explain it simply, you find the gaps.
-                            </span>{' '}
-                            That&apos;s when real understanding kicks in.
-                          </Text>
-                          <div className="mt-3 flex items-center gap-3">
-                            <Text size="1" color="gray">
-                              3 highlights
-                            </Text>
-                            <Text size="1" color="gray">
-                              ·
-                            </Text>
-                            <Text size="1" color="gray">
-                              2 notes
-                            </Text>
-                          </div>
-                        </div>
-                        <div className="flex items-center gap-3 border-t border-[var(--gray-4)] bg-[var(--gray-2)] px-5 py-3">
-                          <Link href="/sample">
-                            <ThemeButton size="2" className="gap-1.5">
-                              <BookOpen className="h-3.5 w-3.5" />
+                            <Plus className="h-4 w-4" />
+                            Add Source
+                          </ThemeButton>
+                          <Link href="/sample" className="w-full sm:w-auto">
+                            <ThemeButton size="3" variant="soft" className="w-full gap-2 sm:w-auto">
+                              <BookOpen className="h-4 w-4" />
                               Try sample doc
                             </ThemeButton>
                           </Link>
                         </div>
+
+                        <div className="mt-8 grid gap-3 md:grid-cols-3">
+                          {importOnboardingActions.map((action) => {
+                            const ActionIcon = action.icon;
+                            return (
+                              <button
+                                key={action.mode}
+                                type="button"
+                                onClick={() => openAddArticleDialog(action.mode)}
+                                className="flex min-h-44 flex-col rounded-lg border border-[var(--gray-5)] bg-[var(--gray-1)]/70 p-4 text-left transition hover:border-[var(--accent-7)] hover:bg-[var(--gray-3)] focus-visible:ring-2 focus-visible:ring-[var(--accent-8)] focus-visible:outline-none"
+                              >
+                                <div className="flex h-10 w-10 items-center justify-center rounded-md border border-[var(--gray-6)] bg-[var(--gray-3)] text-[var(--accent-11)]">
+                                  <ActionIcon className="h-5 w-5" />
+                                </div>
+                                <Text
+                                  as="p"
+                                  size="1"
+                                  weight="medium"
+                                  color="gray"
+                                  className="mt-4 tracking-wide uppercase"
+                                >
+                                  {action.label}
+                                </Text>
+                                <Text
+                                  as="p"
+                                  size="3"
+                                  weight="bold"
+                                  className="mt-1 text-[var(--gray-12)]"
+                                >
+                                  {action.title}
+                                </Text>
+                                <Text
+                                  as="p"
+                                  size="2"
+                                  color="gray"
+                                  className="mt-2 flex-1 leading-6"
+                                >
+                                  {action.description}
+                                </Text>
+                                <span className="mt-4 inline-flex items-center gap-1.5 text-sm font-medium text-[var(--accent-11)]">
+                                  {action.cta}
+                                  <Plus className="h-3.5 w-3.5" />
+                                </span>
+                              </button>
+                            );
+                          })}
+                        </div>
                       </div>
 
-                      <Heading
-                        as="h1"
-                        size="7"
-                        weight="bold"
-                        className="text-balance text-[var(--gray-12)]"
-                      >
-                        Your library is empty
-                      </Heading>
-                      <Text as="p" size="3" color="gray" className="mt-3 max-w-md">
-                        Save articles, PDFs, and links to read and annotate in one place.
-                      </Text>
-                      <ol className="mt-6 w-full max-w-sm space-y-3 text-left">
-                        {[
-                          {
-                            title: 'Paste a URL',
-                            body: 'Drop any article link into Add Source — we strip the clutter.',
-                          },
-                          {
-                            title: 'Read distraction-free',
-                            body: 'Open it in the focused reader view, your way.',
-                          },
-                          {
-                            title: 'Highlight & annotate',
-                            body: 'Select text to capture quotes and add personal notes.',
-                          },
-                        ].map((step, index) => (
-                          <li
-                            key={step.title}
-                            className="flex items-start gap-3 rounded-lg border border-[var(--gray-5)] bg-[var(--gray-1)]/60 px-3 py-2.5"
-                          >
-                            <span className="mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-full border border-[var(--accent-6)] bg-[var(--accent-3)] text-xs font-semibold text-[var(--accent-11)]">
-                              {index + 1}
-                            </span>
-                            <div>
-                              <Text
-                                as="p"
-                                size="2"
-                                weight="medium"
-                                className="text-[var(--gray-12)]"
-                              >
-                                {step.title}
-                              </Text>
-                              <Text as="p" size="1" color="gray" className="mt-0.5">
-                                {step.body}
-                              </Text>
+                      <aside className="border-t border-[var(--gray-5)] bg-[var(--gray-1)]/55 px-5 py-6 sm:px-8 lg:border-t-0 lg:border-l lg:px-6 lg:py-10">
+                        <Text
+                          as="p"
+                          size="1"
+                          weight="medium"
+                          color="gray"
+                          className="tracking-wide uppercase"
+                        >
+                          What happens next
+                        </Text>
+                        <div className="mt-5 space-y-5">
+                          {[
+                            {
+                              title: 'Collect sources',
+                              body: 'Each import lands here with type, origin, and reading state.',
+                            },
+                            {
+                              title: 'Read with context',
+                              body: 'Articles and PDFs open in Reader; outside links open at the source.',
+                            },
+                            {
+                              title: 'Build a trail',
+                              body: 'Highlights, notes, lists, and tags turn saved sources into a research library.',
+                            },
+                          ].map((step, index) => (
+                            <div key={step.title} className="flex gap-3">
+                              <span className="mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-full border border-[var(--accent-6)] bg-[var(--accent-3)] text-xs font-semibold text-[var(--accent-11)]">
+                                {index + 1}
+                              </span>
+                              <div>
+                                <Text
+                                  as="p"
+                                  size="2"
+                                  weight="medium"
+                                  className="text-[var(--gray-12)]"
+                                >
+                                  {step.title}
+                                </Text>
+                                <Text as="p" size="2" color="gray" className="mt-1 leading-6">
+                                  {step.body}
+                                </Text>
+                              </div>
                             </div>
-                          </li>
-                        ))}
-                      </ol>
-                      <ThemeButton
-                        size="3"
-                        onClick={() => setShowAddArticleDialog(true)}
-                        className="mt-6 gap-2"
-                      >
-                        <Plus className="h-4 w-4" />
-                        Add your first source
-                      </ThemeButton>
+                          ))}
+                        </div>
+                      </aside>
                     </div>
-                  </Card>
+                  </section>
                 ) : filteredArticles.length === 0 ? (
                   <Card className="col-span-full border border-dashed border-[var(--gray-6)] bg-[var(--gray-2)]/70 p-0">
                     <div className="mx-auto flex max-w-xl flex-col items-center px-6 py-16 text-center">
@@ -1508,11 +1575,13 @@ export default function HomeClient() {
 
       {/* Add Article Dialog */}
       <AddArticleDialog
+        key={addArticleMode}
         open={showAddArticleDialog}
         onOpenChange={setShowAddArticleDialog}
         onSubmitUrl={handleUrlSubmit}
         onSaveLink={handleSaveLink}
         onUploadPDF={handlePDFUpload}
+        initialMode={addArticleMode}
         isSubmitting={isImporting}
       />
 
