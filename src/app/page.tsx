@@ -1,10 +1,6 @@
 import type { Metadata } from 'next';
 
-import HomeClient from '../components/HomeClient';
 import { MarketingLanding } from '../components/MarketingLanding';
-import { getCurrentUser } from '../lib/auth-server';
-
-export const dynamic = 'force-dynamic';
 
 export const metadata: Metadata = {
   title: 'Library Reader — save, read, highlight, and listen',
@@ -26,13 +22,10 @@ export const metadata: Metadata = {
   },
 };
 
-export default async function Page() {
-  // Signed-in users go straight to the library (HomeClient).
-  // Anonymous visitors see the marketing landing. They can still try the
-  // local-mode library by clicking the CTA, which routes to /library.
-  const user = await getCurrentUser();
-  if (user) {
-    return <HomeClient />;
-  }
+// `/` is intentionally static and free of the auth/DB lookup that used to
+// gate <HomeClient />. psi-swarm flagged TTFB ≈ 1.7s on the SSR path —
+// dominant LCP contributor. Signed-in users still reach the library via
+// the CTA → `/library`, where the auth check is still enforced.
+export default function Page() {
   return <MarketingLanding />;
 }
