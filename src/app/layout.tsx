@@ -19,6 +19,10 @@ const geistSans = Geist({
 const geistMono = Geist_Mono({
   variable: '--font-geist-mono',
   subsets: ['latin'],
+  // Mono is used in code blocks below the fold — skipping preload keeps
+  // the LCP-critical Geist sans the only font on the early network. UI
+  // unchanged: the mono face still loads when CSS references it.
+  preload: false,
 });
 
 export const metadata: Metadata = {
