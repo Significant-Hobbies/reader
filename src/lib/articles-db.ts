@@ -397,16 +397,70 @@ export async function fetchArticlesForSourceMap(userId: string): Promise<Article
   }
 }
 
+// Worker-edge cache for article reads. Keyed by article id AND user id —
+// articles are per-user, and the ownership check (row.userId !== userId)
+// otherwise leaks across users if we cache the row alone. 5-minute TTL;
+// updateArticle / deleteArticle bust the entry below.
+const ARTICLE_CACHE_TTL_SECONDS = 5 * 60;
+const articleCacheUrl = (id: string, userId: string) =>
+  `https://internal-cache/article/${encodeURIComponent(id)}/${encodeURIComponent(userId)}:v1`;
+
+function getEdgeCache(): Cache | undefined {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  return (globalThis as any).caches?.default as Cache | undefined;
+}
+
 export async function fetchArticleById(id: string, userId: string): Promise<Article | null> {
+  const edgeCache = getEdgeCache();
+  const cacheUrl = articleCacheUrl(id, userId);
+
+  if (edgeCache) {
+    try {
+      const cached = await edgeCache.match(cacheUrl);
+      if (cached) {
+        return (await cached.json()) as Article;
+      }
+    } catch {
+      // Fall through to DB on cache read failure.
+    }
+  }
+
+  let article: Article | null;
   try {
     const rows = await db.select().from(articles).where(eq(articles.id, id)).limit(1);
     const row = rows[0];
     if (!row) return null;
     if (row.userId !== userId) return null;
-    return rowToArticle(row);
+    article = rowToArticle(row);
   } catch (error) {
     console.error('articles-db: fetchArticleById failed', error);
     throw error;
+  }
+
+  if (edgeCache && article) {
+    try {
+      const response = new Response(JSON.stringify(article), {
+        headers: {
+          'Content-Type': 'application/json',
+          'Cache-Control': `public, max-age=${ARTICLE_CACHE_TTL_SECONDS}, s-maxage=${ARTICLE_CACHE_TTL_SECONDS}`,
+        },
+      });
+      void edgeCache.put(cacheUrl, response);
+    } catch {
+      // Non-fatal: serving fresh data without storing the cache entry.
+    }
+  }
+
+  return article;
+}
+
+async function invalidateArticleCache(id: string, userId: string): Promise<void> {
+  const edgeCache = getEdgeCache();
+  if (!edgeCache) return;
+  try {
+    await edgeCache.delete(articleCacheUrl(id, userId));
+  } catch {
+    // Non-fatal — stale entry will expire at the 5-min TTL anyway.
   }
 }
 
@@ -952,6 +1006,9 @@ export async function updateArticle(
     console.error('articles-db: updateArticle failed', error);
     throw error;
   }
+
+  // Bust the edge cache so the next read returns the fresh row.
+  await invalidateArticleCache(id, userId);
 }
 
 export async function deleteArticle(id: string, userId: string): Promise<void> {
@@ -961,4 +1018,6 @@ export async function deleteArticle(id: string, userId: string): Promise<void> {
     console.error('articles-db: deleteArticle failed', error);
     throw error;
   }
+
+  await invalidateArticleCache(id, userId);
 }
