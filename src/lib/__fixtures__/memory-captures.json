@@ -1,0 +1,53 @@
+{
+  "captures": [
+    {
+      "id": "fixture-web-page",
+      "kind": "web_page",
+      "url": "https://docs.example.com/memory-search-overview",
+      "title": "Memory search overview",
+      "siteName": "Example Docs",
+      "content": "<article><p>Distributional memory search indexes captured web pages without live refetch.</p></article>",
+      "capturedAt": "2026-06-04T09:15:00.000Z",
+      "annotations": []
+    },
+    {
+      "id": "fixture-blog-article",
+      "kind": "blog_article",
+      "url": "https://blog.example.com/feynman-technique",
+      "title": "The Feynman technique for real understanding",
+      "siteName": "Example Blog",
+      "content": "<article><p>When you explain it simply, you find the gaps in your understanding.</p><p>Queryable blog capture keeps annotations beside the article body.</p></article>",
+      "capturedAt": "2026-06-04T10:30:00.000Z",
+      "annotations": [
+        {
+          "id": 1,
+          "text": "Core idea: teach to learn",
+          "quote": "When you explain it simply, you find the gaps"
+        }
+      ]
+    },
+    {
+      "id": "fixture-pdf-blog-export",
+      "kind": "pdf_document",
+      "url": "memory://fixtures/why-sleep-matters.pdf",
+      "blogOriginUrl": "https://blog.example.com/why-sleep-matters",
+      "title": "Why Sleep Matters (blog → PDF capture)",
+      "content": "",
+      "extractedText": "Sleep consolidates learning from the day. Marginalia in PDF exports should stay searchable alongside the blog source URL.",
+      "capturedAt": "2026-06-04T11:00:00.000Z",
+      "annotations": [
+        {
+          "id": 1,
+          "text": "PDF marginalia: consolidation claim",
+          "quote": "Sleep consolidates learning"
+        }
+      ]
+    }
+  ],
+  "demoQueries": {
+    "crossCapture": "queryable",
+    "web": "distributional",
+    "blog": "Feynman",
+    "pdf": "marginalia"
+  }
+}
