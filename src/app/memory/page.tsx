@@ -6,7 +6,7 @@ import {
   buildPrototypeCorpus,
   ingestMemoryCaptureFixtures,
   loadMemoryCaptureFixture,
-} from '@/lib/memory-capture';
+} from '@/lib/memory-capture-fixtures';
 
 export const metadata: Metadata = {
   title: 'Memory capture prototype — Reader',

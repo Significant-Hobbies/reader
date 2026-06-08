@@ -1,11 +1,11 @@
 import { describe, expect, it } from 'vitest';
 
+import { searchMemoryCaptures } from '../memory-capture';
 import {
   buildPrototypeCorpus,
   ingestMemoryCaptureFixtures,
   mockBrowserMemoryImport,
-  searchMemoryCaptures,
-} from '../memory-capture';
+} from '../memory-capture-fixtures';
 
 describe('memory-capture prototype', () => {
   it('loads fixture captures for web page, blog article, and PDF-like document', () => {

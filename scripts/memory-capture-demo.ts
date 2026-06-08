@@ -1,4 +1,5 @@
-import { buildPrototypeCorpus, searchMemoryCaptures } from '../src/lib/memory-capture';
+import { searchMemoryCaptures } from '../src/lib/memory-capture';
+import { buildPrototypeCorpus } from '../src/lib/memory-capture-fixtures';
 
 const query = process.argv[2] ?? 'queryable';
 const corpus = buildPrototypeCorpus();
