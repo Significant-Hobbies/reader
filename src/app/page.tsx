@@ -2,11 +2,9 @@ import type { Metadata } from 'next';
 
 import { MarketingLanding } from '../components/MarketingLanding';
 
-// Emit s-maxage=3600 on the response so the CF Edge serves cached HTML
-// without re-running the Worker. Verified 919ms TTFB on a fully-static
-// homepage was Worker cold-start; this makes warm CF Edge hits skip the
-// Worker entirely.
-export const revalidate = 3600;
+// Keep the homepage deploy-consistent with build-hashed Next chunks. Prior
+// edge caching served stale HTML that referenced assets pruned by newer deploys.
+export const revalidate = 0;
 
 export const metadata: Metadata = {
   title: 'Library Reader — save, read, highlight, and listen',
