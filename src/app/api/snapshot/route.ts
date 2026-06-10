@@ -3,9 +3,15 @@ import { parseHTML } from 'linkedom';
 import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
 
+import { getAuthenticatedUserId } from '../../../lib/auth-api';
 import { validateExternalUrl } from '../../../lib/url-validation';
 
 export async function GET(req: NextRequest) {
+  const userId = await getAuthenticatedUserId();
+  if (!userId) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  }
+
   const targetUrl = req.nextUrl.searchParams.get('url');
 
   if (!targetUrl) {

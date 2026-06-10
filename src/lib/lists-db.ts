@@ -2,7 +2,7 @@ import crypto from 'crypto';
 import { and, desc, eq } from 'drizzle-orm';
 
 import type { List } from '../types';
-import { sanitizePlainText } from './articles-db';
+import { invalidateArticleCache, sanitizePlainText } from './articles-db';
 import { db } from './db/client';
 import { articles, lists } from './db/schema';
 
@@ -211,6 +211,8 @@ export async function deleteList(listId: string, userId: string): Promise<void> 
         .update(articles)
         .set({ listIds: serializeJsonColumn(next) as unknown as string[], updatedAt: now })
         .where(eq(articles.id, article.id));
+      // Bust the per-article edge cache so cached reads don't serve stale listIds.
+      await invalidateArticleCache(article.id, userId);
     }
 
     await db.delete(lists).where(eq(lists.id, listId));
@@ -240,6 +242,8 @@ async function mutateArticleListIds(
     .update(articles)
     .set({ listIds: serializeJsonColumn(next) as unknown as string[], updatedAt: new Date() })
     .where(eq(articles.id, articleId));
+  // Bust the per-article edge cache so cached reads don't serve stale listIds.
+  await invalidateArticleCache(articleId, userId);
 }
 
 export async function addArticleToList(

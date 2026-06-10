@@ -399,8 +399,10 @@ export async function fetchArticlesForSourceMap(userId: string): Promise<Article
 
 // Worker-edge cache for article reads. Keyed by article id AND user id —
 // articles are per-user, and the ownership check (row.userId !== userId)
-// otherwise leaks across users if we cache the row alone. 5-minute TTL;
-// updateArticle / deleteArticle bust the entry below.
+// otherwise leaks across users if we cache the row alone. 5-minute TTL.
+// Every writer to the articles table must bust the entry via
+// invalidateArticleCache: updateArticle / deleteArticle / share-id writers
+// below, plus the listIds mutations in lists-db.ts.
 const ARTICLE_CACHE_TTL_SECONDS = 5 * 60;
 const articleCacheUrl = (id: string, userId: string) =>
   `https://internal-cache/article/${encodeURIComponent(id)}/${encodeURIComponent(userId)}:v1`;
@@ -454,7 +456,7 @@ export async function fetchArticleById(id: string, userId: string): Promise<Arti
   return article;
 }
 
-async function invalidateArticleCache(id: string, userId: string): Promise<void> {
+export async function invalidateArticleCache(id: string, userId: string): Promise<void> {
   const edgeCache = getEdgeCache();
   if (!edgeCache) return;
   try {
@@ -812,6 +814,7 @@ export async function generateArticleShareId(
       .update(articles)
       .set({ shareId, updatedAt: new Date() })
       .where(eq(articles.id, articleId));
+    await invalidateArticleCache(articleId, userId);
     return shareId;
   } catch (error) {
     console.error('articles-db: generateArticleShareId failed', error);
@@ -834,6 +837,7 @@ export async function revokeArticleShareId(articleId: string, userId: string): P
       .update(articles)
       .set({ shareId: null, updatedAt: new Date() })
       .where(eq(articles.id, articleId));
+    await invalidateArticleCache(articleId, userId);
     return true;
   } catch (error) {
     console.error('articles-db: revokeArticleShareId failed', error);
