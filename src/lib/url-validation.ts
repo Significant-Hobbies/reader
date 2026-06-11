@@ -1,4 +1,5 @@
 import { lookup } from 'dns/promises';
+import { isIP } from 'net';
 
 /**
  * Block SSRF by resolving the hostname and rejecting private/internal IPs.
@@ -47,10 +48,8 @@ export async function validateExternalUrl(
   }
 
   // Resolve DNS to check the actual IP
-  let resolvedAddress: string;
   try {
     const { address } = await lookup(hostname);
-    resolvedAddress = address;
     if (isBlockedIp(address)) {
       return { ok: false, reason: 'Blocked: private or reserved IP' };
     }
@@ -64,14 +63,13 @@ export async function validateExternalUrl(
     return { ok: false, reason: 'Blocked: private or reserved IP' };
   }
 
-  void resolvedAddress; // used above; suppress lint warning
   return { ok: true, url: parsed };
 }
 
 function isBlockedIp(ip: string): boolean {
-  const parts = ip.split('.').map(Number);
-
-  if (parts.length === 4) {
+  const family = isIP(ip);
+  if (family === 4) {
+    const parts = ip.split('.').map(Number);
     const [a, b] = parts;
     // Loopback: 127.0.0.0/8
     if (a === 127) return true;
@@ -85,10 +83,25 @@ function isBlockedIp(ip: string): boolean {
     if (a === 169 && b === 254) return true;
     // 0.0.0.0/8
     if (a === 0) return true;
+    return false;
   }
 
-  // IPv6 loopback
-  if (ip === '::1' || ip === '::') return true;
+  if (family !== 6) return false;
+
+  const normalized = ip.toLowerCase();
+  if (normalized === '::' || normalized === '::1') return true;
+  if (normalized.startsWith('fc') || normalized.startsWith('fd')) return true; // fc00::/7
+  if (
+    normalized.startsWith('fe8') ||
+    normalized.startsWith('fe9') ||
+    normalized.startsWith('fea') ||
+    normalized.startsWith('feb')
+  ) {
+    return true; // fe80::/10
+  }
+  if (normalized.startsWith('::ffff:')) {
+    return isBlockedIp(normalized.slice('::ffff:'.length));
+  }
 
   return false;
 }

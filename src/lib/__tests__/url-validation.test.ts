@@ -73,6 +73,16 @@ describe('validateExternalUrl', () => {
     }
   });
 
+  it('blocks private IPv6 addresses after DNS resolution', async () => {
+    const privateIPs = ['fc00::1', 'fd12:3456:789a::1', 'fe80::1', '::ffff:127.0.0.1'];
+
+    for (const ip of privateIPs) {
+      mockedLookup.mockResolvedValueOnce({ address: ip, family: 6 });
+      const result = await validateExternalUrl('http://example.com');
+      expect(result).toEqual({ ok: false, reason: 'Blocked: private or reserved IP' });
+    }
+  });
+
   it('blocks IPv6 loopback after DNS resolution', async () => {
     mockedLookup.mockResolvedValueOnce({ address: '::1', family: 6 });
     const result = await validateExternalUrl('http://ipv6-loopback.example.com');

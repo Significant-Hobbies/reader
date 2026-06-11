@@ -1,6 +1,7 @@
 import type { NextRequest } from 'next/server';
 
 import { getAuthenticatedUserId } from '../../../lib/auth-api';
+import { fetchWithValidatedRedirects } from '../../../lib/safe-fetch';
 import { validateExternalUrl } from '../../../lib/url-validation';
 
 const MAX_RESPONSE_SIZE = 10 * 1024 * 1024; // 10MB
@@ -30,24 +31,23 @@ export async function GET(request: NextRequest) {
   const parsed = validation.url;
 
   try {
-    const upstream = await fetch(parsed.href, {
+    const upstream = await fetchWithValidatedRedirects(parsed, {
       headers: {
         'User-Agent': 'Mozilla/5.0 (compatible; BlogReader/1.0)',
         Accept: 'text/html,application/xhtml+xml,*/*',
       },
-      redirect: 'follow',
       signal: AbortSignal.timeout(15000),
     });
 
-    if (!upstream.ok) {
-      return new Response(`Upstream returned ${upstream.status}`, {
+    if (!upstream.response.ok) {
+      return new Response(`Upstream returned ${upstream.response.status}`, {
         status: 502,
       });
     }
 
-    const contentType = upstream.headers.get('content-type') || '';
-    const contentLength = upstream.headers.get('content-length');
-    if (contentLength && parseInt(contentLength, 10) > MAX_RESPONSE_SIZE) {
+    const contentType = upstream.response.headers.get('content-type') || '';
+    const body = await upstream.response.arrayBuffer();
+    if (body.byteLength > MAX_RESPONSE_SIZE) {
       return new Response('Response too large', { status: 502 });
     }
 
@@ -56,10 +56,10 @@ export async function GET(request: NextRequest) {
     // Build response headers - pass through content-type, strip frame-blocking headers
     const responseHeaders = new Headers();
     responseHeaders.set('content-type', contentType);
-    responseHeaders.set('cache-control', 'public, max-age=300'); // 5min cache
+    responseHeaders.set('cache-control', 'private, no-store');
 
     if (isHtml) {
-      let html = await upstream.text();
+      let html = new TextDecoder().decode(body);
 
       // Inject <base> tag so relative URLs resolve against the original site
       const baseTag = `<base href="${parsed.origin}/">`;
@@ -89,7 +89,7 @@ export async function GET(request: NextRequest) {
     }
 
     // Non-HTML (CSS, JS, images) - stream through
-    return new Response(upstream.body, {
+    return new Response(body, {
       status: 200,
       headers: responseHeaders,
     });
