@@ -1,5 +1,5 @@
 import crypto from 'crypto';
-import { and, desc, eq } from 'drizzle-orm';
+import { and, desc, eq, inArray } from 'drizzle-orm';
 import type { IOptions } from 'sanitize-html';
 import sanitizeHtml from 'sanitize-html';
 
@@ -12,7 +12,7 @@ import type {
   SessionReview,
 } from '../types';
 import { db } from './db/client';
-import { articles } from './db/schema';
+import { articles, lists } from './db/schema';
 import { getPdfDownloadUrl } from './storage';
 
 // ---------------------------------------------------------------------------
@@ -85,6 +85,18 @@ const isNoteAnchorInput = (value: unknown): value is NoteAnchorInput =>
 
 const isAIChatMessageInput = (value: unknown): value is AIChatMessageInput =>
   typeof value === 'object' && value !== null;
+
+async function filterOwnedListIds(userId: string, listIds: string[]): Promise<string[]> {
+  if (listIds.length === 0) return [];
+
+  const ownedRows = await db
+    .select({ id: lists.id })
+    .from(lists)
+    .where(and(eq(lists.userId, userId), inArray(lists.id, listIds)));
+
+  const ownedIds = new Set(ownedRows.map((row) => row.id));
+  return listIds.filter((id) => ownedIds.has(id));
+}
 
 export const sanitizePlainText = (value: unknown) =>
   sanitizeHtml(String(value ?? ''), plainTextSanitizeOptions).trim();
@@ -501,6 +513,7 @@ export async function createArticleRecord(payload: {
 }): Promise<string> {
   try {
     const sanitized = sanitizeArticlePayload(payload);
+    const ownedListIds = await filterOwnedListIds(sanitized.userId, sanitized.listIds);
     const readingTimeMinutes = calculateReadingTime(sanitized.content);
     const now = new Date();
     const id = crypto.randomUUID();
@@ -516,7 +529,7 @@ export async function createArticleRecord(payload: {
       byline: sanitized.byline || null,
       content: sanitized.content,
       tags: serializeJsonColumn(sanitized.tags) as unknown as string[],
-      listIds: serializeJsonColumn(sanitized.listIds) as unknown as string[],
+      listIds: serializeJsonColumn(ownedListIds) as unknown as string[],
       notes: serializeJsonColumn([]) as unknown as Note[],
       aiChat: serializeJsonColumn([]) as unknown as AIChatMessage[],
       summary: null,
