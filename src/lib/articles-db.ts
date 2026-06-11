@@ -602,6 +602,10 @@ function stripHtmlTags(html: string): string {
   return sanitizePlainText(html);
 }
 
+function escapeRegExp(value: string): string {
+  return value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+}
+
 function highlightSearchTerms(text: string, query: string): string {
   if (!query.trim()) return text;
   const terms = query
@@ -610,7 +614,7 @@ function highlightSearchTerms(text: string, query: string): string {
     .filter((t) => t.length > 0);
   let result = text;
   terms.forEach((term) => {
-    const regex = new RegExp(`(${term})`, 'gi');
+    const regex = new RegExp(`(${escapeRegExp(term)})`, 'gi');
     result = result.replace(regex, '**$1**');
   });
   return result;
@@ -662,7 +666,7 @@ function calculateRelevance(
 
   const lowerContent = stripHtmlTags(content).toLowerCase();
   terms.forEach((term) => {
-    const matches = (lowerContent.match(new RegExp(term, 'gi')) || []).length;
+    const matches = (lowerContent.match(new RegExp(escapeRegExp(term), 'gi')) || []).length;
     score += matches * 2;
   });
 
