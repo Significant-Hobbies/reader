@@ -9,7 +9,11 @@ import { Document, Page, pdfjs } from 'react-pdf';
 import type { ReaderSettings } from '../types';
 import { getThemeClasses } from './ReaderView';
 
-pdfjs.GlobalWorkerOptions.workerSrc = `//unpkg.com/pdfjs-dist@${pdfjs.version}/build/pdf.worker.min.mjs`;
+// Keep the worker local so PDF rendering does not depend on an external CDN.
+pdfjs.GlobalWorkerOptions.workerSrc = new URL(
+  'pdfjs-dist/build/pdf.worker.min.mjs',
+  import.meta.url
+).toString();
 
 interface PDFViewerProps {
   pdfUrl: string;
