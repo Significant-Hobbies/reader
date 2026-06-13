@@ -4,7 +4,10 @@ import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
 
 import { getAuthenticatedUserId } from '../../../lib/auth-api';
+import { fetchWithValidatedRedirects } from '../../../lib/safe-fetch';
 import { validateExternalUrl } from '../../../lib/url-validation';
+
+const MAX_RESPONSE_SIZE = 10 * 1024 * 1024; // 10MB
 
 export async function GET(req: NextRequest) {
   const userId = await getAuthenticatedUserId();
@@ -24,7 +27,7 @@ export async function GET(req: NextRequest) {
   }
 
   try {
-    const response = await fetch(validation.url.href, {
+    const { response } = await fetchWithValidatedRedirects(validation.url, {
       headers: {
         'User-Agent':
           'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36',
@@ -37,7 +40,12 @@ export async function GET(req: NextRequest) {
       throw new Error(`Failed to fetch URL: ${response.status} ${response.statusText}`);
     }
 
-    const html = await response.text();
+    const body = await response.arrayBuffer();
+    if (body.byteLength > MAX_RESPONSE_SIZE) {
+      throw new Error('Response too large');
+    }
+
+    const html = new TextDecoder().decode(body);
     const { document } = parseHTML(html);
 
     const reader = new Readability(document);
