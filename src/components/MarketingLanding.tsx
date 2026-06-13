@@ -128,18 +128,15 @@ export function MarketingLanding() {
               href="/library"
               className="inline-flex h-11 items-center rounded-md bg-[var(--accent-9,#a87c4b)] px-5 text-sm font-semibold text-black transition-opacity hover:opacity-90"
             >
-              Open the library
+              Save your first article
               <ChevronRight className="ml-1 h-4 w-4" />
-            </Link>
-            <Link
-              href="/extension"
-              className="inline-flex h-11 items-center rounded-md border border-white/15 px-5 text-sm font-medium text-gray-200 transition-colors hover:bg-white/5"
-            >
-              Get the Chrome extension
             </Link>
           </div>
           <p className="mt-4 text-xs text-gray-500">
-            No account needed to start — works locally in your browser. Sign in to sync.
+            No account needed — works in your browser right now.{' '}
+            <Link href="/extension" className="underline underline-offset-2 hover:text-gray-300">
+              Chrome extension available.
+            </Link>
           </p>
         </div>
       </section>
@@ -287,7 +284,7 @@ export function MarketingLanding() {
             href="/library"
             className="mt-7 inline-flex h-11 items-center rounded-md bg-[var(--accent-9,#a87c4b)] px-6 text-sm font-semibold text-black transition-opacity hover:opacity-90"
           >
-            Open the library
+            Save your first article
             <ChevronRight className="ml-1 h-4 w-4" />
           </Link>
           <p className="mt-6 text-xs text-gray-500">
@@ -308,7 +305,8 @@ export function MarketingLanding() {
 
       <footer className="border-t border-white/10 py-8">
         <div className="mx-auto max-w-5xl px-6 text-center text-xs text-gray-500">
-          Library Reader — a personal research library.
+          Your reading list is not the same as your understanding. Library Reader helps with the
+          gap.
         </div>
       </footer>
     </div>
