@@ -1,0 +1,228 @@
+---
+import Layout from '@/layouts/Layout.astro';
+
+const TITLE = 'Library Reader — save, read, highlight, and listen';
+const DESCRIPTION =
+  'A personal research library for articles and PDFs. Clean typography, persistent highlights, text-to-speech, and AI chat over your own sources.';
+---
+
+<Layout title={TITLE} description={DESCRIPTION}>
+  <div class="page">
+    <header class="header">
+      <div class="header-inner">
+        <a class="brand" href="/">
+          <span class="brand-mark" aria-hidden="true">L</span>
+          <span>Library Reader</span>
+        </a>
+        <nav class="nav-links" aria-label="Primary">
+          <a href="#features">Features</a>
+          <a href="#how">How it works</a>
+          <a href="#faq">FAQ</a>
+          <a href="/extension">Extension</a>
+        </nav>
+        <a class="btn-signin" href="/login">Sign in</a>
+      </div>
+    </header>
+
+    <section class="hero">
+      <div class="hero-inner">
+        <span class="eyebrow">Personal research library</span>
+        <h1>Save it, read it, highlight it, listen to it.</h1>
+        <p class="hero-lede">
+          One library for the articles and PDFs you actually want to read. Clean typography,
+          persistent highlights, text-to-speech, and AI chat over your own sources.
+        </p>
+        <div class="cta-row">
+          <a class="btn-primary" href="/library">
+            Save your first article
+            <span aria-hidden="true">→</span>
+          </a>
+        </div>
+        <p class="fine">
+          No account needed — works in your browser right now.
+          <a href="/extension">Chrome extension available.</a>
+        </p>
+      </div>
+    </section>
+
+    <section id="features" class="section">
+      <div class="section-head">
+        <h2>What it actually does</h2>
+        <p>Three things, kept deliberately small. No feed, no recommendations, no inbox.</p>
+      </div>
+      <div class="grid-3">
+        <article class="card">
+          <div class="card-icon" aria-hidden="true">📄</div>
+          <h3>One library for articles and PDFs</h3>
+          <p>
+            Paste a URL and the page is cleaned with Mozilla Readability. Upload a PDF and it goes
+            into the same library, with text extraction for search and chat.
+          </p>
+        </article>
+        <article class="card">
+          <div class="card-icon" aria-hidden="true">✦</div>
+          <h3>Highlight and annotate</h3>
+          <p>
+            A distraction-free reader view with persistent highlights and a side panel for notes.
+            Annotations anchor to the exact text you marked so they survive across visits.
+          </p>
+        </article>
+        <article class="card">
+          <div class="card-icon" aria-hidden="true">🎧</div>
+          <h3>Listen to anything you save</h3>
+          <p>
+            Hit Listen on an article or PDF and your browser reads it aloud — voice and rate are
+            controllable. The same control is available from the Chrome extension.
+          </p>
+        </article>
+      </div>
+    </section>
+
+    <section id="demo" class="section section-bordered">
+      <div class="section-head">
+        <h2 class="section-head-inline"><span aria-hidden="true">✨</span> The reader view</h2>
+        <p>
+          Articles get cleaned into a typography-first layout. Select any text to add a note or send
+          it to AI. Press the Listen button to have the page read aloud.
+        </p>
+      </div>
+      <div class="demo-frame" aria-label="Reader layout sketch">
+        <div class="demo-bar">
+          <div class="demo-dots" aria-hidden="true">
+            <span class="demo-dot"></span>
+            <span class="demo-dot"></span>
+            <span class="demo-dot"></span>
+          </div>
+          <span>library / reader</span>
+          <span class="demo-listen">🎧 Listen</span>
+        </div>
+        <div class="demo-grid">
+          <div class="demo-main">
+            <div class="demo-label">Article</div>
+            <div class="skeleton-title"></div>
+            <div class="skeleton-sub"></div>
+            <div class="skeleton-lines">
+              <div class="skeleton-line w97"></div>
+              <div class="skeleton-line w94"></div>
+              <div class="skeleton-line w60"></div>
+              <div class="skeleton-line w88"></div>
+              <div class="skeleton-line w92"></div>
+              <div class="skeleton-line w40"></div>
+            </div>
+          </div>
+          <aside class="demo-aside">
+            <div class="demo-label">Notes</div>
+            <div class="note-card">
+              <div class="note-line w75"></div>
+              <div class="note-line full"></div>
+              <div class="note-line w80"></div>
+            </div>
+            <div class="note-card">
+              <div class="note-line w50"></div>
+              <div class="note-line full"></div>
+            </div>
+          </aside>
+        </div>
+      </div>
+      <p class="demo-caption">Layout sketch — your library renders your real content.</p>
+    </section>
+
+    <section id="how" class="section section-bordered">
+      <div class="section-head">
+        <h2>How it works</h2>
+        <p>Three steps from a URL to a library you keep coming back to.</p>
+      </div>
+      <div class="grid-3">
+        <article class="card">
+          <div class="step-num">1</div>
+          <h3>Save a source</h3>
+          <p>
+            Paste a link, drop a PDF, or use the Chrome extension to capture the current page in one
+            click.
+          </p>
+        </article>
+        <article class="card">
+          <div class="step-num">2</div>
+          <h3>Read, highlight, listen</h3>
+          <p>
+            Open it in the reader view. Highlight what matters, add notes in the side panel, or play
+            it back as audio.
+          </p>
+        </article>
+        <article class="card">
+          <div class="step-num">3</div>
+          <h3>Ask and revisit</h3>
+          <p>
+            Generate a summary, chat with the text using your own AI key, and come back to your
+            highlights any time.
+          </p>
+        </article>
+      </div>
+    </section>
+
+    <section id="faq" class="faq">
+      <h2>FAQ</h2>
+      <div class="faq-list">
+        <details class="faq-item">
+          <summary>Do I need an account to try it?</summary>
+          <p>
+            No. The library works in your browser without signing in — articles, PDFs, highlights,
+            and notes are stored locally. Sign in with Google when you want to sync across devices.
+          </p>
+        </details>
+        <details class="faq-item">
+          <summary>Where are my PDFs stored?</summary>
+          <p>
+            For signed-in users, PDFs are uploaded to Cloudflare R2 and accessed through a proxy
+            that enforces ownership. In local mode, the PDF stays in your browser.
+          </p>
+        </details>
+        <details class="faq-item">
+          <summary>How does the AI chat work? Whose API key does it use?</summary>
+          <p>
+            You bring your own key — OpenAI, Anthropic, or Gemini — and it is stored in your
+            browser. There is also a gateway option and a local-AI mode for development. We never
+            proxy your key through a server.
+          </p>
+        </details>
+        <details class="faq-item">
+          <summary>What does the Chrome extension do?</summary>
+          <p>
+            It captures the page you are on (cleaned via Readability) and saves it to your library.
+            It also exposes the Listen control, so you can have any page read aloud without leaving
+            it.
+          </p>
+        </details>
+        <details class="faq-item">
+          <summary>Can I export my data?</summary>
+          <p>
+            Yes. The About page has an Export button that downloads every article, board, and list
+            scoped to your account as a single JSON file.
+          </p>
+        </details>
+      </div>
+    </section>
+
+    <section class="closing">
+      <div class="closing-inner">
+        <h2>Start your library</h2>
+        <p>
+          Save your first article or PDF. It works in your browser right now — sign in later if you
+          want to sync.
+        </p>
+        <a class="btn-primary" href="/library">
+          Save your first article
+          <span aria-hidden="true">→</span>
+        </a>
+        <p class="footer-links">
+          <a href="/about">About</a> · <a href="/privacy">Privacy</a> ·
+          <a href="/extension">Chrome extension</a>
+        </p>
+      </div>
+    </section>
+
+    <footer class="site-footer">
+      Your reading list is not the same as your understanding. Library Reader helps with the gap.
+    </footer>
+  </div>
+</Layout>

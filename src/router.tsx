@@ -2,7 +2,6 @@ import type { ComponentType } from 'react';
 import { createBrowserRouter } from 'react-router-dom';
 
 import RootLayout from './RootLayout';
-import LandingPage from './pages/LandingPage';
 
 function lazyPage(module: () => Promise<{ default: ComponentType }>) {
   return module().then((m) => ({ Component: m.default }));
@@ -13,7 +12,6 @@ export const router = createBrowserRouter([
     path: '/',
     element: <RootLayout />,
     children: [
-      { index: true, element: <LandingPage /> },
       { path: 'about', lazy: () => lazyPage(() => import('./pages/AboutPage')) },
       { path: 'privacy', lazy: () => lazyPage(() => import('./pages/PrivacyPage')) },
       {

@@ -1,0 +1,41 @@
+---
+import '@/styles/landing.css';
+
+interface Props {
+  title: string;
+  description: string;
+}
+
+const { title, description } = Astro.props;
+
+const SITE_URL = 'https://reader.sarthakagrawal927.workers.dev';
+---
+
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="theme-color" content="#0d0d0c" />
+
+    <title>{title}</title>
+    <meta name="description" content={description} />
+    <meta name="application-name" content="Library Reader" />
+
+    <link rel="canonical" href={SITE_URL} />
+    <link rel="icon" href="/favicon.ico" type="image/x-icon" />
+
+    <meta property="og:type" content="website" />
+    <meta property="og:url" content={SITE_URL} />
+    <meta property="og:site_name" content="Library Reader" />
+    <meta property="og:title" content={title} />
+    <meta property="og:description" content={description} />
+
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content={title} />
+    <meta name="twitter:description" content={description} />
+  </head>
+  <body class="antialiased">
+    <slot />
+  </body>
+</html>

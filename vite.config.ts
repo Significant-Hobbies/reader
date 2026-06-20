@@ -25,6 +25,11 @@ export default defineConfig(() => ({
     outDir: 'dist',
     emptyOutDir: true,
     cssMinify: 'lightningcss',
+    rollupOptions: {
+      input: {
+        app: path.resolve(__dirname, 'app.html'),
+      },
+    },
   },
   resolve: {
     alias: {

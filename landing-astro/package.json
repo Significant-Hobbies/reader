@@ -1,0 +1,21 @@
+{
+  "name": "reader-landing-astro",
+  "type": "module",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Static Astro landing for Library Reader. Overlaid onto dist/index.html; SPA at dist/app.html.",
+  "scripts": {
+    "dev": "astro dev",
+    "build": "astro build",
+    "preview": "astro preview",
+    "astro": "astro"
+  },
+  "dependencies": {
+    "@astrojs/sitemap": "^3.7.3",
+    "astro": "^5.18.2"
+  },
+  "devDependencies": {
+    "lightningcss": "^1.32.0"
+  },
+  "packageManager": "pnpm@10.32.1"
+}

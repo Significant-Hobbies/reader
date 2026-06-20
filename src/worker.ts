@@ -88,6 +88,20 @@ export default {
     }
 
     const assetResponse = await env.ASSETS.fetch(request);
-    return assetResponse.ok ? withSecurityHeaders(assetResponse) : assetResponse;
+    if (assetResponse.ok) {
+      return withSecurityHeaders(assetResponse);
+    }
+
+    if (request.method !== 'GET') {
+      return assetResponse;
+    }
+
+    if (url.pathname === '/') {
+      const landing = await env.ASSETS.fetch(new Request(new URL('/index.html', url), request));
+      return landing.ok ? withSecurityHeaders(landing) : assetResponse;
+    }
+
+    const spa = await env.ASSETS.fetch(new Request(new URL('/app.html', url), request));
+    return spa.ok ? withSecurityHeaders(spa) : assetResponse;
   },
 };
