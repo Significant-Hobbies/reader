@@ -17,20 +17,6 @@ import { Link, useNavigate } from 'react-router-dom';
 import { lazy, Suspense, type MouseEvent, useState } from 'react';
 
 import { trackActivatedOnce, trackCoreAction } from '../lib/analytics';
-import {
-  addLocalArticleToList,
-  createLocalList,
-  deleteLocalArticle,
-  deleteLocalList,
-  estimateReadingTimeFromHtml,
-  fileToDataUrl,
-  getLocalArticles,
-  getLocalLists,
-  getLocalTags,
-  removeLocalArticleFromList,
-  saveLocalArticle,
-  updateLocalStatus,
-} from '../lib/local-library';
 import { formatReadingTime } from '../lib/reading-time-utils';
 import { getTagColor } from '../lib/tag-utils';
 import { formatDate } from '../lib/utils';
@@ -42,8 +28,11 @@ const AddArticleDialog = lazy(() =>
 );
 import { useAuth } from './AuthProvider';
 import { LibraryEmptyOnboarding } from './LibraryEmptyOnboarding';
-import { Navbar } from './Navbar';
-import { ReviewPackBanner } from './ReviewPackBanner';
+
+const Navbar = lazy(() => import('./Navbar').then((m) => ({ default: m.Navbar })));
+const ReviewPackBanner = lazy(() =>
+  import('./ReviewPackBanner').then((m) => ({ default: m.ReviewPackBanner }))
+);
 import { Badge } from './ui/badge';
 import { Button } from './ui/button';
 import { SegmentedControl } from './ui/segmented-control';
@@ -220,6 +209,7 @@ export default function HomeClient() {
     queryKey: articleQueryKey,
     queryFn: async () => {
       if (isLocalMode) {
+        const { getLocalArticles } = await import('../lib/local-library');
         const localArticles = await getLocalArticles();
         return localArticles.map((article) => ({
           ...article,
@@ -242,6 +232,7 @@ export default function HomeClient() {
     queryKey: ['lists', dataMode],
     queryFn: async () => {
       if (isLocalMode) {
+        const { getLocalLists } = await import('../lib/local-library');
         return getLocalLists();
       }
 
@@ -260,6 +251,7 @@ export default function HomeClient() {
     queryKey: ['tags', dataMode],
     queryFn: async () => {
       if (isLocalMode) {
+        const { getLocalTags } = await import('../lib/local-library');
         return getLocalTags();
       }
 
@@ -291,7 +283,8 @@ export default function HomeClient() {
       const snapshotTitle = (article.title || '').trim() || properUrl;
 
       if (isLocalMode) {
-        const saved = await saveLocalArticle({
+        const lib = await import('../lib/local-library');
+        const saved = await lib.saveLocalArticle({
           url: properUrl,
           title: snapshotTitle,
           byline: article.byline,
@@ -299,7 +292,7 @@ export default function HomeClient() {
           type: 'article',
           listIds: selectedListId !== 'all' ? [selectedListId] : [],
           category,
-          readingTimeMinutes: estimateReadingTimeFromHtml(article.content),
+          readingTimeMinutes: lib.estimateReadingTimeFromHtml(article.content),
         });
         return saved.id;
       }
@@ -344,8 +337,9 @@ export default function HomeClient() {
       }
 
       if (isLocalMode) {
-        const pdfDataUrl = await fileToDataUrl(file);
-        const saved = await saveLocalArticle({
+        const lib = await import('../lib/local-library');
+        const pdfDataUrl = await lib.fileToDataUrl(file);
+        const saved = await lib.saveLocalArticle({
           url: `local-pdf://${file.name}`,
           title: file.name.replace(/\.pdf$/i, '') || file.name,
           byline: null,
@@ -401,7 +395,8 @@ export default function HomeClient() {
       }
 
       if (isLocalMode) {
-        return saveLocalArticle({
+        const lib = await import('../lib/local-library');
+        return lib.saveLocalArticle({
           url: properUrl,
           title: title?.trim() || properUrl,
           content: '',
@@ -444,7 +439,8 @@ export default function HomeClient() {
   const deleteMutation = useMutation({
     mutationFn: async (articleId: string) => {
       if (isLocalMode) {
-        await deleteLocalArticle(articleId);
+        const lib = await import('../lib/local-library');
+        await lib.deleteLocalArticle(articleId);
         return;
       }
 
@@ -499,7 +495,8 @@ export default function HomeClient() {
   const toggleStatus = useMutation({
     mutationFn: async ({ id, status }: { id: string; status: ArticleStatus }) => {
       if (isLocalMode) {
-        await updateLocalStatus(id, status);
+        const lib = await import('../lib/local-library');
+        await lib.updateLocalStatus(id, status);
         return { id, status };
       }
 
@@ -530,7 +527,8 @@ export default function HomeClient() {
   const createListMutation = useMutation({
     mutationFn: async (name: string) => {
       if (isLocalMode) {
-        await createLocalList(name);
+        const lib = await import('../lib/local-library');
+        await lib.createLocalList(name);
         return;
       }
 
@@ -553,7 +551,8 @@ export default function HomeClient() {
   const deleteListMutation = useMutation({
     mutationFn: async (listId: string) => {
       if (isLocalMode) {
-        await deleteLocalList(listId);
+        const lib = await import('../lib/local-library');
+        await lib.deleteLocalList(listId);
         return;
       }
 
@@ -575,7 +574,8 @@ export default function HomeClient() {
   const addToListMutation = useMutation({
     mutationFn: async ({ articleId, listId }: { articleId: string; listId: string }) => {
       if (isLocalMode) {
-        await addLocalArticleToList(articleId, listId);
+        const lib = await import('../lib/local-library');
+        await lib.addLocalArticleToList(articleId, listId);
         return { articleId, listId };
       }
 
@@ -613,7 +613,8 @@ export default function HomeClient() {
   const removeFromListMutation = useMutation({
     mutationFn: async ({ articleId, listId }: { articleId: string; listId: string }) => {
       if (isLocalMode) {
-        await removeLocalArticleFromList(articleId, listId);
+        const lib = await import('../lib/local-library');
+        await lib.removeLocalArticleFromList(articleId, listId);
         return { articleId, listId };
       }
 
@@ -701,7 +702,9 @@ export default function HomeClient() {
 
   return (
     <div className="min-h-screen bg-[#0d0d0c] font-sans text-gray-100">
-      <Navbar />
+      <Suspense fallback={null}>
+        <Navbar />
+      </Suspense>
       <div className="flex">
         {/* Sidebar for Lists */}
         <aside className="sticky top-[65px] hidden h-[calc(100vh-65px)] w-[16rem] shrink-0 space-y-4 overflow-y-auto border-r border-white/10 bg-[#101010]/90 p-5 backdrop-blur-xl lg:block">
@@ -924,7 +927,11 @@ export default function HomeClient() {
               </div>
             )}
 
-            {articles.length > 0 && <ReviewPackBanner />}
+            {articles.length > 0 && (
+              <Suspense fallback={null}>
+                <ReviewPackBanner />
+              </Suspense>
+            )}
 
             {articles.length > 0 && (
               <div className="flex flex-wrap items-center justify-between gap-3">

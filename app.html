@@ -14,7 +14,9 @@
       :root {
         --gray-1: #111110;
         --gray-2: #191918;
+        --gray-3: #222221;
         --gray-5: #31312e;
+        --gray-6: #3b3a37;
         --gray-11: #b5b3ad;
         --gray-12: #eeeeec;
         --accent-11: #d4b3a5;
@@ -30,10 +32,12 @@
           'Segoe UI',
           sans-serif;
       }
-      #library-static-shell {
+      .spa-static-shell {
         display: none;
       }
-      html[data-static-shell='library'] #library-static-shell {
+      html[data-static-shell='library-empty'] #library-empty-shell,
+      html[data-static-shell='library-grid'] #library-grid-shell,
+      html[data-static-shell='reader'] #reader-static-shell {
         display: block;
       }
       .shell-nav {
@@ -104,19 +108,81 @@
         line-height: 1.75;
         color: var(--gray-11);
       }
+      .shell-grid {
+        display: grid;
+        grid-template-columns: 1fr;
+        gap: 1rem;
+        margin-top: 1.5rem;
+      }
+      @media (min-width: 768px) {
+        .shell-grid {
+          grid-template-columns: repeat(2, 1fr);
+        }
+      }
+      @media (min-width: 1280px) {
+        .shell-grid {
+          grid-template-columns: repeat(3, 1fr);
+        }
+      }
+      .shell-card {
+        border: 1px solid var(--gray-5);
+        border-left: 2px solid var(--gray-6);
+        border-radius: 0.75rem;
+        background: rgba(25, 25, 24, 0.75);
+        padding: 1.25rem;
+      }
+      .shell-line {
+        border-radius: 9999px;
+        background: rgba(255, 255, 255, 0.1);
+      }
+      .shell-line.sm {
+        height: 0.75rem;
+        width: 40%;
+        margin-bottom: 1rem;
+      }
+      .shell-line.md {
+        height: 1rem;
+        width: 85%;
+        margin-bottom: 0.5rem;
+      }
+      .shell-line.lg {
+        height: 1rem;
+        width: 60%;
+      }
+      .shell-article {
+        max-width: 42rem;
+        margin: 0 auto;
+        padding: 2rem 1.25rem 3rem;
+      }
+      .shell-article h1 {
+        margin: 0.5rem 0 0;
+        font-size: 1.875rem;
+        line-height: 1.2;
+      }
+      .shell-article p {
+        margin: 1.25rem 0 0;
+        font-size: 1rem;
+        line-height: 1.75;
+        color: var(--gray-11);
+      }
     </style>
     <script>
       (function () {
         var path = location.pathname;
         if (path === '/library' || path === '/library/') {
-          document.documentElement.dataset.staticShell = 'library';
+          var authed = /(?:^|;\s*)(?:__Secure-)?session[-_]?token=/.test(document.cookie);
+          document.documentElement.dataset.staticShell = authed ? 'library-grid' : 'library-empty';
+          return;
+        }
+        if (path === '/sample' || path.indexOf('/reader/') === 0) {
+          document.documentElement.dataset.staticShell = 'reader';
         }
       })();
     </script>
   </head>
   <body class="antialiased">
     <div id="root">
-      <div id="library-static-shell" aria-hidden="true">
+      <div id="library-empty-shell" class="spa-static-shell" aria-hidden="true">
         <header class="shell-nav">
           <div class="shell-nav-inner">
             <div class="shell-logo" aria-hidden="true">L</div>
@@ -134,6 +200,59 @@
             outside link for later.
           </p>
         </main>
+      </div>
+
+      <div id="library-grid-shell" class="spa-static-shell" aria-hidden="true">
+        <header class="shell-nav">
+          <div class="shell-nav-inner">
+            <div class="shell-logo" aria-hidden="true">L</div>
+            <div>
+              <p class="shell-title">Library</p>
+              <p class="shell-subtitle">Reader</p>
+            </div>
+          </div>
+        </header>
+        <main class="shell-main">
+          <h1 class="shell-heading">Library</h1>
+          <p class="shell-lede">Loading your sources…</p>
+          <div class="shell-grid" aria-hidden="true">
+            <div class="shell-card">
+              <div class="shell-line sm"></div>
+              <div class="shell-line md"></div>
+              <div class="shell-line lg"></div>
+            </div>
+            <div class="shell-card">
+              <div class="shell-line sm"></div>
+              <div class="shell-line md"></div>
+              <div class="shell-line lg"></div>
+            </div>
+            <div class="shell-card">
+              <div class="shell-line sm"></div>
+              <div class="shell-line md"></div>
+              <div class="shell-line lg"></div>
+            </div>
+          </div>
+        </main>
+      </div>
+
+      <div id="reader-static-shell" class="spa-static-shell" aria-hidden="true">
+        <header class="shell-nav">
+          <div class="shell-nav-inner">
+            <div class="shell-logo" aria-hidden="true">L</div>
+            <div>
+              <p class="shell-title">Library</p>
+              <p class="shell-subtitle">Reader</p>
+            </div>
+          </div>
+        </header>
+        <article class="shell-article">
+          <p class="shell-eyebrow">Article</p>
+          <h1>Loading reader…</h1>
+          <p>
+            Clean typography, persistent highlights, and notes load as soon as your library is
+            ready.
+          </p>
+        </article>
       </div>
     </div>
     <script type="module" src="/src/main.tsx"></script>
