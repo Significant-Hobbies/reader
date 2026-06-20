@@ -24,7 +24,7 @@ import {
   X,
 } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
-import { type MouseEvent, useState } from 'react';
+import { lazy, Suspense, type MouseEvent, useState } from 'react';
 
 import { trackActivatedOnce, trackCoreAction } from '../lib/analytics';
 import {
@@ -45,7 +45,11 @@ import { formatReadingTime } from '../lib/reading-time-utils';
 import { getTagColor } from '../lib/tag-utils';
 import { formatDate } from '../lib/utils';
 import type { ArticleStatus, ArticleSummary, List } from '../types';
-import { AddArticleDialog, type AddArticleMode } from './AddArticleDialog';
+import type { AddArticleMode } from './AddArticleDialog';
+
+const AddArticleDialog = lazy(() =>
+  import('./AddArticleDialog').then((m) => ({ default: m.AddArticleDialog }))
+);
 import { useAuth } from './AuthProvider';
 import { Navbar } from './Navbar';
 import { ReviewPackBanner } from './ReviewPackBanner';
@@ -1572,17 +1576,20 @@ export default function HomeClient() {
         </div>
       </div>
 
-      {/* Add Article Dialog */}
-      <AddArticleDialog
-        key={addArticleMode}
-        open={showAddArticleDialog}
-        onOpenChange={setShowAddArticleDialog}
-        onSubmitUrl={handleUrlSubmit}
-        onSaveLink={handleSaveLink}
-        onUploadPDF={handlePDFUpload}
-        initialMode={addArticleMode}
-        isSubmitting={isImporting}
-      />
+      {showAddArticleDialog ? (
+        <Suspense fallback={null}>
+          <AddArticleDialog
+            key={addArticleMode}
+            open={showAddArticleDialog}
+            onOpenChange={setShowAddArticleDialog}
+            onSubmitUrl={handleUrlSubmit}
+            onSaveLink={handleSaveLink}
+            onUploadPDF={handlePDFUpload}
+            initialMode={addArticleMode}
+            isSubmitting={isImporting}
+          />
+        </Suspense>
+      ) : null}
 
       {articlePendingDelete && (
         <div className="fixed inset-0 z-50 flex items-center justify-center">

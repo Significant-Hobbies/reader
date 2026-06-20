@@ -1,12 +1,24 @@
 import { useQuery } from '@tanstack/react-query';
-import { useEffect } from 'react';
+import { lazy, Suspense, useEffect } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 
-import LocalReaderClient from '@/components/LocalReaderClient';
-import PDFReaderClient from '@/components/PDFReaderClient';
-import ReaderClient from '@/components/ReaderClient';
 import { useAuth } from '@/components/AuthProvider';
 import type { Article } from '@/types';
+
+const LocalReaderClient = lazy(() => import('@/components/LocalReaderClient'));
+const PDFReaderClient = lazy(() => import('@/components/PDFReaderClient'));
+const ReaderClient = lazy(() => import('@/components/ReaderClient'));
+
+function ReaderLoading() {
+  return (
+    <div className="flex h-screen items-center justify-center bg-[#15130f]">
+      <div className="text-center">
+        <div className="mx-auto mb-4 h-12 w-12 animate-spin rounded-full border-b-2 border-[var(--accent-10)]" />
+        <p className="text-gray-400">Loading reader…</p>
+      </div>
+    </div>
+  );
+}
 
 export default function ReaderPage() {
   const { id } = useParams<{ id: string }>();
@@ -49,7 +61,11 @@ export default function ReaderPage() {
   }
 
   if (isLocalArticle) {
-    return <LocalReaderClient articleId={id} />;
+    return (
+      <Suspense fallback={<ReaderLoading />}>
+        <LocalReaderClient articleId={id} />
+      </Suspense>
+    );
   }
 
   if (authLoading || (user && isLoading)) {
@@ -95,9 +111,13 @@ export default function ReaderPage() {
     );
   }
 
-  return article.type === 'pdf' ? (
-    <PDFReaderClient articleId={id} />
-  ) : (
-    <ReaderClient articleId={id} />
+  return (
+    <Suspense fallback={<ReaderLoading />}>
+      {article.type === 'pdf' ? (
+        <PDFReaderClient articleId={id} />
+      ) : (
+        <ReaderClient articleId={id} />
+      )}
+    </Suspense>
   );
 }

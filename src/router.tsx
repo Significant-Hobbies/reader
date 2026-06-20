@@ -14,6 +14,8 @@ export const router = createBrowserRouter([
     children: [
       { path: 'about', lazy: () => lazyPage(() => import('./pages/AboutPage')) },
       { path: 'privacy', lazy: () => lazyPage(() => import('./pages/PrivacyPage')) },
+      { path: 'welcome', lazy: () => lazyPage(() => import('./pages/WelcomePage')) },
+      { path: 'sample', lazy: () => lazyPage(() => import('./pages/SamplePage')) },
       {
         lazy: () => lazyPage(() => import('./AppProvidersLayout')),
         children: [
@@ -27,8 +29,6 @@ export const router = createBrowserRouter([
             path: 'share/article/:shareId',
             lazy: () => lazyPage(() => import('./pages/SharedArticlePage')),
           },
-          { path: 'welcome', lazy: () => lazyPage(() => import('./pages/WelcomePage')) },
-          { path: 'sample', lazy: () => lazyPage(() => import('./pages/SamplePage')) },
           { path: 'memory', lazy: () => lazyPage(() => import('./pages/MemoryPage')) },
           { path: 'extension', lazy: () => lazyPage(() => import('./pages/ExtensionPage')) },
         ],

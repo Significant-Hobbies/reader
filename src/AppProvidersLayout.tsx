@@ -1,4 +1,4 @@
-import '@radix-ui/themes/styles.css';
+import '@/styles/radix-shell.css';
 
 import { Theme } from '@radix-ui/themes';
 import { lazy, Suspense } from 'react';

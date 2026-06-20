@@ -1,0 +1,4 @@
+/* Radix Themes subset: skip utilities.css (~250KB) — Flex/Grid use layout.css. */
+@import '@radix-ui/themes/tokens.css';
+@import '@radix-ui/themes/components.css';
+@import '@radix-ui/themes/layout.css';
