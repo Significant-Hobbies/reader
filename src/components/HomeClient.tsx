@@ -1,15 +1,5 @@
 'use client';
 
-import {
-  Badge as ThemeBadge,
-  Box,
-  Button as ThemeButton,
-  Card,
-  Flex,
-  Heading,
-  SegmentedControl,
-  Text,
-} from '@radix-ui/themes';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import {
   BookOpen,
@@ -53,7 +43,9 @@ const AddArticleDialog = lazy(() =>
 import { useAuth } from './AuthProvider';
 import { Navbar } from './Navbar';
 import { ReviewPackBanner } from './ReviewPackBanner';
+import { Badge } from './ui/badge';
 import { Button } from './ui/button';
+import { SegmentedControl } from './ui/segmented-control';
 import {
   Dialog,
   DialogContent,
@@ -184,9 +176,9 @@ function LoadingLibrarySkeleton() {
   return (
     <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">
       {Array.from({ length: 6 }).map((_, index) => (
-        <Card
+        <div
           key={index}
-          className="border border-l-2 border-[var(--gray-5)] border-l-[var(--gray-6)] bg-[var(--gray-2)]/75 p-0"
+          className="rounded-xl border border-l-2 border-[var(--gray-5)] border-l-[var(--gray-6)] bg-[var(--gray-2)]/75 p-0"
         >
           <div className="space-y-4 p-5">
             <div className="flex items-center justify-between gap-3">
@@ -209,7 +201,7 @@ function LoadingLibrarySkeleton() {
             <div className="h-8 w-24 animate-pulse rounded-md bg-white/10" />
             <div className="h-3 w-20 animate-pulse rounded-full bg-white/10" />
           </div>
-        </Card>
+        </div>
       ))}
     </div>
   );
@@ -770,10 +762,10 @@ export default function HomeClient() {
             <h3 className="text-sm font-medium tracking-wide text-gray-500 uppercase">Library</h3>
             <Dialog open={isListModalOpen} onOpenChange={setIsListModalOpen}>
               <DialogTrigger asChild>
-                <ThemeButton size="1" variant="outline" className="h-7 gap-1 px-2 text-xs">
+                <Button size="sm" variant="outline" className="h-7 gap-1 px-2 text-xs">
                   <Plus className="h-3.5 w-3.5" />
                   New
-                </ThemeButton>
+                </Button>
               </DialogTrigger>
               <DialogContent>
                 <DialogHeader>
@@ -886,72 +878,61 @@ export default function HomeClient() {
           <div className="mx-auto max-w-6xl space-y-6">
             <header className="flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
               <div className="min-w-0">
-                <Heading
-                  as="h1"
-                  size="7"
-                  weight="bold"
-                  className="text-balance text-[var(--gray-12)]"
-                >
+                <h1 className="text-3xl font-bold text-balance text-[var(--gray-12)]">
                   {activeListName || 'Library'}
-                </Heading>
-                <Text as="p" size="2" color="gray" className="mt-1.5">
+                </h1>
+                <p className="mt-1.5 text-sm text-[var(--gray-11)]">
                   {articles.length === 0
                     ? 'Save links, import articles, and read PDFs in one place.'
                     : `${articles.length} ${articles.length === 1 ? 'source' : 'sources'}${
                         unreadCount > 0 ? ` · ${unreadCount} unread` : ''
                       }${notesCount > 0 ? ` · ${notesCount} ${notesCount === 1 ? 'note' : 'notes'}` : ''}`}
-                </Text>
+                </p>
                 {isLocalMode && (
-                  <ThemeBadge color="bronze" variant="surface" className="mt-3">
+                  <Badge variant="accent" className="mt-3">
                     Local only on this browser
-                  </ThemeBadge>
+                  </Badge>
                 )}
               </div>
 
-              <ThemeButton
-                size="3"
+              <Button
+                size="lg"
                 onClick={() => openAddArticleDialog('url')}
                 className={`shrink-0 gap-2 ${articles.length === 0 ? 'w-full border-[var(--accent-7)] bg-[var(--accent-3)] md:w-auto' : ''}`}
               >
                 <Plus className="h-4 w-4" />
                 Add Source
-              </ThemeButton>
+              </Button>
             </header>
 
             {articles.length > 0 && (
               <div className="rounded-xl border border-[var(--gray-5)] bg-[var(--gray-2)]/50 px-5 py-4">
                 <div className="flex flex-wrap items-center gap-x-8 gap-y-3">
                   <div>
-                    <Text size="1" color="gray" className="tracking-wide uppercase">
-                      Read
-                    </Text>
+                    <p className="text-xs tracking-wide text-[var(--gray-11)] uppercase">Read</p>
                     <div className="mt-0.5 flex items-baseline gap-1">
-                      <Text size="5" weight="bold" className="text-[var(--gray-12)]">
-                        {readCount}
-                      </Text>
-                      <Text size="2" color="gray">
-                        / {articles.length}
-                      </Text>
+                      <span className="text-xl font-bold text-[var(--gray-12)]">{readCount}</span>
+                      <span className="text-sm text-[var(--gray-11)]">/ {articles.length}</span>
                     </div>
                   </div>
                   <div>
-                    <Text size="1" color="gray" className="tracking-wide uppercase">
+                    <p className="text-xs tracking-wide text-[var(--gray-11)] uppercase">
                       Highlights
-                    </Text>
-                    <Text size="5" weight="bold" className="mt-0.5 block text-[var(--gray-12)]">
+                    </p>
+                    <span className="mt-0.5 block text-xl font-bold text-[var(--gray-12)]">
                       {notesCount}
-                    </Text>
+                    </span>
                   </div>
                   {unreadMinutes > 0 && (
                     <div>
-                      <Text size="1" color="gray" className="tracking-wide uppercase">
+                      <p className="text-xs tracking-wide text-[var(--gray-11)] uppercase">
                         Left to read
-                      </Text>
-                      <Text size="5" weight="bold" className="mt-0.5 block text-[var(--gray-12)]">
+                      </p>
+                      <span className="mt-0.5 block text-xl font-bold text-[var(--gray-12)]">
                         {unreadMinutes < 60
                           ? `${unreadMinutes} min`
                           : `${Math.floor(unreadMinutes / 60)} hr${unreadMinutes % 60 > 0 ? ` ${unreadMinutes % 60} min` : ''}`}
-                      </Text>
+                      </span>
                     </div>
                   )}
                   {nextUnreadArticle && (
@@ -965,10 +946,10 @@ export default function HomeClient() {
                         target={nextUnreadArticle.type === 'link' ? '_blank' : undefined}
                         rel={nextUnreadArticle.type === 'link' ? 'noopener noreferrer' : undefined}
                       >
-                        <ThemeButton size="2" variant="soft" className="gap-1.5">
+                        <Button size="sm" variant="secondary" className="gap-1.5">
                           <BookOpen className="h-3.5 w-3.5" />
                           Continue reading
-                        </ThemeButton>
+                        </Button>
                       </Link>
                     </div>
                   )}
@@ -980,20 +961,21 @@ export default function HomeClient() {
 
             {articles.length > 0 && (
               <div className="flex flex-wrap items-center justify-between gap-3">
-                <SegmentedControl.Root
+                <SegmentedControl
                   value={contentFilter}
                   onValueChange={(value) => setContentFilter(value as ContentFilter)}
-                  size="2"
-                >
-                  {contentFilters.map((filter) => (
-                    <SegmentedControl.Item key={filter.id} value={filter.id}>
-                      {filter.label}
-                      <span className="ml-1.5 text-[var(--gray-10)]">
-                        {filterCounts[filter.id]}
-                      </span>
-                    </SegmentedControl.Item>
-                  ))}
-                </SegmentedControl.Root>
+                  options={contentFilters.map((filter) => ({
+                    value: filter.id,
+                    label: (
+                      <>
+                        {filter.label}
+                        <span className="ml-1.5 text-[var(--gray-10)]">
+                          {filterCounts[filter.id]}
+                        </span>
+                      </>
+                    ),
+                  }))}
+                />
                 {(selectedTag || contentFilter !== 'all' || selectedListId !== 'all') && (
                   <button
                     onClick={() => {
@@ -1011,15 +993,9 @@ export default function HomeClient() {
 
             {articles.length > 0 && allTags.length > 0 && (
               <div className="-mx-2 flex flex-nowrap items-center gap-2 overflow-x-auto px-2 pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-                <Text
-                  as="span"
-                  size="1"
-                  weight="medium"
-                  color="gray"
-                  className="shrink-0 tracking-wide uppercase"
-                >
+                <span className="shrink-0 text-xs font-medium tracking-wide text-[var(--gray-11)] uppercase">
                   Tags
-                </Text>
+                </span>
                 {allTags.map((tag) => (
                   <button
                     key={tag}
@@ -1051,40 +1027,34 @@ export default function HomeClient() {
                   <section className="col-span-full overflow-hidden rounded-xl border border-[var(--gray-5)] bg-[var(--gray-2)]/70">
                     <div className="grid gap-0 lg:grid-cols-[minmax(0,1fr)_22rem]">
                       <div className="px-5 py-8 sm:px-8 lg:py-10">
-                        <Text
-                          as="p"
-                          size="1"
-                          weight="medium"
-                          className="mb-3 tracking-widest text-[var(--accent-11)] uppercase"
-                        >
+                        <p className="mb-3 text-xs font-medium tracking-widest text-[var(--accent-11)] uppercase">
                           Empty library
-                        </Text>
-                        <Heading
-                          as="h2"
-                          size="7"
-                          weight="bold"
-                          className="max-w-2xl text-balance text-[var(--gray-12)]"
-                        >
+                        </p>
+                        <h2 className="max-w-2xl text-3xl font-bold text-balance text-[var(--gray-12)]">
                           Add your first source
-                        </Heading>
-                        <Text as="p" size="3" color="gray" className="mt-3 max-w-2xl leading-7">
+                        </h2>
+                        <p className="mt-3 max-w-2xl text-base leading-7 text-[var(--gray-11)]">
                           Start by saving something real: import a readable article, upload a PDF,
                           or keep an outside link for later.
-                        </Text>
+                        </p>
                         <div className="mt-6 flex flex-col gap-3 sm:flex-row sm:items-center">
-                          <ThemeButton
-                            size="3"
+                          <Button
+                            size="lg"
                             onClick={() => openAddArticleDialog('url')}
                             className="w-full gap-2 sm:w-auto"
                           >
                             <Plus className="h-4 w-4" />
                             Add Source
-                          </ThemeButton>
+                          </Button>
                           <Link to="/sample" className="w-full sm:w-auto">
-                            <ThemeButton size="3" variant="soft" className="w-full gap-2 sm:w-auto">
+                            <Button
+                              size="lg"
+                              variant="secondary"
+                              className="w-full gap-2 sm:w-auto"
+                            >
                               <BookOpen className="h-4 w-4" />
                               Try sample doc
-                            </ThemeButton>
+                            </Button>
                           </Link>
                         </div>
 
@@ -1101,31 +1071,15 @@ export default function HomeClient() {
                                 <div className="flex h-10 w-10 items-center justify-center rounded-md border border-[var(--gray-6)] bg-[var(--gray-3)] text-[var(--accent-11)]">
                                   <ActionIcon className="h-5 w-5" />
                                 </div>
-                                <Text
-                                  as="p"
-                                  size="1"
-                                  weight="medium"
-                                  color="gray"
-                                  className="mt-4 tracking-wide uppercase"
-                                >
+                                <p className="mt-4 text-xs font-medium tracking-wide text-[var(--gray-11)] uppercase">
                                   {action.label}
-                                </Text>
-                                <Text
-                                  as="p"
-                                  size="3"
-                                  weight="bold"
-                                  className="mt-1 text-[var(--gray-12)]"
-                                >
+                                </p>
+                                <p className="mt-1 text-base font-bold text-[var(--gray-12)]">
                                   {action.title}
-                                </Text>
-                                <Text
-                                  as="p"
-                                  size="2"
-                                  color="gray"
-                                  className="mt-2 flex-1 leading-6"
-                                >
+                                </p>
+                                <p className="mt-2 flex-1 text-sm leading-6 text-[var(--gray-11)]">
                                   {action.description}
-                                </Text>
+                                </p>
                                 <span className="mt-4 inline-flex items-center gap-1.5 text-sm font-medium text-[var(--accent-11)]">
                                   {action.cta}
                                   <Plus className="h-3.5 w-3.5" />
@@ -1137,15 +1091,9 @@ export default function HomeClient() {
                       </div>
 
                       <aside className="border-t border-[var(--gray-5)] bg-[var(--gray-1)]/55 px-5 py-6 sm:px-8 lg:border-t-0 lg:border-l lg:px-6 lg:py-10">
-                        <Text
-                          as="p"
-                          size="1"
-                          weight="medium"
-                          color="gray"
-                          className="tracking-wide uppercase"
-                        >
+                        <p className="text-xs font-medium tracking-wide text-[var(--gray-11)] uppercase">
                           What happens next
-                        </Text>
+                        </p>
                         <div className="mt-5 space-y-5">
                           {[
                             {
@@ -1166,17 +1114,12 @@ export default function HomeClient() {
                                 {index + 1}
                               </span>
                               <div>
-                                <Text
-                                  as="p"
-                                  size="2"
-                                  weight="medium"
-                                  className="text-[var(--gray-12)]"
-                                >
+                                <p className="text-sm font-medium text-[var(--gray-12)]">
                                   {step.title}
-                                </Text>
-                                <Text as="p" size="2" color="gray" className="mt-1 leading-6">
+                                </p>
+                                <p className="mt-1 text-sm leading-6 text-[var(--gray-11)]">
                                   {step.body}
-                                </Text>
+                                </p>
                               </div>
                             </div>
                           ))}
@@ -1185,19 +1128,19 @@ export default function HomeClient() {
                     </div>
                   </section>
                 ) : filteredArticles.length === 0 ? (
-                  <Card className="col-span-full border border-dashed border-[var(--gray-6)] bg-[var(--gray-2)]/70 p-0">
+                  <div className="col-span-full rounded-xl border border-dashed border-[var(--gray-6)] bg-[var(--gray-2)]/70 p-0">
                     <div className="mx-auto flex max-w-xl flex-col items-center px-6 py-16 text-center">
-                      <Text as="p" size="2" weight="medium" color="gray" className="mb-2 uppercase">
+                      <p className="mb-2 text-sm font-medium text-[var(--gray-11)] uppercase">
                         No matching sources
-                      </Text>
-                      <Heading as="h2" size="5" weight="medium" className="text-[var(--gray-12)]">
+                      </p>
+                      <h2 className="text-xl font-medium text-[var(--gray-12)]">
                         Nothing matches this view
-                      </Heading>
-                      <Text as="p" size="3" color="gray" className="mt-3">
+                      </h2>
+                      <p className="mt-3 text-base text-[var(--gray-11)]">
                         Adjust the type, list, or tag filters to bring sources back into view.
-                      </Text>
-                      <ThemeButton
-                        variant="soft"
+                      </p>
+                      <Button
+                        variant="secondary"
                         className="mt-6"
                         onClick={() => {
                           setSelectedListId('all');
@@ -1206,9 +1149,9 @@ export default function HomeClient() {
                         }}
                       >
                         Clear all filters
-                      </ThemeButton>
+                      </Button>
                     </div>
-                  </Card>
+                  </div>
                 ) : (
                   filteredArticles.map((article) => {
                     const nextStatus: ArticleStatus =
@@ -1234,208 +1177,225 @@ export default function HomeClient() {
                         ? 'border-l-2 border-l-[var(--accent-8)]'
                         : 'border-l-2 border-l-[var(--accent-6)]/60';
                     return (
-                      <Card
-                        asChild
+                      <article
                         key={article.id}
-                        className={`group border border-[var(--gray-5)] bg-[var(--gray-2)]/75 p-0 transition-colors duration-150 hover:border-[var(--gray-7)] hover:bg-[var(--gray-3)]/85 ${cardTone}`}
+                        onClick={(event) => {
+                          if (!isLink) {
+                            handleArticleCardClick(event, article.id);
+                            return;
+                          }
+                          if (event.defaultPrevented) return;
+                          const target = event.target;
+                          if (
+                            target instanceof HTMLElement &&
+                            target.closest('button, a, input, textarea, select, [role="menuitem"]')
+                          ) {
+                            return;
+                          }
+                          window.open(article.url, '_blank', 'noopener,noreferrer');
+                        }}
+                        className={`group flex h-full cursor-pointer flex-col overflow-hidden rounded-xl border border-[var(--gray-5)] bg-[var(--gray-2)]/75 p-0 transition-colors duration-150 hover:border-[var(--gray-7)] hover:bg-[var(--gray-3)]/85 ${cardTone}`}
                       >
-                        <article
-                          onClick={(event) => {
-                            if (!isLink) {
-                              handleArticleCardClick(event, article.id);
-                              return;
-                            }
-                            if (event.defaultPrevented) return;
-                            const target = event.target;
-                            if (
-                              target instanceof HTMLElement &&
-                              target.closest(
-                                'button, a, input, textarea, select, [role="menuitem"]'
-                              )
-                            ) {
-                              return;
-                            }
-                            window.open(article.url, '_blank', 'noopener,noreferrer');
-                          }}
-                          className="flex h-full cursor-pointer flex-col overflow-hidden rounded-[inherit]"
-                        >
-                          <div className="flex flex-1 flex-col gap-4 p-5">
-                            <Flex align="center" justify="between" gap="3">
-                              <Flex align="center" gap="2" className="min-w-0">
-                                <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-md border border-[var(--gray-6)] bg-[var(--gray-3)] text-[var(--accent-11)]">
-                                  <KindIcon className="h-4 w-4" />
-                                </div>
-                                <Box className="min-w-0">
-                                  <Text
-                                    as="p"
-                                    size="2"
-                                    weight="medium"
-                                    color="gray"
-                                    className="truncate"
-                                    title={`${kind.label} · ${origin}`}
-                                  >
-                                    {kind.label} · {origin}
-                                  </Text>
-                                </Box>
-                              </Flex>
-                              <ThemeBadge color="gray" variant="soft" className="shrink-0">
-                                {article.status === 'read'
-                                  ? isLink
-                                    ? 'Done'
-                                    : 'Read'
-                                  : isLink
-                                    ? 'Pending'
-                                    : 'Unread'}
-                              </ThemeBadge>
-                            </Flex>
-
-                            <div className="flex items-start gap-2">
-                              <div className="min-w-0 flex-1 pr-2">
-                                <Heading
-                                  as="h2"
-                                  size="4"
-                                  weight="medium"
-                                  className="line-clamp-2 break-words text-[var(--gray-12)]"
-                                  title={displayTitle}
-                                >
-                                  {displayTitle}
-                                </Heading>
-                                {contextLine && (
-                                  <Text
-                                    as="p"
-                                    size="2"
-                                    color="gray"
-                                    className="mt-2 line-clamp-2"
-                                    title={contextLine}
-                                  >
-                                    {contextLine}
-                                  </Text>
-                                )}
-                                {hasMetadata && (
-                                  <div className="mt-3 flex flex-wrap items-center gap-2 text-xs text-gray-300">
-                                    {!isLink && article.readingTimeMinutes && (
-                                      <ThemeBadge color="gray" variant="surface" className="gap-1">
-                                        <Clock className="h-3 w-3" />
-                                        {formatReadingTime(article.readingTimeMinutes)}
-                                      </ThemeBadge>
-                                    )}
-                                    {isPDF && article.pdfMetadata?.pageCount && (
-                                      <ThemeBadge color="gray" variant="surface">
-                                        {article.pdfMetadata.pageCount} pages
-                                      </ThemeBadge>
-                                    )}
-                                    {isPDF && formatFileSize(article.pdfMetadata?.fileSize) && (
-                                      <ThemeBadge color="gray" variant="surface">
-                                        {formatFileSize(article.pdfMetadata?.fileSize)}
-                                      </ThemeBadge>
-                                    )}
-                                    {article.notesCount > 0 && (
-                                      <ThemeBadge color="gray" variant="surface">
-                                        {article.notesCount} notes
-                                      </ThemeBadge>
-                                    )}
-                                  </div>
-                                )}
-                                {(article.category ||
-                                  attachedLists.length > 0 ||
-                                  Boolean(article.tags?.length)) && (
-                                  <div className="mt-3 flex flex-wrap gap-1.5">
-                                    {article.category && (
-                                      <ThemeBadge
-                                        color="gray"
-                                        variant="surface"
-                                        className="max-w-[9rem] truncate"
-                                        title={article.category}
-                                      >
-                                        {article.category}
-                                      </ThemeBadge>
-                                    )}
-                                    {attachedLists.slice(0, 2).map((list) => (
-                                      <ThemeBadge
-                                        key={list.id}
-                                        color="gray"
-                                        variant="soft"
-                                        className="max-w-[8rem] truncate"
-                                        title={list.name}
-                                      >
-                                        {list.name}
-                                      </ThemeBadge>
-                                    ))}
-                                    {(article.tags ?? []).map((tag) => (
-                                      <button
-                                        key={tag}
-                                        onClick={(e) => {
-                                          e.stopPropagation();
-                                          setSelectedTag(tag);
-                                        }}
-                                        className={`inline-flex items-center rounded-sm border px-2 py-0.5 text-xs font-medium transition-colors ${getTagColor(tag)} hover:opacity-80`}
-                                      >
-                                        {tag}
-                                      </button>
-                                    ))}
-                                    {attachedLists.length > 2 && (
-                                      <ThemeBadge color="gray" variant="soft">
-                                        +{attachedLists.length - 2}
-                                      </ThemeBadge>
-                                    )}
-                                  </div>
-                                )}
+                        <div className="flex flex-1 flex-col gap-4 p-5">
+                          <div className="flex items-center justify-between gap-3">
+                            <div className="flex min-w-0 items-center gap-2">
+                              <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-md border border-[var(--gray-6)] bg-[var(--gray-3)] text-[var(--accent-11)]">
+                                <KindIcon className="h-4 w-4" />
                               </div>
-                              <DropdownMenu
-                                open={activeToolbarId === article.id}
-                                onOpenChange={(open) => {
-                                  setActiveToolbarId(open ? article.id : null);
-                                }}
+                              <div className="min-w-0">
+                                <p
+                                  className="truncate text-sm font-medium text-[var(--gray-11)]"
+                                  title={`${kind.label} · ${origin}`}
+                                >
+                                  {kind.label} · {origin}
+                                </p>
+                              </div>
+                            </div>
+                            <Badge variant="soft" className="shrink-0">
+                              {article.status === 'read'
+                                ? isLink
+                                  ? 'Done'
+                                  : 'Read'
+                                : isLink
+                                  ? 'Pending'
+                                  : 'Unread'}
+                            </Badge>
+                          </div>
+
+                          <div className="flex items-start gap-2">
+                            <div className="min-w-0 flex-1 pr-2">
+                              <h2
+                                className="line-clamp-2 text-lg font-medium break-words text-[var(--gray-12)]"
+                                title={displayTitle}
                               >
-                                <DropdownMenuTrigger asChild>
-                                  <button
-                                    onClick={(e) => {
-                                      e.stopPropagation();
-                                      e.preventDefault();
-                                    }}
-                                    aria-label="Article actions"
-                                    className="rounded-md p-1.5 text-gray-500 transition-colors hover:bg-[var(--gray-3)] hover:text-white"
-                                  >
-                                    <MoreVertical className="h-4 w-4" />
-                                  </button>
-                                </DropdownMenuTrigger>
-                                <DropdownMenuContent align="end" className="w-48">
+                                {displayTitle}
+                              </h2>
+                              {contextLine && (
+                                <p
+                                  className="mt-2 line-clamp-2 text-sm text-[var(--gray-11)]"
+                                  title={contextLine}
+                                >
+                                  {contextLine}
+                                </p>
+                              )}
+                              {hasMetadata && (
+                                <div className="mt-3 flex flex-wrap items-center gap-2 text-xs text-gray-300">
+                                  {!isLink && article.readingTimeMinutes && (
+                                    <Badge variant="surface" className="gap-1">
+                                      <Clock className="h-3 w-3" />
+                                      {formatReadingTime(article.readingTimeMinutes)}
+                                    </Badge>
+                                  )}
+                                  {isPDF && article.pdfMetadata?.pageCount && (
+                                    <Badge variant="surface">
+                                      {article.pdfMetadata.pageCount} pages
+                                    </Badge>
+                                  )}
+                                  {isPDF && formatFileSize(article.pdfMetadata?.fileSize) && (
+                                    <Badge variant="surface">
+                                      {formatFileSize(article.pdfMetadata?.fileSize)}
+                                    </Badge>
+                                  )}
+                                  {article.notesCount > 0 && (
+                                    <Badge variant="surface">{article.notesCount} notes</Badge>
+                                  )}
+                                </div>
+                              )}
+                              {(article.category ||
+                                attachedLists.length > 0 ||
+                                Boolean(article.tags?.length)) && (
+                                <div className="mt-3 flex flex-wrap gap-1.5">
+                                  {article.category && (
+                                    <Badge
+                                      variant="surface"
+                                      className="max-w-[9rem] truncate"
+                                      title={article.category}
+                                    >
+                                      {article.category}
+                                    </Badge>
+                                  )}
+                                  {attachedLists.slice(0, 2).map((list) => (
+                                    <Badge
+                                      key={list.id}
+                                      variant="soft"
+                                      className="max-w-[8rem] truncate"
+                                      title={list.name}
+                                    >
+                                      {list.name}
+                                    </Badge>
+                                  ))}
+                                  {(article.tags ?? []).map((tag) => (
+                                    <button
+                                      key={tag}
+                                      onClick={(e) => {
+                                        e.stopPropagation();
+                                        setSelectedTag(tag);
+                                      }}
+                                      className={`inline-flex items-center rounded-sm border px-2 py-0.5 text-xs font-medium transition-colors ${getTagColor(tag)} hover:opacity-80`}
+                                    >
+                                      {tag}
+                                    </button>
+                                  ))}
+                                  {attachedLists.length > 2 && (
+                                    <Badge variant="soft">+{attachedLists.length - 2}</Badge>
+                                  )}
+                                </div>
+                              )}
+                            </div>
+                            <DropdownMenu
+                              open={activeToolbarId === article.id}
+                              onOpenChange={(open) => {
+                                setActiveToolbarId(open ? article.id : null);
+                              }}
+                            >
+                              <DropdownMenuTrigger asChild>
+                                <button
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    e.preventDefault();
+                                  }}
+                                  aria-label="Article actions"
+                                  className="rounded-md p-1.5 text-gray-500 transition-colors hover:bg-[var(--gray-3)] hover:text-white"
+                                >
+                                  <MoreVertical className="h-4 w-4" />
+                                </button>
+                              </DropdownMenuTrigger>
+                              <DropdownMenuContent align="end" className="w-48">
+                                <DropdownMenuItem
+                                  onSelect={() => {
+                                    toggleStatus.mutate({ id: article.id, status: nextStatus });
+                                  }}
+                                >
+                                  {article.status === 'read'
+                                    ? isLink
+                                      ? 'Mark Pending'
+                                      : 'Mark In Progress'
+                                    : isLink
+                                      ? 'Mark Done'
+                                      : 'Mark Read'}
+                                </DropdownMenuItem>
+                                {isLink && (
                                   <DropdownMenuItem
                                     onSelect={() => {
-                                      toggleStatus.mutate({ id: article.id, status: nextStatus });
+                                      window.open(article.url, '_blank', 'noopener,noreferrer');
                                     }}
                                   >
-                                    {article.status === 'read'
-                                      ? isLink
-                                        ? 'Mark Pending'
-                                        : 'Mark In Progress'
-                                      : isLink
-                                        ? 'Mark Done'
-                                        : 'Mark Read'}
+                                    Open Link
                                   </DropdownMenuItem>
-                                  {isLink && (
-                                    <DropdownMenuItem
-                                      onSelect={() => {
-                                        window.open(article.url, '_blank', 'noopener,noreferrer');
-                                      }}
-                                    >
-                                      Open Link
-                                    </DropdownMenuItem>
-                                  )}
+                                )}
+                                <DropdownMenuSub>
+                                  <DropdownMenuSubTrigger>Add to list</DropdownMenuSubTrigger>
+                                  <DropdownMenuSubContent>
+                                    {lists
+                                      .filter((list) => !article.listIds?.includes(list.id))
+                                      .map((list) => (
+                                        <DropdownMenuItem
+                                          key={list.id}
+                                          onSelect={() =>
+                                            addToListMutation.mutate({
+                                              articleId: article.id,
+                                              listId: list.id,
+                                            })
+                                          }
+                                        >
+                                          {list.icon === 'heart' && (
+                                            <Heart className="mr-2 h-4 w-4" />
+                                          )}
+                                          {list.icon === 'clock' && (
+                                            <Clock className="mr-2 h-4 w-4" />
+                                          )}
+                                          {list.icon === 'dot' && (
+                                            <div className="mr-2 h-2 w-2 rounded-full bg-gray-500" />
+                                          )}
+                                          {list.name}
+                                        </DropdownMenuItem>
+                                      ))}
+                                    {lists.filter((list) => !article.listIds?.includes(list.id))
+                                      .length === 0 && (
+                                      <DropdownMenuItem disabled>
+                                        Already in all lists
+                                      </DropdownMenuItem>
+                                    )}
+                                  </DropdownMenuSubContent>
+                                </DropdownMenuSub>
+                                {article.listIds && article.listIds.length > 0 && (
                                   <DropdownMenuSub>
-                                    <DropdownMenuSubTrigger>Add to list</DropdownMenuSubTrigger>
+                                    <DropdownMenuSubTrigger>
+                                      Remove from list
+                                    </DropdownMenuSubTrigger>
                                     <DropdownMenuSubContent>
                                       {lists
-                                        .filter((list) => !article.listIds?.includes(list.id))
+                                        .filter((list) => article.listIds?.includes(list.id))
                                         .map((list) => (
                                           <DropdownMenuItem
                                             key={list.id}
                                             onSelect={() =>
-                                              addToListMutation.mutate({
+                                              removeFromListMutation.mutate({
                                                 articleId: article.id,
                                                 listId: list.id,
                                               })
                                             }
+                                            className="text-yellow-300 focus:text-yellow-100"
                                           >
                                             {list.icon === 'heart' && (
                                               <Heart className="mr-2 h-4 w-4" />
@@ -1449,124 +1409,78 @@ export default function HomeClient() {
                                             {list.name}
                                           </DropdownMenuItem>
                                         ))}
-                                      {lists.filter((list) => !article.listIds?.includes(list.id))
-                                        .length === 0 && (
-                                        <DropdownMenuItem disabled>
-                                          Already in all lists
-                                        </DropdownMenuItem>
-                                      )}
                                     </DropdownMenuSubContent>
                                   </DropdownMenuSub>
-                                  {article.listIds && article.listIds.length > 0 && (
-                                    <DropdownMenuSub>
-                                      <DropdownMenuSubTrigger>
-                                        Remove from list
-                                      </DropdownMenuSubTrigger>
-                                      <DropdownMenuSubContent>
-                                        {lists
-                                          .filter((list) => article.listIds?.includes(list.id))
-                                          .map((list) => (
-                                            <DropdownMenuItem
-                                              key={list.id}
-                                              onSelect={() =>
-                                                removeFromListMutation.mutate({
-                                                  articleId: article.id,
-                                                  listId: list.id,
-                                                })
-                                              }
-                                              className="text-yellow-300 focus:text-yellow-100"
-                                            >
-                                              {list.icon === 'heart' && (
-                                                <Heart className="mr-2 h-4 w-4" />
-                                              )}
-                                              {list.icon === 'clock' && (
-                                                <Clock className="mr-2 h-4 w-4" />
-                                              )}
-                                              {list.icon === 'dot' && (
-                                                <div className="mr-2 h-2 w-2 rounded-full bg-gray-500" />
-                                              )}
-                                              {list.name}
-                                            </DropdownMenuItem>
-                                          ))}
-                                      </DropdownMenuSubContent>
-                                    </DropdownMenuSub>
-                                  )}
-                                  <DropdownMenuSeparator />
-                                  <DropdownMenuItem
-                                    className="text-red-300 focus:text-red-100"
-                                    onClick={(event) => {
-                                      event.stopPropagation();
-                                    }}
-                                    onSelect={(event) => {
-                                      event.preventDefault();
-                                      event.stopPropagation();
-                                      if (deletingId) return;
-                                      setPendingDeleteId(article.id);
-                                      setActiveToolbarId(null);
-                                    }}
-                                  >
-                                    Delete
-                                  </DropdownMenuItem>
-                                </DropdownMenuContent>
-                              </DropdownMenu>
-                            </div>
-                            {article.byline && (
-                              <p
-                                className="line-clamp-1 text-sm text-gray-500 italic"
-                                title={article.byline}
-                              >
-                                By {article.byline}
-                              </p>
-                            )}
-                          </div>
-                          <Flex
-                            align="center"
-                            justify="between"
-                            gap="3"
-                            wrap="wrap"
-                            className="border-t border-[var(--gray-5)] bg-[var(--gray-1)]/40 px-5 py-3"
-                          >
-                            <Flex align="center" gap="2">
-                              <ThemeButton
-                                size="1"
-                                variant={isLink ? 'solid' : 'soft'}
-                                className="h-8 gap-1.5 px-3 text-xs"
-                                onClick={(event) => {
-                                  event.stopPropagation();
-                                  if (isLink) {
-                                    window.open(article.url, '_blank', 'noopener,noreferrer');
-                                    return;
-                                  }
-                                  navigate(`/reader/${article.id}`);
-                                }}
-                              >
-                                {isLink ? (
-                                  <ExternalLink className="h-3.5 w-3.5" />
-                                ) : (
-                                  <BookOpen className="h-3.5 w-3.5" />
                                 )}
-                                {kind.primaryAction}
-                              </ThemeButton>
-                              {!isLink && (
-                                <ThemeButton
-                                  size="1"
-                                  variant="ghost"
-                                  className="h-8 gap-1.5 px-2 text-xs"
+                                <DropdownMenuSeparator />
+                                <DropdownMenuItem
+                                  className="text-red-300 focus:text-red-100"
                                   onClick={(event) => {
                                     event.stopPropagation();
-                                    toggleStatus.mutate({ id: article.id, status: nextStatus });
+                                  }}
+                                  onSelect={(event) => {
+                                    event.preventDefault();
+                                    event.stopPropagation();
+                                    if (deletingId) return;
+                                    setPendingDeleteId(article.id);
+                                    setActiveToolbarId(null);
                                   }}
                                 >
-                                  {article.status === 'read' ? 'Mark unread' : 'Mark read'}
-                                </ThemeButton>
+                                  Delete
+                                </DropdownMenuItem>
+                              </DropdownMenuContent>
+                            </DropdownMenu>
+                          </div>
+                          {article.byline && (
+                            <p
+                              className="line-clamp-1 text-sm text-gray-500 italic"
+                              title={article.byline}
+                            >
+                              By {article.byline}
+                            </p>
+                          )}
+                        </div>
+                        <div className="flex flex-wrap items-center justify-between gap-3 border-t border-[var(--gray-5)] bg-[var(--gray-1)]/40 px-5 py-3">
+                          <div className="flex items-center gap-2">
+                            <Button
+                              size="sm"
+                              variant={isLink ? 'default' : 'secondary'}
+                              className="h-8 gap-1.5 px-3 text-xs"
+                              onClick={(event) => {
+                                event.stopPropagation();
+                                if (isLink) {
+                                  window.open(article.url, '_blank', 'noopener,noreferrer');
+                                  return;
+                                }
+                                navigate(`/reader/${article.id}`);
+                              }}
+                            >
+                              {isLink ? (
+                                <ExternalLink className="h-3.5 w-3.5" />
+                              ) : (
+                                <BookOpen className="h-3.5 w-3.5" />
                               )}
-                            </Flex>
-                            <Text as="span" size="1" color="gray">
-                              {formatDate(article.createdAt)}
-                            </Text>
-                          </Flex>
-                        </article>
-                      </Card>
+                              {kind.primaryAction}
+                            </Button>
+                            {!isLink && (
+                              <Button
+                                size="sm"
+                                variant="ghost"
+                                className="h-8 gap-1.5 px-2 text-xs"
+                                onClick={(event) => {
+                                  event.stopPropagation();
+                                  toggleStatus.mutate({ id: article.id, status: nextStatus });
+                                }}
+                              >
+                                {article.status === 'read' ? 'Mark unread' : 'Mark read'}
+                              </Button>
+                            )}
+                          </div>
+                          <span className="text-xs text-[var(--gray-11)]">
+                            {formatDate(article.createdAt)}
+                          </span>
+                        </div>
+                      </article>
                     );
                   })
                 )}

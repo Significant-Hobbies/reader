@@ -1,6 +1,5 @@
 'use client';
 
-import { Box, Text } from '@radix-ui/themes';
 import { Link, useNavigate } from 'react-router-dom';
 
 import { useAuth } from './AuthProvider';
@@ -26,14 +25,10 @@ export function Navbar() {
           <span className="flex h-9 w-9 items-center justify-center rounded-md border border-[var(--gray-6)] bg-[var(--gray-3)] text-sm font-semibold text-[var(--accent-11)]">
             L
           </span>
-          <Box>
-            <Text as="p" size="3" weight="bold" className="leading-none text-[var(--gray-12)]">
-              Library
-            </Text>
-            <Text as="p" size="1" color="gray" className="leading-none">
-              Reader
-            </Text>
-          </Box>
+          <div>
+            <p className="text-base leading-none font-bold text-[var(--gray-12)]">Library</p>
+            <p className="text-xs leading-none text-[var(--gray-11)]">Reader</p>
+          </div>
         </Link>
 
         <div className="order-3 flex w-full items-center gap-4 sm:order-none sm:max-w-2xl sm:flex-1">

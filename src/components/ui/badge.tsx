@@ -22,6 +22,10 @@ const badgeVariants = cva(
         pink: 'border-pink-700 bg-pink-900/30 text-pink-300',
         purple: 'border-purple-700 bg-purple-900/30 text-purple-300',
         indigo: 'border-indigo-700 bg-indigo-900/30 text-indigo-300',
+        accent: 'border-[var(--accent-6)] bg-[var(--accent-3)] text-[var(--accent-11)]',
+        muted: 'border-[var(--gray-6)] bg-[var(--gray-3)] text-[var(--gray-11)]',
+        soft: 'border-transparent bg-[var(--gray-4)] text-[var(--gray-11)]',
+        surface: 'border-[var(--gray-6)] bg-[var(--gray-2)] text-[var(--gray-11)]',
       },
     },
     defaultVariants: {

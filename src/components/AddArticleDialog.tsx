@@ -1,6 +1,5 @@
 'use client';
 
-import { SegmentedControl } from '@radix-ui/themes';
 import { BookmarkPlus, BookOpen, FileText, Link as LinkIcon, Loader2, Upload } from 'lucide-react';
 import { useRef, useState } from 'react';
 
@@ -8,6 +7,7 @@ import { SUGGESTED_CATEGORIES } from '@/lib/category-utils';
 
 import { Button } from './ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from './ui/dialog';
+import { SegmentedControl } from './ui/segmented-control';
 import { Input } from './ui/input';
 import { Label } from './ui/label';
 
@@ -165,34 +165,43 @@ export function AddArticleDialog({
         </DialogHeader>
 
         <div className="space-y-5 px-6 pt-5 pb-6">
-          <SegmentedControl.Root
+          <SegmentedControl
             value={tab}
             onValueChange={(value) => {
               setTab(value as AddArticleMode);
               setError(null);
             }}
-            size="3"
             className="w-full"
-          >
-            <SegmentedControl.Item value="url">
-              <span className="flex items-center gap-2">
-                <LinkIcon size={16} />
-                Import
-              </span>
-            </SegmentedControl.Item>
-            <SegmentedControl.Item value="link">
-              <span className="flex items-center gap-2">
-                <BookmarkPlus size={16} />
-                Link
-              </span>
-            </SegmentedControl.Item>
-            <SegmentedControl.Item value="pdf">
-              <span className="flex items-center gap-2">
-                <Upload size={16} />
-                PDF
-              </span>
-            </SegmentedControl.Item>
-          </SegmentedControl.Root>
+            options={[
+              {
+                value: 'url',
+                label: (
+                  <span className="flex items-center gap-2">
+                    <LinkIcon size={16} />
+                    Import
+                  </span>
+                ),
+              },
+              {
+                value: 'link',
+                label: (
+                  <span className="flex items-center gap-2">
+                    <BookmarkPlus size={16} />
+                    Link
+                  </span>
+                ),
+              },
+              {
+                value: 'pdf',
+                label: (
+                  <span className="flex items-center gap-2">
+                    <Upload size={16} />
+                    PDF
+                  </span>
+                ),
+              },
+            ]}
+          />
 
           <div className="grid gap-2 sm:grid-cols-3">
             {(Object.entries(modeCopy) as Array<[typeof tab, (typeof modeCopy)[typeof tab]]>).map(
