@@ -1,12 +1,13 @@
 'use client';
 
 import { useCompletion } from '@ai-sdk/react';
-import { useAIConfig, useModelDiscovery } from '@saas-maker/ai';
 import { useQueryClient } from '@tanstack/react-query';
 import { Bot, Loader2, Send, Settings, Square, Trash2, X } from 'lucide-react';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
+
+import { useAIConfig, useModelDiscovery } from '@/lib/ai-vendor-hooks';
 
 import type { AIChatMessage } from '../lib/ai-config';
 import { AI_CONFIG_STORAGE_KEY, isLocalCLIEnabled } from '../lib/ai-config';

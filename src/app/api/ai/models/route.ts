@@ -1,7 +1,7 @@
-import { handleModelsRequest } from '@saas-maker/ai/server';
 import { NextResponse } from 'next/server';
 
 import { normalizeApiKey, normalizeEndpointUrl } from '@/lib/ai-server';
+import { fetchModels } from '@/lib/ai-vendor';
 import { getAuthenticatedUserId } from '@/lib/auth-api';
 
 export const runtime = 'nodejs';
@@ -26,11 +26,11 @@ export async function POST(request: Request) {
       return NextResponse.json({ models: [], source: 'empty' });
     }
 
-    const result = await handleModelsRequest({ endpointUrl, apiKey });
+    const models = await fetchModels(endpointUrl, apiKey);
 
     return NextResponse.json({
-      models: result.models.map((id) => ({ id })),
-      source: result.models.length > 0 ? 'live' : 'empty',
+      models: models.map((id) => ({ id })),
+      source: models.length > 0 ? 'live' : 'empty',
     });
   } catch (error) {
     console.error('AI model discovery failed:', error);

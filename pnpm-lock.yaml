@@ -40,16 +40,7 @@ importers:
       '@radix-ui/themes':
         specifier: ^3.3.0
         version: 3.3.0(@types/react-dom@19.2.3(@types/react@19.2.14))(@types/react@19.2.14)(react-dom@19.2.5(react@19.2.5))(react@19.2.5)
-      '@saas-maker/ai':
-        specifier: ^0.1.0
-        version: 0.1.0(@ai-sdk/openai-compatible@2.0.41(zod@4.3.6))(ai@6.0.168(zod@4.3.6))(react-dom@19.2.5(react@19.2.5))(react@19.2.5)
       '@saas-maker/feedback':
-        specifier: ^0.2.1
-        version: 0.2.1(react-dom@19.2.5(react@19.2.5))(react@19.2.5)
-      '@saas-maker/sdk':
-        specifier: ^0.3.1
-        version: 0.3.1
-      '@saas-maker/testimonials':
         specifier: ^0.2.1
         version: 0.2.1(react-dom@19.2.5(react@19.2.5))(react@19.2.5)
       '@tailwindcss/typography':
@@ -3114,19 +3105,6 @@ packages:
   '@rtsao/scc@1.1.0':
     resolution: {integrity: sha512-zt6OdqaDoOnJ1ZYsCYGt9YmWzDXl4vQdKTyJev62gFhRGKdx7mcT54V9KIjg+d2wi9EXsPvAPKe7i7WjfVWB8g==}
 
-  '@saas-maker/ai@0.1.0':
-    resolution: {integrity: sha512-bRkPhPBLuumk2MOrBAaP5HtTnLZq0J2xu5jsi1N1O9UOMZfPqWnukekOmmLYntZa6n4NbNuCXm3FurOBngGBRQ==}
-    peerDependencies:
-      '@ai-sdk/openai-compatible': '>=1.0.0'
-      ai: '>=4.0.0'
-      react: '>=18'
-      react-dom: '>=18'
-    peerDependenciesMeta:
-      '@ai-sdk/openai-compatible':
-        optional: true
-      ai:
-        optional: true
-
   '@saas-maker/eslint-config@1.0.4':
     resolution: {integrity: sha512-k7xjpLoTpNyaE3wYvGetc+Zw3ib7n4AR1LXPOngLtAw/GNfMNexMsrFxmtglSBwMao9xCeYOQw+DRVLYXuGKww==}
     peerDependencies:
@@ -3149,15 +3127,6 @@ packages:
 
   '@saas-maker/prettier-config@1.0.0':
     resolution: {integrity: sha512-SIEj/4cwEOGnWj6aQzvIQh+BuHZ3DWo4YVYtplgpCIgP9IW01h+x+8Lh648L9boRfGwBDsJq5D0oHly7Ckmjqg==}
-
-  '@saas-maker/sdk@0.3.1':
-    resolution: {integrity: sha512-RhIoYC4Is7HQ2aymJryyT/Nl9mXJ47MyzcfejYnplkU7yXR6bVz5KJkNKV5IdKQsNGxGus5j9DbMJvUjpSaU/Q==}
-
-  '@saas-maker/testimonials@0.2.1':
-    resolution: {integrity: sha512-mioGG90lztefuWFKCFPDyv8fmL0+Na2eniHlKuc2Ug35sahIgGqdWsjjTFsVIvuY59gaVyj+iJMV4KmVTeTwBA==}
-    peerDependencies:
-      react: '>=18'
-      react-dom: '>=18'
 
   '@saas-maker/tsconfig@1.0.0':
     resolution: {integrity: sha512-23PwZHje/WL6cBOQlZJ3IFxQaWmHvs8FMBPshDCBdCEZLfpLMD7Jpga/D1z42eVpF2X6d9sz1MwdTV5hOE2X+w==}
@@ -9840,14 +9809,6 @@ snapshots:
 
   '@rtsao/scc@1.1.0': {}
 
-  '@saas-maker/ai@0.1.0(@ai-sdk/openai-compatible@2.0.41(zod@4.3.6))(ai@6.0.168(zod@4.3.6))(react-dom@19.2.5(react@19.2.5))(react@19.2.5)':
-    dependencies:
-      react: 19.2.5
-      react-dom: 19.2.5(react@19.2.5)
-    optionalDependencies:
-      '@ai-sdk/openai-compatible': 2.0.41(zod@4.3.6)
-      ai: 6.0.168(zod@4.3.6)
-
   '@saas-maker/eslint-config@1.0.4(@typescript-eslint/parser@8.58.0(eslint@10.2.1(jiti@2.6.1))(typescript@6.0.3))(eslint-config-next@16.2.4(@typescript-eslint/parser@8.58.0(eslint@10.2.1(jiti@2.6.1))(typescript@6.0.3))(eslint@10.2.1(jiti@2.6.1))(typescript@6.0.3))(eslint@10.2.1(jiti@2.6.1))(typescript@6.0.3)':
     dependencies:
       '@eslint/js': 10.0.1(eslint@10.2.1(jiti@2.6.1))
@@ -9880,13 +9841,6 @@ snapshots:
       react-dom: 19.2.5(react@19.2.5)
 
   '@saas-maker/prettier-config@1.0.0': {}
-
-  '@saas-maker/sdk@0.3.1': {}
-
-  '@saas-maker/testimonials@0.2.1(react-dom@19.2.5(react@19.2.5))(react@19.2.5)':
-    dependencies:
-      react: 19.2.5
-      react-dom: 19.2.5(react@19.2.5)
 
   '@saas-maker/tsconfig@1.0.0': {}
 

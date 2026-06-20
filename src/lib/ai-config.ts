@@ -2,9 +2,10 @@ import type { AIChatMessage as SharedAIChatMessage } from '../types';
 
 export type AIChatMessage = SharedAIChatMessage;
 
-// Re-export from @saas-maker/ai with the project's custom storage key
-export type { AIConfig } from '@saas-maker/ai';
-export { getAIConfig, saveAIConfig } from '@saas-maker/ai';
+// Re-export from the local vendored AI helpers (formerly @saas-maker/ai),
+// used with the project's custom storage key.
+export type { AIConfig } from './ai-vendor';
+export { getAIConfig, saveAIConfig } from './ai-vendor';
 
 export const AI_CONFIG_STORAGE_KEY = 'web-annotator-ai-config-v2';
 

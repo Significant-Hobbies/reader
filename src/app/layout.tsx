@@ -8,7 +8,6 @@ import { AuthProvider } from '../components/AuthProvider';
 import { AnalyticsProvider } from '../components/posthog-provider';
 import { QueryProvider } from '../components/QueryProvider';
 import { SaaSMakerFeedback } from '../components/saasmaker-feedback';
-import { SaasMakerAnalytics } from '../components/SaasMakerAnalytics';
 
 export const metadata: Metadata = {
   title: {
@@ -59,7 +58,6 @@ export default function RootLayout({
             <AuthProvider>
               <QueryProvider>{children}</QueryProvider>
               <SaaSMakerFeedback />
-              <SaasMakerAnalytics />
             </AuthProvider>
           </AnalyticsProvider>
         </Theme>

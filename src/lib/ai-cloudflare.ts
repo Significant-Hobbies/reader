@@ -1,6 +1,24 @@
-import type { AIConfig } from '@saas-maker/ai/server';
-import { createAIModel } from '@saas-maker/ai/server';
+import { createOpenAICompatible } from '@ai-sdk/openai-compatible';
 import type { LanguageModel } from 'ai';
+
+import type { AIConfig } from './ai-vendor';
+
+/**
+ * Build a LanguageModel from an AIConfig, talking to any OpenAI-compatible
+ * endpoint (formerly @saas-maker/ai's createAIModel).
+ */
+function createAIModel(
+  config: AIConfig,
+  options?: { headers?: Record<string, string>; name?: string }
+): LanguageModel {
+  const provider = createOpenAICompatible({
+    baseURL: config.endpointUrl.trim().replace(/\/+$/, ''),
+    apiKey: config.apiKey,
+    name: options?.name ?? 'free-ai',
+    headers: options?.headers,
+  });
+  return provider.chatModel(config.model);
+}
 
 /**
  * Default Workers AI text model. ~64 Neurons/inference. Routed through the
