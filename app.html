@@ -10,9 +10,132 @@
       content="A personal research library for articles and PDFs. Clean typography, persistent highlights, text-to-speech, and AI chat over your own sources."
     />
     <link rel="icon" href="/favicon.ico" type="image/x-icon" />
+    <style>
+      :root {
+        --gray-1: #111110;
+        --gray-2: #191918;
+        --gray-5: #31312e;
+        --gray-11: #b5b3ad;
+        --gray-12: #eeeeec;
+        --accent-11: #d4b3a5;
+      }
+      body {
+        margin: 0;
+        background: #0d0d0c;
+        color: var(--gray-12);
+        font-family:
+          system-ui,
+          -apple-system,
+          BlinkMacSystemFont,
+          'Segoe UI',
+          sans-serif;
+      }
+      #library-static-shell {
+        display: none;
+      }
+      html[data-static-shell='library'] #library-static-shell {
+        display: block;
+      }
+      .shell-nav {
+        position: sticky;
+        top: 0;
+        z-index: 40;
+        border-bottom: 1px solid var(--gray-5);
+        background: rgba(17, 16, 13, 0.85);
+        backdrop-filter: blur(16px);
+      }
+      .shell-nav-inner {
+        display: flex;
+        max-width: 72rem;
+        margin: 0 auto;
+        align-items: center;
+        gap: 0.75rem;
+        padding: 0.75rem 1.25rem;
+      }
+      .shell-logo {
+        display: flex;
+        height: 2.25rem;
+        width: 2.25rem;
+        align-items: center;
+        justify-content: center;
+        border-radius: 0.375rem;
+        border: 1px solid var(--gray-5);
+        background: var(--gray-2);
+        font-size: 0.875rem;
+        font-weight: 600;
+        color: var(--accent-11);
+      }
+      .shell-title {
+        margin: 0;
+        font-size: 1rem;
+        font-weight: 700;
+        line-height: 1;
+      }
+      .shell-subtitle {
+        margin: 0.125rem 0 0;
+        font-size: 0.75rem;
+        line-height: 1;
+        color: var(--gray-11);
+      }
+      .shell-main {
+        max-width: 72rem;
+        margin: 0 auto;
+        padding: 1.25rem 1.25rem 2rem;
+      }
+      .shell-eyebrow {
+        margin: 0 0 0.75rem;
+        font-size: 0.75rem;
+        font-weight: 500;
+        letter-spacing: 0.1em;
+        text-transform: uppercase;
+        color: var(--accent-11);
+      }
+      .shell-heading {
+        margin: 0;
+        max-width: 42rem;
+        font-size: 1.875rem;
+        font-weight: 700;
+        line-height: 1.2;
+      }
+      .shell-lede {
+        margin: 0.75rem 0 0;
+        max-width: 42rem;
+        font-size: 1rem;
+        line-height: 1.75;
+        color: var(--gray-11);
+      }
+    </style>
+    <script>
+      (function () {
+        var path = location.pathname;
+        if (path === '/library' || path === '/library/') {
+          document.documentElement.dataset.staticShell = 'library';
+        }
+      })();
+    </script>
   </head>
   <body class="antialiased">
-    <div id="root"></div>
+    <div id="root">
+      <div id="library-static-shell" aria-hidden="true">
+        <header class="shell-nav">
+          <div class="shell-nav-inner">
+            <div class="shell-logo" aria-hidden="true">L</div>
+            <div>
+              <p class="shell-title">Library</p>
+              <p class="shell-subtitle">Reader</p>
+            </div>
+          </div>
+        </header>
+        <main class="shell-main">
+          <p class="shell-eyebrow">Empty library</p>
+          <h1 class="shell-heading">Add your first source</h1>
+          <p class="shell-lede">
+            Start by saving something real: import a readable article, upload a PDF, or keep an
+            outside link for later.
+          </p>
+        </main>
+      </div>
+    </div>
     <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>

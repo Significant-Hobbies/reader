@@ -22,6 +22,7 @@ export default defineConfig(() => ({
     },
   },
   build: {
+    modulePreload: false,
     outDir: 'dist',
     emptyOutDir: true,
     cssMinify: 'lightningcss',

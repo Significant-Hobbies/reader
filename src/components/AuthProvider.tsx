@@ -1,39 +1,10 @@
 'use client';
 
-import type { ReactNode } from 'react';
-import { useEffect } from 'react';
+import { createContext, useContext, useEffect, useMemo, useState, type ReactNode } from 'react';
 
 import { trackReturnedOnce, trackSignupOnce } from '@/lib/analytics';
-import { signIn, signOut, useSession } from '@/lib/auth-client';
 
-/**
- * Session-level analytics wiring. `signup` fires once per browser the first
- * time a signed-in user is observed; `returned` fires once per session for a
- * user with prior activity. `activated` / `core_action` are emitted at their
- * real trigger points (HomeClient save mutations, ArticleSummary).
- */
-function AnalyticsTracker() {
-  const { data: session, isPending } = useSession();
-  useEffect(() => {
-    if (isPending) return;
-    if (session?.user) {
-      trackSignupOnce();
-    }
-    // `returned` self-gates on prior activity + per-session.
-    trackReturnedOnce();
-  }, [session?.user, isPending]);
-  return null;
-}
-
-export function AuthProvider({ children }: { children: ReactNode }) {
-  // better-auth manages its own session state via cookies — no wrapper needed
-  return (
-    <>
-      <AnalyticsTracker />
-      {children}
-    </>
-  );
-}
+type AuthClientModule = typeof import('@/lib/auth-client');
 
 export type AuthUser = {
   id: string | null;
@@ -42,33 +13,105 @@ export type AuthUser = {
   image: string | null;
 };
 
-/**
- * better-auth session hook. Preserves the `{ user, loading, signInWithGoogle, logout }` shape.
- */
-export function useAuth() {
+type AuthContextValue = {
+  user: AuthUser | null;
+  loading: boolean;
+  signInWithGoogle: () => void;
+  logout: () => Promise<void>;
+};
+
+const AuthContext = createContext<AuthContextValue | null>(null);
+
+function AnalyticsTracker({ useSession }: { useSession: AuthClientModule['useSession'] }) {
   const { data: session, isPending } = useSession();
+  useEffect(() => {
+    if (isPending) return;
+    if (session?.user) {
+      trackSignupOnce();
+    }
+    trackReturnedOnce();
+  }, [session?.user, isPending]);
+  return null;
+}
+
+function AuthProviderReady({ auth, children }: { auth: AuthClientModule; children: ReactNode }) {
+  const { data: session, isPending } = auth.useSession();
   const sessionUser = session?.user;
 
-  const user: AuthUser | null = sessionUser
-    ? {
-        id: sessionUser.id ?? null,
-        email: sessionUser.email ?? null,
-        name: sessionUser.name ?? null,
-        image: sessionUser.image ?? null,
-      }
-    : null;
-
-  return {
-    user,
-    loading: isPending,
-    signInWithGoogle: () => signIn.social({ provider: 'google', callbackURL: '/' }),
-    logout: () =>
-      signOut({
-        fetchOptions: {
-          onSuccess: () => {
-            window.location.href = '/login';
+  const value = useMemo<AuthContextValue>(
+    () => ({
+      user: sessionUser
+        ? {
+            id: sessionUser.id ?? null,
+            email: sessionUser.email ?? null,
+            name: sessionUser.name ?? null,
+            image: sessionUser.image ?? null,
+          }
+        : null,
+      loading: isPending,
+      signInWithGoogle: () => auth.signIn.social({ provider: 'google', callbackURL: '/' }),
+      logout: async () => {
+        await auth.signOut({
+          fetchOptions: {
+            onSuccess: () => {
+              window.location.href = '/login';
+            },
           },
-        },
-      }),
-  };
+        });
+      },
+    }),
+    [auth, isPending, sessionUser]
+  );
+
+  return (
+    <AuthContext.Provider value={value}>
+      <AnalyticsTracker useSession={auth.useSession} />
+      {children}
+    </AuthContext.Provider>
+  );
+}
+
+export function AuthProvider({ children }: { children: ReactNode }) {
+  const [auth, setAuth] = useState<AuthClientModule | null>(null);
+
+  useEffect(() => {
+    void import('@/lib/auth-client').then(setAuth);
+  }, []);
+
+  const bootValue = useMemo<AuthContextValue>(
+    () => ({
+      user: null,
+      loading: true,
+      signInWithGoogle: () => {
+        void import('@/lib/auth-client').then((mod) =>
+          mod.signIn.social({ provider: 'google', callbackURL: '/' })
+        );
+      },
+      logout: async () => {
+        const mod = await import('@/lib/auth-client');
+        await mod.signOut({
+          fetchOptions: {
+            onSuccess: () => {
+              window.location.href = '/login';
+            },
+          },
+        });
+      },
+    }),
+    []
+  );
+
+  if (!auth) {
+    return <AuthContext.Provider value={bootValue}>{children}</AuthContext.Provider>;
+  }
+
+  return <AuthProviderReady auth={auth}>{children}</AuthProviderReady>;
+}
+
+export function useAuth(): AuthContextValue {
+  const context = useContext(AuthContext);
+  if (!context) {
+    throw new Error('useAuth must be used within AuthProvider');
+  }
+  return context;
 }

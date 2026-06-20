@@ -1,9 +1,11 @@
 'use client';
 
+import { lazy, Suspense } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 
 import { useAuth } from './AuthProvider';
-import { SearchBar } from './SearchBar';
+
+const SearchBar = lazy(() => import('./SearchBar').then((m) => ({ default: m.SearchBar })));
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -32,7 +34,16 @@ export function Navbar() {
         </Link>
 
         <div className="order-3 flex w-full items-center gap-4 sm:order-none sm:max-w-2xl sm:flex-1">
-          <SearchBar />
+          <Suspense
+            fallback={
+              <div
+                className="h-9 w-full rounded-md border border-[var(--gray-6)] bg-[var(--gray-2)]"
+                aria-hidden="true"
+              />
+            }
+          >
+            <SearchBar />
+          </Suspense>
         </div>
 
         {user ? (
