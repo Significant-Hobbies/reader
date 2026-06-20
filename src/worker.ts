@@ -101,7 +101,8 @@ export default {
       return landing.ok ? withSecurityHeaders(landing) : assetResponse;
     }
 
-    const spa = await env.ASSETS.fetch(new Request(new URL('/app.html', url), request));
+    // Assets serves app.html at /app; fetching /app.html returns 307 (not ok).
+    const spa = await env.ASSETS.fetch(new Request(new URL('/app', url), request));
     return spa.ok ? withSecurityHeaders(spa) : assetResponse;
   },
 };
