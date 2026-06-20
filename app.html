@@ -37,7 +37,8 @@
       }
       html[data-static-shell='library-empty'] #library-empty-shell,
       html[data-static-shell='library-grid'] #library-grid-shell,
-      html[data-static-shell='reader'] #reader-static-shell {
+      html[data-static-shell='reader'] #reader-static-shell,
+      html[data-static-shell='sample'] #sample-static-shell {
         display: block;
       }
       .shell-nav {
@@ -165,6 +166,29 @@
         line-height: 1.75;
         color: var(--gray-11);
       }
+      .shell-article .shell-byline {
+        margin: 0.5rem 0 0;
+        font-size: 0.875rem;
+        color: #8a8884;
+      }
+      .shell-mark {
+        border-radius: 0.125rem;
+        background: rgba(168, 124, 75, 0.25);
+        padding: 0 0.125rem;
+        color: var(--gray-12);
+      }
+      .shell-sample-nav {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        border-bottom: 1px solid #2a2a28;
+        background: rgba(13, 13, 12, 0.9);
+        padding: 0.75rem 1rem;
+      }
+      .shell-sample-nav span {
+        font-size: 0.875rem;
+        color: #8a8884;
+      }
     </style>
     <script>
       (function () {
@@ -174,7 +198,11 @@
           document.documentElement.dataset.staticShell = authed ? 'library-grid' : 'library-empty';
           return;
         }
-        if (path === '/sample' || path.indexOf('/reader/') === 0) {
+        if (path === '/sample' || path === '/sample/') {
+          document.documentElement.dataset.staticShell = 'sample';
+          return;
+        }
+        if (path.indexOf('/reader/') === 0) {
           document.documentElement.dataset.staticShell = 'reader';
         }
       })();
@@ -233,6 +261,31 @@
             </div>
           </div>
         </main>
+      </div>
+
+      <div id="sample-static-shell" class="spa-static-shell" aria-hidden="true">
+        <div class="shell-sample-nav">
+          <span>← Back to library</span>
+          <span>3 highlights · 2 notes</span>
+        </div>
+        <article class="shell-article">
+          <p class="shell-eyebrow">Sample article · 4 min read</p>
+          <h1>How to Learn Anything Fast</h1>
+          <p class="shell-byline">Richard Feynman · classic essay</p>
+          <p>
+            Most people think learning means reading something once and hoping it sticks. It
+            doesn't. Real learning is active. You have to wrestle with ideas, not just receive
+            them.
+          </p>
+          <p>
+            The best way to learn is to teach. When you try to explain a concept in plain words,
+            you quickly discover what you actually understand versus what you only think you
+            understand.
+            <span class="shell-mark">When you explain it simply, you find the gaps.</span>
+            That's when real understanding kicks in — go back, fill the gaps, then explain it
+            again.
+          </p>
+        </article>
       </div>
 
       <div id="reader-static-shell" class="spa-static-shell" aria-hidden="true">
