@@ -2,7 +2,7 @@
 
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { Share2 } from 'lucide-react';
-import { useRouter } from 'next/navigation';
+import { useNavigate } from 'react-router-dom';
 import { useState } from 'react';
 
 import { useIsMobileViewport } from '../hooks/useIsMobileViewport';
@@ -13,7 +13,7 @@ import { ReaderCore } from './reader/ReaderCore';
 import { TTSPlayer } from './TTSPlayer';
 
 export default function ReaderClient({ articleId }: { articleId: string }) {
-  const router = useRouter();
+  const navigate = useNavigate();
   const queryClient = useQueryClient();
   const [shareOpen, setShareOpen] = useState(false);
   const isMobile = useIsMobileViewport();
@@ -55,7 +55,7 @@ export default function ReaderClient({ articleId }: { articleId: string }) {
             : 'Failed to load article.'}
         </p>
         <button
-          onClick={() => router.push('/')}
+          onClick={() => navigate('/library')}
           className="rounded-md bg-[var(--accent-9)] px-4 py-2 text-white transition hover:bg-[var(--accent-10)]"
         >
           Back to Library

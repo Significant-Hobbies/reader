@@ -40,7 +40,6 @@ function WebsiteNodeComponent({ id, data, selected }: NodeProps) {
       <div className="border-b border-gray-800 px-3 py-2">
         <div className="flex items-center gap-2">
           {nodeData.favicon ? (
-            // eslint-disable-next-line @next/next/no-img-element
             <img
               src={nodeData.favicon}
               alt=""

@@ -1,7 +1,7 @@
 'use client';
 
 import { useQuery } from '@tanstack/react-query';
-import { useRouter } from 'next/navigation';
+import { useNavigate } from 'react-router-dom';
 import { useState } from 'react';
 
 import type { Article, ReaderSettings } from '../types';
@@ -13,7 +13,7 @@ import { TTSPlayer } from './TTSPlayer';
 
 export default function PDFReaderClient({ articleId }: { articleId: string }) {
   const id = articleId;
-  const router = useRouter();
+  const navigate = useNavigate();
 
   const [activeSidebarTab, setActiveSidebarTab] = useState<'notes' | 'ai'>('notes');
   const [settings, setSettings] = useState<ReaderSettings>({
@@ -61,7 +61,7 @@ export default function PDFReaderClient({ articleId }: { articleId: string }) {
       <div className="flex h-screen flex-col items-center justify-center gap-4 bg-[#15130f] text-gray-200">
         <p>{articleError.message === 'NOT_FOUND' ? 'PDF not found.' : 'Failed to load PDF.'}</p>
         <button
-          onClick={() => router.push('/')}
+          onClick={() => navigate('/library')}
           className="rounded-md bg-[var(--accent-9)] px-4 py-2 text-white transition hover:bg-[var(--accent-10)]"
         >
           Back to Library
@@ -81,7 +81,7 @@ export default function PDFReaderClient({ articleId }: { articleId: string }) {
           {/* Header */}
           <div className="z-10 flex flex-wrap items-center gap-4 border-b border-[var(--gray-5)] bg-[var(--gray-2)]/90 p-4 shadow-md backdrop-blur-md">
             <button
-              onClick={() => router.push('/')}
+              onClick={() => navigate('/library')}
               className="rounded-md border border-[var(--gray-6)] bg-[var(--gray-3)] p-2 text-gray-200 transition-colors hover:bg-[var(--gray-4)]"
               title="Back to Library"
             >

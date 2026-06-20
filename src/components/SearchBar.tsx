@@ -1,7 +1,7 @@
 'use client';
 
 import { Loader2, Search, X } from 'lucide-react';
-import { useRouter } from 'next/navigation';
+import { useNavigate } from 'react-router-dom';
 import { useCallback, useEffect, useRef, useState } from 'react';
 
 import { getLocalArticles } from '../lib/local-library';
@@ -16,7 +16,7 @@ export function SearchBar() {
   const [isLoading, setIsLoading] = useState(false);
   const [isOpen, setIsOpen] = useState(false);
   const [selectedIndex, setSelectedIndex] = useState(-1);
-  const router = useRouter();
+  const navigate = useNavigate();
   const { user, loading: authLoading } = useAuth();
   const isLocalMode = !authLoading && !user;
   const searchRef = useRef<HTMLDivElement>(null);
@@ -108,9 +108,9 @@ export function SearchBar() {
       setQuery('');
       setResults([]);
       setSelectedIndex(-1);
-      router.push(`/reader/${articleId}`);
+      navigate(`/reader/${articleId}`);
     },
-    [router]
+    [navigate]
   );
 
   useEffect(() => {

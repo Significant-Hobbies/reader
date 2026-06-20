@@ -1,7 +1,7 @@
 'use client';
 
 import { Check, Copy, ExternalLink, KeyRound, Loader2, Trash2 } from 'lucide-react';
-import Link from 'next/link';
+import { Link } from 'react-router-dom';
 import { useEffect, useState } from 'react';
 
 import { signIn } from '@/lib/auth-client';
@@ -54,7 +54,9 @@ export function ExtensionConnectClient() {
     if (!userId) return;
 
     let cancelled = false;
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- fetch-on-mount
     setIsLoadingKeys(true);
+
     setError(null);
     fetch('/api/keys', { cache: 'no-store' })
       .then(async (response) => {
@@ -241,7 +243,7 @@ export function ExtensionConnectClient() {
                   </p>
                 </div>
                 <Link
-                  href="/"
+                  to="/library"
                   className="inline-flex items-center gap-1 text-sm text-blue-300 hover:text-blue-200"
                 >
                   Library

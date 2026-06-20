@@ -4,7 +4,7 @@ import '@saas-maker/feedback/dist/index.css';
 
 import { FeedbackWidget } from '@saas-maker/feedback';
 
-const API_KEY = process.env.NEXT_PUBLIC_SAASMAKER_API_KEY ?? '';
+const API_KEY = import.meta.env.VITE_SAASMAKER_API_KEY ?? '';
 const API_BASE = 'https://api.sassmaker.com';
 
 export function SaaSMakerFeedback() {

@@ -1,5 +1,3 @@
-import { getCloudflareContext } from '@opennextjs/cloudflare';
-
 const PDF_PREFIX = 'pdfs';
 
 interface R2HttpMetadata {
@@ -20,13 +18,17 @@ interface R2BucketLike {
   delete(key: string): Promise<void>;
 }
 
+let pdfsBucket: R2BucketLike | undefined;
+
+export function setPdfBucket(bucket: R2BucketLike) {
+  pdfsBucket = bucket;
+}
+
 function getBucket(): R2BucketLike {
-  const { env } = getCloudflareContext();
-  const bucket = (env as unknown as { PDFS_BUCKET?: R2BucketLike }).PDFS_BUCKET;
-  if (!bucket) {
+  if (!pdfsBucket) {
     throw new Error('R2 binding PDFS_BUCKET is not configured');
   }
-  return bucket;
+  return pdfsBucket;
 }
 
 export interface UploadPdfOptions {

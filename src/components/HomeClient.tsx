@@ -23,8 +23,7 @@ import {
   Plus,
   X,
 } from 'lucide-react';
-import Link from 'next/link';
-import { useRouter } from 'next/navigation';
+import { Link, useNavigate } from 'react-router-dom';
 import { type MouseEvent, useState } from 'react';
 
 import { trackActivatedOnce, trackCoreAction } from '../lib/analytics';
@@ -224,7 +223,7 @@ export default function HomeClient() {
   const [showAddArticleDialog, setShowAddArticleDialog] = useState(false);
   const [addArticleMode, setAddArticleMode] = useState<AddArticleMode>('url');
 
-  const router = useRouter();
+  const navigate = useNavigate();
   const queryClient = useQueryClient();
   const { user, loading: authLoading } = useAuth();
   const isLocalMode = !authLoading && !user;
@@ -247,7 +246,7 @@ export default function HomeClient() {
       return;
     }
 
-    router.push(`/reader/${articleId}`);
+    navigate(`/reader/${articleId}`);
   };
 
   const {
@@ -505,7 +504,7 @@ export default function HomeClient() {
   const handleUrlSubmit = async (url: string, category?: string) => {
     try {
       const newArticleId = await importMutation.mutateAsync({ url, category });
-      router.push(`/reader/${newArticleId}`);
+      navigate(`/reader/${newArticleId}`);
     } catch (error) {
       console.error('Import failed:', error);
       throw error; // Re-throw so AddArticleDialog can display it
@@ -515,7 +514,7 @@ export default function HomeClient() {
   const handlePDFUpload = async (file: File, category?: string) => {
     try {
       const newArticleId = await pdfUploadMutation.mutateAsync({ file, category });
-      router.push(`/reader/${newArticleId}`);
+      navigate(`/reader/${newArticleId}`);
     } catch (error) {
       console.error('PDF processing failed:', error);
       throw error; // Re-throw so AddArticleDialog can display it
@@ -748,14 +747,14 @@ export default function HomeClient() {
               Navigate
             </h3>
             <Link
-              href="/"
+              to="/library"
               className="flex w-full items-center gap-3 rounded-md border border-[var(--accent-7)] bg-[var(--accent-4)] px-3 py-2 text-sm font-medium text-[var(--accent-12)] shadow-[0_8px_24px_rgba(168,124,75,0.12)]"
             >
               <FileText size={18} />
               Library
             </Link>
             <Link
-              href="/board"
+              to="/board"
               className="flex w-full items-center gap-3 rounded-md px-3 py-2 text-sm font-medium text-[var(--gray-11)] transition-colors hover:bg-[var(--gray-3)] hover:text-[var(--gray-12)]"
             >
               <LayoutDashboard size={18} />
@@ -954,7 +953,7 @@ export default function HomeClient() {
                   {nextUnreadArticle && (
                     <div className="ml-auto">
                       <Link
-                        href={
+                        to={
                           nextUnreadArticle.type === 'link'
                             ? nextUnreadArticle.url
                             : `/reader/${nextUnreadArticle.id}`
@@ -1077,7 +1076,7 @@ export default function HomeClient() {
                             <Plus className="h-4 w-4" />
                             Add Source
                           </ThemeButton>
-                          <Link href="/sample" className="w-full sm:w-auto">
+                          <Link to="/sample" className="w-full sm:w-auto">
                             <ThemeButton size="3" variant="soft" className="w-full gap-2 sm:w-auto">
                               <BookOpen className="h-4 w-4" />
                               Try sample doc
@@ -1534,7 +1533,7 @@ export default function HomeClient() {
                                     window.open(article.url, '_blank', 'noopener,noreferrer');
                                     return;
                                   }
-                                  router.push(`/reader/${article.id}`);
+                                  navigate(`/reader/${article.id}`);
                                 }}
                               >
                                 {isLink ? (

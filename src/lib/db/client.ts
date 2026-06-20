@@ -1,9 +1,24 @@
-import { createClient } from '@libsql/client';
+import { createClient } from '@libsql/client/web';
 import { drizzle } from 'drizzle-orm/libsql';
 
 import * as schema from './schema';
 
-type Database = ReturnType<typeof drizzle<typeof schema>>;
+export type DbEnv = {
+  TURSO_DATABASE_URL: string;
+  TURSO_AUTH_TOKEN?: string;
+};
+
+export function createDb(env: DbEnv) {
+  const url = env.TURSO_DATABASE_URL;
+  const httpUrl = url.replace(/^libsql:\/\//, 'https://');
+  const client = createClient({
+    url: httpUrl,
+    authToken: env.TURSO_AUTH_TOKEN,
+  });
+  return drizzle(client, { schema });
+}
+
+type Database = ReturnType<typeof createDb>;
 
 let cachedDb: Database | undefined;
 
@@ -20,9 +35,12 @@ function getDb(): Database {
     throw new Error('TURSO_AUTH_TOKEN is not set. Add it to .env.local.');
   }
 
-  const client = createClient({ url, authToken });
-  cachedDb = drizzle(client, { schema });
+  cachedDb = createDb({ TURSO_DATABASE_URL: url, TURSO_AUTH_TOKEN: authToken });
   return cachedDb;
+}
+
+export function setDb(db: Database) {
+  cachedDb = db;
 }
 
 export const db = new Proxy({} as Database, {
@@ -30,4 +48,5 @@ export const db = new Proxy({} as Database, {
     return Reflect.get(getDb() as object, prop, receiver);
   },
 });
+
 export { schema };

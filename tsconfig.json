@@ -1,18 +1,4 @@
 {
-  "extends": "@saas-maker/tsconfig/next.json",
-  "compilerOptions": {
-    "paths": {
-      "@/*": ["./src/*"]
-    },
-    "noPropertyAccessFromIndexSignature": false
-  },
-  "include": [
-    "next-env.d.ts",
-    ".next/types/**/*.ts",
-    "src/**/*.ts",
-    "src/**/*.tsx",
-    "tests/**/*.ts",
-    "tests/**/*.tsx"
-  ],
-  "exclude": ["node_modules", "packages/chrome-extension/dist"]
+  "files": [],
+  "references": [{ "path": "./tsconfig.app.json" }, { "path": "./tsconfig.worker.json" }]
 }

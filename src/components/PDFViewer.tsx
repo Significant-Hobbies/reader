@@ -163,7 +163,7 @@ export function PDFViewer({ pdfUrl, settings }: PDFViewerProps) {
           </div>
         )}
 
-        <style jsx global>{`
+        <style>{`
           .pdf-document {
             display: flex;
             justify-content: center;

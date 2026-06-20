@@ -1,6 +1,5 @@
-import { readFileSync } from 'node:fs';
-import path from 'node:path';
-import { fileURLToPath } from 'node:url';
+import memoryCapturesFixture from './__fixtures__/memory-captures.json';
+import browserMemoryFixture from './__fixtures__/browser-memory-snapshots.json';
 
 import {
   type BrowserMemorySnapshotInput,
@@ -12,15 +11,11 @@ import {
   normalizeMemoryCapture,
 } from './memory-capture';
 
-const FIXTURE_DIR = path.join(path.dirname(fileURLToPath(import.meta.url)), '__fixtures__');
-const MEMORY_CAPTURES_FIXTURE = path.join(FIXTURE_DIR, 'memory-captures.json');
-const BROWSER_MEMORY_FIXTURE = path.join(FIXTURE_DIR, 'browser-memory-snapshots.json');
-
 export function loadMemoryCaptureFixture(): {
   captures: MemoryCaptureInput[];
   demoQueries: Record<string, string>;
 } {
-  const raw = JSON.parse(readFileSync(MEMORY_CAPTURES_FIXTURE, 'utf8')) as {
+  const raw = memoryCapturesFixture as {
     captures: MemoryCaptureInput[];
     demoQueries?: Record<string, string>;
   };
@@ -28,7 +23,7 @@ export function loadMemoryCaptureFixture(): {
 }
 
 export function loadBrowserMemoryFixtureSnapshots(): BrowserMemorySnapshotInput[] {
-  const raw = JSON.parse(readFileSync(BROWSER_MEMORY_FIXTURE, 'utf8')) as {
+  const raw = browserMemoryFixture as {
     snapshots: BrowserMemorySnapshotInput[];
   };
   return raw.snapshots;

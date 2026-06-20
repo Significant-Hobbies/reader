@@ -1,5 +1,5 @@
 import { BookOpen, ChevronRight, FileText, Headphones, Highlighter, Sparkles } from 'lucide-react';
-import Link from 'next/link';
+import { Link } from 'react-router-dom';
 
 /**
  * Public landing page rendered at `/` for signed-out visitors.
@@ -78,7 +78,7 @@ export function MarketingLanding() {
       {/* Top nav */}
       <header className="sticky top-0 z-40 border-b border-white/10 bg-[#0d0d0c]/85 backdrop-blur-xl">
         <div className="mx-auto flex max-w-5xl items-center justify-between px-6 py-3">
-          <Link href="/" className="flex items-center gap-2.5">
+          <Link to="/" className="flex items-center gap-2.5">
             <span className="flex h-8 w-8 items-center justify-center rounded-md border border-white/10 bg-white/5 text-sm font-semibold text-[var(--accent-11,#c79b6a)]">
               L
             </span>
@@ -96,12 +96,12 @@ export function MarketingLanding() {
             <a href="#faq" className="hover:text-gray-100">
               FAQ
             </a>
-            <Link href="/extension" className="hover:text-gray-100">
+            <Link to="/extension" className="hover:text-gray-100">
               Extension
             </Link>
           </nav>
           <Link
-            href="/login"
+            to="/login"
             className="inline-flex h-9 items-center rounded-md bg-[var(--accent-9,#a87c4b)] px-4 text-xs font-semibold text-black transition-opacity hover:opacity-90"
           >
             Sign in
@@ -125,7 +125,7 @@ export function MarketingLanding() {
           </p>
           <div className="mt-8 flex flex-wrap items-center justify-center gap-3">
             <Link
-              href="/library"
+              to="/library"
               className="inline-flex h-11 items-center rounded-md bg-[var(--accent-9,#a87c4b)] px-5 text-sm font-semibold text-black transition-opacity hover:opacity-90"
             >
               Save your first article
@@ -134,7 +134,7 @@ export function MarketingLanding() {
           </div>
           <p className="mt-4 text-xs text-gray-500">
             No account needed — works in your browser right now.{' '}
-            <Link href="/extension" className="underline underline-offset-2 hover:text-gray-300">
+            <Link to="/extension" className="underline underline-offset-2 hover:text-gray-300">
               Chrome extension available.
             </Link>
           </p>
@@ -281,22 +281,22 @@ export function MarketingLanding() {
             you want to sync.
           </p>
           <Link
-            href="/library"
+            to="/library"
             className="mt-7 inline-flex h-11 items-center rounded-md bg-[var(--accent-9,#a87c4b)] px-6 text-sm font-semibold text-black transition-opacity hover:opacity-90"
           >
             Save your first article
             <ChevronRight className="ml-1 h-4 w-4" />
           </Link>
           <p className="mt-6 text-xs text-gray-500">
-            <Link href="/about" className="underline underline-offset-2 hover:text-gray-300">
+            <Link to="/about" className="underline underline-offset-2 hover:text-gray-300">
               About
             </Link>{' '}
             ·{' '}
-            <Link href="/privacy" className="underline underline-offset-2 hover:text-gray-300">
+            <Link to="/privacy" className="underline underline-offset-2 hover:text-gray-300">
               Privacy
             </Link>{' '}
             ·{' '}
-            <Link href="/extension" className="underline underline-offset-2 hover:text-gray-300">
+            <Link to="/extension" className="underline underline-offset-2 hover:text-gray-300">
               Chrome extension
             </Link>
           </p>

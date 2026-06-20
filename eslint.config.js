@@ -1,7 +1,7 @@
-import config from '@saas-maker/eslint-config/next';
+import tseslint from 'typescript-eslint';
+import reactHooks from 'eslint-plugin-react-hooks';
 
-// Ignore generated bundle directories (huge worker.js files OOM ESLint).
-export default [
+export default tseslint.config(
   {
     ignores: [
       '.cf-pages-bundle',
@@ -15,5 +15,16 @@ export default [
       'packages/**',
     ],
   },
-  ...config,
-];
+  ...tseslint.configs.recommended,
+  {
+    plugins: { 'react-hooks': reactHooks },
+    rules: {
+      ...reactHooks.configs.recommended.rules,
+      '@typescript-eslint/no-unused-vars': [
+        'warn',
+        { argsIgnorePattern: '^_', varsIgnorePattern: '^_' },
+      ],
+      '@typescript-eslint/no-explicit-any': 'warn',
+    },
+  }
+);

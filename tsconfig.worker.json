@@ -1,0 +1,40 @@
+{
+  "extends": "@saas-maker/tsconfig/base.json",
+  "compilerOptions": {
+    "ignoreDeprecations": "6.0",
+    "noPropertyAccessFromIndexSignature": false,
+    "noUnusedLocals": false,
+    "noUnusedParameters": false,
+    "noImplicitAny": false,
+    "verbatimModuleSyntax": false,
+    "baseUrl": ".",
+    "paths": {
+      "@/*": ["./src/*"]
+    },
+    "types": ["@cloudflare/workers-types"]
+  },
+  "include": [
+    "src/worker.ts",
+    "src/worker/**/*.ts",
+    "src/lib/worker-env.ts",
+    "src/lib/auth.ts",
+    "src/lib/auth-api.ts",
+    "src/lib/db/**/*.ts",
+    "src/lib/storage.ts",
+    "src/lib/api-keys.ts",
+    "src/lib/articles-db.ts",
+    "src/lib/boards-db.ts",
+    "src/lib/lists-db.ts",
+    "src/lib/ai-cloudflare.ts",
+    "src/lib/ai-server.ts",
+    "src/lib/ai-config.ts",
+    "src/lib/ai-vendor.ts",
+    "src/lib/safe-fetch.ts",
+    "src/lib/url-validation.ts",
+    "src/lib/browser-memory-import.ts",
+    "src/lib/research-brief.ts",
+    "src/lib/pdf-service.ts",
+    "src/types.ts"
+  ],
+  "exclude": ["node_modules", "**/*.test.ts", "src/lib/**/__tests__/**"]
+}

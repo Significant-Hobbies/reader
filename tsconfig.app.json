@@ -1,0 +1,35 @@
+{
+  "extends": "@saas-maker/tsconfig/vite.json",
+  "compilerOptions": {
+    "ignoreDeprecations": "6.0",
+    "noPropertyAccessFromIndexSignature": false,
+    "noUnusedLocals": false,
+    "noUnusedParameters": false,
+    "noImplicitAny": false,
+    "verbatimModuleSyntax": false,
+    "baseUrl": ".",
+    "paths": {
+      "@/*": ["./src/*"]
+    }
+  },
+  "include": [
+    "src/main.tsx",
+    "src/router.tsx",
+    "src/RootLayout.tsx",
+    "src/pages/**/*.tsx",
+    "src/components/**/*.ts",
+    "src/components/**/*.tsx",
+    "src/hooks/**/*.ts",
+    "src/lib/**/*.ts",
+    "src/types.ts",
+    "src/vite-env.d.ts"
+  ],
+  "exclude": [
+    "node_modules",
+    "src/worker.ts",
+    "src/worker/**/*.ts",
+    "src/lib/worker-env.ts",
+    "**/*.test.ts",
+    "src/lib/**/__tests__/**"
+  ]
+}

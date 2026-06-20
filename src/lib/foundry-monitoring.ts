@@ -5,7 +5,9 @@ import posthog from 'posthog-js';
 type AuthFailureStage = 'signin' | 'signup' | 'callback' | 'session' | 'unknown';
 const PROJECT_SLUG = 'reader';
 const POSTHOG_KEY =
-  process.env['NEXT_PUBLIC_POSTHOG_KEY'] ?? 'phc_qgiAarw4Co4pw9fz3Fxj4UJaHmqzFetqs4JrXhGc35Nd';
+  import.meta.env.VITE_POSTHOG_KEY ??
+  process.env['VITE_POSTHOG_KEY'] ??
+  'phc_qgiAarw4Co4pw9fz3Fxj4UJaHmqzFetqs4JrXhGc35Nd';
 const POSTHOG_HOST = 'https://us.i.posthog.com';
 
 function route() {

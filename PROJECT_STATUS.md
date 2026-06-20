@@ -1,6 +1,6 @@
 # Project Status
 
-Last updated: 2026-06-04
+Last updated: 2026-06-20
 
 ## Current Scope
 
@@ -8,12 +8,11 @@ Reader is a web annotator and reading memory app for capturing articles, PDFs, t
 
 ## Done
 
-- Core reading features are documented: article/PDF capture, annotation, tags, search, projects, progress, summaries, key points, chat history, and customizable reading views.
-- Cloudflare Workers deployment through OpenNext is documented.
-- Turso/Drizzle, better-auth Google, R2 PDF storage, and free-ai/BYOK/local AI integrations are part of the current architecture.
-- The memory capture prototype exists at `/memory` with fixture-backed web, blog, PDF-like, and browser-memory import examples.
-- The production browser-memory import path persists sanitized snapshots through `POST /api/browser-memory/import`.
-- Critical and high audit findings have been addressed; residual audit notes are documented.
+- Core reading features: article/PDF capture, annotation, tags, search, projects, progress, summaries, key points, chat history, and customizable reading views.
+- **De-OpenNext migration (wave 2):** Vite + React 19 SPA with React Router; Hono worker at `src/worker.ts` serving `/api/*` and `dist` assets binding (`not_found_handling = single-page-application`). Worker name/origin preserved (`reader`).
+- Turso/Drizzle, better-auth Google, R2 PDF storage (`PDFS_BUCKET`), and free-ai/BYOK/local AI integrations.
+- Memory capture prototype at `/memory` with fixture-backed examples and `POST /api/browser-memory/import`.
+- Critical and high audit findings addressed; residual audit notes documented.
 
 ## Planned Next
 
@@ -27,3 +26,4 @@ Reader is a web annotator and reading memory app for capturing articles, PDFs, t
 - Browser-extension distribution is deferred until the web import and capture flow are reliable.
 - Full personal knowledge-base automation is parked behind strong capture, retrieval, and trust primitives.
 - Paid team/library workflows are deferred.
+- `landing-astro` overlay not applicable (no landing-astro submodule in reader).

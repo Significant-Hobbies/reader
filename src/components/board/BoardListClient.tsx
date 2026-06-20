@@ -1,13 +1,13 @@
 'use client';
 
 import { Layout, Loader2, Plus, Trash2 } from 'lucide-react';
-import { useRouter } from 'next/navigation';
+import { useNavigate } from 'react-router-dom';
 import { useState } from 'react';
 
 import { useBoardList, useCreateBoard, useDeleteBoard } from './hooks/useBoardData';
 
 export function BoardListClient() {
-  const router = useRouter();
+  const navigate = useNavigate();
   const { data: boards } = useBoardList();
   const createBoard = useCreateBoard();
   const deleteBoard = useDeleteBoard();
@@ -17,7 +17,7 @@ export function BoardListClient() {
     const name = newBoardName.trim() || 'Untitled Board';
     const result = await createBoard.mutateAsync(name);
     setNewBoardName('');
-    router.push(`/board/${result.id}`);
+    navigate(`/board/${result.id}`);
   };
 
   const handleDelete = (e: React.MouseEvent, id: string) => {
@@ -67,9 +67,9 @@ export function BoardListClient() {
               key={board.id}
               role="button"
               tabIndex={0}
-              onClick={() => router.push(`/board/${board.id}`)}
+              onClick={() => navigate(`/board/${board.id}`)}
               onKeyDown={(e) => {
-                if (e.key === 'Enter' || e.key === ' ') router.push(`/board/${board.id}`);
+                if (e.key === 'Enter' || e.key === ' ') navigate(`/board/${board.id}`);
               }}
               className="group relative cursor-pointer rounded-xl border border-gray-700 bg-gray-800/60 p-5 text-left shadow-md transition-all hover:border-blue-500/50 hover:bg-gray-800/80"
             >
