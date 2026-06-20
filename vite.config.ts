@@ -15,9 +15,16 @@ export default defineConfig(() => ({
     },
   },
   plugins: [react(), tailwindcss()],
+  css: {
+    transformer: 'lightningcss',
+    lightningcss: {
+      drafts: { customMedia: true },
+    },
+  },
   build: {
     outDir: 'dist',
     emptyOutDir: true,
+    cssMinify: 'lightningcss',
   },
   resolve: {
     alias: {

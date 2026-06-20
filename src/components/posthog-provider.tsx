@@ -1,15 +1,15 @@
 'use client';
 
-import posthog from 'posthog-js';
-import { PostHogProvider } from 'posthog-js/react';
 import { useEffect } from 'react';
-
-import { installBrowserMonitoring } from '@/lib/foundry-monitoring';
 
 export function AnalyticsProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
-    return installBrowserMonitoring();
+    let cleanup: (() => void) | undefined;
+    void import('@/lib/foundry-monitoring').then((m) => {
+      cleanup = m.installBrowserMonitoring();
+    });
+    return () => cleanup?.();
   }, []);
 
-  return <PostHogProvider client={posthog}>{children}</PostHogProvider>;
+  return <>{children}</>;
 }
