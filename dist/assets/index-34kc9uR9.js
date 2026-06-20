@@ -34296,7 +34296,8 @@ function fne() {
       (0, z.jsxs)(`p`, {
         className: `mt-2 text-stone-600`,
         children: [
-          `Your library is private by default. Public share URLs are opt-in. Chat queries are sent only to the AI provider you configure. See `,
+          `Your library is private by default. Public share URLs are opt-in. Chat queries are sent only to the AI provider you configure. See`,
+          ` `,
           (0, z.jsx)(Br, { to: `/privacy`, className: `underline`, children: `/privacy` }),
           `.`,
         ],

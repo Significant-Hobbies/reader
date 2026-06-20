@@ -13,8 +13,6 @@
     "preview": "vite preview",
     "deploy": "pnpm validate:env:deploy && pnpm build && wrangler deploy",
     "lint": "eslint .",
-    "format": "prettier --write .",
-    "check-format": "prettier --check .",
     "type-check": "pnpm typecheck",
     "typecheck": "tsc --noEmit -p tsconfig.app.json && tsc --noEmit -p tsconfig.worker.json",
     "validate:env:build": "node scripts/validate-env.mjs build",
@@ -28,7 +26,10 @@
     "db:push": "drizzle-kit push",
     "db:studio": "drizzle-kit studio",
     "migrate:firestore": "tsx scripts/migrate-firestore-to-turso.ts",
-    "prepare": "husky"
+    "prepare": "husky",
+    "format": "biome format --write .",
+    "format:check": "biome format .",
+    "check": "biome check ."
   },
   "packageManager": "pnpm@10.32.1",
   "engines": {
@@ -79,9 +80,6 @@
     "@cloudflare/workers-types": "4.20260424.1",
     "@eslint/js": "^9.39.4",
     "@playwright/test": "1.59.1",
-    "@saas-maker/eslint-config": "^1.0.4",
-    "@saas-maker/prettier-config": "^1.0.0",
-    "@saas-maker/tsconfig": "^1.0.0",
     "@tailwindcss/vite": "4.2.4",
     "@testing-library/jest-dom": "6.9.1",
     "@testing-library/react": "16.3.2",
@@ -100,15 +98,13 @@
     "happy-dom": "20.9.0",
     "husky": "9.1.7",
     "lint-staged": "16.4.0",
-    "prettier": "3.8.3",
-    "prettier-plugin-tailwindcss": "^0.7.3",
     "tailwindcss": "4",
     "tsx": "4.21.0",
     "typescript": "6.0.3",
     "typescript-eslint": "8.59.0",
     "vite": "8.0.10",
     "vitest": "4.1.5",
-    "wrangler": "4.85.0"
-  },
-  "prettier": "@saas-maker/prettier-config"
+    "wrangler": "4.85.0",
+    "@biomejs/biome": "2.5.0"
+  }
 }
