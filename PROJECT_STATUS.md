@@ -1,29 +1,141 @@
-# Project Status
+# reader — PROJECT STATUS
 
 Last updated: 2026-06-20
 
-## Current Scope
+## Why / What
 
-Reader is a web annotator and reading memory app for capturing articles, PDFs, tags, highlights, summaries, key points, reading progress, projects, and AI-assisted chat over saved material.
+Reader is a personal reading and annotation app for capturing articles and PDFs, organizing them with tags and projects, tracking progress, and running AI-assisted summaries, key points, and chat over saved material.
 
-## Done
+**Users:** Individual readers saving articles/PDFs; signed-in users via Google OAuth; operators running Turso migrations and Cloudflare deploys.
 
-- Core reading features: article/PDF capture, annotation, tags, search, projects, progress, summaries, key points, chat history, and customizable reading views.
-- **De-OpenNext migration (wave 2):** Vite + React 19 SPA with React Router; Hono worker at `src/worker.ts` serving `/api/*` and `dist` assets binding (`not_found_handling = single-page-application`). Worker name/origin preserved (`reader`).
-- Turso/Drizzle, better-auth Google, R2 PDF storage (`PDFS_BUCKET`), and free-ai/BYOK/local AI integrations.
-- Memory capture prototype at `/memory` with fixture-backed examples and `POST /api/browser-memory/import`.
-- Critical and high audit findings addressed; residual audit notes documented.
+**Constraints:** Same-origin Worker + SPA pattern; rate limits deferred until endpoint-specific evidence. Memory capture remains prototype-only until authenticated persistence ships.
 
-## Planned Next
+**IN scope:** Article/PDF capture, annotations, tags/projects, full-text search, AI chat/summaries, boards/lists, Turso persistence, R2 PDF storage, free-ai gateway + BYOK + local-ai dev bridge.
 
-1. Turn the memory capture prototype into an authenticated, persisted product flow.
-2. Move prototype search from in-memory behavior to Turso-backed search where it matters for real usage.
+**OUT of scope:** Browser-extension distribution, full personal knowledge-base automation, paid team/library workflows, separate `landing-astro` deployable product.
+
+Ships as a Vite + React 19 SPA with a Hono Worker backend on Cloudflare Workers.
+
+## Dependencies
+
+### External
+
+- **Turso (libSQL):** Primary persistence for articles, tags, projects, progress, chat, auth sessions.
+- **Cloudflare R2:** `reader-pdfs` (`PDFS_BUCKET`) — PDF binary storage; signed URL access.
+- **PostHog:** Product analytics via `posthog-js`.
+- **Mozilla Readability + linkedom:** Article extraction.
+- **pdfjs / react-pdf:** In-browser PDF viewing.
+- **Env files:** See `.env.example` / deploy validation — Turso, auth, AI gateway, R2 bindings in `wrangler` config.
+
+### Internal (fleet)
+
+| Service                        | Role                                                                                                 |
+| ------------------------------ | ---------------------------------------------------------------------------------------------------- |
+| **free-ai**                    | Default AI chokepoint via `AI_BASE_URL` (`https://free-ai-gateway.sarthakagrawal927.workers.dev/v1`) |
+| **local-ai**                   | Dev bridge for authenticated local CLI models (`pnpm local-ai`)                                      |
+| **SaaS Maker feedback widget** | In-app feedback capture via `@saas-maker/feedback`                                                   |
+
+### Stack & commands
+
+**Stack:** Vite 8 · React 19 · React Router 7 · Tailwind v4 · TanStack Query · Hono Worker `src/worker.ts` · Turso · Drizzle ORM · better-auth Google OAuth · R2 `reader-pdfs` · free-ai-gateway · PostHog · `@saas-maker/feedback` · Mozilla Readability + linkedom · pdfjs/react-pdf.
+
+| Command                                          | Purpose                                   |
+| ------------------------------------------------ | ----------------------------------------- |
+| `pnpm install`                                   | Install deps                              |
+| `pnpm dev`                                       | worker + SPA + local-ai (concurrently)    |
+| `pnpm dev:spa`                                   | vite only                                 |
+| `pnpm dev:worker`                                | wrangler dev only                         |
+| `pnpm local-ai`                                  | local AI bridge                           |
+| `pnpm build`                                     | vite build (validate env)                 |
+| `pnpm cf:build`                                  | build + landing-astro + overlay           |
+| `pnpm deploy`                                    | validate env + cf:build + wrangler deploy |
+| `pnpm typecheck` / `pnpm test` / `pnpm test:e2e` | TS + vitest + playwright                  |
+| `pnpm check`                                     | biome check                               |
+| `pnpm db:push` / `pnpm db:studio`                | Drizzle push / studio                     |
+| `pnpm migrate:firestore`                         | legacy Firestore → Turso migration        |
+| `pnpm memory:demo`                               | memory capture prototype demo             |
+
+CI: GitHub Actions auto-deploy to Cloudflare on push to `main`.
+
+**Entrypoints:** `src/worker.ts` · route modules under `src/worker/routes/` · optional `landing-astro/` overlay merged into `dist/` during `cf:build`.
+
+## Timeline
+
+- **Wave 2 migration** — De-OpenNext migration to Vite + React 19 SPA + Hono worker; Worker name `reader` preserved. Turso/Drizzle persistence; better-auth Google; R2 PDF storage.
+- **Security audit pass** — Auth on snapshot routes; SSRF validation; signed PDF URLs. Firestore rules addressed during migration; render-time sanitization. Dead middleware removed; critical/high audit findings closed.
+
+## Products
+
+| Surface                 | URL                                                        |
+| ----------------------- | ---------------------------------------------------------- |
+| Production app          | `https://reader.sarthakagrawal927.workers.dev`             |
+| AI gateway (Worker var) | `https://free-ai-gateway.sarthakagrawal927.workers.dev/v1` |
+| Canonical / OG          | Set in `landing-astro/astro.config.mjs` and built `dist/`  |
+
+No custom domain configured; production uses `*.workers.dev` (Pages deploy was reverted — Workers is canonical).
+
+## Features (shipped)
+
+### Architecture
+
+- Browser (React 19 SPA, TanStack Query, React Router) calls same-origin `/api/*` + static `dist` via ASSETS binding.
+- Cloudflare Worker `reader` (Hono) routes: articles, boards, lists, pdf, ai, share, keys, misc (snapshot, proxy, browser-memory import).
+- Turso (libSQL) + Drizzle ORM for persistence; better-auth Google OAuth for sessions.
+- R2 `reader-pdfs` (`PDFS_BUCKET`) stores PDF binaries with signed URL access.
+- AI flows through `AI_BASE_URL` → free-ai-gateway, with BYOK (OpenAI/Anthropic/Gemini) and `scripts/local-ai.mjs` dev bridge.
+- Landing: optional `landing-astro/` overlay merged into `dist/` during `cf:build`; SPA fallback via `not_found_handling = single-page-application` pattern.
+- PostHog analytics via `posthog-js`; SaaS Maker feedback widget embedded in app shell.
+
+### Reading & capture
+
+- Article capture from URL via Mozilla Readability; PDF upload, view, annotate, text extraction.
+- Rich annotations with optional DOM anchoring; selection actions (Add note / Ask AI).
+- Reading time estimates; customizable reader (theme, font, size).
+
+### Organization & search
+
+- Tags with color badges, autocomplete, filtering.
+- Full-text search across content, notes, AI chat (Cmd/Ctrl+K).
+- Projects grouping; reading progress tracking.
+- Boards/lists routes (`/board`, `/board/:id`, share links).
+
+### AI features
+
+- Per-article AI chat with persistent markdown history.
+- Auto-summaries (short/medium/long); key points extraction (3–5 bullets).
+- BYOK providers + gateway + local AI mode.
+
+### Memory capture (prototype)
+
+- `/memory` route with fixture-backed examples.
+- `POST /api/browser-memory/import` import endpoint.
+- Not yet authenticated or persisted as full product flow.
+
+### Security & audit fixes
+
+- Auth on snapshot routes; SSRF validation; signed PDF URLs.
+- Firestore rules addressed during migration; render-time sanitization.
+- Dead middleware removed; critical/high audit findings closed.
+
+## Todo / Planned / Deferred / Blocked
+
+### Planned
+
+1. Turn memory capture prototype into authenticated, persisted product flow.
+2. Move prototype search from in-memory behavior to Turso-backed search where it matters.
 3. Clarify PDF storage behavior so extracted text, source files, and R2 objects are consistently represented.
-4. Add abuse and rate-limit handling only where real endpoints need it.
+4. Add abuse and rate-limit handling only where real endpoints need endpoint-specific evidence.
 
-## Deferred / Parked
+### Deferred
 
-- Browser-extension distribution is deferred until the web import and capture flow are reliable.
-- Full personal knowledge-base automation is parked behind strong capture, retrieval, and trust primitives.
-- Paid team/library workflows are deferred.
-- `landing-astro` overlay not applicable (no landing-astro submodule in reader).
+- Browser-extension distribution until web import and capture flow are reliable.
+- Full personal knowledge-base automation behind strong capture, retrieval, and trust primitives.
+- Paid team/library workflows.
+- `landing-astro` is optional overlay only — not a separate deployable product surface.
+- Memory capture is prototype-only (fixtures + import route); not authenticated or persisted as product flow.
+- Residual audit: no explicit CORS config (acceptable for same-origin today); no rate limiting on AI/snapshot/proxy endpoints (deferred pending evidence).
+- README still describes pre-migration Next.js layout in places; canonical runtime is Vite SPA + Hono worker.
+
+### Blocked
+
+- (none)
