@@ -10,59 +10,66 @@ Personal research library — capture, read, annotate, and AI-chat with web arti
 
 ## Stack
 
-- Framework: Next.js 16 (App Router), React 19
+- Framework: Vite + React 19 SPA (single `app.html` entry, client-side routing via `react-router-dom`)
+- Backend: Hono Worker (`src/worker.ts`) mounting `/api/*` routes from `src/worker/routes/*.ts`
 - Language: TypeScript
-- Styling: Tailwind CSS v4 + `@tailwindcss/typography`, Radix UI
+- Styling: Tailwind CSS v4 (`@tailwindcss/vite`) + `@tailwindcss/typography`, Radix UI. CSS via Lightning CSS transformer + minifier (see `vite.config.ts`)
 - DB: Turso (libSQL) via Drizzle ORM
-- Auth: better-auth (Google OAuth, Drizzle adapter on Turso). Server: `src/lib/auth.ts`. Client: `src/lib/auth-client.ts`. Dynamic handler at `src/app/api/auth/[...all]/route.ts`.
+- Auth: better-auth (Google OAuth, Drizzle adapter on Turso). Server config: `src/lib/auth.ts` (`createAuth`). Browser client: `src/lib/auth-client.ts`. Handler is a Hono route — `api.on(['GET','POST'], '/api/auth/*')` in `src/worker.ts`.
 - Storage: Cloudflare R2 (PDFs) via Workers binding `PDFS_BUCKET`
 - Testing: Vitest (unit), Playwright (e2e)
-- Deploy: Cloudflare Workers (OpenNext for Next.js) — `pnpm deploy`
+- Deploy: Cloudflare Workers — `pnpm deploy` builds the SPA + Astro landing, then `wrangler deploy`. Worker `main = src/worker.ts`; built SPA served via the `ASSETS` binding (`wrangler.toml`).
 - Package manager: pnpm workspace
 
 ## Repo structure
 
 ```
+app.html                  # Single SPA HTML entry (Vite input; carries inline shell CSS)
+vite.config.ts            # Vite SPA build (React, Tailwind v4, Lightning CSS)
+wrangler.toml             # Worker config: main=src/worker.ts, ASSETS + PDFS_BUCKET bindings
 src/
-  app/
-    page.tsx             # Home (article library)
-    login/               # Login page
-    reader/              # Article reader view
-    board/               # Kanban board view
-    share/               # Public share page
-    api/                 # REST API routes
+  worker.ts               # Hono Worker entry — security headers, /api/* routing, asset serving
+  worker/
+    routes/               # Hono API route modules mounted under /api/*
+      articles.ts         #   /api/articles  — article CRUD
+      boards.ts           #   /api/boards
+      lists.ts            #   /api/lists
+      ai.ts               #   /api/ai       — AI chat/summary via free-ai gateway
+      keys.ts             #   /api/keys     — extension API keys (rdr* keys)
+      pdf.ts              #   /api/pdfs     — PDF upload/download (R2-backed)
+      share.ts            #   /api/share    — public share endpoints
+      misc.ts             #   /api/*        — search, tags, data-export, snapshot, proxy, ext chat, session
+  pages/                  # Route page components (LibraryPage, ReaderPage, BoardPage, etc.)
   components/
     ReaderView.tsx        # Article reading mode (typography, annotations)
     PDFReaderClient.tsx   # PDF reading via pdfjs-dist / react-pdf
     NotesAIChat.tsx       # AI chat panel for notes
     ArticleSummary.tsx    # AI-generated summary
-    board/               # Board components
-    reader/              # Reader components
-    ui/                  # Shadcn-style primitives
+    board/                # Board components
+    reader/               # Reader components
+    ui/                   # Shadcn-style primitives
+  hooks/                  # Shared React hooks
   lib/
     db/
-      schema.ts          # Drizzle schema (articles, boards, lists, plus better-auth tables)
-      client.ts          # Turso libSQL client
-    articles-db.ts       # Article CRUD (Drizzle/Turso)
-    articles-service.ts  # Business logic layer
-    boards-db.ts         # Boards CRUD
-    auth.ts              # better-auth server config (Drizzle adapter, Google OAuth)
-    auth-client.ts       # better-auth browser client
-    auth-server.ts       # Server-side session helpers
-    ai-server.ts         # AI provider config (server)
-    storage.ts           # Cloudflare R2 helpers (PDFS_BUCKET binding)
-    pdf-service.ts       # PDF text extraction
+      schema.ts           # Drizzle schema (articles, boards, lists, plus better-auth tables)
+      client.ts           # Turso libSQL client (createDb)
+    articles-db.ts        # Article CRUD (Drizzle/Turso)
+    boards-db.ts          # Boards CRUD
+    lists-db.ts           # Lists CRUD
+    auth.ts               # better-auth server config (createAuth — Drizzle adapter, Google OAuth)
+    auth-client.ts        # better-auth browser client
+    ai-server.ts          # AI provider config (server)
+    storage.ts            # Cloudflare R2 helpers (PDFS_BUCKET binding)
+    pdf-service.ts        # PDF file validation (size limit)
 packages/
-  chrome-extension/      # Chrome MV3 extension (separate Vite build)
-    manifest.json        # MV3 manifest — side panel, content script, service worker
-    src/                 # Extension source (background, content script)
-    side-panel/          # Side panel HTML entry
-    vite.config.ts       # Extension Vite config (builds independently)
+  chrome-extension/       # Chrome MV3 extension (separate Vite build) — excluded from root tooling
+landing-astro/            # Astro landing page (built into the deploy via cf:build)
 plans/
-  migrate-off-firebase.md  # Historical: Firebase → Turso + better-auth + R2 (DONE)
-  archive/                 # Archived plans with timestamps
+  migrate-off-firebase.md # Historical: Firebase → Turso + better-auth + R2 (DONE)
+  archive/                # Archived plans with timestamps
 scripts/
-  local-ai.mjs            # Local LLM bridge server (runs alongside Next.js in dev)
+  local-ai.mjs            # Local LLM bridge server (runs alongside the Worker + SPA in dev)
+  validate-env.mjs        # Env validation for build/runtime/deploy
 drizzle.config.ts         # Drizzle config (Turso, schema at src/lib/db/schema.ts)
 ```
 
@@ -70,19 +77,24 @@ drizzle.config.ts         # Drizzle config (Turso, schema at src/lib/db/schema.t
 
 ```bash
 # Web app
-pnpm dev            # Next.js + local-ai.mjs concurrently
-pnpm dev:app        # Next.js only (port 3000)
-pnpm build          # next build
+pnpm dev            # Worker (wrangler dev) + Vite SPA + local-ai.mjs, concurrently
+pnpm dev:worker     # wrangler dev only (Worker, port 8787)
+pnpm dev:spa        # vite only (SPA dev server, port 5173, proxies /api → 8787)
+pnpm build          # validate env + vite build → dist/
+pnpm cf:build       # build SPA + Astro landing + overlay landing into dist/
+pnpm deploy         # validate env + cf:build + wrangler deploy
 pnpm test           # vitest run
 pnpm test:e2e       # playwright test
 pnpm lint           # eslint
-pnpm type-check     # tsc --noEmit
+pnpm typecheck      # tsc --noEmit (app + worker tsconfigs); `type-check` aliases this
+pnpm format         # biome format --write .
+pnpm check          # biome check .
 
-# Database (Turso — migration target)
+# Database (Turso)
 pnpm db:push        # drizzle-kit push
 pnpm db:studio      # drizzle-kit studio
 
-# Chrome extension (from packages/chrome-extension/)
+# Chrome extension (from packages/chrome-extension/) — separate Vite build
 pnpm dev            # vite build --watch → dist/
 pnpm build          # vite build (production)
 pnpm test           # vitest run
@@ -90,17 +102,18 @@ pnpm test           # vitest run
 
 ## Architecture notes
 
-- **DB + Auth**: Turso (libSQL) via Drizzle. `src/lib/db/schema.ts` defines articles/boards/lists plus better-auth tables (`users`, `baSessions`, `baAccounts`, `baVerifications`). better-auth uses the Drizzle adapter; only Google OAuth is configured.
-- **PDF storage**: PDFs live in Cloudflare R2 (binding `PDFS_BUCKET`). Downloads always proxy through `/api/pdfs/[id]/download` so auth + ownership are enforced server-side. See `src/lib/storage.ts`.
-- **Chrome extension**: Manifest V3. Side panel (not popup) for chat UI. Content script uses `@mozilla/readability` for page extraction. Communicates with the web app. Builds independently in `packages/chrome-extension/`.
-- **PDF support**: `pdfjs-dist` for rendering, `pdf-parse` for text extraction.
-- **Boards**: Kanban view at `/board` using `@xyflow/react`.
-- **AI**: `@ai-sdk/openai-compatible` + Vercel AI SDK. `scripts/local-ai.mjs` bridges a local LLM in dev.
-- **React Query**: `@tanstack/react-query` for client data fetching; `ReactQueryHydrate` for SSR hydration.
-- **pnpm monorepo**: root is the Next.js web app; `packages/chrome-extension` is a separate workspace package.
-- **Env vars**: `TURSO_DATABASE_URL`, `TURSO_AUTH_TOKEN`, `BETTER_AUTH_SECRET`, `BETTER_AUTH_URL`, `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`, plus the Cloudflare R2 bindings. No Firebase, no NextAuth.
+- **App shape**: Vite + React SPA served from a Hono Worker. The browser loads `app.html` (one entry) and routes client-side via `react-router-dom`; `src/worker.ts` handles `/api/*` and serves built assets via the `ASSETS` binding. No SSR, no Next.js.
+- **DB + Auth**: Turso (libSQL) via Drizzle. `src/lib/db/schema.ts` defines articles/boards/lists plus better-auth tables (`users`, `baSessions`, `baAccounts`, `baVerifications`). better-auth uses the Drizzle adapter; only Google OAuth is configured. Auth is mounted as a Hono catch-all route (`/api/auth/*`) in `src/worker.ts`.
+- **PDF storage**: PDFs live in Cloudflare R2 (binding `PDFS_BUCKET`). Upload/download go through the Hono `/api/pdfs` routes (`src/worker/routes/pdf.ts`) so auth + ownership are enforced server-side. See `src/lib/storage.ts`.
+- **Chrome extension**: Manifest V3. Side panel (not popup) for chat UI. Content script uses `@mozilla/readability` for page extraction. Authenticates with `rdr*` API keys via `/api/keys`. Builds independently in `packages/chrome-extension/`; excluded from root Biome/ESLint tooling.
+- **PDF support**: `pdfjs-dist` (+ `react-pdf`) for rendering. `src/lib/pdf-service.ts` only validates uploaded PDFs (size limit).
+- **Boards**: Kanban view using `@xyflow/react`.
+- **AI**: `@ai-sdk/openai-compatible` + Vercel AI SDK, routed through the `AI_BASE_URL` free-ai gateway (`wrangler.toml`) with an `x-gateway-project-id: reader` header. `scripts/local-ai.mjs` bridges a local LLM in dev.
+- **React Query**: `@tanstack/react-query` for client data fetching; `ReactQueryHydrate` is a thin `HydrationBoundary` wrapper for seeding the client query cache.
+- **pnpm workspace**: root is the Vite SPA + Hono Worker; `packages/chrome-extension` and `landing-astro` are separate workspace builds.
+- **Env vars**: `TURSO_DATABASE_URL`, `TURSO_AUTH_TOKEN`, `BETTER_AUTH_SECRET`, `BETTER_AUTH_URL`, `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`, plus the Cloudflare R2 binding. Validated by `scripts/validate-env.mjs`. No Firebase, no NextAuth.
 - Do NOT commit `.env` or auth credentials — verify `.gitignore` before any push.
-- Pre-commit and pre-push hooks via Husky: lint-staged runs ESLint + Prettier.
+- Pre-commit hook via Husky: lint-staged runs ESLint (`--fix`) + Biome formatter on staged files.
 
 <!-- FLEET-GUIDANCE:START -->
 

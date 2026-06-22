@@ -39,10 +39,10 @@
   "lint-staged": {
     "*.{js,jsx,ts,tsx}": [
       "eslint --fix",
-      "prettier --write"
+      "biome format --write"
     ],
-    "*.{json,css,md}": [
-      "prettier --write"
+    "*.{json,css}": [
+      "biome format --write"
     ]
   },
   "dependencies": {
