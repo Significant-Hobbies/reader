@@ -2,6 +2,3 @@ packages:
   - '.'
   - 'landing-astro'
   - 'packages/*'
-
-patchedDependencies:
-  eslint-plugin-react@7.37.5: patches/eslint-plugin-react@7.37.5.patch
