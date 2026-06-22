@@ -90,18 +90,20 @@ async function upsertDefaultList(params: {
 
 export async function ensureDefaultLists(userId: string): Promise<List[]> {
   try {
-    const favouritesRow = await upsertDefaultList({
-      id: favouritesListId(userId),
-      userId,
-      name: 'Favourites',
-      icon: 'heart',
-    });
-    const readLaterRow = await upsertDefaultList({
-      id: readLaterListId(userId),
-      userId,
-      name: 'Read Later',
-      icon: 'clock',
-    });
+    const [favouritesRow, readLaterRow] = await Promise.all([
+      upsertDefaultList({
+        id: favouritesListId(userId),
+        userId,
+        name: 'Favourites',
+        icon: 'heart',
+      }),
+      upsertDefaultList({
+        id: readLaterListId(userId),
+        userId,
+        name: 'Read Later',
+        icon: 'clock',
+      }),
+    ]);
     return [rowToList(favouritesRow), rowToList(readLaterRow)];
   } catch (error) {
     console.error('lists-db: ensureDefaultLists failed', error);
@@ -111,14 +113,15 @@ export async function ensureDefaultLists(userId: string): Promise<List[]> {
 
 export async function fetchLists(userId: string): Promise<List[]> {
   try {
-    const defaultLists = await ensureDefaultLists(userId);
+    const [defaultLists, customRows] = await Promise.all([
+      ensureDefaultLists(userId),
+      db
+        .select()
+        .from(lists)
+        .where(and(eq(lists.userId, userId), eq(lists.isDefault, 0)))
+        .orderBy(desc(lists.createdAt)),
+    ]);
     const defaultIds = new Set(defaultLists.map((l) => l.id));
-
-    const customRows = await db
-      .select()
-      .from(lists)
-      .where(and(eq(lists.userId, userId), eq(lists.isDefault, 0)))
-      .orderBy(desc(lists.createdAt));
 
     const customLists = customRows.filter((row) => !defaultIds.has(row.id)).map(rowToList);
 
