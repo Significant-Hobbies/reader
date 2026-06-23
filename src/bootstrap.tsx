@@ -3,6 +3,7 @@ import { createRoot, hydrateRoot } from 'react-dom/client';
 import { RouterProvider } from 'react-router-dom';
 
 import '@/styles/globals.css';
+import { initVitals } from './lib/vitals';
 
 async function mount() {
   const rootEl = document.getElementById('root');
@@ -29,3 +30,4 @@ async function mount() {
 }
 
 void mount();
+initVitals();
