@@ -11,6 +11,7 @@ import listsRoutes from './worker/routes/lists';
 import miscRoutes from './worker/routes/misc';
 import pdfRoutes from './worker/routes/pdf';
 import shareRoutes from './worker/routes/share';
+import { withTiming } from './lib/timing';
 
 const SECURITY_HEADERS: Record<string, string> = {
   'X-Content-Type-Options': 'nosniff',
@@ -76,33 +77,35 @@ function withSecurityHeaders(response: Response): Response {
 }
 
 export default {
-  async fetch(request: Request, env: WorkerEnv, ctx: ExecutionContext): Promise<Response> {
-    const url = new URL(request.url);
+  fetch: withTiming(
+    async (request: Request, env: WorkerEnv, ctx: ExecutionContext): Promise<Response> => {
+      const url = new URL(request.url);
 
-    if (url.pathname.startsWith('/api/')) {
-      return api.fetch(request, env, ctx);
+      if (url.pathname.startsWith('/api/')) {
+        return api.fetch(request, env, ctx);
+      }
+
+      if (request.method === 'GET' && url.pathname === '/' && hasAuthCookie(request)) {
+        return Response.redirect(`${url.origin}/library`, 302);
+      }
+
+      const assetResponse = await env.ASSETS.fetch(request);
+      if (assetResponse.ok) {
+        return withSecurityHeaders(assetResponse);
+      }
+
+      if (request.method !== 'GET') {
+        return assetResponse;
+      }
+
+      if (url.pathname === '/') {
+        const landing = await env.ASSETS.fetch(new Request(new URL('/index.html', url), request));
+        return landing.ok ? withSecurityHeaders(landing) : assetResponse;
+      }
+
+      // Assets serves app.html at /app; fetching /app.html returns 307 (not ok).
+      const spa = await env.ASSETS.fetch(new Request(new URL('/app', url), request));
+      return spa.ok ? withSecurityHeaders(spa) : assetResponse;
     }
-
-    if (request.method === 'GET' && url.pathname === '/' && hasAuthCookie(request)) {
-      return Response.redirect(`${url.origin}/library`, 302);
-    }
-
-    const assetResponse = await env.ASSETS.fetch(request);
-    if (assetResponse.ok) {
-      return withSecurityHeaders(assetResponse);
-    }
-
-    if (request.method !== 'GET') {
-      return assetResponse;
-    }
-
-    if (url.pathname === '/') {
-      const landing = await env.ASSETS.fetch(new Request(new URL('/index.html', url), request));
-      return landing.ok ? withSecurityHeaders(landing) : assetResponse;
-    }
-
-    // Assets serves app.html at /app; fetching /app.html returns 307 (not ok).
-    const spa = await env.ASSETS.fetch(new Request(new URL('/app', url), request));
-    return spa.ok ? withSecurityHeaders(spa) : assetResponse;
-  },
+  ),
 };
