@@ -28,13 +28,7 @@ body {
 }
 
 body {
-  font-family:
-    system-ui,
-    -apple-system,
-    BlinkMacSystemFont,
-    'Segoe UI',
-    Roboto,
-    sans-serif;
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
   -webkit-font-smoothing: antialiased;
   line-height: 1.6;
 }
@@ -524,7 +518,7 @@ a {
 }
 
 .faq-item summary::after {
-  content: '›';
+  content: "›";
   color: var(--lr-dim);
   transition: transform 0.15s ease;
 }

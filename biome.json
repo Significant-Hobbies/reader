@@ -29,6 +29,9 @@
     "lineWidth": 100,
     "lineEnding": "lf"
   },
+  "css": {
+    "parser": { "tailwindDirectives": true }
+  },
   "javascript": {
     "formatter": {
       "quoteStyle": "single",
@@ -37,6 +40,6 @@
       "jsxQuoteStyle": "double"
     }
   },
-  "linter": { "enabled": true, "rules": { "recommended": true } },
+  "linter": { "enabled": true, "rules": { "preset": "recommended" } },
   "assist": { "enabled": true, "actions": { "source": { "organizeImports": "off" } } }
 }

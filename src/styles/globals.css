@@ -1,6 +1,6 @@
-@import 'tailwindcss';
-@import './app-tokens.css';
-@plugin '@tailwindcss/typography';
+@import "tailwindcss";
+@import "./app-tokens.css";
+@plugin "@tailwindcss/typography";
 
 :root {
   --background: #0a0a0a;
