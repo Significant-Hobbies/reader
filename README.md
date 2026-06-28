@@ -6,7 +6,7 @@ A modern web application for capturing and annotating articles with a distractio
 
 | Concern      | Service                                                                                      |
 | ------------ | -------------------------------------------------------------------------------------------- |
-| Hosting      | Cloudflare Workers (`reader`) via `@opennextjs/cloudflare`                                   |
+| Hosting      | Cloudflare Workers (`reader`) via Hono Worker (`src/worker.ts`)                              |
 | Database     | Turso (libSQL) via Drizzle ORM                                                               |
 | Auth         | better-auth + Google OAuth                                                                   |
 | File storage | Cloudflare R2 (`reader-pdfs`, bound as `PDFS_BUCKET`)                                        |
@@ -53,13 +53,13 @@ Web Annotator solves this by providing a personal research library where you can
 ```mermaid
 graph TB
     subgraph "Client Layer"
-        UI[React 19 + Next.js 16 Frontend]
+        UI[React 19 + Vite SPA Frontend]
         UI --> |Tailwind CSS| Styling[UI Components]
         UI --> |React Query| State[State Management]
     end
 
     subgraph "API Layer"
-        API["Next.js API Routes"]
+        API["Hono API Routes (/api/*)"]
         API --> Articles["articles"]
         API --> Projects["projects"]
         API --> Auth["auth"]
@@ -103,13 +103,13 @@ graph TB
 
 ### Tech Stack
 
-- **Frontend**: Next.js 16, React 19, TypeScript, Tailwind CSS
+- **Frontend**: Vite + React 19 SPA (single `app.html` entry, client-side routing via `react-router-dom`), TypeScript, Tailwind CSS v4
 - **Database**: Turso (libSQL) via Drizzle ORM
 - **Auth**: better-auth (Google OAuth, Drizzle adapter)
 - **Storage**: Cloudflare R2 (PDFs) via Workers binding
 - **AI Integration**: Vercel AI SDK + AI Gateway (preferred), BYOK chat providers, local AI support
 - **PDF Processing**: react-pdf, pdfjs-dist, pdf-parse for viewing and text extraction
-- **Deployment**: Cloudflare Workers via OpenNext (`pnpm deploy`)
+- **Deployment**: Cloudflare Workers via `wrangler deploy` (Hono worker `src/worker.ts`; built SPA served via `ASSETS` binding)
 
 ## Getting Started
 
@@ -145,7 +145,7 @@ graph TB
 
    # better-auth
    BETTER_AUTH_SECRET=$(openssl rand -base64 32)
-   BETTER_AUTH_URL=http://localhost:3000
+   BETTER_AUTH_URL=http://localhost:8787
    GOOGLE_CLIENT_ID=...
    GOOGLE_CLIENT_SECRET=...
 
@@ -171,40 +171,42 @@ graph TB
    pnpm dev
    ```
 
-   `pnpm dev` starts both the Next.js app and the local AI server.
+   `pnpm dev` starts the Hono Worker (port 8787), the Vite SPA dev server (port 5173, proxies `/api` → 8787), and the local AI server concurrently.
    Local AI providers are shown only in development mode.
-   If you only want the app server:
+   If you only want the SPA:
 
    ```bash
-   pnpm dev:app
+   pnpm dev:spa
    ```
 
-5. Open [http://localhost:3000](http://localhost:3000)
+5. Open [http://localhost:8787](http://localhost:8787) (Worker-served app) or [http://localhost:5173](http://localhost:5173) (Vite SPA only)
 
 ### Development Commands
 
 ```bash
-pnpm dev          # Start Next.js + local AI server
-pnpm dev:app      # Start only Next.js app
+pnpm dev          # Start Worker + Vite SPA + local AI server (concurrently)
+pnpm dev:worker   # wrangler dev only (Worker, port 8787)
+pnpm dev:spa      # Vite SPA only (port 5173, proxies /api → 8787)
 pnpm local-ai     # Start only the local AI server
-pnpm build        # Build for production
-pnpm start        # Start production server
+pnpm build        # Validate env + Vite build → dist/
+pnpm cf:build     # Build SPA + Astro landing + overlay into dist/
+pnpm deploy       # validate env + cf:build + wrangler deploy
 pnpm lint         # Run ESLint
-pnpm format       # Format code with Prettier
-pnpm type-check   # Check TypeScript types
+pnpm format       # Format code with Biome
+pnpm typecheck    # tsc --noEmit (app + worker tsconfigs)
 pnpm db:push      # Apply schema to Turso (Drizzle)
 pnpm db:studio    # Open Drizzle Studio
 ```
 
 ## Deployment
 
-### Cloudflare Workers (via OpenNext)
+### Cloudflare Workers (Hono Worker)
 
 ```bash
 pnpm deploy
 ```
 
-This runs `cf:build` (Next build + OpenNext bundling) and `wrangler deploy`.
+This runs `cf:build` (Vite SPA build + Astro landing overlay into `dist/`) and `wrangler deploy`.
 Configure secrets via `wrangler secret put` for `BETTER_AUTH_SECRET`,
 `TURSO_AUTH_TOKEN`, `GOOGLE_CLIENT_SECRET`, etc., and bind the R2 bucket as
 `PDFS_BUCKET` in `wrangler.toml`.
@@ -213,19 +215,25 @@ Configure secrets via `wrangler secret put` for `BETTER_AUTH_SECRET`,
 
 ```
 web-annotator/
+├── app.html              # Single SPA HTML entry (Vite input)
+├── vite.config.ts        # Vite SPA build (React, Tailwind v4, Lightning CSS)
+├── wrangler.toml         # Worker config: main=src/worker.ts, ASSETS + PDFS_BUCKET
 ├── src/
-│   ├── app/              # Next.js pages and API routes
-│   │   ├── api/          # Backend API endpoints
-│   │   ├── login/        # better-auth login page
-│   │   └── reader/       # Article reader view
-│   ├── components/       # React components
-│   ├── lib/              # Business logic and utilities
+│   ├── worker.ts         # Hono Worker entry — /api/* routing, asset serving
+│   ├── worker/
+│   │   └── routes/       # Hono API route modules (articles, ai, pdf, auth, etc.)
+│   ├── pages/            # Route page components (LibraryPage, ReaderPage, etc.)
+│   ├── components/       # React components (ReaderView, PDFReaderClient, etc.)
+│   ├── hooks/            # Shared React hooks
+│   ├── lib/
 │   │   ├── auth.ts       # better-auth server config
 │   │   ├── auth-client.ts# better-auth browser client
 │   │   ├── db/           # Drizzle schema + Turso client
 │   │   └── storage.ts    # R2 helpers
 │   └── types.ts          # TypeScript definitions
-├── public/               # Static assets
+├── packages/
+│   └── chrome-extension/ # Chrome MV3 extension (separate Vite build)
+├── landing-astro/        # Astro landing page (built into deploy via cf:build)
 └── agents.md             # Development guide
 ```
 
