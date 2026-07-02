@@ -1,6 +1,6 @@
 # reader — PROJECT STATUS
 
-Last updated: 2026-06-28
+Last updated: 2026-07-02
 
 ## Why / What
 
@@ -61,6 +61,7 @@ CI: GitHub Actions auto-deploy to Cloudflare on push to `main`.
 
 ## Timeline
 
+- **2026-07-02** — Added `api.onError()` global error handler + outer try/catch in worker fetch handler; added React `<ErrorBoundary>` wrapping `RouterProvider` in `bootstrap.tsx`.
 - **Wave 2 migration** — De-OpenNext migration to Vite + React 19 SPA + Hono worker; Worker name `reader` preserved. Turso/Drizzle persistence; better-auth Google; R2 PDF storage.
 - **Security audit pass** — Auth on snapshot routes; SSRF validation; signed PDF URLs. Firestore rules addressed during migration; render-time sanitization. Dead middleware removed; critical/high audit findings closed.
 
