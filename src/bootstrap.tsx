@@ -3,6 +3,7 @@ import { createRoot, hydrateRoot } from 'react-dom/client';
 import { RouterProvider } from 'react-router-dom';
 
 import '@/styles/globals.css';
+import { ErrorBoundary } from './components/ErrorBoundary';
 
 async function mount() {
   const rootEl = document.getElementById('root');
@@ -14,7 +15,9 @@ async function mount() {
 
   const app = (
     <StrictMode>
-      <RouterProvider router={router} />
+      <ErrorBoundary>
+        <RouterProvider router={router} />
+      </ErrorBoundary>
     </StrictMode>
   );
 

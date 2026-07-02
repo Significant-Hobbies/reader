@@ -57,6 +57,11 @@ api.route('/api/pdfs', pdfRoutes);
 api.route('/api/share', shareRoutes);
 api.route('/api', miscRoutes);
 
+api.onError((err, c) => {
+  console.error(`[error] ${c.req.method} ${c.req.path}:`, err.message, err.stack);
+  return c.json({ error: 'Internal Server Error' }, 500);
+});
+
 function hasAuthCookie(request: Request): boolean {
   const cookie = request.headers.get('cookie');
   if (!cookie) return false;
@@ -80,7 +85,15 @@ export default {
     const url = new URL(request.url);
 
     if (url.pathname.startsWith('/api/')) {
-      return api.fetch(request, env, ctx);
+      try {
+        return await api.fetch(request, env, ctx);
+      } catch (err) {
+        console.error(`[error] fetch ${url.pathname}:`, err instanceof Error ? err.message : err);
+        return new Response(JSON.stringify({ error: 'Internal Server Error' }), {
+          status: 500,
+          headers: { 'Content-Type': 'application/json' },
+        });
+      }
     }
 
     if (request.method === 'GET' && url.pathname === '/' && hasAuthCookie(request)) {
