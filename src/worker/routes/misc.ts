@@ -11,6 +11,7 @@ import type { BrowserMemorySnapshotInput } from '../../lib/browser-memory-import
 import { importBrowserMemorySnapshots } from '../../lib/browser-memory-import';
 import { db, schema } from '../../lib/db/client';
 import { users } from '../../lib/db/schema';
+import { searchMemories } from '../../lib/memories-db';
 import { buildSourceRelationshipMap } from '../../lib/research-brief';
 import {
   DEFAULT_SYSTEM_PROMPT,
@@ -91,7 +92,13 @@ misc.get('/search', async (c) => {
       return c.json({ results: [] });
     }
 
-    const results = await searchArticles(userId, query, projectId);
+    const [articleResults, memoryResults] = await Promise.all([
+      searchArticles(userId, query, projectId),
+      searchMemories(userId, query),
+    ]);
+    const results = [...articleResults, ...memoryResults].sort(
+      (a, b) => b.relevanceScore - a.relevanceScore
+    );
     return c.json({ results });
   } catch (error) {
     console.error('Error searching articles:', error);
@@ -306,13 +313,15 @@ misc.post('/browser-memory/import', async (c) => {
       return c.json({ error: `At most ${MAX_BATCH_SIZE} snapshots per request` }, 400);
     }
 
-    const listIds = Array.isArray(body.listIds) ? body.listIds : undefined;
     const category = typeof body.category === 'string' ? body.category : undefined;
+    // Memories have no list/category columns; surface category as an extra tag
+    // so imported captures remain groupable alongside the browser-memory tag.
+    const extraTags = category ? [category] : undefined;
 
     const result = await importBrowserMemorySnapshots(
       userId,
       snapshots as BrowserMemorySnapshotInput[],
-      { listIds, category }
+      { extraTags }
     );
 
     return c.json(result);

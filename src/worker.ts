@@ -8,6 +8,7 @@ import articlesRoutes from './worker/routes/articles';
 import boardsRoutes from './worker/routes/boards';
 import keysRoutes from './worker/routes/keys';
 import listsRoutes from './worker/routes/lists';
+import memoriesRoutes from './worker/routes/memories';
 import miscRoutes from './worker/routes/misc';
 import pdfRoutes from './worker/routes/pdf';
 import shareRoutes from './worker/routes/share';
@@ -51,6 +52,7 @@ api.on(['GET', 'POST'], '/api/auth/*', (c) => {
 api.route('/api/articles', articlesRoutes);
 api.route('/api/boards', boardsRoutes);
 api.route('/api/lists', listsRoutes);
+api.route('/api/memories', memoriesRoutes);
 api.route('/api/ai', aiRoutes);
 api.route('/api/keys', keysRoutes);
 api.route('/api/pdfs', pdfRoutes);

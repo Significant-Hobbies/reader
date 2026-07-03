@@ -178,4 +178,5 @@ export interface SearchResult {
   relevanceScore: number;
   listIds?: string[]; // Array of list IDs this article belongs to
   category?: string; // Optional single category
+  kind?: 'article' | 'memory'; // memory hits route to /memory instead of /reader
 }

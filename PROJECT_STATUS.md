@@ -8,7 +8,7 @@ Reader is a personal reading and annotation app for capturing articles and PDFs,
 
 **Users:** Individual readers saving articles/PDFs; signed-in users via Google OAuth; operators running Turso migrations and Cloudflare deploys.
 
-**Constraints:** Same-origin Worker + SPA pattern; rate limits deferred until endpoint-specific evidence. Memory capture remains prototype-only until authenticated persistence ships.
+**Constraints:** Same-origin Worker + SPA pattern; rate limits deferred until endpoint-specific evidence. Memory capture is persisted and authenticated (Turso `memories` table, `/api/memories` routes, `/memory` UI page).
 
 **IN scope:** Article/PDF capture, annotations, tags/projects, full-text search, AI chat/summaries, boards/lists, Turso persistence, R2 PDF storage, free-ai gateway + BYOK + local-ai dev bridge.
 
@@ -61,6 +61,7 @@ CI: GitHub Actions auto-deploy to Cloudflare on push to `main`.
 
 ## Timeline
 
+- **2026-07-03** — Memory capture promoted from prototype to persisted, authenticated flow. `memories` Turso table + `/api/memories` CRUD/search routes + `/memory` UI page + browser-memory import all wired. Global SearchBar routes memory hits to `/memory`. Read-and-remember instead of read-and-forget.
 - **2026-07-02** — Added `api.onError()` global error handler + outer try/catch in worker fetch handler; added React `<ErrorBoundary>` wrapping `RouterProvider` in `bootstrap.tsx`.
 - **Wave 2 migration** — De-OpenNext migration to Vite + React 19 SPA + Hono worker; Worker name `reader` preserved. Turso/Drizzle persistence; better-auth Google; R2 PDF storage.
 - **Security audit pass** — Auth on snapshot routes; SSRF validation; signed PDF URLs. Firestore rules addressed during migration; render-time sanitization. Dead middleware removed; critical/high audit findings closed.
@@ -122,8 +123,8 @@ No custom domain configured; production uses `*.workers.dev` (Pages deploy was r
 
 ### Planned
 
-1. Turn memory capture prototype into authenticated, persisted product flow.
-2. Move prototype search from in-memory behavior to Turso-backed search where it matters.
+1. ~~Turn memory capture prototype into authenticated, persisted product flow.~~ **Done** — `memories` table, `/api/memories` routes, `/memory` UI page, browser-memory import.
+2. ~~Move prototype search from in-memory behavior to Turso-backed search where it matters.~~ **Done** — `/api/memories/search` is Turso-backed; global SearchBar routes memory hits to `/memory`.
 3. Clarify PDF storage behavior so extracted text, source files, and R2 objects are consistently represented.
 4. Add abuse and rate-limit handling only where real endpoints need endpoint-specific evidence.
 
@@ -133,7 +134,7 @@ No custom domain configured; production uses `*.workers.dev` (Pages deploy was r
 - Full personal knowledge-base automation behind strong capture, retrieval, and trust primitives.
 - Paid team/library workflows.
 - `landing-astro` is optional overlay only — not a separate deployable product surface.
-- Memory capture is prototype-only (fixtures + import route); not authenticated or persisted as product flow.
+- Memory capture is persisted and authenticated: `memories` Turso table, `/api/memories` CRUD + search routes, `/memory` UI page, browser-memory import. Global SearchBar routes memory hits to `/memory`.
 - Residual audit: no explicit CORS config (acceptable for same-origin today); no rate limiting on AI/snapshot/proxy endpoints (deferred pending evidence).
 - README still describes pre-migration Next.js layout in places; canonical runtime is Vite SPA + Hono worker.
 

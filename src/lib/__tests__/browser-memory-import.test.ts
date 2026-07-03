@@ -37,6 +37,13 @@ vi.mock('../articles-db', () => ({
   sanitizeTitle: (v: unknown, fallback: string) => String(v ?? fallback).trim(),
 }));
 
+// Memories are persisted via memories-db (not articles-db). Mock it so the
+// import flow can be exercised without a live Turso connection.
+vi.mock('../memories-db', () => ({
+  findMemoryByUrl: vi.fn().mockResolvedValue(null),
+  createMemoryRecord: vi.fn().mockResolvedValue('memory-id-1'),
+}));
+
 const fixturePath = path.join(__dirname, '..', '__fixtures__', 'browser-memory-snapshots.json');
 
 describe('browser-memory-import', () => {
@@ -107,23 +114,24 @@ describe('browser-memory-import', () => {
     const fixture = JSON.parse(readFileSync(fixturePath, 'utf8')) as {
       snapshots: Array<Record<string, unknown>>;
     };
-    const { findArticleByUrl, createArticleRecord } = await import('../articles-db');
+    const { findMemoryByUrl, createMemoryRecord } = await import('../memories-db');
 
     const result = await importBrowserMemorySnapshots('user-1', fixture.snapshots, {
-      category: 'Research',
+      extraTags: ['Research'],
     });
 
     expect(result.imported).toBe(2);
     expect(result.failed).toBe(0);
     expect(result.ids).toHaveLength(2);
-    expect(createArticleRecord).toHaveBeenCalledTimes(2);
-    expect(findArticleByUrl).toHaveBeenCalled();
+    expect(createMemoryRecord).toHaveBeenCalledTimes(2);
+    expect(findMemoryByUrl).toHaveBeenCalled();
 
-    const firstCall = vi.mocked(createArticleRecord).mock.calls[0]?.[0];
+    const firstCall = vi.mocked(createMemoryRecord).mock.calls[0]?.[0];
     expect(firstCall?.tags).toContain('browser-memory');
-    expect(firstCall?.category).toBe('Research');
+    expect(firstCall?.tags).toContain('Research');
+    expect(firstCall?.userId).toBe('user-1');
 
-    const secondUrl = vi.mocked(createArticleRecord).mock.calls[1]?.[0]?.url;
+    const secondUrl = vi.mocked(createMemoryRecord).mock.calls[1]?.[0]?.url;
     expect(secondUrl).not.toContain('token=');
   });
 });

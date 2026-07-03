@@ -103,12 +103,14 @@ export function SearchBar() {
   );
 
   const handleResultClick = useCallback(
-    (articleId: string) => {
+    (result: SearchResult) => {
       setIsOpen(false);
       setQuery('');
       setResults([]);
       setSelectedIndex(-1);
-      navigate(`/reader/${articleId}`);
+      // Memory captures have no per-item reader route; send them to the
+      // memory surface so the user can retrieve the full capture there.
+      navigate(result.kind === 'memory' ? '/memory' : `/reader/${result.id}`);
     },
     [navigate]
   );
@@ -153,9 +155,9 @@ export function SearchBar() {
         case 'Enter':
           event.preventDefault();
           if (selectedIndex >= 0 && selectedIndex < results.length) {
-            handleResultClick(results[selectedIndex].id);
+            handleResultClick(results[selectedIndex]);
           } else if (results.length > 0) {
-            handleResultClick(results[0].id);
+            handleResultClick(results[0]);
           }
           break;
         case 'Escape':
@@ -250,7 +252,7 @@ export function SearchBar() {
               {results.map((result, index) => (
                 <button
                   key={result.id}
-                  onClick={() => handleResultClick(result.id)}
+                  onClick={() => handleResultClick(result)}
                   className={`w-full border-b border-[var(--gray-5)] px-4 py-3 text-left transition-colors last:border-b-0 ${
                     selectedIndex === index ? 'bg-[var(--gray-4)]' : 'hover:bg-[var(--gray-3)]'
                   }`}

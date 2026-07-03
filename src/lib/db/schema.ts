@@ -1,5 +1,12 @@
 import { sql } from 'drizzle-orm';
-import { index, integer, primaryKey, sqliteTable, text } from 'drizzle-orm/sqlite-core';
+import {
+  index,
+  integer,
+  primaryKey,
+  sqliteTable,
+  text,
+  uniqueIndex,
+} from 'drizzle-orm/sqlite-core';
 
 import type { AIChatMessage, ArticleStatus, Note, SessionReview } from '../../types';
 
@@ -202,6 +209,36 @@ export const lists = sqliteTable(
   })
 );
 
+// Browser-memory captures imported via /api/browser-memory/import.
+// Content is sanitized HTML; tags are JSON text (serialized in memories-db).
+// The (user_id, url) unique index makes re-imports idempotent at the DB level.
+export const memories = sqliteTable(
+  'memories',
+  {
+    id: text('id').primaryKey(),
+    userId: text('user_id')
+      .notNull()
+      .references(() => users.id, { onDelete: 'cascade' }),
+    url: text('url').notNull(),
+    title: text('title').notNull(),
+    byline: text('byline'),
+    siteName: text('site_name'),
+    content: text('content').notNull(),
+    tags: text('tags').$type<string[]>(),
+    capturedAt: integer('captured_at', { mode: 'timestamp_ms' }),
+    createdAt: integer('created_at', { mode: 'timestamp_ms' })
+      .notNull()
+      .default(sql`(unixepoch() * 1000)`),
+    updatedAt: integer('updated_at', { mode: 'timestamp_ms' })
+      .notNull()
+      .default(sql`(unixepoch() * 1000)`),
+  },
+  (t) => ({
+    userUrlUnique: uniqueIndex('memories_user_url_unique').on(t.userId, t.url),
+    userCreatedIdx: index('memories_user_created_idx').on(t.userId, t.createdAt),
+  })
+);
+
 export const apiKeys = sqliteTable(
   'api_keys',
   {
@@ -232,3 +269,5 @@ export type ListRow = typeof lists.$inferSelect;
 export type NewListRow = typeof lists.$inferInsert;
 export type ApiKeyRow = typeof apiKeys.$inferSelect;
 export type NewApiKeyRow = typeof apiKeys.$inferInsert;
+export type MemoryRow = typeof memories.$inferSelect;
+export type NewMemoryRow = typeof memories.$inferInsert;

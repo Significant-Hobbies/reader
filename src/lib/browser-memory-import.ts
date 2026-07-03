@@ -1,11 +1,10 @@
 import {
-  createArticleRecord,
-  findArticleByUrl,
   normalizeTags,
   sanitizeArticlePayload,
   sanitizePlainText,
   sanitizeTitle,
 } from './articles-db';
+import { createMemoryRecord, findMemoryByUrl } from './memories-db';
 
 /** Shape produced by the Chrome extension content script (Readability). */
 export interface BrowserMemorySnapshotInput {
@@ -145,10 +144,21 @@ export function sanitizeBrowserMemorySnapshot(
   }
 }
 
+function parseCapturedAt(value: unknown): Date | undefined {
+  if (typeof value !== 'string' && typeof value !== 'number') return undefined;
+  const parsed = new Date(value);
+  return Number.isNaN(parsed.getTime()) ? undefined : parsed;
+}
+
+/**
+ * Persist sanitized snapshots into the memories table (one row per user+URL).
+ * Idempotent: URLs already captured by this user are skipped and their
+ * existing ids returned, backed by the (user_id, url) unique index.
+ */
 export async function importBrowserMemorySnapshots(
   userId: string,
   snapshots: BrowserMemorySnapshotInput[],
-  options?: { listIds?: string[]; category?: string; extraTags?: string[] }
+  options?: { extraTags?: string[] }
 ): Promise<BrowserMemoryImportResult> {
   const result: BrowserMemoryImportResult = {
     imported: 0,
@@ -158,10 +168,6 @@ export async function importBrowserMemorySnapshots(
     errors: [],
   };
 
-  const listIds = options?.listIds?.filter((id) => typeof id === 'string' && id.trim()) ?? [];
-  const category = options?.category?.trim()
-    ? sanitizePlainText(options.category).slice(0, 50)
-    : undefined;
   const extraTags = normalizeTags(options?.extraTags ?? []);
   const tags = normalizeTags([BROWSER_MEMORY_TAG, ...extraTags]);
 
@@ -177,7 +183,7 @@ export async function importBrowserMemorySnapshots(
     }
 
     const { snapshot } = parsed;
-    const existingId = await findArticleByUrl(snapshot.url, userId);
+    const existingId = await findMemoryByUrl(snapshot.url, userId);
     if (existingId) {
       result.skipped += 1;
       result.ids.push(existingId);
@@ -185,16 +191,15 @@ export async function importBrowserMemorySnapshots(
     }
 
     try {
-      const id = await createArticleRecord({
+      const id = await createMemoryRecord({
+        userId,
         url: snapshot.url,
         title: snapshot.title,
         byline: snapshot.byline,
+        siteName: snapshot.siteName,
         content: snapshot.content,
-        userId,
-        type: 'article',
-        listIds,
-        category,
         tags,
+        capturedAt: parseCapturedAt(raw.visitedAt),
       });
       result.imported += 1;
       result.ids.push(id);
