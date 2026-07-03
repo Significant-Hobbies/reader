@@ -8,6 +8,7 @@ export function AnalyticsProvider({ children }: { children: React.ReactNode }) {
     void import('@/lib/foundry-monitoring').then((m) => {
       cleanup = m.installBrowserMonitoring();
     });
+    void import('@/lib/api-timing').then((m) => m.initApiTiming()).catch(() => {});
     return () => cleanup?.();
   }, []);
 
