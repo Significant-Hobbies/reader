@@ -6,6 +6,7 @@ Companion extension for [Web Annotator](https://reader.sarthakagrawal927.workers
 
 - **Toolbar button**: opens a popup that lets you send the active tab to Web Annotator (article extraction + annotation).
 - **Side panel**: a persistent reader/chat surface for the page you're on.
+- **Chrome Reading List sync**: mirrors native Chrome Reading List URLs into Web Annotator links, adds extension-saved pages to the native list, and reflects native read-state/title changes where Reader can safely apply them.
 - **Content script**: a thin script that runs on every page (read-only — no network, no DOM rewrites). It exists so the side panel can pull the page's clean reading text using `@mozilla/readability` on demand.
 
 ## Permissions
@@ -16,6 +17,7 @@ Companion extension for [Web Annotator](https://reader.sarthakagrawal927.workers
 | `scripting` | Required by the side panel to execute the Readability extraction in the page context on demand. |
 | `sidePanel` | Enables the side-panel UI. |
 | `storage` | Caches the most recent extraction + chat scratch state so you don't lose them on tab switch. |
+| `readingList` | Reads and updates Chrome's native Reading List so Reader's saved links stay in sync with it. |
 
 Host permission `https://reader.sarthakagrawal927.workers.dev/*` is the only remote endpoint the extension talks to (your Web Annotator instance).
 

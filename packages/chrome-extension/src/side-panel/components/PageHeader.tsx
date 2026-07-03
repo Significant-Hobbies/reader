@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { ExternalLink, Globe, KeyRound, LogOut, User } from 'lucide-react';
 import type { PageContent, AuthState } from '../lib/types';
 import { clearApiKey, getApiBase, setApiKey, verifyApiKeyForUser } from '../lib/api';
+import { syncAllChromeReadingListToReader } from '../lib/reading-list-sync';
 
 interface PageHeaderProps {
   page: PageContent | null;
@@ -32,6 +33,7 @@ export function PageHeader({ page, auth, onAuthChange }: PageHeaderProps) {
     const result = await verifyApiKeyForUser(trimmed);
     if (result.ok) {
       await setApiKey(trimmed);
+      await syncAllChromeReadingListToReader().catch(() => null);
       onAuthChange({ isAuthenticated: true, user: result.user });
       setConnecting(false);
       setPasteValue('');

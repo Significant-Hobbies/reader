@@ -10,6 +10,7 @@ import {
   updateLibraryItemCategory,
   type ReaderLibraryItem,
 } from '../lib/api';
+import { upsertChromeReadingListEntry } from '../lib/reading-list-sync';
 
 interface SaveButtonProps {
   page: PageContent;
@@ -99,6 +100,12 @@ export function SaveButton({ page, messages, canImport }: SaveButtonProps) {
         category: trimmedCategory || undefined,
       });
       await applyCategory(result.id);
+      await upsertChromeReadingListEntry({
+        url: page.url,
+        title: page.title || page.url,
+        articleId: result.id,
+        itemType: 'article',
+      });
 
       // Save chat history alongside the article
       if (messages.length > 0) {
@@ -138,6 +145,12 @@ export function SaveButton({ page, messages, canImport }: SaveButtonProps) {
         category: trimmedCategory || undefined,
       });
       await applyCategory(result.id);
+      await upsertChromeReadingListEntry({
+        url: page.url,
+        title: page.title || page.url,
+        articleId: result.id,
+        itemType: 'link',
+      });
       setSavedId(result.id);
       setSavedWasExisting(result.existing);
       setState('saved');

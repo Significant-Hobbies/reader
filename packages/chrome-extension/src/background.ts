@@ -1,3 +1,9 @@
+import {
+  syncAllChromeReadingListToReader,
+  syncChromeReadingListEntryToReader,
+  syncChromeReadingListRemovalToReader,
+} from './side-panel/lib/reading-list-sync';
+
 chrome.sidePanel.setPanelBehavior({ openPanelOnActionClick: false });
 
 async function getActiveTab(): Promise<chrome.tabs.Tab | undefined> {
@@ -110,3 +116,35 @@ chrome.tabs.onUpdated.addListener((tabId, changeInfo) => {
       });
   }
 });
+
+chrome.runtime.onInstalled.addListener(() => {
+  void syncAllChromeReadingListToReader().catch(() => {
+    // Reader may not be connected yet.
+  });
+});
+
+chrome.runtime.onStartup.addListener(() => {
+  void syncAllChromeReadingListToReader().catch(() => {
+    // Reader may not be connected yet.
+  });
+});
+
+if (chrome.readingList) {
+  chrome.readingList.onEntryAdded.addListener((entry) => {
+    void syncChromeReadingListEntryToReader(entry).catch(() => {
+      // Keep native Reading List changes non-blocking.
+    });
+  });
+
+  chrome.readingList.onEntryUpdated.addListener((entry) => {
+    void syncChromeReadingListEntryToReader(entry).catch(() => {
+      // Keep native Reading List changes non-blocking.
+    });
+  });
+
+  chrome.readingList.onEntryRemoved.addListener((entry) => {
+    void syncChromeReadingListRemovalToReader(entry).catch(() => {
+      // Keep native Reading List changes non-blocking.
+    });
+  });
+}

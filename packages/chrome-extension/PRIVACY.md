@@ -1,14 +1,15 @@
 # Privacy Policy — Web Annotator Extension
 
-_Last updated: 2026-05-14._
+_Last updated: 2026-07-03._
 
 The Web Annotator Chrome extension is built to be transparent: it talks to one backend (your Web Annotator instance) and stores a minimum of state locally.
 
 ## What the extension reads
 
 - **Active tab URL and title** — read only when you explicitly click "Open in Web Annotator" or open the side panel for the current page.
+- **Chrome Reading List entries** — URL, title, and read/unread state are read so native Chrome Reading List items can sync with Web Annotator.
 - **Page reading text** — when you ask the side panel to summarize/chat, the extension runs `@mozilla/readability` inside the page and reads the cleaned article body.
-- **Local extension storage** — recent extraction text and chat scratch state, scoped to the extension. Cleared on uninstall.
+- **Local extension storage** — recent extraction text, chat scratch state, Reader API key, and Reading List sync provenance, scoped to the extension. Cleared on uninstall.
 
 ## What it sends, and where
 
@@ -16,7 +17,7 @@ The extension communicates with one server:
 
 - `https://reader.sarthakagrawal927.workers.dev` — the Web Annotator backend.
 
-When you take an action that requires server processing (save an article, ask a chat question), the extension sends the URL, title, and (when applicable) the extracted page text to that endpoint. Nothing is sent on pages where you take no action.
+When you take an action that requires server processing (save an article, ask a chat question), the extension sends the URL, title, and (when applicable) the extracted page text to that endpoint. After you connect Reader, Chrome Reading List URLs, titles, and read/unread state are also sent to that endpoint for sync.
 
 ## What it does not do
 
@@ -27,7 +28,7 @@ When you take an action that requires server processing (save an article, ask a 
 
 ## Account data
 
-If you sign in to Web Annotator from the side panel, the auth flow is performed by the backend at the URL above. The extension itself does not store credentials.
+If you connect Web Annotator from the extension, the extension stores the `rdr_` API key locally in Chrome extension storage. It does not store your Google OAuth credentials.
 
 ## Contact
 

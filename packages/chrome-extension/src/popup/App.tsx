@@ -24,6 +24,10 @@ import {
   type ReaderLibraryItem,
 } from '../side-panel/lib/api';
 import { canImportPage, getImportNotice, type ImportNotice } from '../side-panel/lib/importQuality';
+import {
+  syncAllChromeReadingListToReader,
+  upsertChromeReadingListEntry,
+} from '../side-panel/lib/reading-list-sync';
 
 type LoadState = 'loading' | 'ready';
 type ActionState = 'idle' | 'working' | 'error';
@@ -144,6 +148,7 @@ export function App() {
     const result = await verifyApiKeyForUser(trimmed);
     if (result.ok) {
       await setApiKey(trimmed);
+      await syncAllChromeReadingListToReader().catch(() => null);
       setAuth({ isAuthenticated: true, user: result.user });
       setShowConnect(false);
       setKeyValue('');
@@ -180,6 +185,12 @@ export function App() {
       if (trimmedCategory) {
         await updateLibraryItemCategory(article.id, trimmedCategory);
       }
+      await upsertChromeReadingListEntry({
+        url: page.url,
+        title: page.title || page.url,
+        articleId: article.id,
+        itemType: 'article',
+      });
       const opened = await openUrlInActiveTab(`${getApiBase()}/reader/${article.id}`);
       if (!opened) {
         chrome.tabs.create({ url: `${getApiBase()}/reader/${article.id}` });
@@ -209,6 +220,12 @@ export function App() {
       if (trimmedCategory) {
         await updateLibraryItemCategory(result.id, trimmedCategory);
       }
+      await upsertChromeReadingListEntry({
+        url: page.url,
+        title: page.title || page.url,
+        articleId: result.id,
+        itemType: 'link',
+      });
       setActionState('idle');
       window.close();
     } catch (err) {

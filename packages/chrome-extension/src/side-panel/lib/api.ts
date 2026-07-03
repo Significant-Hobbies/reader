@@ -42,6 +42,7 @@ export interface ReaderLibraryItem {
   title: string;
   type?: 'article' | 'pdf' | 'link';
   category?: string;
+  status?: 'in_progress' | 'read';
   createdAt?: string;
 }
 
@@ -243,6 +244,46 @@ export async function updateLibraryItemCategory(
   if (!response.ok) {
     const payload = await response.json().catch(() => ({}));
     throw new Error((payload as { error?: string }).error || 'Failed to update category');
+  }
+}
+
+export async function updateLibraryItemReadingListFields(
+  articleId: string,
+  fields: {
+    title?: string;
+    status?: 'in_progress' | 'read';
+  }
+): Promise<void> {
+  const payload: Record<string, string> = {};
+  if (fields.title) payload.title = fields.title;
+  if (fields.status) payload.status = fields.status;
+  if (Object.keys(payload).length === 0) return;
+
+  const auth = await authHeaders();
+  const response = await fetch(`${API_BASE}/api/articles/${articleId}`, {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json', ...auth },
+    body: JSON.stringify(payload),
+  });
+
+  if (!response.ok) {
+    const errorPayload = await response.json().catch(() => ({}));
+    throw new Error(
+      (errorPayload as { error?: string }).error || 'Failed to update reading list item'
+    );
+  }
+}
+
+export async function deleteLibraryItem(articleId: string): Promise<void> {
+  const auth = await authHeaders();
+  const response = await fetch(`${API_BASE}/api/articles/${articleId}`, {
+    method: 'DELETE',
+    headers: auth,
+  });
+
+  if (!response.ok) {
+    const payload = await response.json().catch(() => ({}));
+    throw new Error((payload as { error?: string }).error || 'Failed to delete library item');
   }
 }
 
