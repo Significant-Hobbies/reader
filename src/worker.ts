@@ -33,15 +33,15 @@ api.use('*', async (c, next) => {
 api.use('/api/*', async (c, next) => {
   await next();
   const response = c.res;
-  const headers = new Headers(response.headers);
+  // Pass the original response as init so multiple Set-Cookie headers are
+  // preserved. Using `new Headers(response.headers)` merges multiple
+  // Set-Cookie values into one comma-joined string that browsers cannot
+  // parse — which breaks the OAuth callback (session token + state clear).
+  const newResponse = new Response(response.body, response);
   for (const [key, value] of Object.entries(SECURITY_HEADERS)) {
-    headers.set(key, value);
+    newResponse.headers.set(key, value);
   }
-  return new Response(response.body, {
-    status: response.status,
-    statusText: response.statusText,
-    headers,
-  });
+  return newResponse;
 });
 
 api.on(['GET', 'POST'], '/api/auth/*', (c) => {
@@ -74,6 +74,11 @@ function withSecurityHeaders(response: Response): Response {
   const headers = new Headers(response.headers);
   for (const [key, value] of Object.entries(SECURITY_HEADERS)) {
     headers.set(key, value);
+  }
+  // Prevent edge caching of HTML pages (SPA shell) so deploys take effect immediately.
+  const contentType = headers.get('content-type') ?? '';
+  if (contentType.includes('text/html')) {
+    headers.set('Cache-Control', 'no-cache, no-store, must-revalidate');
   }
   return new Response(response.body, {
     status: response.status,

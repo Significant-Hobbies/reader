@@ -994,13 +994,7 @@ export default function HomeClient() {
             )}
 
             {authLoading || isLoading ? (
-              articles.length === 0 ? (
-                <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">
-                  <LibraryEmptyOnboarding onAddSource={openAddArticleDialog} />
-                </div>
-              ) : (
-                <LoadingLibrarySkeleton />
-              )
+              <LoadingLibrarySkeleton />
             ) : (
               <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">
                 {articles.length === 0 ? (
