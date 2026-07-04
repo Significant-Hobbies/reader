@@ -44,6 +44,7 @@ export const AppearanceToolbar = ({
   return (
     <div className="relative" ref={toolbarRef}>
       <button
+        type="button"
         onClick={() => setIsOpen(!isOpen)}
         className={`rounded-md p-2 transition-colors ${
           isOpen
@@ -61,6 +62,7 @@ export const AppearanceToolbar = ({
           <div className="flex rounded-md bg-[var(--gray-3)] p-1">
             {(['sans', 'serif', 'mono'] as FontFamily[]).map((font) => (
               <button
+                type="button"
                 key={font}
                 onClick={() => onUpdate({ fontFamily: font })}
                 className={`flex-1 rounded-md py-1 text-sm capitalize transition-colors ${

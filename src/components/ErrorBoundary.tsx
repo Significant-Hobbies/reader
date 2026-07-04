@@ -15,7 +15,7 @@ export class ErrorBoundary extends Component<{ children: ReactNode }, { hasError
     return this.state.hasError ? (
       <div className="p-8 text-center text-muted-foreground">
         Something went wrong.{' '}
-        <button onClick={() => location.reload()} className="underline">
+        <button type="button" onClick={() => location.reload()} className="underline">
           Reload
         </button>
       </div>

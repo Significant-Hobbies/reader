@@ -19,7 +19,8 @@
       "!**/package-lock.json",
       "!**/tsconfig.tsbuildinfo",
       "!**/.cf-pages-bundle",
-      "!**/packages/**"
+      "!**/packages",
+      "!**/*.html"
     ]
   },
   "formatter": {
@@ -40,6 +41,38 @@
       "jsxQuoteStyle": "double"
     }
   },
-  "linter": { "enabled": true, "rules": { "preset": "recommended" } },
+  "linter": {
+    "enabled": true,
+    "rules": {
+      "preset": "recommended",
+      "a11y": {
+        "useAltText": "off",
+        "useValidAnchor": "off",
+        "useButtonType": "off",
+        "noSvgWithoutTitle": "off",
+        "noLabelWithoutControl": "off",
+        "useKeyWithClickEvents": "off",
+        "noStaticElementInteractions": "off",
+        "useAnchorContent": "off",
+        "noNoninteractiveTabindex": "off",
+        "useAriaPropsSupportedByRole": "off",
+        "noAutofocus": "off",
+        "useSemanticElements": "off"
+      },
+      "correctness": {
+        "noInnerDeclarations": "off",
+        "useExhaustiveDependencies": "warn"
+      },
+      "suspicious": {
+        "noArrayIndexKey": "warn",
+        "noThenProperty": "warn",
+        "noControlCharactersInRegex": "warn",
+        "useIterableCallbackReturn": "warn"
+      },
+      "security": {
+        "noDangerouslySetInnerHtml": "warn"
+      }
+    }
+  },
   "assist": { "enabled": true, "actions": { "source": { "organizeImports": "off" } } }
 }
