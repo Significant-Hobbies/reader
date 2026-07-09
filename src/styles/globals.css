@@ -20,6 +20,31 @@ body {
   font-family: Arial, Helvetica, sans-serif;
 }
 
+.reader-shell {
+  background: #09090b;
+}
+
+.reader-hero,
+.reader-card {
+  position: relative;
+  isolation: isolate;
+}
+
+.reader-card {
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.28);
+}
+
+.reader-primary-button {
+  border: 1px solid #fafafa;
+  background: #fafafa;
+  color: #09090b;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.28);
+}
+
+.reader-primary-button:hover {
+  background: #e4e4e7;
+}
+
 /* Custom Typography Styles */
 @layer base {
   /* Footnotes */
@@ -68,7 +93,7 @@ body {
   }
 
   .prose code {
-    @apply rounded bg-gray-100 px-1 py-0.5 font-mono text-sm text-pink-600 dark:bg-gray-800 dark:text-pink-400;
+    @apply rounded bg-gray-100 px-1 py-0.5 font-mono text-sm text-gray-700 dark:bg-gray-800 dark:text-gray-200;
   }
 
   .prose pre code {

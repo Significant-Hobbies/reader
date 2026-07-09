@@ -1,27 +1,27 @@
-/* Dark sand + bronze tokens for routes outside AppProvidersLayout (no full Radix CSS). */
+/* Neutral dark tokens for routes outside AppProvidersLayout (no full Radix CSS). */
 :root {
-  --gray-1: #111110;
-  --gray-2: #191918;
-  --gray-3: #222221;
-  --gray-4: #2a2a28;
-  --gray-5: #31312e;
-  --gray-6: #3b3a37;
-  --gray-7: #494844;
-  --gray-8: #62605b;
-  --gray-9: #6f6d66;
-  --gray-10: #7c7b74;
-  --gray-11: #b5b3ad;
-  --gray-12: #eeeeec;
-  --accent-1: #141110;
-  --accent-2: #1c1917;
-  --accent-3: #262220;
-  --accent-4: #302a27;
-  --accent-5: #3b3330;
-  --accent-6: #493e3a;
-  --accent-7: #5a4c47;
-  --accent-8: #6f5f58;
-  --accent-9: #a18072;
-  --accent-10: #ae8c7e;
-  --accent-11: #d4b3a5;
-  --accent-12: #ede0d9;
+  --gray-1: #09090b;
+  --gray-2: #18181b;
+  --gray-3: #27272a;
+  --gray-4: #3f3f46;
+  --gray-5: #3f3f46;
+  --gray-6: #52525b;
+  --gray-7: #71717a;
+  --gray-8: #a1a1aa;
+  --gray-9: #a1a1aa;
+  --gray-10: #d4d4d8;
+  --gray-11: #e4e4e7;
+  --gray-12: #fafafa;
+  --accent-1: #09090b;
+  --accent-2: #18181b;
+  --accent-3: #27272a;
+  --accent-4: #3f3f46;
+  --accent-5: #52525b;
+  --accent-6: #71717a;
+  --accent-7: #a1a1aa;
+  --accent-8: #d4d4d8;
+  --accent-9: #fafafa;
+  --accent-10: #e4e4e7;
+  --accent-11: #f4f4f5;
+  --accent-12: #ffffff;
 }

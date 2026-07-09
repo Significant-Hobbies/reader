@@ -185,7 +185,7 @@ export function SearchBar() {
       <span>
         {parts.map((part, i) =>
           i % 2 === 1 ? (
-            <mark key={i} className="rounded bg-yellow-300 px-0.5 text-gray-900">
+            <mark key={i} className="rounded bg-zinc-700 px-0.5 text-zinc-50">
               {part}
             </mark>
           ) : (
@@ -212,21 +212,26 @@ export function SearchBar() {
   };
 
   return (
-    <div ref={searchRef} className="relative w-full max-w-md">
+    <div ref={searchRef} className="relative w-full max-w-xl">
       <div className="relative">
-        <Search className="absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 text-gray-400" />
+        <Search className="absolute top-1/2 left-3.5 h-4 w-4 -translate-y-1/2 text-[var(--gray-10)]" />
         <Input
           ref={inputRef}
           type="text"
           value={query}
           onChange={(e) => setQuery(e.target.value)}
           placeholder={isLocalMode ? 'Find saved sources...' : 'Find articles, notes, and chats...'}
-          className="border-[var(--gray-6)] bg-[var(--gray-2)] pr-10 pl-10 text-[var(--gray-12)] placeholder:text-[var(--gray-10)] focus:border-[var(--accent-8)]"
+          className="h-10 rounded-lg border-zinc-800 bg-zinc-900 pr-24 pl-10 text-zinc-100 placeholder:text-zinc-500 focus:border-[var(--accent-8)]"
         />
+        {!query && (
+          <span className="pointer-events-none absolute top-1/2 right-3 hidden -translate-y-1/2 rounded-md border border-zinc-700 bg-zinc-950 px-1.5 py-0.5 text-[10px] font-medium text-zinc-500 sm:inline-flex">
+            Ctrl K
+          </span>
+        )}
         {query && (
           <button
             onClick={handleClear}
-            className="absolute top-1/2 right-3 -translate-y-1/2 text-gray-400 hover:text-white"
+            className="absolute top-1/2 right-3 -translate-y-1/2 rounded-md p-1 text-zinc-500 hover:bg-zinc-800 hover:text-white"
             aria-label="Clear search"
           >
             {isLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : <X className="h-4 w-4" />}
@@ -235,7 +240,7 @@ export function SearchBar() {
       </div>
 
       {isOpen && query.trim().length >= 2 && (
-        <div className="absolute top-full z-50 mt-2 max-h-96 w-full overflow-y-auto rounded-md border border-[var(--gray-6)] bg-[var(--gray-2)] shadow-2xl">
+        <div className="absolute top-full z-50 mt-2 max-h-96 w-full overflow-y-auto rounded-lg border border-zinc-800 bg-zinc-950 shadow-xl">
           {results.length === 0 ? (
             <div className="p-6 text-center text-gray-400">
               <p className="text-sm">No results found for &quot;{query}&quot;</p>
@@ -243,7 +248,7 @@ export function SearchBar() {
             </div>
           ) : (
             <div className="py-2">
-              <div className="flex items-center justify-between border-b border-[var(--gray-5)] px-4 py-2 text-xs text-gray-500">
+              <div className="flex items-center justify-between border-b border-zinc-800 px-4 py-2 text-xs text-gray-500">
                 <span>
                   {results.length} {results.length === 1 ? 'result' : 'results'}
                 </span>
@@ -253,8 +258,8 @@ export function SearchBar() {
                 <button
                   key={result.id}
                   onClick={() => handleResultClick(result)}
-                  className={`w-full border-b border-[var(--gray-5)] px-4 py-3 text-left transition-colors last:border-b-0 ${
-                    selectedIndex === index ? 'bg-[var(--gray-4)]' : 'hover:bg-[var(--gray-3)]'
+                  className={`w-full border-b border-zinc-800 px-4 py-3 text-left transition-colors last:border-b-0 ${
+                    selectedIndex === index ? 'bg-zinc-900' : 'hover:bg-zinc-900/70'
                   }`}
                 >
                   <div className="flex items-start gap-3">

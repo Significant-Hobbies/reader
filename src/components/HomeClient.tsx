@@ -2,7 +2,9 @@
 
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import {
+  ArrowRight,
   BookOpen,
+  CheckCircle2,
   Clock,
   ExternalLink,
   FileText,
@@ -11,6 +13,7 @@ import {
   type LucideIcon,
   MoreVertical,
   Plus,
+  Tags,
   X,
 } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
@@ -134,28 +137,28 @@ function LoadingLibrarySkeleton() {
       {Array.from({ length: 6 }).map((_, index) => (
         <div
           key={index}
-          className="rounded-xl border border-l-2 border-[var(--gray-5)] border-l-[var(--gray-6)] bg-[var(--gray-2)]/75 p-0"
+          className="overflow-hidden rounded-xl border border-zinc-800 bg-zinc-950 p-0"
         >
           <div className="space-y-4 p-5">
             <div className="flex items-center justify-between gap-3">
               <div className="flex items-center gap-2">
-                <div className="h-8 w-8 animate-pulse rounded-md bg-white/10" />
-                <div className="h-3 w-28 animate-pulse rounded-full bg-white/10" />
+                <div className="h-9 w-9 animate-pulse rounded-lg bg-white/10" />
+                <div className="h-3 w-28 animate-pulse rounded-md bg-white/10" />
               </div>
-              <div className="h-5 w-14 animate-pulse rounded-full bg-white/10" />
+              <div className="h-5 w-14 animate-pulse rounded-md bg-white/10" />
             </div>
             <div className="space-y-2">
-              <div className="h-5 w-11/12 animate-pulse rounded-full bg-white/15" />
-              <div className="h-5 w-7/12 animate-pulse rounded-full bg-white/10" />
+              <div className="h-5 w-11/12 animate-pulse rounded-md bg-white/15" />
+              <div className="h-5 w-7/12 animate-pulse rounded-md bg-white/10" />
             </div>
             <div className="flex gap-2">
-              <div className="h-5 w-16 animate-pulse rounded-full bg-white/10" />
-              <div className="h-5 w-20 animate-pulse rounded-full bg-white/10" />
+              <div className="h-5 w-16 animate-pulse rounded-md bg-white/10" />
+              <div className="h-5 w-20 animate-pulse rounded-md bg-white/10" />
             </div>
           </div>
-          <div className="flex items-center justify-between border-t border-[var(--gray-5)] px-5 py-3">
+          <div className="flex items-center justify-between border-t border-zinc-800 px-5 py-3">
             <div className="h-8 w-24 animate-pulse rounded-md bg-white/10" />
-            <div className="h-3 w-20 animate-pulse rounded-full bg-white/10" />
+            <div className="h-3 w-20 animate-pulse rounded-md bg-white/10" />
           </div>
         </div>
       ))}
@@ -701,35 +704,37 @@ export default function HomeClient() {
     articles.find((article) => article.status !== 'read');
 
   return (
-    <div className="min-h-screen bg-[#0d0d0c] font-sans text-gray-100">
+    <div className="reader-shell min-h-screen font-sans text-gray-100">
       <Suspense fallback={null}>
         <Navbar />
       </Suspense>
-      <div className="flex">
+      <div className="relative flex">
         {/* Sidebar for Lists */}
-        <aside className="sticky top-[65px] hidden h-[calc(100vh-65px)] w-[16rem] shrink-0 space-y-4 overflow-y-auto border-r border-white/10 bg-[#101010]/90 p-5 backdrop-blur-xl lg:block">
+        <aside className="sticky top-[65px] hidden h-[calc(100vh-65px)] w-[17rem] shrink-0 space-y-4 overflow-y-auto border-r border-zinc-800 bg-zinc-950 p-5 lg:block">
           <div className="mb-6">
-            <h3 className="mb-3 text-sm font-medium tracking-wide text-gray-500 uppercase">
+            <h3 className="mb-3 text-xs font-semibold tracking-[0.18em] text-gray-500 uppercase">
               Navigate
             </h3>
             <Link
               to="/library"
-              className="flex w-full items-center gap-3 rounded-md border border-[var(--accent-7)] bg-[var(--accent-4)] px-3 py-2 text-sm font-medium text-[var(--accent-12)] shadow-[0_8px_24px_rgba(168,124,75,0.12)]"
+              className="flex w-full items-center gap-3 rounded-lg border border-zinc-800 bg-zinc-900 px-3 py-2.5 text-sm font-medium text-zinc-100"
             >
               <FileText size={18} />
               Library
             </Link>
             <Link
               to="/board"
-              className="flex w-full items-center gap-3 rounded-md px-3 py-2 text-sm font-medium text-[var(--gray-11)] transition-colors hover:bg-[var(--gray-3)] hover:text-[var(--gray-12)]"
+              className="mt-2 flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium text-[var(--gray-11)] transition-colors hover:bg-zinc-900 hover:text-[var(--gray-12)]"
             >
               <LayoutDashboard size={18} />
               Boards
             </Link>
           </div>
-          <div className="mb-4 border-t border-[var(--gray-5)]" />
+          <div className="mb-4 border-t border-zinc-800" />
           <div className="mb-6 flex items-center justify-between">
-            <h3 className="text-sm font-medium tracking-wide text-gray-500 uppercase">Library</h3>
+            <h3 className="text-xs font-semibold tracking-[0.18em] text-gray-500 uppercase">
+              Library
+            </h3>
             <Dialog open={isListModalOpen} onOpenChange={setIsListModalOpen}>
               <DialogTrigger asChild>
                 <Button size="sm" variant="outline" className="h-7 gap-1 px-2 text-xs">
@@ -776,10 +781,10 @@ export default function HomeClient() {
           {/* All Articles */}
           <button
             onClick={() => setSelectedListId('all')}
-            className={`flex w-full items-center gap-3 rounded-md px-3 py-2 text-sm font-medium transition-colors ${
+            className={`flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors ${
               selectedListId === 'all'
-                ? 'bg-[var(--accent-4)] text-[var(--accent-12)]'
-                : 'text-[var(--gray-11)] hover:bg-[var(--gray-3)] hover:text-[var(--gray-12)]'
+                ? 'bg-zinc-900 text-zinc-100'
+                : 'text-[var(--gray-11)] hover:bg-zinc-900 hover:text-[var(--gray-12)]'
             }`}
           >
             <FileText size={18} />
@@ -793,10 +798,10 @@ export default function HomeClient() {
               <button
                 key={list.id}
                 onClick={() => setSelectedListId(list.id)}
-                className={`flex w-full items-center gap-3 rounded-md px-3 py-2 text-sm font-medium transition-colors ${
+                className={`flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors ${
                   selectedListId === list.id
-                    ? 'bg-[var(--accent-4)] text-[var(--accent-12)]'
-                    : 'text-[var(--gray-11)] hover:bg-[var(--gray-3)] hover:text-[var(--gray-12)]'
+                    ? 'bg-zinc-900 text-zinc-100'
+                    : 'text-[var(--gray-11)] hover:bg-zinc-900 hover:text-[var(--gray-12)]'
                 }`}
               >
                 {list.icon === 'heart' && <Heart size={18} />}
@@ -808,20 +813,20 @@ export default function HomeClient() {
           {/* Custom Lists */}
           {lists.filter((list) => !list.isDefault).length > 0 && (
             <>
-              <div className="my-4 border-t border-[var(--gray-5)]" />
+              <div className="my-4 border-t border-zinc-800" />
               {lists
                 .filter((list) => !list.isDefault)
                 .map((list) => (
                   <div key={list.id} className="flex items-center gap-2">
                     <button
                       onClick={() => setSelectedListId(list.id)}
-                      className={`flex flex-1 items-center gap-3 rounded-md px-3 py-2 text-sm font-medium transition-colors ${
+                      className={`flex flex-1 items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors ${
                         selectedListId === list.id
-                          ? 'bg-[var(--accent-4)] text-[var(--accent-12)]'
-                          : 'text-[var(--gray-11)] hover:bg-[var(--gray-3)] hover:text-[var(--gray-12)]'
+                          ? 'bg-zinc-900 text-zinc-100'
+                          : 'text-[var(--gray-11)] hover:bg-zinc-900 hover:text-[var(--gray-12)]'
                       }`}
                     >
-                      <div className="h-2 w-2 rounded-full bg-gray-500" />
+                      <div className="h-2 w-2 rounded-md bg-gray-500" />
                       {list.name}
                     </button>
                     {selectedListId === list.id && !list.isDefault && (
@@ -844,69 +849,33 @@ export default function HomeClient() {
         </aside>
 
         {/* Main Content */}
-        <div className="min-w-0 flex-1 p-5 sm:p-8">
+        <div className="min-w-0 flex-1 p-4 sm:p-6 lg:p-8">
           <div className="mx-auto max-w-6xl space-y-6">
-            <header className="flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
-              <div className="min-w-0">
-                <h1 className="text-3xl font-bold text-balance text-[var(--gray-12)]">
-                  {activeListName || 'Library'}
-                </h1>
-                <p className="mt-1.5 text-sm text-[var(--gray-11)]">
-                  {articles.length === 0
-                    ? 'Save links, import articles, and read PDFs in one place.'
-                    : `${articles.length} ${articles.length === 1 ? 'source' : 'sources'}${
-                        unreadCount > 0 ? ` · ${unreadCount} unread` : ''
-                      }${notesCount > 0 ? ` · ${notesCount} ${notesCount === 1 ? 'note' : 'notes'}` : ''}`}
-                </p>
-                {isLocalMode && (
-                  <Badge variant="accent" className="mt-3">
-                    Local only on this browser
-                  </Badge>
-                )}
-              </div>
-
-              <Button
-                size="lg"
-                onClick={() => openAddArticleDialog('url')}
-                className={`shrink-0 gap-2 ${articles.length === 0 ? 'w-full border-[var(--accent-7)] bg-[var(--accent-3)] md:w-auto' : ''}`}
-              >
-                <Plus className="h-4 w-4" />
-                Add Source
-              </Button>
-            </header>
-
-            {articles.length > 0 && (
-              <div className="rounded-xl border border-[var(--gray-5)] bg-[var(--gray-2)]/50 px-5 py-4">
-                <div className="flex flex-wrap items-center gap-x-8 gap-y-3">
-                  <div>
-                    <p className="text-xs tracking-wide text-[var(--gray-11)] uppercase">Read</p>
-                    <div className="mt-0.5 flex items-baseline gap-1">
-                      <span className="text-xl font-bold text-[var(--gray-12)]">{readCount}</span>
-                      <span className="text-sm text-[var(--gray-11)]">/ {articles.length}</span>
-                    </div>
+            <header className="reader-hero overflow-hidden rounded-xl border border-zinc-800 bg-zinc-950">
+              <div className="grid gap-6 p-5 sm:p-7 lg:grid-cols-[minmax(0,1fr)_20rem] lg:p-8">
+                <div className="min-w-0">
+                  <div className="mb-4 inline-flex items-center gap-2 rounded-md border border-zinc-800 bg-zinc-900 px-3 py-1 text-xs font-medium text-[var(--gray-11)] ">
+                    <BookOpen className="h-3.5 w-3.5 text-[var(--accent-11)]" />
+                    {isLocalMode ? 'Local browser library' : 'Synced research library'}
                   </div>
-                  <div>
-                    <p className="text-xs tracking-wide text-[var(--gray-11)] uppercase">
-                      Highlights
-                    </p>
-                    <span className="mt-0.5 block text-xl font-bold text-[var(--gray-12)]">
-                      {notesCount}
-                    </span>
-                  </div>
-                  {unreadMinutes > 0 && (
-                    <div>
-                      <p className="text-xs tracking-wide text-[var(--gray-11)] uppercase">
-                        Left to read
-                      </p>
-                      <span className="mt-0.5 block text-xl font-bold text-[var(--gray-12)]">
-                        {unreadMinutes < 60
-                          ? `${unreadMinutes} min`
-                          : `${Math.floor(unreadMinutes / 60)} hr${unreadMinutes % 60 > 0 ? ` ${unreadMinutes % 60} min` : ''}`}
-                      </span>
-                    </div>
-                  )}
-                  {nextUnreadArticle && (
-                    <div className="ml-auto">
+                  <h1 className="max-w-3xl text-3xl leading-tight font-semibold text-balance text-[var(--gray-12)] sm:text-4xl">
+                    {activeListName || 'Library'}
+                  </h1>
+                  <p className="mt-4 max-w-2xl text-base leading-7 text-[var(--gray-11)]">
+                    {articles.length === 0
+                      ? 'Save links, import articles, and keep PDFs inside a calm reading workspace.'
+                      : `${articles.length} ${articles.length === 1 ? 'source' : 'sources'} ready across links, PDFs, notes, and imported articles.`}
+                  </p>
+                  <div className="mt-6 flex flex-col gap-3 sm:flex-row sm:items-center">
+                    <Button
+                      size="lg"
+                      onClick={() => openAddArticleDialog('url')}
+                      className="reader-primary-button w-full gap-2 sm:w-auto"
+                    >
+                      <Plus className="h-4 w-4" />
+                      Add Source
+                    </Button>
+                    {nextUnreadArticle && (
                       <Link
                         to={
                           nextUnreadArticle.type === 'link'
@@ -915,17 +884,61 @@ export default function HomeClient() {
                         }
                         target={nextUnreadArticle.type === 'link' ? '_blank' : undefined}
                         rel={nextUnreadArticle.type === 'link' ? 'noopener noreferrer' : undefined}
+                        className="w-full sm:w-auto"
                       >
-                        <Button size="sm" variant="secondary" className="gap-1.5">
-                          <BookOpen className="h-3.5 w-3.5" />
-                          Continue reading
+                        <Button size="lg" variant="secondary" className="w-full gap-2 sm:w-auto">
+                          <BookOpen className="h-4 w-4" />
+                          Continue
+                          <ArrowRight className="h-4 w-4" />
                         </Button>
                       </Link>
-                    </div>
+                    )}
+                  </div>
+                  {isLocalMode && (
+                    <Badge variant="accent" className="mt-4 rounded-md">
+                      Local only on this browser
+                    </Badge>
                   )}
                 </div>
+
+                <div className="grid gap-3 sm:grid-cols-3 lg:grid-cols-1">
+                  {[
+                    { label: 'Read', value: `${readCount}/${articles.length}`, icon: CheckCircle2 },
+                    { label: 'Highlights', value: notesCount, icon: Tags },
+                    {
+                      label: 'Left to read',
+                      value:
+                        unreadMinutes > 0
+                          ? unreadMinutes < 60
+                            ? `${unreadMinutes} min`
+                            : `${Math.floor(unreadMinutes / 60)} hr${
+                                unreadMinutes % 60 > 0 ? ` ${unreadMinutes % 60} min` : ''
+                              }`
+                          : '0 min',
+                      icon: Clock,
+                    },
+                  ].map((stat) => {
+                    const StatIcon = stat.icon;
+                    return (
+                      <div
+                        key={stat.label}
+                        className="rounded-lg border border-zinc-800 bg-zinc-900 p-4"
+                      >
+                        <div className="flex items-center justify-between gap-3">
+                          <p className="text-xs font-semibold tracking-[0.16em] text-[var(--gray-10)] uppercase">
+                            {stat.label}
+                          </p>
+                          <StatIcon className="h-4 w-4 text-[var(--accent-11)]" />
+                        </div>
+                        <p className="mt-2 text-2xl font-semibold text-[var(--gray-12)]">
+                          {stat.value}
+                        </p>
+                      </div>
+                    );
+                  })}
+                </div>
               </div>
-            )}
+            </header>
 
             {articles.length > 0 && (
               <Suspense fallback={null}>
@@ -934,7 +947,7 @@ export default function HomeClient() {
             )}
 
             {articles.length > 0 && (
-              <div className="flex flex-wrap items-center justify-between gap-3">
+              <div className="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-zinc-800 bg-zinc-950 p-3">
                 <SegmentedControl
                   value={contentFilter}
                   onValueChange={(value) => setContentFilter(value as ContentFilter)}
@@ -957,7 +970,7 @@ export default function HomeClient() {
                       setSelectedTag(null);
                       setContentFilter('all');
                     }}
-                    className="text-xs text-[var(--gray-11)] underline-offset-2 transition-colors hover:text-[var(--gray-12)] hover:underline"
+                    className="rounded-md border border-white/10 bg-black/10 px-3 py-1.5 text-xs text-[var(--gray-11)] transition-colors hover:bg-zinc-900 hover:text-[var(--gray-12)]"
                   >
                     Clear filters
                   </button>
@@ -967,14 +980,15 @@ export default function HomeClient() {
 
             {articles.length > 0 && allTags.length > 0 && (
               <div className="-mx-2 flex flex-nowrap items-center gap-2 overflow-x-auto px-2 pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-                <span className="shrink-0 text-xs font-medium tracking-wide text-[var(--gray-11)] uppercase">
+                <span className="inline-flex shrink-0 items-center gap-1.5 text-xs font-semibold tracking-[0.16em] text-[var(--gray-11)] uppercase">
+                  <Tags className="h-3.5 w-3.5 text-[var(--accent-11)]" />
                   Tags
                 </span>
                 {allTags.map((tag) => (
                   <button
                     key={tag}
                     onClick={() => setSelectedTag(selectedTag === tag ? null : tag)}
-                    className={`inline-flex shrink-0 items-center rounded-full border px-2.5 py-0.5 text-xs font-medium transition-all ${
+                    className={`inline-flex shrink-0 items-center rounded-md border px-3 py-1 text-xs font-medium  transition-all ${
                       selectedTag === tag
                         ? 'ring-1 ring-[var(--accent-9)] ring-offset-1 ring-offset-[#0d0d0c]'
                         : ''
@@ -1000,7 +1014,7 @@ export default function HomeClient() {
                 {articles.length === 0 ? (
                   <LibraryEmptyOnboarding onAddSource={openAddArticleDialog} />
                 ) : filteredArticles.length === 0 ? (
-                  <div className="col-span-full rounded-xl border border-dashed border-[var(--gray-6)] bg-[var(--gray-2)]/70 p-0">
+                  <div className="col-span-full rounded-lg border border-dashed border-zinc-800 bg-zinc-950 p-0">
                     <div className="mx-auto flex max-w-xl flex-col items-center px-6 py-16 text-center">
                       <p className="mb-2 text-sm font-medium text-[var(--gray-11)] uppercase">
                         No matching sources
@@ -1044,10 +1058,10 @@ export default function HomeClient() {
                       (isPDF && Boolean(formatFileSize(article.pdfMetadata?.fileSize))) ||
                       article.notesCount > 0;
                     const cardTone = isLink
-                      ? 'border-l-2 border-l-[var(--gray-6)]'
+                      ? 'border-l-zinc-700'
                       : isPDF
-                        ? 'border-l-2 border-l-[var(--accent-8)]'
-                        : 'border-l-2 border-l-[var(--accent-6)]/60';
+                        ? 'border-l-zinc-600'
+                        : 'border-l-zinc-500';
                     return (
                       <article
                         key={article.id}
@@ -1066,12 +1080,12 @@ export default function HomeClient() {
                           }
                           window.open(article.url, '_blank', 'noopener,noreferrer');
                         }}
-                        className={`group flex h-full cursor-pointer flex-col overflow-hidden rounded-xl border border-[var(--gray-5)] bg-[var(--gray-2)]/75 p-0 transition-colors duration-150 hover:border-[var(--gray-7)] hover:bg-[var(--gray-3)]/85 ${cardTone}`}
+                        className={`reader-card group flex h-full cursor-pointer flex-col overflow-hidden rounded-lg border border-l-2 border-zinc-800 bg-zinc-950 p-0 transition-colors duration-150 hover:border-zinc-700 hover:bg-zinc-900/70 ${cardTone}`}
                       >
                         <div className="flex flex-1 flex-col gap-4 p-5">
                           <div className="flex items-center justify-between gap-3">
                             <div className="flex min-w-0 items-center gap-2">
-                              <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-md border border-[var(--gray-6)] bg-[var(--gray-3)] text-[var(--accent-11)]">
+                              <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border border-zinc-800 bg-zinc-900 text-[var(--accent-11)]">
                                 <KindIcon className="h-4 w-4" />
                               </div>
                               <div className="min-w-0">
@@ -1083,7 +1097,7 @@ export default function HomeClient() {
                                 </p>
                               </div>
                             </div>
-                            <Badge variant="soft" className="shrink-0">
+                            <Badge variant="soft" className="shrink-0 rounded-md">
                               {article.status === 'read'
                                 ? isLink
                                   ? 'Done'
@@ -1097,14 +1111,14 @@ export default function HomeClient() {
                           <div className="flex items-start gap-2">
                             <div className="min-w-0 flex-1 pr-2">
                               <h2
-                                className="line-clamp-2 text-lg font-medium break-words text-[var(--gray-12)]"
+                                className="line-clamp-2 text-lg leading-snug font-semibold break-words text-[var(--gray-12)]"
                                 title={displayTitle}
                               >
                                 {displayTitle}
                               </h2>
                               {contextLine && (
                                 <p
-                                  className="mt-2 line-clamp-2 text-sm text-[var(--gray-11)]"
+                                  className="mt-2 line-clamp-2 text-sm leading-6 text-[var(--gray-11)]"
                                   title={contextLine}
                                 >
                                   {contextLine}
@@ -1113,23 +1127,25 @@ export default function HomeClient() {
                               {hasMetadata && (
                                 <div className="mt-3 flex flex-wrap items-center gap-2 text-xs text-gray-300">
                                   {!isLink && article.readingTimeMinutes && (
-                                    <Badge variant="surface" className="gap-1">
+                                    <Badge variant="surface" className="gap-1 rounded-md">
                                       <Clock className="h-3 w-3" />
                                       {formatReadingTime(article.readingTimeMinutes)}
                                     </Badge>
                                   )}
                                   {isPDF && article.pdfMetadata?.pageCount && (
-                                    <Badge variant="surface">
+                                    <Badge variant="surface" className="rounded-md">
                                       {article.pdfMetadata.pageCount} pages
                                     </Badge>
                                   )}
                                   {isPDF && formatFileSize(article.pdfMetadata?.fileSize) && (
-                                    <Badge variant="surface">
+                                    <Badge variant="surface" className="rounded-md">
                                       {formatFileSize(article.pdfMetadata?.fileSize)}
                                     </Badge>
                                   )}
                                   {article.notesCount > 0 && (
-                                    <Badge variant="surface">{article.notesCount} notes</Badge>
+                                    <Badge variant="surface" className="rounded-md">
+                                      {article.notesCount} notes
+                                    </Badge>
                                   )}
                                 </div>
                               )}
@@ -1140,7 +1156,7 @@ export default function HomeClient() {
                                   {article.category && (
                                     <Badge
                                       variant="surface"
-                                      className="max-w-[9rem] truncate"
+                                      className="max-w-[9rem] truncate rounded-md"
                                       title={article.category}
                                     >
                                       {article.category}
@@ -1150,7 +1166,7 @@ export default function HomeClient() {
                                     <Badge
                                       key={list.id}
                                       variant="soft"
-                                      className="max-w-[8rem] truncate"
+                                      className="max-w-[8rem] truncate rounded-md"
                                       title={list.name}
                                     >
                                       {list.name}
@@ -1163,13 +1179,15 @@ export default function HomeClient() {
                                         e.stopPropagation();
                                         setSelectedTag(tag);
                                       }}
-                                      className={`inline-flex items-center rounded-sm border px-2 py-0.5 text-xs font-medium transition-colors ${getTagColor(tag)} hover:opacity-80`}
+                                      className={`inline-flex items-center rounded-md border px-2.5 py-0.5 text-xs font-medium transition-colors ${getTagColor(tag)} hover:opacity-80`}
                                     >
                                       {tag}
                                     </button>
                                   ))}
                                   {attachedLists.length > 2 && (
-                                    <Badge variant="soft">+{attachedLists.length - 2}</Badge>
+                                    <Badge variant="soft" className="rounded-md">
+                                      +{attachedLists.length - 2}
+                                    </Badge>
                                   )}
                                 </div>
                               )}
@@ -1187,7 +1205,7 @@ export default function HomeClient() {
                                     e.preventDefault();
                                   }}
                                   aria-label="Article actions"
-                                  className="rounded-md p-1.5 text-gray-500 transition-colors hover:bg-[var(--gray-3)] hover:text-white"
+                                  className="rounded-md p-1.5 text-gray-500 transition-colors hover:bg-zinc-800 hover:text-white"
                                 >
                                   <MoreVertical className="h-4 w-4" />
                                 </button>
@@ -1237,7 +1255,7 @@ export default function HomeClient() {
                                             <Clock className="mr-2 h-4 w-4" />
                                           )}
                                           {list.icon === 'dot' && (
-                                            <div className="mr-2 h-2 w-2 rounded-full bg-gray-500" />
+                                            <div className="mr-2 h-2 w-2 rounded-md bg-gray-500" />
                                           )}
                                           {list.name}
                                         </DropdownMenuItem>
@@ -1267,7 +1285,7 @@ export default function HomeClient() {
                                                 listId: list.id,
                                               })
                                             }
-                                            className="text-yellow-300 focus:text-yellow-100"
+                                            className="text-zinc-300 focus:text-zinc-100"
                                           >
                                             {list.icon === 'heart' && (
                                               <Heart className="mr-2 h-4 w-4" />
@@ -1276,7 +1294,7 @@ export default function HomeClient() {
                                               <Clock className="mr-2 h-4 w-4" />
                                             )}
                                             {list.icon === 'dot' && (
-                                              <div className="mr-2 h-2 w-2 rounded-full bg-gray-500" />
+                                              <div className="mr-2 h-2 w-2 rounded-md bg-gray-500" />
                                             )}
                                             {list.name}
                                           </DropdownMenuItem>
@@ -1312,12 +1330,12 @@ export default function HomeClient() {
                             </p>
                           )}
                         </div>
-                        <div className="flex flex-wrap items-center justify-between gap-3 border-t border-[var(--gray-5)] bg-[var(--gray-1)]/40 px-5 py-3">
+                        <div className="flex flex-wrap items-center justify-between gap-3 border-t border-zinc-800 bg-black/20 px-5 py-3">
                           <div className="flex items-center gap-2">
                             <Button
                               size="sm"
                               variant={isLink ? 'default' : 'secondary'}
-                              className="h-8 gap-1.5 px-3 text-xs"
+                              className="h-8 gap-1.5 rounded-md px-3 text-xs"
                               onClick={(event) => {
                                 event.stopPropagation();
                                 if (isLink) {
@@ -1338,7 +1356,7 @@ export default function HomeClient() {
                               <Button
                                 size="sm"
                                 variant="ghost"
-                                className="h-8 gap-1.5 px-2 text-xs"
+                                className="h-8 gap-1.5 rounded-md px-3 text-xs"
                                 onClick={(event) => {
                                   event.stopPropagation();
                                   toggleStatus.mutate({ id: article.id, status: nextStatus });
@@ -1435,7 +1453,7 @@ export default function HomeClient() {
               >
                 {deletingId === articlePendingDelete.id ? (
                   <>
-                    <span className="h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent" />
+                    <span className="h-4 w-4 animate-spin rounded-md border-2 border-white border-t-transparent" />
                     Deleting...
                   </>
                 ) : (

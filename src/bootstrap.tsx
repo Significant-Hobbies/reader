@@ -1,5 +1,5 @@
 import { StrictMode } from 'react';
-import { createRoot, hydrateRoot } from 'react-dom/client';
+import { createRoot } from 'react-dom/client';
 import { RouterProvider } from 'react-router-dom';
 
 import '@/styles/globals.css';
@@ -21,14 +21,7 @@ async function mount() {
     </StrictMode>
   );
 
-  const shellType = document.documentElement.dataset.staticShell;
-  const useHydrate = shellType === 'library-empty' || shellType === 'library-grid';
-
-  if (useHydrate) {
-    hydrateRoot(rootEl, app);
-  } else {
-    createRoot(rootEl).render(app);
-  }
+  createRoot(rootEl).render(app);
 }
 
 void mount();

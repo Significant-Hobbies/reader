@@ -44,13 +44,13 @@ type LibraryEmptyOnboardingProps = {
 
 export function LibraryEmptyOnboarding({ onAddSource }: LibraryEmptyOnboardingProps) {
   return (
-    <section className="col-span-full overflow-hidden rounded-xl border border-[var(--gray-5)] bg-[var(--gray-2)]/70">
+    <section className="reader-card col-span-full overflow-hidden rounded-lg border border-zinc-800 bg-zinc-950">
       <div className="grid gap-0 lg:grid-cols-[minmax(0,1fr)_22rem]">
         <div className="px-5 py-8 sm:px-8 lg:py-10">
-          <p className="mb-3 text-xs font-medium tracking-widest text-[var(--accent-11)] uppercase">
+          <p className="mb-3 text-xs font-semibold tracking-[0.18em] text-[var(--accent-11)] uppercase">
             Empty library
           </p>
-          <h2 className="max-w-2xl text-3xl font-bold text-balance text-[var(--gray-12)]">
+          <h2 className="max-w-2xl text-3xl leading-tight font-semibold text-balance text-[var(--gray-12)]">
             Add your first source
           </h2>
           <p className="mt-3 max-w-2xl text-base leading-7 text-[var(--gray-11)]">
@@ -58,10 +58,6 @@ export function LibraryEmptyOnboarding({ onAddSource }: LibraryEmptyOnboardingPr
             outside link for later.
           </p>
           <div className="mt-6 flex flex-col gap-3 sm:flex-row sm:items-center">
-            <Button size="lg" onClick={() => onAddSource('url')} className="w-full gap-2 sm:w-auto">
-              <Plus className="h-4 w-4" />
-              Add Source
-            </Button>
             <Link to="/sample" className="w-full sm:w-auto">
               <Button size="lg" variant="secondary" className="w-full gap-2 sm:w-auto">
                 <BookOpen className="h-4 w-4" />
@@ -78,9 +74,9 @@ export function LibraryEmptyOnboarding({ onAddSource }: LibraryEmptyOnboardingPr
                   key={action.mode}
                   type="button"
                   onClick={() => onAddSource(action.mode)}
-                  className="flex min-h-44 flex-col rounded-lg border border-[var(--gray-5)] bg-[var(--gray-1)]/70 p-4 text-left transition hover:border-[var(--accent-7)] hover:bg-[var(--gray-3)] focus-visible:ring-2 focus-visible:ring-[var(--accent-8)] focus-visible:outline-none"
+                  className="flex min-h-44 flex-col rounded-lg border border-zinc-800 bg-zinc-900 p-4 text-left transition-colors hover:border-[var(--accent-7)] hover:bg-zinc-800/70 focus-visible:ring-2 focus-visible:ring-[var(--accent-8)] focus-visible:outline-none"
                 >
-                  <div className="flex h-10 w-10 items-center justify-center rounded-md border border-[var(--gray-6)] bg-[var(--gray-3)] text-[var(--accent-11)]">
+                  <div className="flex h-10 w-10 items-center justify-center rounded-lg border border-zinc-800 bg-zinc-950 text-[var(--accent-11)]">
                     <ActionIcon className="h-5 w-5" />
                   </div>
                   <p className="mt-4 text-xs font-medium tracking-wide text-[var(--gray-11)] uppercase">
@@ -100,8 +96,8 @@ export function LibraryEmptyOnboarding({ onAddSource }: LibraryEmptyOnboardingPr
           </div>
         </div>
 
-        <aside className="border-t border-[var(--gray-5)] bg-[var(--gray-1)]/55 px-5 py-6 sm:px-8 lg:border-t-0 lg:border-l lg:px-6 lg:py-10">
-          <p className="text-xs font-medium tracking-wide text-[var(--gray-11)] uppercase">
+        <aside className="border-t border-zinc-800 bg-zinc-900/60 px-5 py-6 sm:px-8 lg:border-t-0 lg:border-l lg:px-6 lg:py-10">
+          <p className="text-xs font-semibold tracking-[0.16em] text-[var(--gray-11)] uppercase">
             What happens next
           </p>
           <div className="mt-5 space-y-5">
@@ -120,7 +116,7 @@ export function LibraryEmptyOnboarding({ onAddSource }: LibraryEmptyOnboardingPr
               },
             ].map((step, index) => (
               <div key={step.title} className="flex gap-3">
-                <span className="mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-full border border-[var(--accent-6)] bg-[var(--accent-3)] text-xs font-semibold text-[var(--accent-11)]">
+                <span className="mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-md border border-[var(--accent-6)] bg-[var(--accent-3)] text-xs font-semibold text-[var(--accent-11)]">
                   {index + 1}
                 </span>
                 <div>

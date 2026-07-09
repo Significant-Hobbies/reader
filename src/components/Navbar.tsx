@@ -2,6 +2,7 @@
 
 import { lazy, Suspense } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
+import { BookOpenText, LogIn, Puzzle } from 'lucide-react';
 
 import { useAuth } from './AuthProvider';
 
@@ -18,18 +19,18 @@ export function Navbar() {
   const navigate = useNavigate();
 
   return (
-    <nav className="sticky top-0 z-40 border-b border-[var(--gray-5)] bg-[#11100d]/85 backdrop-blur-xl">
+    <nav className="sticky top-0 z-40 border-b border-zinc-800 bg-zinc-950/95 backdrop-blur">
       <div className="mx-auto flex max-w-6xl flex-wrap items-center justify-between gap-3 px-5 py-3 sm:flex-nowrap sm:gap-4 sm:px-6">
         <Link
           to="/library"
           className="flex items-center gap-3 whitespace-nowrap transition-colors hover:text-[var(--accent-11)]"
         >
-          <span className="flex h-9 w-9 items-center justify-center rounded-md border border-[var(--gray-6)] bg-[var(--gray-3)] text-sm font-semibold text-[var(--accent-11)]">
-            L
+          <span className="flex h-9 w-9 items-center justify-center rounded-lg border border-zinc-800 bg-zinc-900 text-[var(--accent-11)]">
+            <BookOpenText className="h-4.5 w-4.5" />
           </span>
           <div>
-            <p className="text-base leading-none font-bold text-[var(--gray-12)]">Library</p>
-            <p className="text-xs leading-none text-[var(--gray-11)]">Reader</p>
+            <p className="text-sm leading-none font-semibold text-zinc-100">Reader</p>
+            <p className="mt-1 text-xs leading-none text-zinc-500">Library</p>
           </div>
         </Link>
 
@@ -37,7 +38,7 @@ export function Navbar() {
           <Suspense
             fallback={
               <div
-                className="h-9 w-full rounded-md border border-[var(--gray-6)] bg-[var(--gray-2)]"
+                className="h-10 w-full rounded-lg border border-zinc-800 bg-zinc-900"
                 aria-hidden="true"
               />
             }
@@ -66,7 +67,10 @@ export function Navbar() {
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
               <DropdownMenuItem asChild>
-                <Link to="/extension">Chrome extension</Link>
+                <Link to="/extension" className="flex items-center gap-2">
+                  <Puzzle className="h-4 w-4" />
+                  Chrome extension
+                </Link>
               </DropdownMenuItem>
               <DropdownMenuItem
                 onSelect={async () => {
@@ -83,8 +87,9 @@ export function Navbar() {
         ) : (
           <Link
             to="/login"
-            className="rounded-md border border-[var(--gray-6)] bg-[var(--gray-3)] px-3 py-1.5 text-sm font-medium text-[var(--gray-12)] transition-colors hover:bg-[var(--gray-4)]"
+            className="inline-flex items-center gap-2 rounded-lg border border-zinc-800 bg-zinc-900 px-3 py-2 text-sm font-medium text-zinc-100 transition-colors hover:bg-zinc-800"
           >
+            <LogIn className="h-4 w-4" />
             Sign in
           </Link>
         )}
