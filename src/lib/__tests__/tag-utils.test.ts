@@ -2,10 +2,16 @@ import { describe, expect, it } from 'vitest';
 
 import { getTagColor } from '../tag-utils';
 
+const neutralTagClasses = [
+  'bg-zinc-900 text-zinc-300 border-zinc-700',
+  'bg-zinc-950 text-zinc-300 border-zinc-700',
+  'bg-zinc-900/80 text-zinc-400 border-zinc-800',
+];
+
 describe('getTagColor', () => {
   it('returns a valid Tailwind class string', () => {
     const color = getTagColor('javascript');
-    expect(color).toMatch(/^bg-\w+-900\/50 text-\w+-200 border-\w+-700$/);
+    expect(neutralTagClasses).toContain(color);
   });
 
   it('returns the same color for the same tag', () => {
@@ -23,16 +29,16 @@ describe('getTagColor', () => {
 
   it('handles empty string', () => {
     const color = getTagColor('');
-    expect(color).toMatch(/^bg-\w+-900\/50 text-\w+-200 border-\w+-700$/);
+    expect(neutralTagClasses).toContain(color);
   });
 
   it('handles single character tags', () => {
     const color = getTagColor('a');
-    expect(color).toMatch(/^bg-\w+-900\/50 text-\w+-200 border-\w+-700$/);
+    expect(neutralTagClasses).toContain(color);
   });
 
   it('returns different colors for different tags (not guaranteed but likely)', () => {
-    // With 10 colors and many tags, we expect at least 2 distinct colors
+    // With three neutral tones and many tags, we expect at least two distinct values.
     const tags = ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l'];
     const colors = new Set(tags.map(getTagColor));
     expect(colors.size).toBeGreaterThan(1);
@@ -40,28 +46,16 @@ describe('getTagColor', () => {
 
   it('handles special characters in tag names', () => {
     const color = getTagColor('c++');
-    expect(color).toMatch(/^bg-\w+-900\/50 text-\w+-200 border-\w+-700$/);
+    expect(neutralTagClasses).toContain(color);
   });
 
   it('handles unicode characters', () => {
     const color = getTagColor('cafe\u0301');
-    expect(color).toMatch(/^bg-\w+-900\/50 text-\w+-200 border-\w+-700$/);
+    expect(neutralTagClasses).toContain(color);
   });
 
   it('returns one of the predefined color values', () => {
-    const validColors = [
-      'bg-blue-900/50 text-blue-200 border-blue-700',
-      'bg-green-900/50 text-green-200 border-green-700',
-      'bg-purple-900/50 text-purple-200 border-purple-700',
-      'bg-pink-900/50 text-pink-200 border-pink-700',
-      'bg-yellow-900/50 text-yellow-200 border-yellow-700',
-      'bg-red-900/50 text-red-200 border-red-700',
-      'bg-indigo-900/50 text-indigo-200 border-indigo-700',
-      'bg-cyan-900/50 text-cyan-200 border-cyan-700',
-      'bg-orange-900/50 text-orange-200 border-orange-700',
-      'bg-teal-900/50 text-teal-200 border-teal-700',
-    ];
     const color = getTagColor('test-tag');
-    expect(validColors).toContain(color);
+    expect(neutralTagClasses).toContain(color);
   });
 });
