@@ -3,7 +3,7 @@ on:
   workflow_dispatch:
 jobs:
   deploy-production:
-    if: github.event_name == 'push'
+    if: github.event_name == 'workflow_dispatch'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v6
