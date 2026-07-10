@@ -130,7 +130,7 @@ No custom domain configured; production uses `*.workers.dev` (Pages deploy was r
 
 ### Closure
 
-- **Finish-and-pause (2026-07-10):** persisted memory capture and authenticated search are the retained baseline. The preexisting generated `dist/` worktree drift is not part of this closure.
+- **Personal-use support (2026-07-10):** Keep Reader available for direct use. No roadmap expansion; accept only maintenance, reliability, or personally requested workflow fixes. The preexisting generated `dist/` worktree drift is not part of this decision.
 
 ### Deferred
 
