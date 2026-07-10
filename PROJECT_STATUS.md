@@ -125,8 +125,12 @@ No custom domain configured; production uses `*.workers.dev` (Pages deploy was r
 
 1. ~~Turn memory capture prototype into authenticated, persisted product flow.~~ **Done** — `memories` table, `/api/memories` routes, `/memory` UI page, browser-memory import.
 2. ~~Move prototype search from in-memory behavior to Turso-backed search where it matters.~~ **Done** — `/api/memories/search` is Turso-backed; global SearchBar routes memory hits to `/memory`.
-3. Clarify PDF storage behavior so extracted text, source files, and R2 objects are consistently represented.
-4. Add abuse and rate-limit handling only where real endpoints need endpoint-specific evidence.
+3. ~~Clarify PDF storage behavior.~~ **Paused** at the current documented representation; reopen for a concrete storage defect.
+4. ~~Add abuse and rate-limit handling.~~ **Paused** until endpoint-specific evidence exists.
+
+### Closure
+
+- **Finish-and-pause (2026-07-10):** persisted memory capture and authenticated search are the retained baseline. The preexisting generated `dist/` worktree drift is not part of this closure.
 
 ### Deferred
 
