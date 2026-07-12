@@ -44,7 +44,7 @@ export default function WelcomePage() {
         <div className="mx-auto max-w-5xl px-6 py-20 text-center md:py-28">
           <span className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-3 py-1 text-xs font-medium text-gray-300">
             <BookOpen className="h-3.5 w-3.5" />
-            Web Annotator
+            Library Reader
           </span>
           <h1 className="mx-auto mt-6 max-w-3xl text-4xl font-bold tracking-tight text-balance md:text-5xl">
             Read, annotate, and chat with everything you save.
@@ -61,10 +61,16 @@ export default function WelcomePage() {
               Open your library
             </Link>
             <Link
+              to="/sample"
+              className="inline-flex h-11 items-center rounded-md border border-white/15 px-5 text-sm font-medium text-gray-200 transition-colors hover:bg-white/5"
+            >
+              Try a sample doc
+            </Link>
+            <Link
               to="/extension"
               className="inline-flex h-11 items-center rounded-md border border-white/15 px-5 text-sm font-medium text-gray-200 transition-colors hover:bg-white/5"
             >
-              Get the Chrome extension
+              Chrome extension setup
             </Link>
           </div>
           <p className="mt-4 text-xs text-gray-500">

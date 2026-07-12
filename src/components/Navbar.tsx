@@ -90,7 +90,7 @@ export function Navbar() {
             className="inline-flex items-center gap-2 rounded-lg border border-zinc-800 bg-zinc-900 px-3 py-2 text-sm font-medium text-zinc-100 transition-colors hover:bg-zinc-800"
           >
             <LogIn className="h-4 w-4" />
-            Sign in
+            Sign in to sync
           </Link>
         )}
       </div>

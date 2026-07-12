@@ -6,11 +6,11 @@ export default function AboutPage() {
   return (
     <main className="mx-auto max-w-3xl px-4 py-12 text-sm leading-7">
       <Link to="/" className="text-xs text-stone-500 hover:underline">
-        ← Web Annotator
+        ← Library Reader
       </Link>
       <h1 className="mt-3 text-3xl font-bold tracking-tight">About</h1>
       <p className="mt-4">
-        Web Annotator is a personal research library. Paste any URL or upload a PDF; the article
+        Library Reader is a personal research library. Paste any URL or upload a PDF; the article
         body gets cleaned, indexed, and made annotatable. A Chrome extension does the same with one
         click from any page.
       </p>
