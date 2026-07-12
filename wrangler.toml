@@ -8,6 +8,10 @@ assets = { directory = "dist", binding = "ASSETS", run_worker_first = ["/api/*",
 [placement]
 mode = "smart"
 
+routes = [
+  { pattern = "reader.sassmaker.com/*", zone_name = "sassmaker.com" }
+]
+
 [observability]
 enabled = true
 head_sampling_rate = 0.1

@@ -4,7 +4,7 @@ export default function PrivacyPage() {
   return (
     <main className="mx-auto max-w-3xl px-4 py-12 text-sm leading-7">
       <Link to="/" className="text-xs text-stone-500 hover:underline">
-        ← Web Annotator
+        ← Library Reader
       </Link>
       <h1 className="mt-3 text-3xl font-bold tracking-tight">Privacy</h1>
       <p className="mt-4 text-xs text-stone-500">Last updated: 2026-05-15.</p>
@@ -24,8 +24,8 @@ export default function PrivacyPage() {
         <li>No third-party tracking pixels or marketing tags.</li>
         <li>No selling of library data.</li>
         <li>
-          The Chrome extension does not collect telemetry; it only talks to your configured Web
-          Annotator backend.
+          The Chrome extension does not collect telemetry; it only talks to the Library Reader app
+          you connect it to.
         </li>
       </ul>
 
