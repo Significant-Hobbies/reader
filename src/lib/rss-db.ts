@@ -7,6 +7,63 @@ import { db } from './db/client';
 import { rssEntries, rssFeeds } from './db/schema';
 import type { NormalizedFeedEntry } from './rss-parser';
 
+let rssSchemaPromise: Promise<void> | null = null;
+
+const RSS_SCHEMA_STATEMENTS = [
+  `CREATE TABLE IF NOT EXISTS rss_feeds (
+    id text PRIMARY KEY NOT NULL,
+    user_id text NOT NULL REFERENCES user(id) ON DELETE CASCADE,
+    feed_url text NOT NULL,
+    title text NOT NULL,
+    site_url text,
+    last_fetched_at integer,
+    last_error text,
+    etag text,
+    last_modified text,
+    created_at integer DEFAULT (unixepoch() * 1000) NOT NULL,
+    updated_at integer DEFAULT (unixepoch() * 1000) NOT NULL
+  )`,
+  'CREATE UNIQUE INDEX IF NOT EXISTS rss_feeds_user_feed_unique ON rss_feeds (user_id, feed_url)',
+  'CREATE INDEX IF NOT EXISTS rss_feeds_user_created_idx ON rss_feeds (user_id, created_at)',
+  `CREATE TABLE IF NOT EXISTS rss_entries (
+    id text PRIMARY KEY NOT NULL,
+    feed_id text NOT NULL REFERENCES rss_feeds(id) ON DELETE CASCADE,
+    external_id text NOT NULL,
+    url text,
+    title text NOT NULL,
+    author text,
+    content text,
+    excerpt text,
+    published_at integer,
+    read_at integer,
+    saved_article_id text REFERENCES articles(id) ON DELETE SET NULL,
+    created_at integer DEFAULT (unixepoch() * 1000) NOT NULL,
+    updated_at integer DEFAULT (unixepoch() * 1000) NOT NULL
+  )`,
+  'CREATE UNIQUE INDEX IF NOT EXISTS rss_entries_feed_external_unique ON rss_entries (feed_id, external_id)',
+  'CREATE INDEX IF NOT EXISTS rss_entries_feed_published_idx ON rss_entries (feed_id, published_at)',
+  'CREATE INDEX IF NOT EXISTS rss_entries_feed_read_idx ON rss_entries (feed_id, read_at)',
+] as const;
+
+/**
+ * Ensures additive RSS tables exist using the Worker's existing Turso binding.
+ * The SQL migration remains canonical; this idempotent guard handles deploy
+ * environments where database credentials are intentionally unavailable to CI.
+ */
+export async function ensureRssSchema(): Promise<void> {
+  if (!rssSchemaPromise) {
+    rssSchemaPromise = (async () => {
+      for (const statement of RSS_SCHEMA_STATEMENTS) {
+        await db.run(sql.raw(statement));
+      }
+    })().catch((error) => {
+      rssSchemaPromise = null;
+      throw error;
+    });
+  }
+  return rssSchemaPromise;
+}
+
 function toIso(value: Date | number | null | undefined): string | undefined {
   if (value == null) return undefined;
   return (value instanceof Date ? value : new Date(value)).toISOString();

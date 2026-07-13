@@ -5,6 +5,7 @@ import { getAuthenticatedUserId } from '../../lib/auth-api';
 import {
   addRssFeed,
   deleteRssFeed,
+  ensureRssSchema,
   getOwnedRssEntry,
   linkRssEntryToArticle,
   listRssEntries,
@@ -19,7 +20,9 @@ import type { WorkerEnv } from '../../lib/worker-env';
 const rss = new Hono<{ Bindings: WorkerEnv }>();
 
 async function requireUser(c: Context<{ Bindings: WorkerEnv }>) {
-  return getAuthenticatedUserId(c.req.raw.headers, c.env);
+  const userId = await getAuthenticatedUserId(c.req.raw.headers, c.env);
+  if (userId) await ensureRssSchema();
+  return userId;
 }
 
 rss.get('/feeds', async (c) => {
