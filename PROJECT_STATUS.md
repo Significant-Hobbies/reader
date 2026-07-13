@@ -75,7 +75,7 @@ CI: GitHub Actions auto-deploy to Cloudflare on push to `main`.
 | AI gateway (Worker var) | `https://free-ai-gateway.sarthakagrawal927.workers.dev/v1` |
 | Canonical / OG          | Set in `landing-astro/astro.config.mjs` and built `dist/`  |
 
-No custom domain configured; production uses `*.workers.dev` (Pages deploy was reverted — Workers is canonical).
+Production uses the `read.significanthobbies.com` custom domain on the canonical Cloudflare Worker; Pages remains reverted.
 
 ## Features (shipped)
 
