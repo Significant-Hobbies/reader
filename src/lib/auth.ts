@@ -32,7 +32,7 @@ export function createAuth(env: AuthEnv) {
     baseURL:
       env.BETTER_AUTH_URL?.trim() ||
       env.BETTER_AUTH_BASE_URL?.trim() ||
-      'https://reader.sarthakagrawal927.workers.dev',
+      'https://read.significanthobbies.com',
     database: drizzleAdapter(db, {
       provider: 'sqlite',
       schema: {

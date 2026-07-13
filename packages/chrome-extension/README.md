@@ -1,6 +1,6 @@
 # Web Annotator — Chrome Extension
 
-Companion extension for [Web Annotator](https://reader.sarthakagrawal927.workers.dev). Opens the current tab in Web Annotator's reader/annotator view and exposes a side-panel for page-level chat.
+Companion extension for [Web Annotator](https://read.significanthobbies.com). Opens the current tab in Web Annotator's reader/annotator view and exposes a side-panel for page-level chat.
 
 ## What it does
 
@@ -19,7 +19,7 @@ Companion extension for [Web Annotator](https://reader.sarthakagrawal927.workers
 | `storage` | Caches the most recent extraction + chat scratch state so you don't lose them on tab switch. |
 | `readingList` | Reads and updates Chrome's native Reading List so Reader's saved links stay in sync with it. |
 
-Host permission `https://reader.sarthakagrawal927.workers.dev/*` is the only remote endpoint the extension talks to (your Web Annotator instance).
+Host permission `https://read.significanthobbies.com/*` is the only remote endpoint the extension talks to (your Web Annotator instance).
 
 ## Develop locally
 

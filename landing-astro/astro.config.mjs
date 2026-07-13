@@ -3,7 +3,7 @@ import { defineConfig } from 'astro/config';
 import sitemap from '@astrojs/sitemap';
 
 export default defineConfig({
-  site: 'https://reader.sarthakagrawal927.workers.dev',
+  site: 'https://read.significanthobbies.com',
   output: 'static',
   trailingSlash: 'never',
   build: {

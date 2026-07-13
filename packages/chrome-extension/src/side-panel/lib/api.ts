@@ -3,7 +3,7 @@ import type { AIChatMessage, AIConfig } from './types';
 const API_BASE =
   import.meta.env.VITE_API_BASE ||
   (typeof chrome !== 'undefined' && chrome.runtime?.id
-    ? 'https://reader.sarthakagrawal927.workers.dev'
+    ? 'https://read.significanthobbies.com'
     : 'http://localhost:3000');
 
 const API_KEY_STORAGE_KEY = 'api-key';

@@ -15,7 +15,7 @@ The Web Annotator Chrome extension is built to be transparent: it talks to one b
 
 The extension communicates with one server:
 
-- `https://reader.sarthakagrawal927.workers.dev` — the Web Annotator backend.
+- `https://read.significanthobbies.com` — the Web Annotator backend.
 
 When you take an action that requires server processing (save an article, ask a chat question), the extension sends the URL, title, and (when applicable) the extracted page text to that endpoint. After you connect Reader, Chrome Reading List URLs, titles, and read/unread state are also sent to that endpoint for sync.
 

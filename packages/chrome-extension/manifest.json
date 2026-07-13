@@ -4,7 +4,7 @@
   "version": "0.1.1",
   "description": "Open the current webpage in Web Annotator, with optional page chat.",
   "permissions": ["activeTab", "scripting", "sidePanel", "storage", "readingList"],
-  "host_permissions": ["https://reader.sarthakagrawal927.workers.dev/*"],
+  "host_permissions": ["https://read.significanthobbies.com/*"],
   "side_panel": {
     "default_path": "side-panel/index.html"
   },

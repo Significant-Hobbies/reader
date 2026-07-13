@@ -70,7 +70,7 @@ CI: GitHub Actions auto-deploy to Cloudflare on push to `main`.
 
 | Surface                 | URL                                                        |
 | ----------------------- | ---------------------------------------------------------- |
-| Production app          | `https://reader.sarthakagrawal927.workers.dev`             |
+| Production app          | `https://read.significanthobbies.com`             |
 | AI gateway (Worker var) | `https://free-ai-gateway.sarthakagrawal927.workers.dev/v1` |
 | Canonical / OG          | Set in `landing-astro/astro.config.mjs` and built `dist/`  |
 

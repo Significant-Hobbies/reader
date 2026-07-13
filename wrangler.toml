@@ -5,12 +5,12 @@ compatibility_flags = ["nodejs_compat_v2"]
 
 assets = { directory = "dist", binding = "ASSETS", run_worker_first = ["/api/*", "/"] }
 
+routes = [
+  { pattern = "read.significanthobbies.com", custom_domain = true }
+]
+
 [placement]
 mode = "smart"
-
-routes = [
-  { pattern = "reader.sassmaker.com/*", zone_name = "sassmaker.com" }
-]
 
 [observability]
 enabled = true
@@ -22,6 +22,7 @@ cpu_ms = 30000
 [vars]
 NODE_ENV = "production"
 AI_BASE_URL = "https://free-ai-gateway.sarthakagrawal927.workers.dev/v1"
+BETTER_AUTH_URL = "https://read.significanthobbies.com"
 
 [[r2_buckets]]
 binding = "PDFS_BUCKET"
