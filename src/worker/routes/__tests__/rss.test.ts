@@ -5,7 +5,6 @@ const mocks = vi.hoisted(() => ({
   getAuthenticatedUserId: vi.fn(),
   addRssFeed: vi.fn(),
   deleteRssFeed: vi.fn(),
-  ensureRssSchema: vi.fn(),
   getOwnedRssEntry: vi.fn(),
   linkRssEntryToArticle: vi.fn(),
   listRssEntries: vi.fn(),
@@ -23,7 +22,6 @@ vi.mock('../../../lib/auth-api', () => ({
 vi.mock('../../../lib/rss-db', () => ({
   addRssFeed: mocks.addRssFeed,
   deleteRssFeed: mocks.deleteRssFeed,
-  ensureRssSchema: mocks.ensureRssSchema,
   getOwnedRssEntry: mocks.getOwnedRssEntry,
   linkRssEntryToArticle: mocks.linkRssEntryToArticle,
   listRssEntries: mocks.listRssEntries,
@@ -48,7 +46,6 @@ describe('RSS routes', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     mocks.getAuthenticatedUserId.mockResolvedValue('user-1');
-    mocks.ensureRssSchema.mockResolvedValue(undefined);
     mocks.validateExternalUrl.mockImplementation(async (url: string) => ({
       ok: true,
       url: new URL(url),
@@ -59,7 +56,6 @@ describe('RSS routes', () => {
     mocks.getAuthenticatedUserId.mockResolvedValue(null);
     const response = await app.request('/api/rss/refresh', { method: 'POST' });
     expect(response.status).toBe(401);
-    expect(mocks.ensureRssSchema).not.toHaveBeenCalled();
     expect(mocks.refreshRssFeeds).not.toHaveBeenCalled();
   });
 

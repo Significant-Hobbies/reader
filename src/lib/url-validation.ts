@@ -1,5 +1,5 @@
-import { lookup } from 'dns/promises';
-import { isIP } from 'net';
+import { resolve4, resolve6 } from 'node:dns/promises';
+import { isIP } from 'node:net';
 
 /**
  * Block SSRF by resolving the hostname and rejecting private/internal IPs.
@@ -12,7 +12,8 @@ import { isIP } from 'net';
  * level is appropriate — the server is not a privileged internal host.
  */
 export async function validateExternalUrl(
-  raw: string
+  raw: string,
+  options: { resolveDns?: boolean } = {}
 ): Promise<{ ok: true; url: URL } | { ok: false; reason: string }> {
   let parsed: URL;
   try {
@@ -26,6 +27,7 @@ export async function validateExternalUrl(
   }
 
   const hostname = parsed.hostname;
+  const unwrappedHostname = hostname.replace(/^\[|\]$/g, '');
 
   // Block obvious localhost aliases before DNS
   if (
@@ -47,19 +49,27 @@ export async function validateExternalUrl(
     return { ok: false, reason: 'Blocked: hex IP not allowed' };
   }
 
-  // Resolve DNS to check the actual IP
-  try {
-    const { address } = await lookup(hostname);
-    if (isBlockedIp(address)) {
-      return { ok: false, reason: 'Blocked: private or reserved IP' };
-    }
-  } catch {
-    return { ok: false, reason: 'DNS resolution failed' };
+  // Raw IP literals do not need DNS resolution.
+  if (isIP(unwrappedHostname)) {
+    return isBlockedIp(unwrappedHostname)
+      ? { ok: false, reason: 'Blocked: private or reserved IP' }
+      : { ok: true, url: parsed };
   }
 
-  // Verify the URL host is not a raw IP that resolves to itself in blocked range
-  // (covers cases where URL.hostname already IS an IP literal)
-  if (isBlockedIp(hostname)) {
+  // Persisting a URL does not make a network request. Callers that only store
+  // subscriptions can skip DNS; fetch paths always use the default full check.
+  if (options.resolveDns === false) return { ok: true, url: parsed };
+
+  // Workers does not implement dns.lookup(). Resolve both record families in
+  // parallel and reject the host if any answer points at a private range.
+  const results = await Promise.allSettled([resolve4(hostname), resolve6(hostname)]);
+  const addresses = results.flatMap((result) =>
+    result.status === 'fulfilled' ? result.value : []
+  );
+  if (addresses.length === 0) {
+    return { ok: false, reason: 'DNS resolution failed' };
+  }
+  if (addresses.some(isBlockedIp)) {
     return { ok: false, reason: 'Blocked: private or reserved IP' };
   }
 

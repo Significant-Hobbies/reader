@@ -136,7 +136,7 @@ Production uses the `read.significanthobbies.com` custom domain on the canonical
 
 ### Deferred
 
-- RSS background refresh/scheduled triggers, notifications, OPML folder preservation, and feed discovery. Current RSS refresh is manual. `drizzle/0002_first_green_goblin.sql` is the canonical migration; an idempotent schema guard initializes the same additive tables on the first authenticated RSS request when deploy environments do not hold direct Turso credentials.
+- RSS background refresh/scheduled triggers, notifications, OPML folder preservation, and feed discovery. Current RSS refresh is manual. `drizzle/0002_first_green_goblin.sql` is the canonical migration and is applied to production.
 - Browser-extension distribution until web import and capture flow are reliable.
 - Full personal knowledge-base automation behind strong capture, retrieval, and trust primitives.
 - Paid team/library workflows.

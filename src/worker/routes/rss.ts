@@ -5,7 +5,6 @@ import { getAuthenticatedUserId } from '../../lib/auth-api';
 import {
   addRssFeed,
   deleteRssFeed,
-  ensureRssSchema,
   getOwnedRssEntry,
   linkRssEntryToArticle,
   listRssEntries,
@@ -18,11 +17,10 @@ import { validateExternalUrl } from '../../lib/url-validation';
 import type { WorkerEnv } from '../../lib/worker-env';
 
 const rss = new Hono<{ Bindings: WorkerEnv }>();
+const OPML_IMPORT_CONCURRENCY = 6;
 
 async function requireUser(c: Context<{ Bindings: WorkerEnv }>) {
-  const userId = await getAuthenticatedUserId(c.req.raw.headers, c.env);
-  if (userId) await ensureRssSchema();
-  return userId;
+  return getAuthenticatedUserId(c.req.raw.headers, c.env);
 }
 
 rss.get('/feeds', async (c) => {
@@ -36,7 +34,7 @@ rss.post('/feeds', async (c) => {
   if (!userId) return c.json({ error: 'Unauthorized' }, 401);
   const body = (await c.req.json().catch(() => ({}))) as Record<string, unknown>;
   if (typeof body.feedUrl !== 'string') return c.json({ error: 'Feed URL is required' }, 400);
-  const validation = await validateExternalUrl(body.feedUrl);
+  const validation = await validateExternalUrl(body.feedUrl, { resolveDns: false });
   if (!validation.ok) return c.json({ error: validation.reason }, 400);
   const result = await addRssFeed({
     userId,
@@ -70,15 +68,29 @@ rss.post('/import', async (c) => {
   let imported = 0;
   let existing = 0;
   let rejected = 0;
-  for (const subscription of subscriptions) {
-    const validation = await validateExternalUrl(subscription.feedUrl);
-    if (!validation.ok) {
-      rejected += 1;
-      continue;
+  for (let index = 0; index < subscriptions.length; index += OPML_IMPORT_CONCURRENCY) {
+    const batch = subscriptions.slice(index, index + OPML_IMPORT_CONCURRENCY);
+    const results = await Promise.all(
+      batch.map(async (subscription) => {
+        try {
+          const validation = await validateExternalUrl(subscription.feedUrl, { resolveDns: false });
+          if (!validation.ok) return 'rejected' as const;
+          const result = await addRssFeed({
+            userId,
+            ...subscription,
+            feedUrl: validation.url.href,
+          });
+          return result.existing ? ('existing' as const) : ('imported' as const);
+        } catch {
+          return 'rejected' as const;
+        }
+      })
+    );
+    for (const result of results) {
+      if (result === 'existing') existing += 1;
+      else if (result === 'imported') imported += 1;
+      else rejected += 1;
     }
-    const result = await addRssFeed({ userId, ...subscription, feedUrl: validation.url.href });
-    if (result.existing) existing += 1;
-    else imported += 1;
   }
   return c.json({ imported, existing, rejected, total: subscriptions.length });
 });
