@@ -45,6 +45,11 @@ api.use('/api/*', async (c, next) => {
   return newResponse;
 });
 
+api.get('/api/auth/client-config', (c) => {
+  c.header('Cache-Control', 'no-store');
+  return c.json({ googleClientId: c.env.GOOGLE_CLIENT_ID?.trim() || null });
+});
+
 api.on(['GET', 'POST'], '/api/auth/*', (c) => {
   const auth = createAuth(c.env);
   return auth.handler(c.req.raw);

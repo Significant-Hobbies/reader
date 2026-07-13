@@ -1,6 +1,6 @@
 'use client';
 
-type AuthFailureStage = 'signin' | 'signup' | 'callback' | 'session' | 'unknown';
+type AuthFailureStage = 'signin' | 'signup' | 'callback' | 'session' | 'one-tap' | 'unknown';
 const PROJECT_SLUG = 'reader';
 const POSTHOG_KEY =
   import.meta.env.VITE_POSTHOG_KEY ??

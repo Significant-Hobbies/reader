@@ -1,5 +1,6 @@
 import { betterAuth } from 'better-auth';
 import { drizzleAdapter } from 'better-auth/adapters/drizzle';
+import { oneTap } from 'better-auth/plugins';
 
 import { createDb, type DbEnv } from './db/client';
 import { baAccounts, baSessions, baVerifications, users } from './db/schema';
@@ -46,6 +47,7 @@ export function createAuth(env: AuthEnv) {
       googleClientId && googleClientSecret
         ? { google: { clientId: googleClientId, clientSecret: googleClientSecret } }
         : {},
+    plugins: [oneTap()],
     rateLimit: {
       enabled: false,
     },

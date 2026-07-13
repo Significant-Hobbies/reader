@@ -1,8 +1,8 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 
-import { signIn } from '@/lib/auth-client';
+import { signIn, startGoogleOneTap } from '@/lib/auth-client';
 import { captureAuthFailure } from '@/lib/foundry-monitoring';
 
 import { Button } from './ui/button';
@@ -35,8 +35,8 @@ function AnnotationPreview({ onExport }: { onExport: () => void }) {
         </p>
 
         <div className="space-y-5">
-          {SAMPLE_ANNOTATIONS.map((item, i) => (
-            <div key={i}>
+          {SAMPLE_ANNOTATIONS.map((item) => (
+            <div key={item.highlight}>
               <p className="text-[var(--gray-10)]">
                 {'…'}
                 <mark className="rounded bg-amber-400/20 px-0.5 text-amber-200/90 not-italic">
@@ -67,6 +67,17 @@ export default function LoginClient() {
   const [error, setError] = useState<string | null>(null);
   const [signingIn, setSigningIn] = useState(false);
   const [redirecting, setRedirecting] = useState(false);
+
+  useEffect(() => {
+    void startGoogleOneTap('/library').catch((error) => {
+      captureAuthFailure({
+        provider: 'google',
+        stage: 'one-tap',
+        reason: error instanceof Error ? error.message : 'Google One Tap failed',
+        source: 'login-client',
+      });
+    });
+  }, []);
 
   const handleSignIn = async () => {
     setError(null);
