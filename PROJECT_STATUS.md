@@ -1,6 +1,6 @@
 # reader — PROJECT STATUS
 
-Last updated: 2026-07-02
+Last updated: 2026-07-13
 
 ## Why / What
 
@@ -61,6 +61,7 @@ CI: GitHub Actions auto-deploy to Cloudflare on push to `main`.
 
 ## Timeline
 
+- **2026-07-13** — Added an authenticated RSS/Atom reader with OPML import, direct add/remove feed management, bounded manual refresh, unread/read inbox state, and save-to-library actions. The additive `0002_first_green_goblin.sql` migration must be applied before deployment.
 - **2026-07-03** — Memory capture promoted from prototype to persisted, authenticated flow. `memories` Turso table + `/api/memories` CRUD/search routes + `/memory` UI page + browser-memory import all wired. Global SearchBar routes memory hits to `/memory`. Read-and-remember instead of read-and-forget.
 - **2026-07-02** — Added `api.onError()` global error handler + outer try/catch in worker fetch handler; added React `<ErrorBoundary>` wrapping `RouterProvider` in `bootstrap.tsx`.
 - **Wave 2 migration** — De-OpenNext migration to Vite + React 19 SPA + Hono worker; Worker name `reader` preserved. Turso/Drizzle persistence; better-auth Google; R2 PDF storage.
@@ -93,6 +94,7 @@ No custom domain configured; production uses `*.workers.dev` (Pages deploy was r
 - Article capture from URL via Mozilla Readability; PDF upload, view, annotate, text extraction.
 - Rich annotations with optional DOM anchoring; selection actions (Add note / Ask AI).
 - Reading time estimates; customizable reader (theme, font, size).
+- RSS/Atom inbox at `/rss`: OPML import, direct feed add/remove, manual refresh with partial-failure reporting, unread/read filtering, and save-to-library.
 
 ### Organization & search
 
@@ -134,6 +136,7 @@ No custom domain configured; production uses `*.workers.dev` (Pages deploy was r
 
 ### Deferred
 
+- RSS background refresh/scheduled triggers, notifications, OPML folder preservation, and feed discovery. Current RSS refresh is manual; apply `drizzle/0002_first_green_goblin.sql` before deploying the RSS routes.
 - Browser-extension distribution until web import and capture flow are reliable.
 - Full personal knowledge-base automation behind strong capture, retrieval, and trust primitives.
 - Paid team/library workflows.

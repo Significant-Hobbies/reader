@@ -94,6 +94,31 @@ export interface List {
   updatedAt?: string;
 }
 
+export interface RssFeed {
+  id: string;
+  feedUrl: string;
+  title: string;
+  siteUrl?: string;
+  unreadCount: number;
+  totalCount: number;
+  lastFetchedAt?: string;
+  lastError?: string;
+  createdAt: string;
+}
+
+export interface RssEntry {
+  id: string;
+  feedId: string;
+  feedTitle: string;
+  url?: string;
+  title: string;
+  author?: string;
+  excerpt?: string;
+  publishedAt?: string;
+  readAt?: string;
+  savedArticleId?: string;
+}
+
 // Board types
 export interface WebsiteNodeData {
   url: string;

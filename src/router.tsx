@@ -30,6 +30,7 @@ export const router = createBrowserRouter([
             lazy: () => lazyPage(() => import('./pages/SharedArticlePage')),
           },
           { path: 'memory', lazy: () => lazyPage(() => import('./pages/MemoryPage')) },
+          { path: 'rss', lazy: () => lazyPage(() => import('./pages/RssPage')) },
           { path: 'extension', lazy: () => lazyPage(() => import('./pages/ExtensionPage')) },
         ],
       },

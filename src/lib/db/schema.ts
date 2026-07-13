@@ -239,6 +239,65 @@ export const memories = sqliteTable(
   })
 );
 
+export const rssFeeds = sqliteTable(
+  'rss_feeds',
+  {
+    id: text('id').primaryKey(),
+    userId: text('user_id')
+      .notNull()
+      .references(() => users.id, { onDelete: 'cascade' }),
+    feedUrl: text('feed_url').notNull(),
+    title: text('title').notNull(),
+    siteUrl: text('site_url'),
+    lastFetchedAt: integer('last_fetched_at', { mode: 'timestamp_ms' }),
+    lastError: text('last_error'),
+    etag: text('etag'),
+    lastModified: text('last_modified'),
+    createdAt: integer('created_at', { mode: 'timestamp_ms' })
+      .notNull()
+      .default(sql`(unixepoch() * 1000)`),
+    updatedAt: integer('updated_at', { mode: 'timestamp_ms' })
+      .notNull()
+      .default(sql`(unixepoch() * 1000)`),
+  },
+  (t) => ({
+    userFeedUnique: uniqueIndex('rss_feeds_user_feed_unique').on(t.userId, t.feedUrl),
+    userCreatedIdx: index('rss_feeds_user_created_idx').on(t.userId, t.createdAt),
+  })
+);
+
+export const rssEntries = sqliteTable(
+  'rss_entries',
+  {
+    id: text('id').primaryKey(),
+    feedId: text('feed_id')
+      .notNull()
+      .references(() => rssFeeds.id, { onDelete: 'cascade' }),
+    externalId: text('external_id').notNull(),
+    url: text('url'),
+    title: text('title').notNull(),
+    author: text('author'),
+    content: text('content'),
+    excerpt: text('excerpt'),
+    publishedAt: integer('published_at', { mode: 'timestamp_ms' }),
+    readAt: integer('read_at', { mode: 'timestamp_ms' }),
+    savedArticleId: text('saved_article_id').references(() => articles.id, {
+      onDelete: 'set null',
+    }),
+    createdAt: integer('created_at', { mode: 'timestamp_ms' })
+      .notNull()
+      .default(sql`(unixepoch() * 1000)`),
+    updatedAt: integer('updated_at', { mode: 'timestamp_ms' })
+      .notNull()
+      .default(sql`(unixepoch() * 1000)`),
+  },
+  (t) => ({
+    feedExternalUnique: uniqueIndex('rss_entries_feed_external_unique').on(t.feedId, t.externalId),
+    feedPublishedIdx: index('rss_entries_feed_published_idx').on(t.feedId, t.publishedAt),
+    feedReadIdx: index('rss_entries_feed_read_idx').on(t.feedId, t.readAt),
+  })
+);
+
 export const apiKeys = sqliteTable(
   'api_keys',
   {
@@ -271,3 +330,7 @@ export type ApiKeyRow = typeof apiKeys.$inferSelect;
 export type NewApiKeyRow = typeof apiKeys.$inferInsert;
 export type MemoryRow = typeof memories.$inferSelect;
 export type NewMemoryRow = typeof memories.$inferInsert;
+export type RssFeedRow = typeof rssFeeds.$inferSelect;
+export type NewRssFeedRow = typeof rssFeeds.$inferInsert;
+export type RssEntryRow = typeof rssEntries.$inferSelect;
+export type NewRssEntryRow = typeof rssEntries.$inferInsert;

@@ -11,6 +11,7 @@ import listsRoutes from './worker/routes/lists';
 import memoriesRoutes from './worker/routes/memories';
 import miscRoutes from './worker/routes/misc';
 import pdfRoutes from './worker/routes/pdf';
+import rssRoutes from './worker/routes/rss';
 import shareRoutes from './worker/routes/share';
 
 const SECURITY_HEADERS: Record<string, string> = {
@@ -56,6 +57,7 @@ api.route('/api/memories', memoriesRoutes);
 api.route('/api/ai', aiRoutes);
 api.route('/api/keys', keysRoutes);
 api.route('/api/pdfs', pdfRoutes);
+api.route('/api/rss', rssRoutes);
 api.route('/api/share', shareRoutes);
 api.route('/api', miscRoutes);
 

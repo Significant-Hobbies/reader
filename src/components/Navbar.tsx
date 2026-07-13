@@ -2,7 +2,7 @@
 
 import { lazy, Suspense } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { BookOpenText, LogIn, Puzzle } from 'lucide-react';
+import { BookOpenText, LogIn, Puzzle, Rss } from 'lucide-react';
 
 import { useAuth } from './AuthProvider';
 
@@ -66,6 +66,12 @@ export function Navbar() {
               </button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
+              <DropdownMenuItem asChild>
+                <Link to="/rss" className="flex items-center gap-2">
+                  <Rss className="h-4 w-4" />
+                  RSS inbox
+                </Link>
+              </DropdownMenuItem>
               <DropdownMenuItem asChild>
                 <Link to="/extension" className="flex items-center gap-2">
                   <Puzzle className="h-4 w-4" />
