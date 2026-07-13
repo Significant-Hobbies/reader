@@ -31,7 +31,7 @@ Ships as a Vite + React 19 SPA with a Hono Worker backend on Cloudflare Workers.
 
 | Service                        | Role                                                                                                 |
 | ------------------------------ | ---------------------------------------------------------------------------------------------------- |
-| **free-ai**                    | Default AI chokepoint via `AI_BASE_URL` (`https://free-ai-gateway.sarthakagrawal927.workers.dev/v1`) |
+| **free-ai**                    | Default AI chokepoint via `AI_BASE_URL` (`https://ai-gateway.sassmaker.com/v1`) |
 | **local-ai**                   | Dev bridge for authenticated local CLI models (`pnpm local-ai`)                                      |
 | **SaaS Maker feedback widget** | In-app feedback capture via `@saas-maker/feedback`                                                   |
 
@@ -72,7 +72,7 @@ CI: GitHub Actions auto-deploy to Cloudflare on push to `main`.
 | Surface                 | URL                                                        |
 | ----------------------- | ---------------------------------------------------------- |
 | Production app          | `https://read.significanthobbies.com`             |
-| AI gateway (Worker var) | `https://free-ai-gateway.sarthakagrawal927.workers.dev/v1` |
+| AI gateway (Worker var) | `https://ai-gateway.sassmaker.com/v1` |
 | Canonical / OG          | Set in `landing-astro/astro.config.mjs` and built `dist/`  |
 
 Production uses the `read.significanthobbies.com` custom domain on the canonical Cloudflare Worker; Pages remains reverted.

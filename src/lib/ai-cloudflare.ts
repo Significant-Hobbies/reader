@@ -30,7 +30,7 @@ const DEFAULT_WORKERS_AI_MODEL = '@cf/meta/llama-3.3-70b-instruct-fp8-fast';
 /** Default Workers AI embedding model — 768 dims, ~0.5 Neurons/call. */
 export const DEFAULT_WORKERS_AI_EMBEDDING_MODEL = '@cf/baai/bge-base-en-v1.5';
 
-const FALLBACK_GATEWAY_BASE_URL = 'https://free-ai-gateway.sarthakagrawal927.workers.dev/v1';
+const FALLBACK_GATEWAY_BASE_URL = 'https://ai-gateway.sassmaker.com/v1';
 const PROJECT_ID = 'reader';
 
 interface CreateLanguageModelArgs {

@@ -21,7 +21,7 @@ cpu_ms = 30000
 
 [vars]
 NODE_ENV = "production"
-AI_BASE_URL = "https://free-ai-gateway.sarthakagrawal927.workers.dev/v1"
+AI_BASE_URL = "https://ai-gateway.sassmaker.com/v1"
 BETTER_AUTH_URL = "https://read.significanthobbies.com"
 
 [[r2_buckets]]
