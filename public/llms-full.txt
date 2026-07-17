@@ -1,0 +1,38 @@
+# Reader — full agent brief
+
+Research library: capture, annotate, and AI-chat over your reading — private by default.
+
+## Index
+
+# Reader
+
+Research library for capture, annotation, and AI chat over your reading.
+
+## Privacy
+
+Personal libraries require auth and are not agent-indexed. Public marketing surfaces only.
+
+## Agent entrypoints
+
+- https://read.significanthobbies.com/llms.txt
+- https://read.significanthobbies.com/api/ai
+- https://read.significanthobbies.com/index.md
+
+## Product links
+
+- Home: https://read.significanthobbies.com/ — App (auth for library)
+- Login: https://read.significanthobbies.com/login — Sign in
+
+## Machine surfaces
+
+- https://read.significanthobbies.com/llms.txt
+- https://read.significanthobbies.com/llms-full.txt
+- https://read.significanthobbies.com/api/ai
+- https://read.significanthobbies.com/index.md
+- https://read.significanthobbies.com/sitemap.xml
+- https://read.significanthobbies.com/robots.txt
+
+## Contact / fleet
+
+- Fleet: https://sassmaker.com
+- Agent email for directory verification: sarthakagrawal@agentmail.to

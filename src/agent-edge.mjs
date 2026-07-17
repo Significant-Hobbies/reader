@@ -1,77 +1,53 @@
 /**
- * Portable agent-edge handler (fleet GEO standard).
+ * Portable agent-edge handler — copy or generate into each product.
  * Spec: fleet-ops/docs/agent-indexing-standard.md
+ *
+ * Usage in worker.mjs (before openNext.fetch):
+ *   import { handleAgentEdge } from './agent-edge.mjs'
+ *   const agent = handleAgentEdge(request)
+ *   if (agent) return agent
  */
 
+/** @type {{ name: string, url: string, llmsTxt: string, llmsFullTxt?: string, indexMd: string, catalog: object }} */
 export const AGENT_SURFACE = {
-  name: 'Reader',
-  url: 'https://read.significanthobbies.com',
-  llmsTxt:
-    '# Reader\n' +
-    '\n' +
-    '> Research library: capture, annotate, and AI-chat over your reading — private by default.\n' +
-    '\n' +
-    '## Product\n' +
-    '\n' +
-    '- [Home](https://read.significanthobbies.com/): App (auth for library)\n' +
-    '- [Login](https://read.significanthobbies.com/login): Sign in\n' +
-    '\n' +
-    '## Machine surfaces\n' +
-    '\n' +
-    '- [Agent catalog](https://read.significanthobbies.com/api/ai): JSON inventory of public surfaces\n' +
-    '- [Homepage markdown](https://read.significanthobbies.com/index.md): Product brief without JS\n' +
-    '- [This index](https://read.significanthobbies.com/llms.txt)\n' +
-    '\n' +
-    '## Optional\n' +
-    '\n' +
-    '- [Foundry](https://sassmaker.com): Parent fleet showcase\n',
-  indexMd:
-    '# Reader\n' +
-    '\n' +
-    'Research library for capture, annotation, and AI chat over your reading.\n' +
-    '\n' +
-    '## Privacy\n' +
-    '\n' +
-    'Personal libraries require auth and are not agent-indexed. Public marketing surfaces only.\n' +
-    '\n' +
-    '## Agent entrypoints\n' +
-    '\n' +
-    '- https://read.significanthobbies.com/llms.txt\n' +
-    '- https://read.significanthobbies.com/api/ai\n' +
-    '- https://read.significanthobbies.com/index.md\n',
-  catalog: {
-    name: 'Reader',
-    version: '1',
-    url: 'https://read.significanthobbies.com',
-    llms: 'https://read.significanthobbies.com/llms.txt',
-    llmsFull: null,
-    sitemap: 'https://read.significanthobbies.com/sitemap.xml',
-    markdown: {
-      suffix: '.md',
-      negotiation: true,
+  "name": "Reader",
+  "url": "https://read.significanthobbies.com",
+  "llmsFullTxt": "# Reader — full agent brief\n\nResearch library: capture, annotate, and AI-chat over your reading — private by default.\n\n## Index\n\n# Reader\n\nResearch library for capture, annotation, and AI chat over your reading.\n\n## Privacy\n\nPersonal libraries require auth and are not agent-indexed. Public marketing surfaces only.\n\n## Agent entrypoints\n\n- https://read.significanthobbies.com/llms.txt\n- https://read.significanthobbies.com/api/ai\n- https://read.significanthobbies.com/index.md\n\n## Product links\n\n- Home: https://read.significanthobbies.com/ — App (auth for library)\n- Login: https://read.significanthobbies.com/login — Sign in\n\n## Machine surfaces\n\n- https://read.significanthobbies.com/llms.txt\n- https://read.significanthobbies.com/llms-full.txt\n- https://read.significanthobbies.com/api/ai\n- https://read.significanthobbies.com/index.md\n- https://read.significanthobbies.com/sitemap.xml\n- https://read.significanthobbies.com/robots.txt\n\n## Contact / fleet\n\n- Fleet: https://sassmaker.com\n- Agent email for directory verification: sarthakagrawal@agentmail.to\n",
+  "llmsTxt": "# Reader\n\n> Research library: capture, annotate, and AI-chat over your reading — private by default.\n\n## Product\n\n- [Home](https://read.significanthobbies.com/): App (auth for library)\n- [Login](https://read.significanthobbies.com/login): Sign in\n\n## Machine surfaces\n\n- [Agent catalog](https://read.significanthobbies.com/api/ai): JSON inventory of public surfaces\n- [Homepage markdown](https://read.significanthobbies.com/index.md): Product brief without JS\n- [This index](https://read.significanthobbies.com/llms.txt)\n\n## Optional\n\n- [Foundry](https://sassmaker.com): Parent fleet showcase\n",
+  "indexMd": "# Reader\n\nResearch library for capture, annotation, and AI chat over your reading.\n\n## Privacy\n\nPersonal libraries require auth and are not agent-indexed. Public marketing surfaces only.\n\n## Agent entrypoints\n\n- https://read.significanthobbies.com/llms.txt\n- https://read.significanthobbies.com/api/ai\n- https://read.significanthobbies.com/index.md\n",
+  "catalog": {
+    "name": "Reader",
+    "version": "1",
+    "url": "https://read.significanthobbies.com",
+    "llms": "https://read.significanthobbies.com/llms.txt",
+    "llmsFull": "https://read.significanthobbies.com/llms-full.txt",
+    "sitemap": "https://read.significanthobbies.com/sitemap.xml",
+    "robots": "https://read.significanthobbies.com/robots.txt",
+    "markdown": {
+      "suffix": ".md",
+      "negotiation": true
     },
-    surfaces: [
+    "surfaces": [
       {
-        id: 'home',
-        url: 'https://read.significanthobbies.com/',
-        md: 'https://read.significanthobbies.com/index.md',
-        kind: 'spa',
-        description: 'Product home',
+        "id": "home",
+        "url": "https://read.significanthobbies.com/",
+        "md": "https://read.significanthobbies.com/index.md",
+        "kind": "spa",
+        "description": "Product home"
       },
       {
-        id: 'login',
-        url: 'https://read.significanthobbies.com/login',
-        md: null,
-        kind: 'static',
-        description: 'Sign in',
-      },
+        "id": "login",
+        "url": "https://read.significanthobbies.com/login",
+        "md": null,
+        "kind": "static",
+        "description": "Sign in"
+      }
     ],
-    auth: {
-      public: true,
-      notes: 'Auth-walled app routes are not agent-indexed unless listed here.',
-    },
-  },
-  llmsFull: null,
+    "auth": {
+      "public": true,
+      "notes": "Auth-walled app routes are not agent-indexed unless listed here."
+    }
+  }
 };
 
 /**
@@ -84,20 +60,21 @@ export function handleAgentEdge(request) {
   const path = url.pathname === '' ? '/' : url.pathname;
 
   if (path === '/llms.txt') {
-    if (AGENT_SURFACE.skipLlms) return null;
     return text(AGENT_SURFACE.llmsTxt, 'text/plain; charset=utf-8');
   }
-  if (path === '/llms-full.txt' && AGENT_SURFACE.llmsFull) {
-    return text(AGENT_SURFACE.llmsFull, 'text/plain; charset=utf-8');
+  if (path === '/llms-full.txt' && AGENT_SURFACE.llmsFullTxt) {
+    return text(AGENT_SURFACE.llmsFullTxt, 'text/plain; charset=utf-8');
   }
   if (path === '/index.md') {
     return text(AGENT_SURFACE.indexMd, 'text/markdown; charset=utf-8');
   }
   if (path === '/api/ai') {
+    // Re-bind origin so preview/custom domains stay correct
     const catalog = {
       ...AGENT_SURFACE.catalog,
       url: url.origin,
       llms: `${url.origin}/llms.txt`,
+      llmsFull: `${url.origin}/llms-full.txt`,
       sitemap: AGENT_SURFACE.catalog.sitemap
         ? String(AGENT_SURFACE.catalog.sitemap).replace(AGENT_SURFACE.url, url.origin)
         : `${url.origin}/sitemap.xml`,
@@ -110,6 +87,7 @@ export function handleAgentEdge(request) {
     return json(catalog);
   }
 
+  // Homepage markdown negotiation
   if ((path === '/' || path === '') && wantsMarkdown(request)) {
     return text(AGENT_SURFACE.indexMd, 'text/markdown; charset=utf-8', {
       Link: '</index.md>; rel="alternate"; type="text/markdown"',

@@ -3,8 +3,9 @@
   "version": "1",
   "url": "https://read.significanthobbies.com",
   "llms": "https://read.significanthobbies.com/llms.txt",
-  "llmsFull": null,
+  "llmsFull": "https://read.significanthobbies.com/llms-full.txt",
   "sitemap": "https://read.significanthobbies.com/sitemap.xml",
+  "robots": "https://read.significanthobbies.com/robots.txt",
   "markdown": {
     "suffix": ".md",
     "negotiation": true
