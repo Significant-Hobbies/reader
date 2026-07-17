@@ -1,0 +1,18 @@
+# Reader
+
+> Research library: capture, annotate, and AI-chat over your reading — private by default.
+
+## Product
+
+- [Home](https://read.significanthobbies.com/): App (auth for library)
+- [Login](https://read.significanthobbies.com/login): Sign in
+
+## Machine surfaces
+
+- [Agent catalog](https://read.significanthobbies.com/api/ai): JSON inventory of public surfaces
+- [Homepage markdown](https://read.significanthobbies.com/index.md): Product brief without JS
+- [This index](https://read.significanthobbies.com/llms.txt)
+
+## Optional
+
+- [Foundry](https://sassmaker.com): Parent fleet showcase

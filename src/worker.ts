@@ -1,5 +1,6 @@
 import { Hono } from 'hono';
 
+import { handleAgentEdge } from './agent-edge.mjs';
 import { createAuth } from './lib/auth';
 import type { WorkerEnv } from './lib/worker-env';
 import { bindWorkerEnv } from './worker/bind-env';
@@ -97,6 +98,10 @@ function withSecurityHeaders(response: Response): Response {
 export default {
   async fetch(request: Request, env: WorkerEnv, ctx: ExecutionContext): Promise<Response> {
     const url = new URL(request.url);
+
+    // Fleet agent indexing (GEO) — before SPA/ASSETS fallback
+    const agent = handleAgentEdge(request);
+    if (agent) return agent;
 
     if (url.pathname.startsWith('/api/')) {
       try {
