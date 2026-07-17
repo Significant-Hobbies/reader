@@ -9,48 +9,46 @@
  */
 
 /** @type {{ name: string, url: string, llmsTxt: string, llmsFullTxt?: string, indexMd: string, catalog: object }} */
+// biome-ignore format: generated payload from apply-agent-surfaces (JSON keys/quotes)
 export const AGENT_SURFACE = {
-  name: 'Reader',
-  url: 'https://read.significanthobbies.com',
-  llmsFullTxt:
-    '# Reader — full agent brief\n\nResearch library: capture, annotate, and AI-chat over your reading — private by default.\n\n## Index\n\n# Reader\n\nResearch library for capture, annotation, and AI chat over your reading.\n\n## Privacy\n\nPersonal libraries require auth and are not agent-indexed. Public marketing surfaces only.\n\n## Agent entrypoints\n\n- https://read.significanthobbies.com/llms.txt\n- https://read.significanthobbies.com/api/ai\n- https://read.significanthobbies.com/index.md\n\n## Product links\n\n- Home: https://read.significanthobbies.com/ — App (auth for library)\n- Login: https://read.significanthobbies.com/login — Sign in\n\n## Machine surfaces\n\n- https://read.significanthobbies.com/llms.txt\n- https://read.significanthobbies.com/llms-full.txt\n- https://read.significanthobbies.com/api/ai\n- https://read.significanthobbies.com/index.md\n- https://read.significanthobbies.com/sitemap.xml\n- https://read.significanthobbies.com/robots.txt\n\n## Contact / fleet\n\n- Fleet: https://sassmaker.com\n- Agent email for directory verification: sarthakagrawal@agentmail.to\n',
-  llmsTxt:
-    '# Reader\n\n> Research library: capture, annotate, and AI-chat over your reading — private by default.\n\n## Product\n\n- [Home](https://read.significanthobbies.com/): App (auth for library)\n- [Login](https://read.significanthobbies.com/login): Sign in\n\n## Machine surfaces\n\n- [Agent catalog](https://read.significanthobbies.com/api/ai): JSON inventory of public surfaces\n- [Homepage markdown](https://read.significanthobbies.com/index.md): Product brief without JS\n- [This index](https://read.significanthobbies.com/llms.txt)\n\n## Optional\n\n- [Foundry](https://sassmaker.com): Parent fleet showcase\n',
-  indexMd:
-    '# Reader\n\nResearch library for capture, annotation, and AI chat over your reading.\n\n## Privacy\n\nPersonal libraries require auth and are not agent-indexed. Public marketing surfaces only.\n\n## Agent entrypoints\n\n- https://read.significanthobbies.com/llms.txt\n- https://read.significanthobbies.com/api/ai\n- https://read.significanthobbies.com/index.md\n',
-  catalog: {
-    name: 'Reader',
-    version: '1',
-    url: 'https://read.significanthobbies.com',
-    llms: 'https://read.significanthobbies.com/llms.txt',
-    llmsFull: 'https://read.significanthobbies.com/llms-full.txt',
-    sitemap: 'https://read.significanthobbies.com/sitemap.xml',
-    robots: 'https://read.significanthobbies.com/robots.txt',
-    markdown: {
-      suffix: '.md',
-      negotiation: true,
+  "name": "Reader",
+  "url": "https://read.significanthobbies.com",
+  "llmsFullTxt": "# Reader — full agent brief\n\nResearch library: capture, annotate, and AI-chat over your reading — private by default.\n\n## Index\n\n# Reader\n\nResearch library for capture, annotation, and AI chat over your reading.\n\n## Privacy\n\nPersonal libraries require auth and are not agent-indexed. Public marketing surfaces only.\n\n## Agent entrypoints\n\n- https://read.significanthobbies.com/llms.txt\n- https://read.significanthobbies.com/api/ai\n- https://read.significanthobbies.com/index.md\n\n## Product links\n\n- Home: https://read.significanthobbies.com/ — App (auth for library)\n- Login: https://read.significanthobbies.com/login — Sign in\n\n## Machine surfaces\n\n- https://read.significanthobbies.com/llms.txt\n- https://read.significanthobbies.com/llms-full.txt\n- https://read.significanthobbies.com/api/ai\n- https://read.significanthobbies.com/index.md\n- https://read.significanthobbies.com/sitemap.xml\n- https://read.significanthobbies.com/robots.txt\n\n## Contact / fleet\n\n- Fleet: https://sassmaker.com\n- Agent email for directory verification: sarthakagrawal@agentmail.to\n",
+  "llmsTxt": "# Reader\n\n> Research library: capture, annotate, and AI-chat over your reading — private by default.\n\n## Product\n\n- [Home](https://read.significanthobbies.com/): App (auth for library)\n- [Login](https://read.significanthobbies.com/login): Sign in\n\n## Machine surfaces\n\n- [Agent catalog](https://read.significanthobbies.com/api/ai): JSON inventory of public surfaces\n- [Homepage markdown](https://read.significanthobbies.com/index.md): Product brief without JS\n- [This index](https://read.significanthobbies.com/llms.txt)\n\n## Optional\n\n- [Foundry](https://sassmaker.com): Parent fleet showcase\n",
+  "indexMd": "# Reader\n\nResearch library for capture, annotation, and AI chat over your reading.\n\n## Privacy\n\nPersonal libraries require auth and are not agent-indexed. Public marketing surfaces only.\n\n## Agent entrypoints\n\n- https://read.significanthobbies.com/llms.txt\n- https://read.significanthobbies.com/api/ai\n- https://read.significanthobbies.com/index.md\n",
+  "catalog": {
+    "name": "Reader",
+    "version": "1",
+    "url": "https://read.significanthobbies.com",
+    "llms": "https://read.significanthobbies.com/llms.txt",
+    "llmsFull": "https://read.significanthobbies.com/llms-full.txt",
+    "sitemap": "https://read.significanthobbies.com/sitemap.xml",
+    "robots": "https://read.significanthobbies.com/robots.txt",
+    "markdown": {
+      "suffix": ".md",
+      "negotiation": true
     },
-    surfaces: [
+    "surfaces": [
       {
-        id: 'home',
-        url: 'https://read.significanthobbies.com/',
-        md: 'https://read.significanthobbies.com/index.md',
-        kind: 'spa',
-        description: 'Product home',
+        "id": "home",
+        "url": "https://read.significanthobbies.com/",
+        "md": "https://read.significanthobbies.com/index.md",
+        "kind": "spa",
+        "description": "Product home"
       },
       {
-        id: 'login',
-        url: 'https://read.significanthobbies.com/login',
-        md: null,
-        kind: 'static',
-        description: 'Sign in',
-      },
+        "id": "login",
+        "url": "https://read.significanthobbies.com/login",
+        "md": null,
+        "kind": "static",
+        "description": "Sign in"
+      }
     ],
-    auth: {
-      public: true,
-      notes: 'Auth-walled app routes are not agent-indexed unless listed here.',
-    },
-  },
+    "auth": {
+      "public": true,
+      "notes": "Auth-walled app routes are not agent-indexed unless listed here."
+    }
+  }
 };
 
 /**
