@@ -16,11 +16,16 @@ Cloudflare Workers runtime (no full browser process).
   `/api/snapshot` flow. `linkedom` is a pure-JS DOM parser that replaced
   Playwright (too heavy/slow for Workers). HTML is sanitised before storage
   and re-sanitised on read.
-- **PDF viewing (client):** `pdfjs-dist` + `react-pdf` in
-  `src/components/PDFReaderClient.tsx`. The pdfjs web worker is loaded from
-  `public/pdf.worker.min.mjs` (local static asset), not from a CDN.
-- **PDF text extraction (server, at upload):** `pdf-parse` (legacy) — text is
-  stored in `articles.extracted_text`.
+- **PDF viewing (client):** `pdfjs-dist` + `react-pdf`. The pdfjs `workerSrc` is
+  configured in `src/components/PDFViewer.tsx` via
+  `new URL('pdfjs-dist/build/pdf.worker.min.mjs', import.meta.url)`, so Vite
+  bundles the worker locally into `dist/assets/` — it is never fetched from a
+  CDN. (`PDFReaderClient.tsx` renders the viewer UI around `PDFViewer`.)
+- **PDF text extraction:** the `articles.extracted_text` column exists, but text
+  is supplied by the client in the article payload (e.g. the Chrome extension's
+  in-browser extraction). There is no server-side `pdf-parse` extraction at
+  upload; the upload route only stores the binary in R2. TBD: whether the webapp
+  populates `extracted_text` for direct PDF uploads.
 
 ## Rationale
 
@@ -38,9 +43,10 @@ Cloudflare Workers runtime (no full browser process).
 
 - `linkedom` is less complete than JSDOM for edge-case DOM APIs; acceptable
   for article extraction where Readability handles the parsing.
-- `pdf-parse` runs at upload time and stores extracted text; re-extraction
-  requires re-upload. PDF metadata (page count, file size, storage path) is
-  stored in `articles.pdf_metadata`.
+- Server-side PDF text extraction is not performed at upload; `extracted_text`
+  depends on client-supplied text, so direct webapp PDF uploads may lack it.
+  PDF metadata (page count, file size, storage path) is stored in
+  `articles.pdf_metadata`.
 
 ## Alternatives considered
 

@@ -16,8 +16,11 @@ No deploy. No secrets beyond what `validate:env:build` needs (none for
 
 ## Deploy — `.github/workflows/deploy.yml`
 
-**Triggers:** `workflow_dispatch` only (manual). A `deploy-preview` job runs
-on PRs (build only, no deploy).
+**Triggers:** `workflow_dispatch` only (manual). The file also defines a
+`deploy-preview` job gated on `github.event_name == 'pull_request'` (build
+only, no deploy), but since the workflow's `on:` block lists only
+`workflow_dispatch`, that job does not currently fire on PRs. (Re-add a
+`pull_request` trigger to enable it.)
 
 **Production steps:** checkout → pnpm setup → Node 24 →
 `pnpm install --frozen-lockfile` → `validate:env:build` → validate Cloudflare

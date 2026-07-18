@@ -7,7 +7,7 @@ How a request moves through the system. Read alongside
 
 ```
 request → export default { fetch }
-  1. handleAgentEdge(request)            ← /llms.txt, /llms-full.txt, /index.md, /api/ai, /robots.txt
+  1. handleAgentEdge(request)            ← /llms.txt, /llms-full.txt, /index.md, /sitemap.xml, /robots.txt, /api/ai
        returns early if matched
   2. if pathname.startsWith('/api/') → api.fetch(request, env, ctx)
        Hono router; onError → 500 JSON; outer try/catch → 500 JSON
@@ -66,15 +66,18 @@ Migrations live in `drizzle/` (`0000_baseline.sql`, `0001_memories.sql`,
 
 ## PDF storage (`src/lib/storage.ts` + `src/worker/routes/pdf.ts`)
 
-- Upload: `POST /api/pdfs/upload` (multipart) → validate size (10 MB) →
-  validate magic bytes (`%PDF-`) → `PDFS_BUCKET.put('pdfs/<userId>/<uuid>.pdf')`
-  → store `blob://<storageKey>` as `articles.url` → optional `pdf-parse` text
-  extraction → return article record.
+- Upload: `POST /api/pdfs/upload` (multipart) → validate magic bytes (`%PDF-`)
+  → `validatePDFFile` size check (10 MB, `src/lib/pdf-service.ts`) →
+  `PDFS_BUCKET.put('pdfs/<userId>/<timestamp>-<sanitized-filename>')`
+  (`src/lib/storage.ts`) → store `blob://<storageKey>` as `articles.url` →
+  return the created article record. Any `extractedText` is supplied by the
+  client in the article payload; the upload route does not run server-side PDF
+  text extraction.
 - Download: `GET /api/pdfs/:id/download` → auth + ownership check →
-  `PDFS_BUCKET.get(storageKey)` → stream bytes with `application/pdf` content
-  type. Clients never receive a raw R2 URL.
-- The R2 binding is unavailable in `next dev`-style local dev; the binding is
-  set via `bindWorkerEnv()` from `wrangler dev` / production.
+  `fetchPdfBytes(storageKey)` (`PDFS_BUCKET.get`) → stream bytes with
+  `application/pdf` content type. Clients never receive a raw R2 URL.
+- The R2 binding is only present under `wrangler dev` / production; it is wired
+  in via `bindWorkerEnv()`.
 
 ## AI routing (`src/lib/ai-cloudflare.ts` + `src/worker/routes/ai.ts`)
 
@@ -127,10 +130,12 @@ originate from the extension's origin). Flow:
 ## Caching
 
 - `caches.default` (Cloudflare edge cache) is used in `articles-db.ts` for
-  article reads (5 min TTL), guarded by `globalThis.caches?.default` because it
-  is unavailable in `next dev`-style local dev. Cache must be explicitly busted
-  on writes (see `lists-db.ts`).
-- Security headers set `Cache-Control: public, max-age=300, s-maxage=600,
-  stale-while-revalidate=86400` on `text/html` responses so deploys propagate
-  quickly without sacrificing TTFB.
+  article reads (5 min TTL, `ARTICLE_CACHE_TTL_SECONDS = 5 * 60`), guarded by
+  `globalThis.caches?.default` because it is unavailable in some local-dev
+  runtimes. Cached responses carry
+  `Cache-Control: public, max-age=300, s-maxage=300`. Cache must be explicitly
+  busted on writes (see `lists-db.ts`).
+- The Worker forces `Cache-Control: no-cache, no-store, must-revalidate` on
+  every `text/html` response (`withSecurityHeaders` in `src/worker.ts`) so SPA
+  shell deploys take effect immediately.
 - `/api/auth/client-config` is sent with `Cache-Control: no-store`.

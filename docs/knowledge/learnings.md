@@ -23,8 +23,8 @@ not yet available at import time.
 
 `articles-db.ts` caches article reads at the edge (5 min TTL) using
 `globalThis.caches?.default`. The guard is required because `caches.default`
-does not exist in `next dev`-style local dev. Cache must be explicitly busted
-on writes (see `lists-db.ts`).
+does not exist in some local-dev runtimes (e.g. the pure-Vite SPA dev server).
+Cache must be explicitly busted on writes (see `lists-db.ts`).
 
 ### L3: Smart Placement is essential for Turso latency
 
@@ -109,18 +109,20 @@ cannot attribute the 9500 Neuron/day fleet-wide cap.
 
 ### L12: pdfjs web worker must be loaded locally
 
-pdfjs-dist defaults to loading its web worker from `unpkg.com`. This fails
+pdfjs-dist defaults to loading its web worker from a CDN. This fails
 in the extension context (CSP `script-src 'self'` blocks remote scripts)
-and in the CF Workers build sandbox. The worker is loaded from
-`public/pdf.worker.min.mjs` (local static asset) via explicit
-`GlobalWorkerOptions.workerSrc`.
+and in the CF Workers build sandbox. In the webapp, `src/components/PDFViewer.tsx`
+sets `GlobalWorkerOptions.workerSrc` to
+`new URL('pdfjs-dist/build/pdf.worker.min.mjs', import.meta.url)`, so Vite
+bundles the worker locally into `dist/assets/` instead of fetching it remotely.
 
 → [architecture/decisions/0007-content-extraction.md](../architecture/decisions/0007-content-extraction.md)
 
 ### L13: Extension auth uses hashed API keys, not session cookies
 
 MV3 extensions cannot share the same-origin session cookie. The `api_keys`
-table stores HMAC-hashed tokens with a visible `rdr_` prefix. The extension
+table stores SHA-256-hashed tokens (`sha256Hex` in `src/lib/api-keys.ts`) with
+a visible `rdr_` prefix. The extension
 sends the raw token as a Bearer header; the server hashes it for lookup.
 
 → [architecture/decisions/0006-mv3-side-panel.md](../architecture/decisions/0006-mv3-side-panel.md)

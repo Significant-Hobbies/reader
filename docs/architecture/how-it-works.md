@@ -68,7 +68,7 @@ story.
 
 ```mermaid
 flowchart TD
-    U[User pastes a URL in the SPA] --> SNAP["POST /api/snapshot<br/>(misc.ts)"]
+    U[User pastes a URL in the SPA] --> SNAP["GET /api/snapshot?url=…<br/>(misc.ts)"]
     SNAP --> SF["validateExternalUrl + safe-fetch<br/>(SSRF boundary)"]
     SF --> READ["Readability + linkedom<br/>extract clean article"]
     READ --> SAVE["POST /api/articles<br/>createArticleRecord (articles-db.ts)"]
@@ -78,7 +78,7 @@ flowchart TD
     CACHE -->|hit| RENDER[ReaderView renders]
     CACHE -->|miss| DB
     DB --> RENDER
-    RENDER --> NOTE["Select text → Add note<br/>PATCH /api/articles/:id (notes JSON)"]
+    RENDER --> NOTE["Select text → Add note<br/>PUT /api/articles/:id (notes JSON)"]
     NOTE --> DB
     RENDER --> ASK["Select text → Ask AI<br/>POST /api/ai/chat"]
     ASK --> GW["getLanguageModel → AI gateway<br/>(or BYOK / local-ai)"]
@@ -90,7 +90,7 @@ flowchart TD
     AUTH -.guards.-> ASK
 ```
 
-1. **Capture.** You paste a URL. The SPA calls `POST /api/snapshot`
+1. **Capture.** You paste a URL. The SPA calls `GET /api/snapshot?url=…`
    (`src/worker/routes/misc.ts`). The Worker — not the browser — fetches the
    page through the safe-fetch boundary, then runs Mozilla `Readability` over a
    `linkedom`-parsed DOM to strip nav/ads/chrome down to clean article HTML and
@@ -111,7 +111,7 @@ flowchart TD
    the sanitised HTML with the user's theme/font/size preferences.
 
 4. **Annotate.** Selecting text surfaces *Add note* / *Ask AI*. A note is a
-   `PATCH /api/articles/:id` that appends to the article's `notes` JSON column
+   `PUT /api/articles/:id` that updates the article's `notes` JSON column
    (stored as text, typed via Drizzle's `$type<T>()`) — annotations live *with*
    the article rather than in a separate table.
 
