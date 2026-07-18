@@ -1,7 +1,7 @@
 # SEO Landing Keywords — Read-it-Later Annotation & Note Capture
 
 > **v2** — 30 search intents for read-it-later annotation / note capture. Grouped by problem, alternative, comparison, how-to.
-> See also: [comparison-page-draft.md](./create-comparison-page-draft.md) | [use-case-page-draft.md](./create-use-case-page-draft.md) | [how-it-works-page-draft.md](./create-how-it-works-page-draft.md)
+> See also: [comparison-page-draft.md](./create-comparison-page-draft.md) | [use-case-page-draft.md](./create-use-case-page-draft.md) | [how-it-works-page-draft.md](./create-how-it-works-page-draft.md) | [objection-handling-faq.md](./create-objection-handling-faq.md)
 
 Focus: people who save articles but forget them, want to annotate while reading, or want to capture notes from online research.
 

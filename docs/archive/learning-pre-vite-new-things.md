@@ -1,7 +1,7 @@
 # New things to learn — reader
 
 Technologies encountered during reader development that are worth understanding in depth.
-See also: [external-references.md](./external-references.md)
+See also: [external-references.md](./learning-pre-vite-external-references.md)
 
 ---
 
