@@ -1,7 +1,7 @@
 # AGENTS.md — Reader
 
 > Agent bootloader. Concise by design — links to [`docs/`](docs/index.md) for
-> depth. Also follow the shared fleet standard at [`../AGENTS.md`](../AGENTS.md):
+> depth. Also follow the [shared fleet standard](https://github.com/sass-maker/fleet-workspace/blob/main/AGENTS.md):
 > treat this repository as owned product code, protect production stability,
 > keep changes scoped, verify work, and record durable follow-up tasks when
 > something remains incomplete or blocked.
