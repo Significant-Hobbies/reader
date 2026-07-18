@@ -30,7 +30,10 @@
     "prepare": "husky",
     "format": "biome format --write .",
     "format:check": "biome format .",
-    "check": "biome check ."
+    "check": "biome check .",
+    "docs:check": "node scripts/check-docs.mjs",
+    "docs:dev": "blume dev",
+    "docs:build": "blume build"
   },
   "packageManager": "pnpm@10.33.2",
   "engines": {

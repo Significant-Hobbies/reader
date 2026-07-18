@@ -1,4 +1,13 @@
-# Engineering Lessons — Reader
+# Engineering Lessons — Reader (pre-Vite, historical)
+
+> **Historical record.** These lessons were captured while Reader ran on
+> Next.js + `@opennextjs/cloudflare`. The app has since migrated to a Vite +
+> React 19 SPA with a Hono Worker, so the OpenNext-specific lessons
+> (`scripts/patch-opennext.mjs`, `next.config.ts`, `WeakRef` patches,
+> `serverExternalPackages`, etc.) describe code that no longer exists in the
+> repo. They are preserved verbatim because the underlying failure modes and
+> reasoning are still useful context. Current, applicable lessons live in
+> [`docs/knowledge/learnings.md`](../knowledge/learnings.md).
 
 Concrete lessons evidenced by code, scripts, or git history. Each links to
 the decision record where relevant.

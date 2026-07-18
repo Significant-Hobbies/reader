@@ -83,10 +83,11 @@ function withSecurityHeaders(response: Response): Response {
   for (const [key, value] of Object.entries(SECURITY_HEADERS)) {
     headers.set(key, value);
   }
-  // Prevent edge caching of HTML pages (SPA shell) so deploys take effect immediately.
+  // Allow edge caching of static HTML (landing page) with short browser TTL
+  // and SWR so deploys propagate quickly without sacrificing TTFB on slow networks.
   const contentType = headers.get('content-type') ?? '';
   if (contentType.includes('text/html')) {
-    headers.set('Cache-Control', 'no-cache, no-store, must-revalidate');
+    headers.set('Cache-Control', 'public, max-age=300, s-maxage=600, stale-while-revalidate=86400');
   }
   return new Response(response.body, {
     status: response.status,

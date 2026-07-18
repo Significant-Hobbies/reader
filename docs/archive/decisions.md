@@ -1,4 +1,13 @@
-# Architecture Decision Records — Reader
+# Architecture Decision Records — Reader (pre-Vite, historical)
+
+> **Historical record.** These ADRs were authored while Reader ran on
+> Next.js + OpenNext on Cloudflare Workers. The app has since migrated to a
+> Vite + React 19 SPA backed by a Hono Worker (see
+> [`docs/architecture/decisions/`](../architecture/decisions/) for current
+> ADRs). This file is preserved verbatim for context and git history.
+> ADR-01 (Next.js + OpenNext) is **superseded** by the Vite/Hono migration;
+> ADR-02 through ADR-07 largely still apply but reference the old runtime in
+> places. Read with the migration in mind.
 
 Decisions are listed in rough chronological order. Rationale is drawn from
 code comments, plan docs, and git history. Unknown rationale is flagged
