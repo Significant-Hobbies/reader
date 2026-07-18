@@ -1,0 +1,172 @@
+---
+import Layout from '@/layouts/Layout.astro';
+
+const TITLE = 'Library Reader — FAQ';
+const DESCRIPTION =
+  'Frequently asked questions about Library Reader — a personal research library for web articles and PDFs with highlights, notes, AI chat, and a Chrome extension.';
+
+const SITE_URL = 'https://read.significanthobbies.com';
+
+const faqs = [
+  {
+    q: 'How can I save and annotate web articles for research?',
+    a: 'Paste a URL into Library Reader and the page is cleaned with Mozilla Readability into a distraction-free reader view. Select any text to add a persistent highlight or open the side panel for notes — annotations anchor to the exact text you marked so they survive across visits. You can also capture the current page in one click from the Chrome extension.',
+  },
+  {
+    q: "What's the best tool to build a personal research library with PDF support?",
+    a: 'Library Reader keeps articles and PDFs in one library. Paste a URL and the page is cleaned with Readability; upload a PDF and it goes into the same library with text extraction so it is searchable and chat-able. For signed-in users, PDFs are stored in Cloudflare R2 with ownership enforced through a proxy; in local mode the PDF stays in your browser.',
+  },
+  {
+    q: 'How do I organize articles with tags and projects for research?',
+    a: 'Every article can be tagged, added to lists, and placed on boards. Boards are a Kanban view (built on @xyflow/react) for arranging research projects spatially — drag cards between columns as a piece moves from "to read" to "reading" to "done." Lists group related sources, and tags cross-cut both for fast retrieval.',
+  },
+  {
+    q: 'Can I chat with AI about my saved articles and PDFs?',
+    a: 'Yes. The notes side panel includes an AI chat that runs over the article or PDF you have open. You bring your own key — OpenAI, Anthropic, or Gemini — stored in your browser. There is also a gateway option and a local-AI mode for development. We never proxy your key through a server.',
+  },
+  {
+    q: 'What tool lets me highlight text and add notes to web articles?',
+    a: "Library Reader's reader view supports persistent highlights and a side panel for notes. Annotations anchor to the exact text you marked, so they survive across visits and reloads. The same selection flow lets you send a quote straight to AI chat.",
+  },
+  {
+    q: 'How can I search across all my saved articles and notes?',
+    a: 'The library has built-in full-text search across article bodies, titles, and your notes. Results surface matches from both web articles and PDFs (PDFs have their text extracted on upload), so one query covers your whole library.',
+  },
+  {
+    q: 'Is there a read-it-later app with AI chat capabilities?',
+    a: 'Library Reader is a read-it-later library with AI chat built in. Save a page (via paste or the Chrome extension), read it in a cleaned typography-first view, then ask questions about it in the side panel using your own AI key. Summaries and Q&A both run over the text you saved.',
+  },
+  {
+    q: 'How do I extract key points from articles automatically?',
+    a: 'Open any saved article or PDF and generate an AI summary from the reader view. The summary pulls the key points out of the full text — useful for long articles and PDFs you want to triage before reading in full.',
+  },
+  {
+    q: "What's the best way to manage research papers and web articles together?",
+    a: 'Library Reader treats PDFs and web articles as first-class peers in the same library. Upload a PDF and its text is extracted for search and chat; paste a URL and the page is cleaned with Readability. Both appear in the same lists, boards, and search results, so your research papers and web sources live in one place.',
+  },
+  {
+    q: "Can I get AI summaries of articles I've saved?",
+    a: 'Yes. Each saved article or PDF has a summary action that generates an AI summary over its full text. Use your own OpenAI, Anthropic, or Gemini key, or the free-ai gateway.',
+  },
+  {
+    q: 'How do I track reading progress across multiple articles?',
+    a: 'Use boards to track reading progress Kanban-style — move cards across columns like "to read," "reading," and "done." Lists and tags give you additional ways to slice what is in flight, and the library preserves your highlights and notes so you can pick up where you left off.',
+  },
+  {
+    q: 'What tool combines article saving, annotation, and AI assistance?',
+    a: 'Library Reader does all three in one place: save (paste URL, drop PDF, or one-click from the Chrome extension), annotate (persistent highlights + side-panel notes anchored to exact text), and AI assistance (chat and summaries over the open source using your own key).',
+  },
+  {
+    q: 'How can I organize my research into projects?',
+    a: 'Boards give each research project a Kanban canvas — drag sources between columns to reflect status. Combine boards with lists (grouping) and tags (cross-cutting labels) so a single source can belong to a project board and still be found by topic.',
+  },
+  {
+    q: 'Is there a Chrome extension for saving articles with annotations?',
+    a: 'Yes. The Library Reader Chrome MV3 extension captures the page you are on (cleaned via Readability) and saves it to your library in one click. It also exposes the Listen control so you can have any page read aloud without leaving it, and a side panel for chat.',
+  },
+  {
+    q: "What's the best personal knowledge base for web content?",
+    a: 'Library Reader is a personal knowledge base for web content and PDFs: cleaned articles, persistent highlights, side-panel notes, full-text search, tags, lists, and boards — plus AI chat and summaries over everything you save. It works in your browser without an account, and syncs when you sign in with Google.',
+  },
+  {
+    q: 'How do I generate intelligent summaries of saved articles?',
+    a: 'Open any saved article or PDF and choose the summary action. The AI reads the full extracted text and returns the key points. Bring your own OpenAI, Anthropic, or Gemini key, or use the free-ai gateway.',
+  },
+  {
+    q: 'Can I use my own AI API keys with a research tool?',
+    a: 'Yes. Library Reader lets you bring your own key — OpenAI, Anthropic, or Gemini — stored in your browser. There is also a gateway option and a local-AI mode for development. We never proxy your key through a server.',
+  },
+  {
+    q: 'What tool provides distraction-free reading with annotation?',
+    a: "Library Reader's reader view cleans articles with Mozilla Readability into a typography-first layout, then layers persistent highlights and a notes side panel on top. Select text to highlight or annotate; annotations anchor to the exact text so they survive across visits.",
+  },
+  {
+    q: 'How can I ask questions about my PDF documents?',
+    a: 'Upload a PDF to your library and its text is extracted on upload. Open it in the PDF reader and use the AI chat side panel to ask questions about the document — answers are grounded in the extracted text. The same chat works on web articles.',
+  },
+  {
+    q: 'Is there a research library that supports both articles and PDFs?',
+    a: 'Library Reader is built around exactly that: one library for web articles (cleaned via Readability) and PDFs (text extracted on upload). Both share the same highlights, notes, tags, lists, boards, search, and AI chat, so articles and PDFs are first-class peers.',
+  },
+];
+
+const faqJsonLd = {
+  '@context': 'https://schema.org',
+  '@type': 'FAQPage',
+  mainEntity: faqs.map((f) => ({
+    '@type': 'Question',
+    name: f.q,
+    acceptedAnswer: {
+      '@type': 'Answer',
+      text: f.a,
+    },
+  })),
+};
+---
+
+<Layout title={TITLE} description={DESCRIPTION}>
+  <div class="page">
+    <header class="header">
+      <div class="header-inner">
+        <a class="brand" href="/">
+          <span class="brand-mark" aria-hidden="true">L</span>
+          <span>Library Reader</span>
+        </a>
+        <nav class="nav-links" aria-label="Primary">
+          <a href="/#features">Features</a>
+          <a href="/#how">How it works</a>
+          <a href="/faq">FAQ</a>
+          <a href="/extension">Extension</a>
+        </nav>
+        <a class="btn-signin" href="/login">Sign in</a>
+      </div>
+    </header>
+
+    <section class="hero">
+      <div class="hero-inner">
+        <span class="eyebrow">FAQ</span>
+        <h1>Questions about Library Reader</h1>
+        <p class="hero-lede">
+          A personal research library for web articles and PDFs — capture, read, highlight,
+          listen, and chat with AI over your own sources. Here are the things people ask most.
+        </p>
+      </div>
+    </section>
+
+    <section class="faq">
+      <h2>Frequently asked questions</h2>
+      <div class="faq-list">
+        {faqs.map((f) => (
+          <details class="faq-item">
+            <summary>{f.q}</summary>
+            <p>{f.a}</p>
+          </details>
+        ))}
+      </div>
+    </section>
+
+    <section class="closing">
+      <div class="closing-inner">
+        <h2>Start your library</h2>
+        <p>
+          Save your first article or PDF. It works in your browser right now — sign in later if you
+          want to sync.
+        </p>
+        <a class="btn-primary" href="/library">
+          Save your first article
+          <span aria-hidden="true">→</span>
+        </a>
+        <p class="footer-links">
+          <a href="/about">About</a> · <a href="/privacy">Privacy</a> ·
+          <a href="/extension">Chrome extension</a>
+        </p>
+      </div>
+    </section>
+
+    <footer class="site-footer">
+      Your reading list is not the same as your understanding. Library Reader helps with the gap.
+    </footer>
+  </div>
+
+  <script type="application/ld+json" set:html={JSON.stringify(faqJsonLd)} />
+</Layout>

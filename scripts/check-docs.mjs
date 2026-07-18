@@ -18,8 +18,8 @@
 //
 // Run: pnpm docs:check  OR  node scripts/check-docs.mjs
 
-import { readFileSync, readdirSync, existsSync } from "node:fs";
-import { dirname, join, relative, resolve, sep } from "node:path";
+import { readFileSync, readdirSync, existsSync } from 'node:fs';
+import { dirname, join, relative, resolve, sep } from 'node:path';
 
 const ROOT = resolve(new URL('..', import.meta.url).pathname);
 const DOCS = join(ROOT, 'docs');
@@ -45,12 +45,7 @@ const REQUIRED_FILES = [
   'STATUS.md',
 ];
 
-const ROOT_FILES_SCANNED_FOR_LINKS = [
-  'AGENTS.md',
-  'STATUS.md',
-  'PROJECT_STATUS.md',
-  'README.md',
-];
+const ROOT_FILES_SCANNED_FOR_LINKS = ['AGENTS.md', 'STATUS.md', 'PROJECT_STATUS.md', 'README.md'];
 
 // Markdown link regex: [text](target)
 // Captures the target. Skips code spans inlined in text naively.
@@ -72,18 +67,19 @@ function walkMd(dir) {
 
 function listAllMdFiles() {
   const docsFiles = walkMd(DOCS);
-  const rootFiles = ROOT_FILES_SCANNED_FOR_LINKS.map((f) => join(ROOT, f)).filter(
-    (f) => existsSync(f)
+  const rootFiles = ROOT_FILES_SCANNED_FOR_LINKS.map((f) => join(ROOT, f)).filter((f) =>
+    existsSync(f)
   );
   return [...docsFiles, ...rootFiles];
 }
 
 function extractLinks(text) {
   const links = [];
-  let m;
   LINK_RE.lastIndex = 0;
-  while ((m = LINK_RE.exec(text)) !== null) {
-    links.push(m[1]);
+  while (true) {
+    const match = LINK_RE.exec(text);
+    if (match === null) break;
+    links.push(match[1]);
   }
   return links;
 }
@@ -184,9 +180,10 @@ function main() {
   }
 
   const docsFiles = walkMd(DOCS);
-  const orphans = findOrphans([...docsFiles, ...ROOT_FILES_SCANNED_FOR_LINKS
-    .map((f) => join(ROOT, f))
-    .filter((f) => existsSync(f))]);
+  const orphans = findOrphans([
+    ...docsFiles,
+    ...ROOT_FILES_SCANNED_FOR_LINKS.map((f) => join(ROOT, f)).filter((f) => existsSync(f)),
+  ]);
   for (const o of orphans) {
     warnings.push(`Orphan doc (no inbound link): ${o}`);
   }
@@ -207,7 +204,9 @@ function main() {
 
   const checkedCount = allFiles.length;
   if (errors.length === 0) {
-    console.log(`✓ ${checkedCount} Markdown file(s) checked — no broken links or missing required files.`);
+    console.log(
+      `✓ ${checkedCount} Markdown file(s) checked — no broken links or missing required files.`
+    );
   }
 
   if (warnings.length > 0) {

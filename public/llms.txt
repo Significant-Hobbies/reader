@@ -5,6 +5,7 @@
 ## Product
 
 - [Home](https://read.significanthobbies.com/): App (auth for library)
+- [FAQ](https://read.significanthobbies.com/faq): Frequently asked questions
 - [Login](https://read.significanthobbies.com/login): Sign in
 
 ## Machine surfaces

@@ -486,6 +486,22 @@ a {
   font-weight: 700;
 }
 
+.faq-intro {
+  margin: 0.75rem 0 0;
+  font-size: 0.875rem;
+  color: var(--lr-muted);
+}
+
+.faq-intro a {
+  color: var(--lr-accent-light);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.faq-intro a:hover {
+  color: var(--lr-fg);
+}
+
 .faq-list {
   margin-top: 2rem;
   border-radius: 0.75rem;
