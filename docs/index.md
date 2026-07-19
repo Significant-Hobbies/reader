@@ -8,7 +8,7 @@ For a fast agent briefing, read [AGENTS.md](../AGENTS.md) first, then this index
 
 ## Where to start
 
-- **New to the codebase?** → [product/overview.md](product/overview.md) → [product/features.md](product/features.md) → [architecture/overview.md](architecture/overview.md) → [development/setup.md](development/setup.md)
+- **New to the codebase?** → [product/overview.md](product/overview.md) → [product/features.md](product/features.md) → [architecture/how-it-works.md](architecture/how-it-works.md) → [architecture/overview.md](architecture/overview.md) → [development/setup.md](development/setup.md)
 - **On-call / deploying?** → [operations/deploy.md](operations/deploy.md) → [operations/runbooks/](operations/runbooks/)
 - **Why is X the way it is?** → [architecture/decisions/](architecture/decisions/) → [knowledge/learnings.md](knowledge/learnings.md)
 - **What broke before?** → [knowledge/failed-approaches.md](knowledge/failed-approaches.md) → [archive/](archive/)
@@ -26,6 +26,7 @@ docs/
     features.md                 # shipped feature inventory
     surfaces.md                 # production URLs + agent-indexing surfaces
   architecture/
+    how-it-works.md             # end-to-end walkthrough (start here)
     overview.md                 # Vite SPA + Hono Worker shape
     data-flow.md                # request flow, auth, storage, AI
     decisions/                  # current ADRs (one file per decision)
