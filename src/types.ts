@@ -120,7 +120,7 @@ export interface RssEntry {
 }
 
 // Board types
-export interface WebsiteNodeData {
+interface WebsiteNodeData {
   url: string;
   title: string;
   excerpt: string;
@@ -128,24 +128,24 @@ export interface WebsiteNodeData {
   articleId?: string;
 }
 
-export interface NoteNodeData {
+interface NoteNodeData {
   text: string;
   color: string;
   elementAnchor?: ElementAnchor;
 }
 
-export interface AIChatNodeData {
+interface AIChatNodeData {
   messages: AIChatMessage[];
   contextLabel?: string;
   elementAnchor?: ElementAnchor;
 }
 
-export interface IframeNodeData {
+interface IframeNodeData {
   url: string;
   title?: string;
 }
 
-export interface ReaderNodeData {
+interface ReaderNodeData {
   articleId: string;
   url: string;
   title: string;
@@ -183,7 +183,7 @@ export type BoardSummary = Pick<Board, 'id' | 'name' | 'createdAt' | 'updatedAt'
   nodeCount: number;
 };
 
-export interface SearchSnippet {
+interface SearchSnippet {
   field: string;
   text: string;
 }

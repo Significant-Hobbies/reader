@@ -1,10 +1,10 @@
 import { DOMParser } from 'linkedom';
 import sanitizeHtml from 'sanitize-html';
 
-export const MAX_OPML_BYTES = 1_000_000;
+const MAX_OPML_BYTES = 1_000_000;
 export const MAX_FEED_BYTES = 2_000_000;
-export const MAX_OPML_FEEDS = 500;
-export const MAX_FEED_ENTRIES = 200;
+const MAX_OPML_FEEDS = 500;
+const MAX_FEED_ENTRIES = 200;
 
 export interface OpmlSubscription {
   title: string;

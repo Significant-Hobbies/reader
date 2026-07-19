@@ -250,10 +250,6 @@ export function estimateReadingTimeFromHtml(html: string): number {
   return Math.max(1, Math.ceil(text.split(' ').length / 220));
 }
 
-export async function persistLocalNotes(articleId: string, notes: Note[]) {
-  return updateLocalArticle(articleId, { notes });
-}
-
 export async function updateLocalStatus(articleId: string, status: ArticleStatus) {
   return updateLocalArticle(articleId, { status });
 }

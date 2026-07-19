@@ -6,11 +6,11 @@ import { invalidateArticleCache, sanitizePlainText } from './articles-db';
 import { db } from './db/client';
 import { articles, lists } from './db/schema';
 
-export function favouritesListId(userId: string): string {
+function favouritesListId(userId: string): string {
   return `${userId}_favourites`;
 }
 
-export function readLaterListId(userId: string): string {
+function readLaterListId(userId: string): string {
   return `${userId}_read-later`;
 }
 
@@ -88,7 +88,7 @@ async function upsertDefaultList(params: {
   return rows[0];
 }
 
-export async function ensureDefaultLists(userId: string): Promise<List[]> {
+async function ensureDefaultLists(userId: string): Promise<List[]> {
   try {
     const [favouritesRow, readLaterRow] = await Promise.all([
       upsertDefaultList({

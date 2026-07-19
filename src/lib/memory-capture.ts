@@ -1,6 +1,6 @@
-export type MemoryCaptureKind = 'web_page' | 'blog_article' | 'pdf_document';
+type MemoryCaptureKind = 'web_page' | 'blog_article' | 'pdf_document';
 
-export interface MemoryAnnotation {
+interface MemoryAnnotation {
   id: number;
   text: string;
   quote?: string;

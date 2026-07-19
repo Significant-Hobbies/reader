@@ -101,11 +101,3 @@ export async function fetchPdfBytes(storageKey: string): Promise<{
     size: object.size ?? 0,
   };
 }
-
-/**
- * Delete a PDF from R2. Safe to call even if the key no longer exists —
- * R2 delete is idempotent.
- */
-export async function deletePdf(storageKey: string): Promise<void> {
-  await getBucket().delete(storageKey);
-}

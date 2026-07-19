@@ -11,7 +11,7 @@ import {
   normalizeMemoryCapture,
 } from './memory-capture';
 
-export function loadMemoryCaptureFixture(): {
+function loadMemoryCaptureFixture(): {
   captures: MemoryCaptureInput[];
   demoQueries: Record<string, string>;
 } {
@@ -22,7 +22,7 @@ export function loadMemoryCaptureFixture(): {
   return { captures: raw.captures, demoQueries: raw.demoQueries ?? {} };
 }
 
-export function loadBrowserMemoryFixtureSnapshots(): BrowserMemorySnapshotInput[] {
+function loadBrowserMemoryFixtureSnapshots(): BrowserMemorySnapshotInput[] {
   const raw = browserMemoryFixture as {
     snapshots: BrowserMemorySnapshotInput[];
   };

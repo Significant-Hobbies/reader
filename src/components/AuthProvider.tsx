@@ -6,7 +6,7 @@ import { trackReturnedOnce, trackSignupOnce } from '@/lib/analytics';
 
 type AuthClientModule = typeof import('@/lib/auth-client');
 
-export type AuthUser = {
+type AuthUser = {
   id: string | null;
   email: string | null;
   name: string | null;
