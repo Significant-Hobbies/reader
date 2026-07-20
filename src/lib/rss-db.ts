@@ -54,7 +54,7 @@ export async function listRssFeeds(userId: string): Promise<RssFeed[]> {
   }));
 }
 
-export async function findRssFeedByUrl(userId: string, feedUrl: string) {
+async function findRssFeedByUrl(userId: string, feedUrl: string) {
   const rows = await db
     .select()
     .from(rssFeeds)

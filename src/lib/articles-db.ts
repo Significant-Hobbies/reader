@@ -136,25 +136,14 @@ export function normalizeTags(payload: unknown): string[] {
 }
 
 /** Calculate reading time in minutes from HTML content (225 wpm). */
-export function calculateReadingTime(htmlContent: string): number {
+function calculateReadingTime(htmlContent: string): number {
   const plainText = sanitizePlainText(htmlContent);
   const words = plainText.split(/\s+/).filter((word) => word.length > 0);
   const WORDS_PER_MINUTE = 225;
   return Math.max(1, Math.round(words.length / WORDS_PER_MINUTE));
 }
 
-/** Format reading time for display. */
-export function formatReadingTime(minutes?: number): string {
-  if (!minutes || minutes < 1) return '< 1 min read';
-  if (minutes >= 60) {
-    const hours = Math.floor(minutes / 60);
-    const remainingMinutes = minutes % 60;
-    return remainingMinutes === 0 ? `${hours} hr read` : `${hours} hr ${remainingMinutes} min read`;
-  }
-  return `${minutes} min read`;
-}
-
-export function normalizeNotes(payload: unknown): Note[] {
+function normalizeNotes(payload: unknown): Note[] {
   if (!Array.isArray(payload)) return [];
   return payload
     .map((note) => {
@@ -172,7 +161,7 @@ export function normalizeNotes(payload: unknown): Note[] {
     .filter(Boolean) as Note[];
 }
 
-export function normalizeAIChatMessages(payload: unknown): AIChatMessage[] {
+function normalizeAIChatMessages(payload: unknown): AIChatMessage[] {
   if (!Array.isArray(payload)) return [];
   return payload
     .map((message) => {

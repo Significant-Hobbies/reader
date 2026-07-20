@@ -11,7 +11,7 @@ import { validateExternalUrl } from './url-validation';
 const REFRESH_CONCURRENCY = 4;
 const REFRESH_TIMEOUT_MS = 15_000;
 
-export interface RssRefreshResult {
+interface RssRefreshResult {
   feedId: string;
   title: string;
   inserted: number;

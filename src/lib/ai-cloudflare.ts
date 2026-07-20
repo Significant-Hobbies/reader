@@ -27,9 +27,6 @@ function createAIModel(
  */
 const DEFAULT_WORKERS_AI_MODEL = '@cf/meta/llama-3.3-70b-instruct-fp8-fast';
 
-/** Default Workers AI embedding model — 768 dims, ~0.5 Neurons/call. */
-export const DEFAULT_WORKERS_AI_EMBEDDING_MODEL = '@cf/baai/bge-base-en-v1.5';
-
 const FALLBACK_GATEWAY_BASE_URL = 'https://ai-gateway.sassmaker.com/v1';
 const PROJECT_ID = 'reader';
 
@@ -87,43 +84,4 @@ export function getLanguageModel({
       },
     }
   );
-}
-
-/**
- * Generate embeddings via the free-ai-gateway `/v1/embeddings` endpoint
- * (OpenAI-compatible). Returns null on failure so callers can fall back.
- */
-export async function embedTextsWithWorkersAI(
-  texts: string[],
-  modelId: string = DEFAULT_WORKERS_AI_EMBEDDING_MODEL
-): Promise<number[][] | null> {
-  if (texts.length === 0) return [];
-
-  try {
-    const response = await fetch(`${getGatewayBaseUrl()}/embeddings`, {
-      method: 'POST',
-      headers: {
-        'content-type': 'application/json',
-        authorization: `Bearer ${getGatewayApiKey() || 'free-ai-gateway'}`,
-        'x-gateway-project-id': PROJECT_ID,
-      },
-      body: JSON.stringify({
-        model: modelId,
-        input: texts,
-        project_id: PROJECT_ID,
-      }),
-    });
-
-    if (!response.ok) return null;
-
-    const json = (await response.json()) as {
-      data?: Array<{ embedding?: number[] }>;
-    };
-    const rows = (json.data ?? [])
-      .map((item) => item.embedding)
-      .filter((row): row is number[] => Array.isArray(row));
-    return rows.length > 0 ? rows : null;
-  } catch {
-    return null;
-  }
 }

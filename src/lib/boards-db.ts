@@ -129,7 +129,7 @@ function sanitizeBoardEdge(edge: unknown): BoardEdge | null {
   return result as unknown as BoardEdge;
 }
 
-export function sanitizeNodes(nodes: unknown): BoardNode[] {
+function sanitizeNodes(nodes: unknown): BoardNode[] {
   if (!Array.isArray(nodes)) return [];
   return nodes
     .map(sanitizeBoardNode)
@@ -137,7 +137,7 @@ export function sanitizeNodes(nodes: unknown): BoardNode[] {
     .slice(0, MAX_NODES);
 }
 
-export function sanitizeEdges(edges: unknown): BoardEdge[] {
+function sanitizeEdges(edges: unknown): BoardEdge[] {
   if (!Array.isArray(edges)) return [];
   return edges
     .map(sanitizeBoardEdge)

@@ -1,31 +1,31 @@
 import type { Article, Note } from '../types';
 
-export interface ResearchBriefCitation {
+interface ResearchBriefCitation {
   id: string;
   label: string;
   excerpt: string;
 }
 
-export interface ResearchBriefClaim {
+interface ResearchBriefClaim {
   id: string;
   text: string;
   citationIds: string[];
 }
 
-export interface SourceMapSource {
+interface SourceMapSource {
   id: string;
   title: string;
   url: string;
 }
 
-export interface SourceMapItem {
+interface SourceMapItem {
   id: string;
   topic: string;
   summary: string;
   sourceIds: string[];
 }
 
-export interface SourceMapContradiction extends SourceMapItem {
+interface SourceMapContradiction extends SourceMapItem {
   claimA: string;
   claimB: string;
 }

@@ -1,11 +1,10 @@
 import { createParser } from 'eventsource-parser';
 
-import { getLanguageModel } from './ai-cloudflare';
 import type { AIChatMessage } from './ai-config';
 
-export const MAX_API_KEY_LENGTH = 512;
-export const MAX_CHAT_MESSAGES = 24;
-export const MAX_CHAT_MESSAGE_LENGTH = 10_000;
+const MAX_API_KEY_LENGTH = 512;
+const MAX_CHAT_MESSAGES = 24;
+const MAX_CHAT_MESSAGE_LENGTH = 10_000;
 export const MAX_SYSTEM_PROMPT_LENGTH = 8_000;
 
 export const DEFAULT_SYSTEM_PROMPT =
@@ -56,23 +55,11 @@ export const toSDKMessages = (messages: AIChatMessage[]) =>
     content: message.content,
   }));
 
-export const parseResponseError = async (response: Response) => {
+const parseResponseError = async (response: Response) => {
   const raw = await response.text().catch(() => '');
   if (!raw) return `Provider returned ${response.status}`;
   return `Provider returned ${response.status}: ${raw.slice(0, 400)}`;
 };
-
-export const createLanguageModel = ({
-  endpointUrl,
-  apiKey,
-  model,
-  headers,
-}: {
-  endpointUrl: string;
-  apiKey: string;
-  model: string;
-  headers?: Record<string, string>;
-}) => getLanguageModel({ endpointUrl, apiKey, model, headers });
 
 export const createLocalAITextStream = async ({
   model,

@@ -1,6 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
-import type { Board, BoardSummary } from '../../../types';
+import type { BoardSummary } from '../../../types';
 
 export function useBoardList() {
   return useQuery<BoardSummary[]>({
@@ -14,22 +14,6 @@ export function useBoardList() {
       }
       return response.json();
     },
-  });
-}
-
-export function useBoard(id: string) {
-  return useQuery<Board>({
-    queryKey: ['board', id],
-    queryFn: async () => {
-      const response = await fetch(`/api/boards/${id}`);
-      if (!response.ok) {
-        const err = new Error('Failed to fetch board');
-        (err as Error & { status: number }).status = response.status;
-        throw err;
-      }
-      return response.json();
-    },
-    enabled: Boolean(id),
   });
 }
 
