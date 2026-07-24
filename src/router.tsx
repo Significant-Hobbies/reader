@@ -7,10 +7,24 @@ function lazyPage(module: () => Promise<{ default: ComponentType }>) {
   return module().then((m) => ({ Component: m.default }));
 }
 
+function RouteLoading() {
+  return (
+    <main
+      className="flex min-h-screen items-center justify-center bg-black px-5 text-gray-100"
+      aria-busy="true"
+    >
+      <p role="status" className="text-sm text-gray-400">
+        Loading Reader…
+      </p>
+    </main>
+  );
+}
+
 export const router = createBrowserRouter([
   {
     path: '/',
     element: <RootLayout />,
+    hydrateFallbackElement: <RouteLoading />,
     children: [
       { path: 'about', lazy: () => lazyPage(() => import('./pages/AboutPage')) },
       { path: 'privacy', lazy: () => lazyPage(() => import('./pages/PrivacyPage')) },
