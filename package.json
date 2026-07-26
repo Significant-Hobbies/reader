@@ -12,7 +12,7 @@
     "build": "node scripts/validate-env.mjs build && vite build",
     "cf:build": "pnpm build && pnpm --filter ./landing-astro build && node scripts/overlay-astro-landing.mjs",
     "preview": "vite preview",
-    "deploy": "pnpm validate:env:deploy && pnpm cf:build && pnpm exec wrangler deploy",
+    "deploy": "pnpm validate:env:deploy && pnpm cf:build && pnpm exec wrangler deploy --tag \"$(git rev-parse HEAD)\"",
     "lint": "biome check .",
     "type-check": "pnpm typecheck",
     "typecheck": "tsc --noEmit -p tsconfig.app.json && tsc --noEmit -p tsconfig.worker.json",
