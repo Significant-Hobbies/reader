@@ -1,3 +1,4 @@
+import { createAuthClient as createVanillaAuthClient } from 'better-auth/client';
 import { createAuthClient } from 'better-auth/react';
 import { oneTapClient } from 'better-auth/client/plugins';
 
@@ -24,7 +25,7 @@ export async function startGoogleOneTap(callbackPath = '/library'): Promise<void
   const { googleClientId } = (await response.json()) as AuthClientConfig;
   if (!googleClientId) return;
 
-  const client = createAuthClient({
+  const client = createVanillaAuthClient({
     baseURL,
     plugins: [
       oneTapClient({
