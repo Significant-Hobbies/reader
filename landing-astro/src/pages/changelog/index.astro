@@ -1,0 +1,98 @@
+---
+import Layout from '@/layouts/Layout.astro';
+
+const repository = 'https://github.com/Significant-Hobbies/reader';
+const releases = [
+  {
+    date: '2026-07-13',
+    title: 'RSS and Atom reading joined the library',
+    outcomes: [
+      'Authenticated readers can import OPML, add or remove feeds, refresh them on demand, and track unread items.',
+      'A feed item can be saved directly into the same article and PDF library for annotation and later research.',
+    ],
+  },
+  {
+    date: '2026-07-03',
+    title: 'Memory capture became durable',
+    outcomes: [
+      'Saved research memories gained authenticated persistence, search, and a dedicated reading surface.',
+      'Existing browser memories can be imported into the account-backed collection.',
+    ],
+  },
+  {
+    date: '2026-07-02',
+    title: 'Safer failure recovery',
+    outcomes: [
+      'Unhandled API and Worker errors now return a controlled response instead of breaking the request path.',
+      'A React error boundary gives the library a recovery surface when a page fails to render.',
+    ],
+  },
+  {
+    date: '2026-06-20',
+    title: 'Reader moved to a faster app shell',
+    outcomes: [
+      'The product moved to a Vite and React SPA backed by a focused Hono Worker while preserving its production identity.',
+      'Articles, PDFs, highlights, notes, boards, lists, search, and AI-assisted reading stayed together in one library.',
+    ],
+  },
+];
+---
+
+<Layout
+  title="Changelog — Library Reader"
+  description="Meaningful improvements to Library Reader’s capture, reading, annotation, and research workflows."
+  canonicalPath="/changelog"
+>
+  <div class="page">
+    <header class="header">
+      <div class="header-inner">
+        <a class="brand" href="/">
+          <span class="brand-mark" aria-hidden="true">L</span>
+          <span>Library Reader</span>
+        </a>
+        <nav class="nav-links" aria-label="Site">
+          <a href="/#features">Features</a>
+          <a href="/faq">FAQ</a>
+          <a aria-current="page" href="/changelog">Changelog</a>
+        </nav>
+        <a class="btn-signin" href="/login">Sign in</a>
+      </div>
+    </header>
+
+    <main class="changelog-main">
+      <header class="changelog-header">
+        <span class="eyebrow">Product history</span>
+        <h1>Changelog</h1>
+        <p>
+          Meaningful improvements to saving, reading, annotating, and revisiting your research.
+        </p>
+        <nav aria-label="Project links">
+          <a href={`${repository}/issues`}>Roadmap</a>
+          <a href={repository}>Source</a>
+        </nav>
+      </header>
+
+      <ol class="changelog-list">
+        {
+          releases.map((release) => (
+            <li>
+              <article class="changelog-entry">
+                <time datetime={release.date}>
+                  {new Date(`${release.date}T00:00:00`).toLocaleDateString('en-US', {
+                    year: 'numeric',
+                    month: 'long',
+                    day: 'numeric',
+                  })}
+                </time>
+                <h2>{release.title}</h2>
+                <ul>
+                  {release.outcomes.map((outcome) => <li>{outcome}</li>)}
+                </ul>
+              </article>
+            </li>
+          ))
+        }
+      </ol>
+    </main>
+  </div>
+</Layout>

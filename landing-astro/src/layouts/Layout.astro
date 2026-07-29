@@ -4,9 +4,10 @@ import '@/styles/landing.css';
 interface Props {
   title: string;
   description: string;
+  canonicalPath?: string;
 }
 
-const { title, description } = Astro.props;
+const { title, description, canonicalPath = '/' } = Astro.props;
 
 const SITE_URL = 'https://read.significanthobbies.com';
 ---
@@ -22,12 +23,12 @@ const SITE_URL = 'https://read.significanthobbies.com';
     <meta name="description" content={description} />
     <meta name="application-name" content="Library Reader" />
 
-    <link rel="canonical" href={SITE_URL} />
+    <link rel="canonical" href={new URL(canonicalPath, SITE_URL)} />
     <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
     <link rel="icon" href="/favicon.ico" sizes="any" />
 
     <meta property="og:type" content="website" />
-    <meta property="og:url" content={SITE_URL} />
+    <meta property="og:url" content={new URL(canonicalPath, SITE_URL)} />
     <meta property="og:site_name" content="Library Reader" />
     <meta property="og:title" content={title} />
     <meta property="og:description" content={description} />

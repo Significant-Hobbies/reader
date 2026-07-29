@@ -42,6 +42,80 @@ a {
   min-height: 100dvh;
 }
 
+.changelog-main {
+  width: min(100% - 3rem, var(--lr-narrow));
+  margin: 0 auto;
+  padding: clamp(3rem, 8vw, 6rem) 0;
+}
+
+.changelog-header {
+  max-width: 42rem;
+}
+
+.changelog-header h1 {
+  margin: 0.5rem 0 0;
+  font-size: clamp(2.75rem, 9vw, 5rem);
+  line-height: 1;
+  letter-spacing: -0.04em;
+}
+
+.changelog-header > p {
+  max-width: 65ch;
+  margin: 1.25rem 0 0;
+  color: var(--lr-muted);
+}
+
+.changelog-header nav {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem 1.5rem;
+  margin-top: 1.5rem;
+}
+
+.changelog-header nav a {
+  color: var(--lr-accent-light);
+  font-weight: 600;
+  text-decoration: underline;
+  text-underline-offset: 4px;
+}
+
+.changelog-list {
+  display: grid;
+  gap: 1px;
+  margin: 3.5rem 0 0;
+  padding: 0;
+  background: var(--lr-border);
+  list-style: none;
+}
+
+.changelog-entry {
+  padding: clamp(1.4rem, 5vw, 2.3rem);
+  background: var(--lr-bg-deep);
+}
+
+.changelog-entry time {
+  color: var(--lr-dim);
+  font-size: 0.78rem;
+  font-weight: 600;
+}
+
+.changelog-entry h2 {
+  margin: 0.55rem 0 0;
+  font-size: clamp(1.4rem, 4vw, 1.9rem);
+  line-height: 1.2;
+}
+
+.changelog-entry ul {
+  max-width: 68ch;
+  margin: 1rem 0 0;
+  padding-left: 1.25rem;
+  color: var(--lr-muted);
+}
+
+.changelog-entry li + li {
+  margin-top: 0.55rem;
+}
+
 /* Header */
 .header {
   position: sticky;

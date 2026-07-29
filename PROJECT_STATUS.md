@@ -4,23 +4,35 @@
 > [`STATUS.md`](STATUS.md). This file is kept for fleet tooling that reads
 > `PROJECT_STATUS.md` by name (e.g. the `name-domains` skill). For the full
 > product/feature/architecture record, see [`docs/`](docs/index.md).
->
-> Last substantive content: 2026-07-13 (RSS reader shipped). Superseded by
-> STATUS.md on 2026-07-18.
 
-## At-a-glance
+## Why / What
 
-- **Product:** Reader — personal research library (capture, read, annotate,
-  AI-chat over articles and PDFs) + Chrome MV3 extension.
-- **Production:** `https://read.significanthobbies.com` (Cloudflare Worker
-  `reader`, custom domain).
-- **Stack:** Vite + React 19 SPA + Hono Worker · Turso (libSQL) + Drizzle ·
-  better-auth Google OAuth · Cloudflare R2 (`PDFS_BUCKET`) · free-ai-gateway
-  + BYOK + local-ai dev bridge.
-- **Posture:** Personal-use support (closure 2026-07-10). Maintenance and
-  reliability only; no roadmap expansion.
-- **Open work:** [GitHub Issues](https://github.com/Significant-Hobbies/reader/issues).
-- **Detailed docs:** see [docs/index.md](docs/index.md).
+Reader is a personal research library for capturing, reading, annotating, and
+AI-assisted work over saved articles and PDFs. It remains in personal-use,
+maintenance-first support.
+
+## Dependencies
+
+- Vite + React 19 SPA, Hono Worker, Turso + Drizzle, Cloudflare R2, better-auth
+  Google OAuth, and optional AI providers.
+
+## Timeline
+
+- **2026-07-29:** Added an owned `/changelog` with verified release outcomes and
+  direct GitHub Roadmap and Source links.
+- **2026-07-13:** Shipped authenticated RSS/Atom reading and OPML import.
+
+## Products
+
+- Public research library at `https://read.significanthobbies.com`.
+- Chrome MV3 capture extension.
+
+## Features (shipped)
+
+- Articles and PDFs with highlights, notes, search, boards, lists, and
+  AI-assisted reading.
+- Account-backed and device-local capture paths.
+- Owned editorial product changelog at `/changelog`.
 
 ## Work queue
 
