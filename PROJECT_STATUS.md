@@ -19,5 +19,11 @@
   + BYOK + local-ai dev bridge.
 - **Posture:** Personal-use support (closure 2026-07-10). Maintenance and
   reliability only; no roadmap expansion.
-- **Current state + blockers + next steps:** see [STATUS.md](STATUS.md).
+- **Open work:** [GitHub Issues](https://github.com/Significant-Hobbies/reader/issues).
 - **Detailed docs:** see [docs/index.md](docs/index.md).
+
+## Work queue
+
+Open work is tracked only in [GitHub Issues](https://github.com/Significant-Hobbies/reader/issues).
+An open issue is a to-do, a linked pull request is in progress, and merge plus
+issue closure makes the work done.
