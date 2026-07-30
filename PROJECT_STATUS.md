@@ -18,6 +18,9 @@ maintenance-first support.
 
 ## Timeline
 
+- **2026-07-31:** Added locally verified Open Graph/Twitter image metadata and
+  SoftwareApplication structured data to the public landing layout; production
+  deployment remains separate.
 - **2026-07-29:** Added an owned `/changelog` with verified release outcomes and
   direct GitHub Roadmap and Source links.
 - **2026-07-13:** Shipped authenticated RSS/Atom reading and OPML import.

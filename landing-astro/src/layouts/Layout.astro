@@ -32,10 +32,25 @@ const SITE_URL = 'https://read.significanthobbies.com';
     <meta property="og:site_name" content="Library Reader" />
     <meta property="og:title" content={title} />
     <meta property="og:description" content={description} />
+    <meta property="og:image" content={`${SITE_URL}/icon.svg`} />
 
     <meta name="twitter:card" content="summary_large_image" />
     <meta name="twitter:title" content={title} />
     <meta name="twitter:description" content={description} />
+    <meta name="twitter:image" content={`${SITE_URL}/icon.svg`} />
+    <script
+      is:inline
+      type="application/ld+json"
+      set:html={JSON.stringify({
+        '@context': 'https://schema.org',
+        '@type': 'SoftwareApplication',
+        name: 'Library Reader',
+        url: SITE_URL,
+        description,
+        applicationCategory: 'ProductivityApplication',
+        operatingSystem: 'Web',
+      })}
+    />
   </head>
   <body class="antialiased">
     <slot />
