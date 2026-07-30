@@ -18,6 +18,10 @@ maintenance-first support.
 
 ## Timeline
 
+- **2026-07-31:** Kept the public sitemap limited to the four canonical HTML
+  pages while retaining six machine resources through robots, llms, and the
+  agent catalog. Explicit tests now enforce sitemap, catalog, and Markdown
+  parity; production deployment remains separate.
 - **2026-07-31:** Added locally verified Open Graph/Twitter image metadata and
   SoftwareApplication structured data to the public landing layout; production
   deployment remains separate.

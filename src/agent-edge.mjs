@@ -13,8 +13,8 @@
 export const AGENT_SURFACE = {
   "name": "Reader",
   "url": "https://read.significanthobbies.com",
-  "llmsFullTxt": "# Reader — full agent brief\n\nResearch library: capture, annotate, and AI-chat over your reading — private by default.\n\n## Index\n\n# Reader\n\nResearch library for capture, annotation, and AI chat over your reading.\n\n## Privacy\n\nPersonal libraries require auth and are not agent-indexed. Public marketing surfaces only.\n\n## Agent entrypoints\n\n- https://read.significanthobbies.com/llms.txt\n- https://read.significanthobbies.com/api/ai\n- https://read.significanthobbies.com/index.md\n\n## Product links\n\n- Home: https://read.significanthobbies.com/ — App (auth for library)\n- Login: https://read.significanthobbies.com/login — Sign in\n\n## Machine surfaces\n\n- https://read.significanthobbies.com/llms.txt\n- https://read.significanthobbies.com/llms-full.txt\n- https://read.significanthobbies.com/api/ai\n- https://read.significanthobbies.com/index.md\n- https://read.significanthobbies.com/sitemap.xml\n- https://read.significanthobbies.com/robots.txt\n\n## Contact / fleet\n\n- Fleet: https://sassmaker.com\n- Agent email for directory verification: sarthakagrawal@agentmail.to\n",
-  "llmsTxt": "# Reader\n\n> Research library: capture, annotate, and AI-chat over your reading — private by default.\n\n## Product\n\n- [Home](https://read.significanthobbies.com/): App (auth for library)\n- [Login](https://read.significanthobbies.com/login): Sign in\n\n## Machine surfaces\n\n- [Agent catalog](https://read.significanthobbies.com/api/ai): JSON inventory of public surfaces\n- [Homepage markdown](https://read.significanthobbies.com/index.md): Product brief without JS\n- [This index](https://read.significanthobbies.com/llms.txt)\n\n## Optional\n\n- [Foundry](https://sassmaker.com): Parent fleet showcase\n",
+  "llmsFullTxt": "# Reader — full agent brief\n\nResearch library: capture, annotate, and AI-chat over your reading — private by default.\n\n## Index\n\n# Reader\n\nResearch library for capture, annotation, and AI chat over your reading.\n\n## Privacy\n\nPersonal libraries require auth and are not agent-indexed. Public marketing surfaces only.\n\n## Agent entrypoints\n\n- https://read.significanthobbies.com/llms.txt\n- https://read.significanthobbies.com/api/ai\n- https://read.significanthobbies.com/index.md\n\n## Product links\n\n- Home: https://read.significanthobbies.com/ — App (auth for library)\n- FAQ: https://read.significanthobbies.com/faq — Frequently asked questions\n- Changelog: https://read.significanthobbies.com/changelog — Verified product history\n- Login: https://read.significanthobbies.com/login — Sign in\n\n## Machine surfaces\n\n- https://read.significanthobbies.com/llms.txt\n- https://read.significanthobbies.com/llms-full.txt\n- https://read.significanthobbies.com/api/ai\n- https://read.significanthobbies.com/index.md\n- https://read.significanthobbies.com/sitemap.xml\n- https://read.significanthobbies.com/robots.txt\n\n## Contact / fleet\n\n- Fleet: https://sassmaker.com\n- Agent email for directory verification: sarthakagrawal@agentmail.to\n",
+  "llmsTxt": "# Reader\n\n> Research library: capture, annotate, and AI-chat over your reading — private by default.\n\n## Product\n\n- [Home](https://read.significanthobbies.com/): App (auth for library)\n- [FAQ](https://read.significanthobbies.com/faq): Frequently asked questions\n- [Changelog](https://read.significanthobbies.com/changelog): Verified product history\n- [Login](https://read.significanthobbies.com/login): Sign in\n\n## Machine surfaces\n\n- [Agent catalog](https://read.significanthobbies.com/api/ai): JSON inventory of public surfaces\n- [Homepage markdown](https://read.significanthobbies.com/index.md): Product brief without JS\n- [Full agent brief](https://read.significanthobbies.com/llms-full.txt): Complete product and privacy context\n- [HTML sitemap](https://read.significanthobbies.com/sitemap.xml): Canonical public pages\n- [This index](https://read.significanthobbies.com/llms.txt)\n\n## Optional\n\n- [Foundry](https://sassmaker.com): Parent fleet showcase\n",
   "indexMd": "# Reader\n\nResearch library for capture, annotation, and AI chat over your reading.\n\n## Privacy\n\nPersonal libraries require auth and are not agent-indexed. Public marketing surfaces only.\n\n## Agent entrypoints\n\n- https://read.significanthobbies.com/llms.txt\n- https://read.significanthobbies.com/api/ai\n- https://read.significanthobbies.com/index.md\n",
   "catalog": {
     "name": "Reader",
@@ -35,6 +35,20 @@ export const AGENT_SURFACE = {
         "md": "https://read.significanthobbies.com/index.md",
         "kind": "spa",
         "description": "Product home"
+      },
+      {
+        "id": "faq",
+        "url": "https://read.significanthobbies.com/faq",
+        "md": "https://read.significanthobbies.com/faq.md",
+        "kind": "static",
+        "description": "Frequently asked questions"
+      },
+      {
+        "id": "changelog",
+        "url": "https://read.significanthobbies.com/changelog",
+        "md": "https://read.significanthobbies.com/changelog.md",
+        "kind": "static",
+        "description": "Verified product history"
       },
       {
         "id": "login",
