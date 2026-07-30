@@ -18,6 +18,8 @@ maintenance-first support.
 
 ## Timeline
 
+- **2026-07-31:** Kept the public sitemap HTML-only and added source-level
+  sitemap/catalog/Markdown parity coverage.
 - **2026-07-31:** Added locally verified Open Graph/Twitter image metadata and
   SoftwareApplication structured data to the public landing layout; production
   deployment remains separate.
@@ -36,6 +38,7 @@ maintenance-first support.
   AI-assisted reading.
 - Account-backed and device-local capture paths.
 - Owned editorial product changelog at `/changelog`.
+- HTML-only public sitemap with cataloged Markdown mirrors for agent discovery.
 
 ## Work queue
 

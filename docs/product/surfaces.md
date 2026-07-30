@@ -32,7 +32,7 @@ Served from `public/` and the `agent-edge.mjs` handler in `src/worker.ts`
 | `index.md` | `/index.md` | Product brief in Markdown (no JS) |
 | `api/ai` | `/api/ai` | JSON catalog of public surfaces |
 | `robots.txt` | `/robots.txt` | Allows all + lists agent surfaces |
-| `sitemap.xml` | `/sitemap.xml` | Public URL inventory |
+| `sitemap.xml` | `/sitemap.xml` | Canonical public HTML page inventory |
 | IndexNow key | `/fa7259e2e0d942f1a1267b344a75a143.txt` | Bing/Yandex URL submission key |
 
 The agent-edge payload is generated into `src/agent-edge.mjs` by the fleet
