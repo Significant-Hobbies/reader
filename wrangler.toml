@@ -31,3 +31,10 @@ BETTER_AUTH_URL = "https://read.significanthobbies.com"
 [[r2_buckets]]
 binding = "PDFS_BUCKET"
 bucket_name = "reader-pdfs"
+
+[[d1_databases]]
+binding = "DB"
+database_name = "reader"
+database_id = "f59f66af-79d1-4c2d-be34-fbdf20ed8da6"
+preview_database_id = "fb70ecb4-ff51-413f-9b21-d87456a97a9d"
+migrations_dir = "drizzle"

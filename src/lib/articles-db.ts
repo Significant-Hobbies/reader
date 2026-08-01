@@ -358,7 +358,7 @@ export async function fetchArticleSummaries(
   projectId?: string,
   listId?: string
 ): Promise<ArticleSummary[]> {
-  // projectId retained for signature parity; the Turso schema drops the column.
+  // projectId is retained for signature parity; the current schema omits the column.
   void projectId;
   try {
     const rows = await db
@@ -721,7 +721,7 @@ export async function searchArticles(
   projectId?: string
 ): Promise<SearchResult[]> {
   // projectId is retained for signature parity with articles-service; the
-  // Turso schema drops the column, so filtering is a no-op here.
+  // The current schema omits the column, so filtering is a no-op here.
   void projectId;
   const sanitizedQuery = sanitizePlainText(query);
   if (!sanitizedQuery || sanitizedQuery.length < 2) return [];

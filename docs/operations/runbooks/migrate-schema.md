@@ -1,9 +1,8 @@
 # Runbook: Apply a Drizzle Schema Change
 
-Reader uses `drizzle-kit push` (`pnpm db:push`) for schema sync, with additive
-migration SQL files committed under `drizzle/` for deliberate application in
-production. The migration journal is `drizzle/meta/_journal.json` with
-snapshots in `drizzle/meta/`.
+Reader uses generated, additive migration SQL committed under `drizzle/` and
+applied through Wrangler's D1 migration ledger. The Drizzle journal is
+`drizzle/meta/_journal.json` with snapshots in `drizzle/meta/`.
 
 ## When to use this runbook
 
@@ -14,12 +13,12 @@ snapshots in `drizzle/meta/`.
 ## Local / dev
 
 ```bash
-pnpm db:push        # drizzle-kit push → diffs schema.ts against the live DB and applies
+pnpm db:generate       # after editing the schema
+pnpm db:migrate:local  # applies only to isolated local D1
 ```
 
-`drizzle.config.ts` loads `.env.local` for `TURSO_DATABASE_URL` and
-`TURSO_AUTH_TOKEN`. Push is schema-sync (no migration history); safe for a
-single-user DB.
+`drizzle.config.ts` generates SQLite-compatible D1 migrations without database
+credentials. `wrangler.local.toml` owns the isolated local binding.
 
 ## Production
 
@@ -30,18 +29,14 @@ single-user DB.
    it. For additive migrations the order is: migrate → deploy. For
    destructive migrations, deploy backward-compatible code first, then
    migrate, then remove the old code path.
-3. **Apply via Turso** (not `wrangler`):
+3. **Apply via Wrangler only after explicit operator approval:**
 
    ```bash
-   # Option A: drizzle-kit push against the production DB
-   TURSO_DATABASE_URL=<prod url> TURSO_AUTH_TOKEN=<prod token> pnpm db:push
-
-   # Option B: run the SQL file directly with the Turso CLI
-   turso db shell <db-name> < drizzle/0002_first_green_goblin.sql
+   pnpm db:migrate:remote
    ```
 
-4. **Verify** with `pnpm db:studio` (read-only inspection) or a direct Turso
-   query (`turso db shell <db-name> ".tables"`).
+4. **Verify** with an explicitly remote, read-only Wrangler D1 query and the
+   migration receipt checks.
 5. **Deploy** the application code per [deploy.md](../deploy.md).
 
 ## Example: the RSS migration
@@ -54,15 +49,10 @@ the RSS routes. See [architecture/decisions/0008-rss-inbox.md](../../architectur
 
 - **Additive migration:** drop the new table/column/index. Data in the new
   table is disposable (e.g. RSS entries are transient inbox items).
-- **Destructive migration:** restore from Turso backup (`turso db shell
-  <db-name> ".restore <backup>"`). Take a backup before any destructive
-  change.
+- **Destructive migration:** restore through the separately rehearsed D1
+  recovery plan. Take an export before any destructive change.
 
 ## Discipline
 
 - Prefer additive migrations (new tables, new nullable columns, new indexes).
-- Avoid `drizzle-kit push` against production with data in an incompatible old
-  shape — read the generated SQL first.
-- Open question (tracked in STATUS.md): switch from `drizzle-kit push` to
-  `drizzle-kit generate` for safer schema changes as user count grows. See
-  [knowledge/learnings.md](../../knowledge/learnings.md).
+- Never use schema push against production; read generated SQL first.

@@ -45,7 +45,7 @@ It depends on how you read. If you're reading something technical or research-he
 
 Your annotations are private by default. Nothing is shared unless you explicitly create a public share link for an article. The share link exposes the article text but does not expose your private highlights or notes. AI features run on the article text; your notes are included only when you actively open the AI chat panel for that article.
 
-**Honest limit:** Reader is a cloud-based app — your data lives on Turso (a managed database) and Cloudflare infrastructure. If that's a dealbreaker for sensitive research, local-first tools like Obsidian are the right fit.
+**Honest limit:** Reader is a cloud-based app — your data lives on Cloudflare infrastructure. If that's a dealbreaker for sensitive research, local-first tools like Obsidian are the right fit.
 
 ---
 

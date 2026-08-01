@@ -1,15 +1,16 @@
 /**
- * One-shot Firestore → Turso migration script.
+ * One-shot Firestore → D1 migration script.
  *
  * Usage:
  *   pnpm migrate:firestore            # dry-run (default, safe)
- *   pnpm migrate:firestore --apply    # actually write to Turso
+ *   pnpm migrate:firestore --apply             # write to local D1
+ *   pnpm migrate:firestore --apply --remote    # explicitly write to remote D1
  *
  * What it does (in order):
- *   1. users  — Firebase Auth → Turso `user` table (one row for the target uid)
- *   2. lists  — Firestore `lists` → Turso `lists`
- *   3. articles — Firestore `annotations` → Turso `articles`
- *   4. boards — Firestore `boards` → Turso `boards`
+ *   1. users  — Firebase Auth → D1 `user` table (one row for the target uid)
+ *   2. lists  — Firestore `lists` → D1 `lists`
+ *   3. articles — Firestore `annotations` → D1 `articles`
+ *   4. boards — Firestore `boards` → D1 `boards`
  *
  * Idempotency: every insert uses INSERT ... ON CONFLICT(id) DO UPDATE (upsert).
  * A re-run of --apply is safe; it refreshes column values.
@@ -25,11 +26,11 @@ import { resolve } from 'node:path';
 import { dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
-import { createClient } from '@libsql/client';
 import { config as loadEnv } from 'dotenv';
 import { sql } from 'drizzle-orm';
-import { drizzle } from 'drizzle-orm/libsql';
+import { drizzle } from 'drizzle-orm/d1';
 import admin from 'firebase-admin';
+import { getPlatformProxy } from 'wrangler';
 
 // Relative imports (scripts run outside Next.js, so no `@/` alias).
 import * as schema from '../src/lib/db/schema';
@@ -44,7 +45,13 @@ loadEnv({ path: resolve(repoRoot, '.env.local') });
 // --- CLI flags ---
 const args = process.argv.slice(2);
 const APPLY = args.includes('--apply');
+const REMOTE = args.includes('--remote');
 const DRY_RUN = !APPLY;
+
+if (REMOTE && !APPLY) {
+  console.error('--remote requires --apply so remote access is always explicit.');
+  process.exit(1);
+}
 
 // Single-user migration target (per plan).
 const TARGET_USER_ID = 'zxhdLO9NLwcTgRJNLNNFHTiAEnH3';
@@ -68,15 +75,12 @@ if (!admin.apps.length) {
 const firestore = admin.firestore();
 const auth = admin.auth();
 
-// --- Turso init (mirrors src/lib/db/client.ts but without the Next-time throw) ---
-const url = process.env.TURSO_DATABASE_URL;
-const authToken = process.env.TURSO_AUTH_TOKEN;
-if (!url || !authToken) {
-  console.error('TURSO_DATABASE_URL and TURSO_AUTH_TOKEN must be set in .env.local');
-  process.exit(1);
-}
-const libsql = createClient({ url, authToken });
-const db = drizzle(libsql, { schema });
+// --- D1 init ---
+const platform = await getPlatformProxy<{ DB: Parameters<typeof drizzle>[0] }>({
+  configPath: REMOTE ? './wrangler.toml' : './wrangler.local.toml',
+  remoteBindings: REMOTE,
+});
+const db = drizzle(platform.env.DB, { schema });
 
 // --- Helpers ---
 type Counts = { fetched: number; inserted: number; skipped: number; errored: number };
@@ -263,7 +267,7 @@ async function migrateArticles(counts: Counts): Promise<{ pdfCount: number }> {
     const data = doc.data() ?? {};
     const id = doc.id;
 
-    // projectId is dropped in Turso schema (see plan §2.5) — don't carry it.
+    // projectId is absent from the current schema (see plan §2.5) — don't carry it.
     const pdfMetadata = data.pdfMetadata ?? null;
     const pdfStorageKey =
       pdfMetadata &&
@@ -445,9 +449,9 @@ async function migrateBoards(counts: Counts): Promise<void> {
 // --- Main ---
 async function main(): Promise<void> {
   console.log('─'.repeat(60));
-  console.log(`Firestore → Turso migration (${DRY_RUN ? 'DRY-RUN' : 'APPLY'})`);
+  console.log(`Firestore → D1 migration (${DRY_RUN ? 'DRY-RUN' : 'APPLY'})`);
   console.log(`Target user: ${TARGET_USER_ID}`);
-  console.log(`Turso URL: ${url}`);
+  console.log(`Target: ${REMOTE ? 'remote D1' : 'local D1'}`);
   console.log('─'.repeat(60));
 
   const totals = {
@@ -481,12 +485,11 @@ async function main(): Promise<void> {
     console.log('\n  Re-run with --apply to write.\n');
   }
 
-  // libsql client keeps the event loop alive; close explicitly.
-  libsql.close();
+  await platform.dispose();
 }
 
 main().catch((error) => {
   console.error('\nMigration failed:', error);
-  libsql.close();
+  void platform.dispose();
   process.exit(1);
 });

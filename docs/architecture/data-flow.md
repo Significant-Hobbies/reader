@@ -38,9 +38,8 @@ accept API keys (e.g. key management itself).
 
 ## Database (`src/lib/db/`)
 
-- `createDb(env)` builds a Drizzle instance over `@libsql/client/web` using
-  `TURSO_DATABASE_URL` (rewritten `libsql://` → `https://`) and
-  `TURSO_AUTH_TOKEN`.
+- `createDb(env)` builds a Drizzle instance directly over the request's
+  Cloudflare D1 `DB` binding.
 - A module-level `db` Proxy defers client creation until first property access
   (`getDb()`), so the Worker can `bindWorkerEnv()` before any query runs.
 - All reads/writes are scoped by `userId` from the auth step. JSON columns
@@ -61,8 +60,8 @@ accept API keys (e.g. key management itself).
 - `api_keys` — `rdr_*` tokens; `token_hash` unique; `revoked_at` nullable.
 
 Migrations live in `drizzle/` (`0000_baseline.sql`, `0001_memories.sql`,
-`0002_first_green_goblin.sql` for RSS). Schema sync uses `drizzle-kit push`
-(`pnpm db:push`); see [operations/runbooks/migrate-schema.md](../operations/runbooks/migrate-schema.md).
+`0002_first_green_goblin.sql` for RSS). Apply them locally with
+`pnpm db:migrate:local`; see [operations/runbooks/migrate-schema.md](../operations/runbooks/migrate-schema.md).
 
 ## PDF storage (`src/lib/storage.ts` + `src/worker/routes/pdf.ts`)
 

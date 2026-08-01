@@ -30,17 +30,13 @@ case) do not require rollback — old code ignores new tables/columns.
 
 For a destructive migration that removed data:
 
-1. Restore the Turso DB from the most recent backup:
+1. Restore D1 through the rehearsed Cloudflare recovery procedure recorded in
+   the migration receipt. During the Turso-to-D1 observation window, the
+   preserved source database is the separate rollback authority.
+2. Redeploy the matching known-good application code (above).
+3. Verify with read-only D1 integrity and critical-journey checks.
 
-   ```bash
-   turso db shell <db-name> ".databases"      # confirm the DB
-   turso db shell <db-name> ".restore <backup>"
-   ```
-
-2. Redeploy the last known-good application code (above).
-3. Verify with `pnpm db:studio` or a direct query.
-
-Take a Turso backup before any destructive migration in the future.
+Take a D1 export before any destructive migration in the future.
 
 ## Rollback a landing overlay change
 
@@ -66,7 +62,7 @@ in place on `main` without a smoke check.
 - **R2 object deletes** — if a deploy deleted PDF objects, they are gone
   unless you have R2 replication or a bucket backup. Avoid `delete` calls in
   new code without a soft-delete path.
-- **Turso row deletes** — restore from backup.
+- **D1 row deletes** — restore through the rehearsed recovery procedure.
 - **OAuth session invalidation** — rotating `BETTER_AUTH_SECRET` invalidates
   all sessions; users must sign in again. There is no rollback.
 

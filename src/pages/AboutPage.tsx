@@ -35,8 +35,8 @@ export default function AboutPage() {
 
       <h2 className="mt-8 text-base font-semibold">Stack</h2>
       <p className="mt-2 text-stone-600">
-        Vite + React 19 SPA, Hono worker on Cloudflare, Turso (libSQL) + Drizzle, better-auth
-        (Google), Cloudflare R2 for PDF storage, Vercel AI SDK for chat. Chrome MV3 extension builds
+        Vite + React 19 SPA, Hono worker on Cloudflare, D1 + Drizzle, better-auth (Google),
+        Cloudflare R2 for PDF storage, Vercel AI SDK for chat. Chrome MV3 extension builds
         independently in <code>packages/chrome-extension/</code>.
       </p>
 

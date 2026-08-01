@@ -15,7 +15,7 @@ auto-summarise the saved material. Companion Chrome MV3 extension. See
 ## Stack (one-liner)
 
 Vite + React 19 SPA (single `app.html` entry) + Hono Worker on Cloudflare
-Workers (`src/worker.ts`), Turso (libSQL) via Drizzle ORM, better-auth Google
+Workers (`src/worker.ts`), Cloudflare D1 via Drizzle ORM, better-auth Google
 OAuth, Cloudflare R2 for PDFs, free-ai-gateway + BYOK + local-ai dev bridge.
 No SSR, no Next.js, no Firebase.
 
@@ -34,8 +34,8 @@ pnpm test             # vitest run
 pnpm test:e2e         # playwright
 pnpm lint             # biome check .
 pnpm format           # biome format --write .
-pnpm db:push          # drizzle-kit push (schema sync)
-pnpm db:studio        # drizzle-kit studio
+pnpm db:generate      # generate a tracked D1 migration
+pnpm db:migrate:local # apply migrations to isolated local D1
 pnpm docs:check       # validate docs/ links + structure
 pnpm docs:dev         # blume dev (local docs site; requires `pnpm add -D blume`)
 pnpm docs:build       # blume build (presentation only; not part of production build)
@@ -62,7 +62,7 @@ Full command map: [docs/development/commands.md](docs/development/commands.md).
   and `/api/*` to reach the Worker before the `ASSETS` binding.
 - **BYOK provider keys live in the browser only** — never persist or log
   server-side. `rdr_*` API keys are hashed at rest; plaintext shown once.
-- **Schema changes are additive + deliberate.** `pnpm db:push` is schema-sync;
+- **Schema changes are additive + deliberate.** Generate and inspect SQL before applying it;
   read the SQL under `drizzle/` before applying to production. See
   [docs/operations/runbooks/migrate-schema.md](docs/operations/runbooks/migrate-schema.md).
 - **Pre-commit hook (Husky + lint-staged)** runs `biome check --write` on

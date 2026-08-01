@@ -27,12 +27,12 @@ Vite entry) and routes client-side via `react-router-dom`; the Worker handles
                 │   │                                    data-export, ext chat, browser-mem)│
                 │   └── env.ASSETS.fetch()       ← built SPA + landing (dist/)              │
                 │                                                                          │
-                │   Bindings: PDFS_BUCKET (R2), ASSETS (dist/)                              │
+                │   Bindings: DB (D1), PDFS_BUCKET (R2), ASSETS (dist/)                     │
                 └────────────────────────────────┬─────────────────────────────────────────┘
                                                  │
                   ┌──────────────────────────────┼──────────────────────────────┐
                   ▼                              ▼                              ▼
-            Turso (libSQL)              Cloudflare R2                free-ai-gateway
+            Cloudflare D1               Cloudflare R2                free-ai-gateway
             via Drizzle ORM             reader-pdfs bucket            (AI_BASE_URL)
             (articles, boards,          (PDF binaries,               + BYOK providers
             lists, memories, rss,       proxied downloads)           + local-ai (dev)
@@ -47,7 +47,7 @@ Vite entry) and routes client-side via `react-router-dom`; the Worker handles
   `/api/<resource>`.
 - `src/lib/db/schema.ts` — Drizzle schema (app tables + better-auth tables +
   legacy NextAuth tables kept for reference).
-- `src/lib/db/client.ts` — Turso libSQL client. Lazy proxy so the client is
+- `src/lib/db/client.ts` — D1 Drizzle client. Lazy proxy so the client is
   not created at module load (required for the Workers runtime).
 - `src/lib/auth.ts` — better-auth server config (`createAuth`), Drizzle
   adapter, Google OAuth, `oneTap` plugin, rate limiting disabled.
@@ -59,7 +59,7 @@ Vite entry) and routes client-side via `react-router-dom`; the Worker handles
 - `src/lib/url-validation.ts` + `src/lib/safe-fetch.ts` — SSRF protection and
   redirect-safe fetch used by snapshot/proxy/RSS refresh.
 - `src/router.tsx` — client-side routes (lazy-loaded pages).
-- `wrangler.toml` — Worker config: `main = src/worker.ts`, `ASSETS` + `PDFS_BUCKET`
+- `wrangler.toml` — Worker config: `main = src/worker.ts`, `DB` + `ASSETS` + `PDFS_BUCKET`
   bindings, `placement.mode = "smart"`, `nodejs_compat_v2`, custom domain.
 - `vite.config.ts` — Vite SPA build (React, Tailwind v4, Lightning CSS).
 - `app.html` — single SPA HTML entry (Vite input; carries inline shell CSS).

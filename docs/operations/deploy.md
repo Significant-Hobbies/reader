@@ -23,10 +23,11 @@ the `ASSETS` binding. `wrangler.toml` configures:
 - `compatibility_date = "2025-04-01"`, `compatibility_flags = ["nodejs_compat_v2"]`
 - `assets = { directory = "dist", binding = "ASSETS", run_worker_first = ["/sitemap.xml", "/index.md", "/llms-full.txt", "/llms.txt", "/api/*", "/"] }`
 - `routes = [{ pattern = "read.significanthobbies.com", custom_domain = true }]`
-- `[placement] mode = "smart"` (co-locate Worker with Turso)
+- `[placement] mode = "smart"`
 - `[observability] enabled = true, head_sampling_rate = 0.1`
 - `[limits] cpu_ms = 30000`
 - `[[r2_buckets]] binding = "PDFS_BUCKET", bucket_name = "reader-pdfs"`
+- `[[d1_databases]] binding = "DB"` after the approved production cutover
 - `[vars] AI_BASE_URL`, `BETTER_AUTH_URL`, `NODE_ENV = "production"`
 
 ## Required Cloudflare secrets
@@ -36,8 +37,6 @@ Set via `wrangler secret put <NAME>`:
 - `BETTER_AUTH_SECRET`
 - `GOOGLE_CLIENT_ID`
 - `GOOGLE_CLIENT_SECRET`
-- `TURSO_AUTH_TOKEN`
-- `TURSO_DATABASE_URL`
 - `AI_GATEWAY_API_KEY` (free-ai gateway; legacy alias `AI_API_KEY`)
 
 The deploy workflow validates that each required secret exists in

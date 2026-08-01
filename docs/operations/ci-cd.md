@@ -30,8 +30,7 @@ exists) → `cf:build` → `cloudflare/wrangler-action@v3 deploy` → smoke chec
 
 **Required GitHub secrets:** `CLOUDFLARE_API_TOKEN`, `CLOUDFLARE_ACCOUNT_ID`.
 **Required Cloudflare Worker secrets:** `BETTER_AUTH_SECRET`,
-`GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`, `TURSO_AUTH_TOKEN`,
-`TURSO_DATABASE_URL`.
+`GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`.
 
 See [deploy.md](deploy.md) for the full pipeline.
 

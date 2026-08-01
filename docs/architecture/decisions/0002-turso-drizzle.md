@@ -1,7 +1,7 @@
 # ADR-0002: Turso (libSQL) via Drizzle ORM
 
 **Date:** 2026-04-25 (Firebase → Turso migration); carried forward post-Vite migration
-**Status:** Current
+**Status:** Superseded by [ADR-0010](0010-cloudflare-d1.md); retained as migration history.
 **Supersedes:** [archive/decisions.md ADR-02](../../archive/decisions.md) (same decision; this record updates the runtime context to Vite + Hono)
 
 ## Context
