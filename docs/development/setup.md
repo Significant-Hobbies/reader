@@ -4,7 +4,7 @@
 
 - Node.js 22+ (engines field in `package.json`; CI uses 24).
 - pnpm 10+ (the `packageManager` field pins the exact version).
-- A Turso database (`turso db create`) and auth token.
+- Wrangler for the isolated local D1 database (already installed by `pnpm install`).
 - A Cloudflare account with an R2 bucket `reader-pdfs` bound as `PDFS_BUCKET`.
 - A Google OAuth client (Google Cloud Console → APIs & Services → Credentials)
   with a redirect URI for `BETTER_AUTH_URL` (e.g.
@@ -25,7 +25,6 @@ cp .env.example .env.local
 Edit `.env.local` (see [operations/env.md](../operations/env.md) for the full
 list and validation):
 
-- `TURSO_DATABASE_URL`, `TURSO_AUTH_TOKEN`
 - `BETTER_AUTH_SECRET` (`openssl rand -base64 32`), `BETTER_AUTH_URL`
 - `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`
 - `AI_GATEWAY_API_KEY` (free-ai gateway) — optional for BYOK-only dev
@@ -34,10 +33,10 @@ list and validation):
 R2 credentials are only needed for production / `wrangler dev`; the binding
 itself is provided by `wrangler dev` from `wrangler.toml`.
 
-## Push the schema
+## Apply the schema
 
 ```bash
-pnpm db:push        # drizzle-kit push → applies schema to Turso
+pnpm db:migrate:local        # tracked migrations → isolated local D1
 ```
 
 See [operations/runbooks/migrate-schema.md](../operations/runbooks/migrate-schema.md)

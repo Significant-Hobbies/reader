@@ -10,7 +10,7 @@ A modern web application for capturing and annotating articles with a distractio
 | Concern      | Service                                                                                      |
 | ------------ | -------------------------------------------------------------------------------------------- |
 | Hosting      | Cloudflare Workers (`reader`) via Hono Worker (`src/worker.ts`)                              |
-| Database     | Turso (libSQL) via Drizzle ORM                                                               |
+| Database     | Cloudflare D1 via Drizzle ORM                                                                |
 | Auth         | better-auth + Google OAuth                                                                   |
 | File storage | Cloudflare R2 (`reader-pdfs`, bound as `PDFS_BUCKET`)                                        |
 | AI           | free-ai-gateway (Workers AI chokepoint); BYOK providers (OpenAI/Anthropic/Gemini) + local AI |
@@ -74,9 +74,9 @@ graph TB
     end
 
     subgraph "Backend Services"
-        Turso[Turso libSQL]
-        Turso --> Drizzle[Drizzle ORM]
-        Turso --> BetterAuth[better-auth - Google OAuth]
+        D1[Cloudflare D1]
+        D1 --> Drizzle[Drizzle ORM]
+        D1 --> BetterAuth[better-auth - Google OAuth]
 
         R2[Cloudflare R2 - PDFS_BUCKET]
 
@@ -91,7 +91,7 @@ graph TB
     end
 
     UI --> API
-    API --> Turso
+    API --> D1
     API --> R2
     API --> External
 
@@ -100,14 +100,14 @@ graph TB
     classDef external fill:#f59e0b,stroke:#d97706,color:#fff
 
     class UI,Styling,State frontend
-    class API,Articles,Projects,Auth,AI,Search,Tags,PDF,Snapshot,Turso,Drizzle,BetterAuth,R2 backend
+    class API,Articles,Projects,Auth,AI,Search,Tags,PDF,Snapshot,D1,Drizzle,BetterAuth,R2 backend
     class External,Readability,AIProviders,OpenAI,Anthropic,Gemini,Gateway,LocalAI external
 ```
 
 ### Tech Stack
 
 - **Frontend**: Vite + React 19 SPA (single `app.html` entry, client-side routing via `react-router-dom`), TypeScript, Tailwind CSS v4
-- **Database**: Turso (libSQL) via Drizzle ORM
+- **Database**: Cloudflare D1 via Drizzle ORM
 - **Auth**: better-auth (Google OAuth, Drizzle adapter)
 - **Storage**: Cloudflare R2 (PDFs) via Workers binding
 - **AI Integration**: Vercel AI SDK + AI Gateway (preferred), BYOK chat providers, local AI support
@@ -119,7 +119,7 @@ graph TB
 ### Prerequisites
 
 - Node.js 22+
-- A Turso database (`turso db create`) and auth token
+- Wrangler-managed local D1 (configured in `wrangler.local.toml`)
 - A Cloudflare account with an R2 bucket bound as `PDFS_BUCKET`
 - A Google OAuth client (Cloud Console > APIs & Services > Credentials)
 
@@ -142,10 +142,6 @@ graph TB
    Edit `.env.local`:
 
    ```env
-   # Turso
-   TURSO_DATABASE_URL=libsql://your-db.turso.io
-   TURSO_AUTH_TOKEN=...
-
    # better-auth
    BETTER_AUTH_SECRET=$(openssl rand -base64 32)
    BETTER_AUTH_URL=http://localhost:8787
@@ -162,10 +158,10 @@ graph TB
    LOCAL_AI_URL=http://127.0.0.1:3456
    ```
 
-3. Push the schema to Turso:
+3. Apply the schema to local D1:
 
    ```bash
-   pnpm db:push
+   pnpm db:migrate:local
    ```
 
 4. Run the development server:
@@ -197,8 +193,8 @@ pnpm deploy       # validate env + cf:build + wrangler deploy
 pnpm lint         # Run ESLint
 pnpm format       # Format code with Biome
 pnpm typecheck    # tsc --noEmit (app + worker tsconfigs)
-pnpm db:push      # Apply schema to Turso (Drizzle)
-pnpm db:studio    # Open Drizzle Studio
+pnpm db:generate       # Generate a tracked D1 migration
+pnpm db:migrate:local  # Apply migrations to local D1 only
 ```
 
 ## Deployment
@@ -211,8 +207,8 @@ pnpm deploy
 
 This runs `cf:build` (Vite SPA build + Astro landing overlay into `dist/`) and `wrangler deploy`.
 Configure secrets via `wrangler secret put` for `BETTER_AUTH_SECRET`,
-`TURSO_AUTH_TOKEN`, `GOOGLE_CLIENT_SECRET`, etc., and bind the R2 bucket as
-`PDFS_BUCKET` in `wrangler.toml`.
+`GOOGLE_CLIENT_SECRET`, etc., and bind D1 as `DB` plus R2 as `PDFS_BUCKET` in
+`wrangler.toml`.
 
 ## Project Structure
 
@@ -231,7 +227,7 @@ web-annotator/
 │   ├── lib/
 │   │   ├── auth.ts       # better-auth server config
 │   │   ├── auth-client.ts# better-auth browser client
-│   │   ├── db/           # Drizzle schema + Turso client
+│   │   ├── db/           # Drizzle schema + D1 client
 │   │   └── storage.ts    # R2 helpers
 │   └── types.ts          # TypeScript definitions
 ├── packages/

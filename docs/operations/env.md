@@ -8,8 +8,7 @@ for that mode is missing or empty.
 
 | Variable | Required where | Set via | Purpose |
 | --- | --- | --- | --- |
-| `TURSO_DATABASE_URL` | runtime, deploy | Wrangler secret | Turso libSQL URL (`libsql://...`) |
-| `TURSO_AUTH_TOKEN` | runtime, deploy | Wrangler secret | Turso auth token |
+| `DB` | runtime | `wrangler.toml` binding | Cloudflare D1 application and auth database |
 | `BETTER_AUTH_SECRET` | runtime, deploy | Wrangler secret | better-auth session signing key (`openssl rand -base64 32`) |
 | `BETTER_AUTH_URL` | — | `wrangler.toml [vars]` | OAuth callback base URL (prod: `https://read.significanthobbies.com`) |
 | `GOOGLE_CLIENT_ID` | runtime, deploy | Wrangler secret | Google OAuth client ID |
@@ -33,16 +32,15 @@ for that mode is missing or empty.
 ## Validation modes
 
 - `build` — no required vars (the build does not need runtime secrets).
-- `runtime` — `BETTER_AUTH_SECRET`, `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`,
-  `TURSO_AUTH_TOKEN`, `TURSO_DATABASE_URL`.
+- `runtime` — `BETTER_AUTH_SECRET`, `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`.
 - `deploy` — same as `runtime`.
 
 ## Local dev
 
-`.env.local` is loaded by `drizzle.config.ts` and `vite.config.ts` via
-`dotenv/config`. `.env.example` is the committed template; `.env.local` is
-gitignored. The Worker dev server (`pnpm dev:worker`) reads Wrangler secrets
-from `.dev.vars` (gitignored) and bindings from `wrangler.toml`.
+`.env.local` is loaded by `vite.config.ts` via `dotenv/config`. `.env.example`
+is the committed template; `.env.local` is gitignored. The Worker dev server
+(`pnpm dev:worker`) reads Wrangler secrets from `.dev.vars` (gitignored) and
+isolated D1/R2 bindings from `wrangler.local.toml`.
 
 ## Security
 

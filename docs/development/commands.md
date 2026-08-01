@@ -26,9 +26,10 @@ ordering; run `pnpm run` to see the live list.
 | `pnpm test:coverage` | `vitest run --coverage` |
 | `pnpm test:e2e` | `playwright test` |
 | `pnpm memory:demo` | `tsx scripts/memory-capture-demo.ts` |
-| `pnpm db:push` | `drizzle-kit push` (schema sync) |
-| `pnpm db:studio` | `drizzle-kit studio` |
-| `pnpm migrate:firestore` | Legacy Firestore → Turso migration (`tsx scripts/migrate-firestore-to-turso.ts`) |
+| `pnpm db:generate` | Generate a tracked D1 migration from `src/lib/db/schema.ts` |
+| `pnpm db:migrate:local` | Apply tracked migrations to isolated local D1 |
+| `pnpm db:migrate:remote` | Explicitly apply tracked migrations to the configured remote D1 |
+| `pnpm migrate:firestore` | Legacy Firestore → D1 migration (`tsx scripts/migrate-firestore-to-d1.ts`; dry-run by default) |
 | `pnpm prepare` | `husky` (installs pre-commit hook) |
 | `pnpm format` | `biome format --write .` |
 | `pnpm format:check` | `biome format .` |

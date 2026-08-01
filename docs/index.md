@@ -51,7 +51,7 @@ docs/
     jobs.md                     # scheduled jobs (weekly quality check)
     runbooks/
       migrate-schema.md         # applying Drizzle schema changes
-      rotate-secrets.md         # rotating Cloudflare/Turso/Google secrets
+      rotate-secrets.md         # rotating Cloudflare and Google secrets
       rollback.md               # rollback procedure for a bad deploy
   knowledge/
     learnings.md                # current, applicable engineering lessons

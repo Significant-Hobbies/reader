@@ -62,7 +62,7 @@ update when behaviour changes. For the API route map, see
 
 ## Memory capture
 
-- `/memory` page with persisted, authenticated captures (`memories` Turso
+- `/memory` page with persisted, authenticated captures (`memories` D1
   table, `/api/memories` CRUD + `/api/memories/search`).
 - `POST /api/browser-memory/import` for browser-memory imports.
 - Global SearchBar routes memory hits to `/memory`.
