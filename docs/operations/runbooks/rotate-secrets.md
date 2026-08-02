@@ -2,13 +2,13 @@
 
 Rotate on a schedule, after a suspected leak, or when personnel changes. The
 production Worker reads secrets from Cloudflare Workers secrets
-(`wrangler secret list`); Turso and Google OAuth have their own consoles.
+(`wrangler secret list`); Google OAuth has its own console. D1 and R2 use
+native bindings rather than database credentials in the Worker.
 
 ## Cloudflare Worker secrets
 
 ```bash
 wrangler secret put BETTER_AUTH_SECRET        # openssl rand -base64 32
-wrangler secret put TURSO_AUTH_TOKEN          # from Turso console
 wrangler secret put GOOGLE_CLIENT_SECRET      # from Google Cloud Console
 wrangler secret put AI_GATEWAY_API_KEY        # from free-ai gateway
 ```
@@ -21,12 +21,6 @@ var if you prefer; current convention keeps it as a secret.
 After rotating `BETTER_AUTH_SECRET`, existing sessions are invalidated — users
 must sign in again. There is only one production user today, so this is a
 non-event.
-
-## Turso
-
-1. Turso console → database → Tokens → create a new token.
-2. `wrangler secret put TURSO_AUTH_TOKEN` with the new value.
-3. Revoke the old token in the Turso console once the new one is live.
 
 ## Google OAuth
 

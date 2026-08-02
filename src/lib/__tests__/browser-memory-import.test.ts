@@ -38,7 +38,7 @@ vi.mock('../articles-db', () => ({
 }));
 
 // Memories are persisted via memories-db (not articles-db). Mock it so the
-// import flow can be exercised without a live Turso connection.
+// import flow can be exercised without a live D1 binding.
 vi.mock('../memories-db', () => ({
   findMemoryByUrl: vi.fn().mockResolvedValue(null),
   createMemoryRecord: vi.fn().mockResolvedValue('memory-id-1'),

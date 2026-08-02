@@ -3,8 +3,6 @@ import { setPdfBucket } from '../lib/storage';
 import type { WorkerEnv } from '../lib/worker-env';
 
 const STRING_KEYS: (keyof WorkerEnv)[] = [
-  'TURSO_DATABASE_URL',
-  'TURSO_AUTH_TOKEN',
   'BETTER_AUTH_SECRET',
   'AUTH_SECRET',
   'BETTER_AUTH_URL',
@@ -27,9 +25,7 @@ export function bindWorkerEnv(env: WorkerEnv) {
     }
   }
 
-  if (env.TURSO_DATABASE_URL) {
-    setDb(createDb(env));
-  }
+  setDb(createDb(env));
 
   if (env.PDFS_BUCKET) {
     setPdfBucket(env.PDFS_BUCKET);

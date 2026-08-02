@@ -22,7 +22,7 @@ each choice.
 A **Vite + React 19 single-page app** (no SSR) runs entirely in the browser and
 talks to a **single Hono Worker** on Cloudflare, which routes `/api/*` to
 resource handlers, serves the built SPA over the `ASSETS` binding, and fans out
-to three backends: **Turso** (libSQL, all structured data), **Cloudflare R2**
+to three backends: **Cloudflare D1** (all structured data), **Cloudflare R2**
 (PDF binaries), and an **AI gateway** (Workers AI, with BYOK and a local-dev
 bridge as alternatives).
 
@@ -45,8 +45,8 @@ Every claim below is grounded in the file named next to it.
   with Google OAuth for the webapp, plus an `rdr_*` API-key path for the Chrome
   extension. `getAuthenticatedUserId()` is the single choke point every
   protected handler calls first.
-- **Data layer** (`src/lib/db/`, `src/lib/*-db.ts`) — Drizzle over a Turso
-  libSQL client, wrapped in `*-db.ts` helpers (`articles-db.ts`, `lists-db.ts`,
+- **Data layer** (`src/lib/db/`, `src/lib/*-db.ts`) — Drizzle over the Worker's
+  D1 binding, wrapped in `*-db.ts` helpers (`articles-db.ts`, `lists-db.ts`,
   …) that own queries, ownership scoping, and edge-cache invalidation.
 - **PDF storage** (`src/lib/storage.ts`, `src/worker/routes/pdf.ts`) — binaries
   live in the R2 `PDFS_BUCKET`; the DB stores only a `blob://<key>` reference,
@@ -72,7 +72,7 @@ flowchart TD
     SNAP --> SF["validateExternalUrl + safe-fetch<br/>(SSRF boundary)"]
     SF --> READ["Readability + linkedom<br/>extract clean article"]
     READ --> SAVE["POST /api/articles<br/>createArticleRecord (articles-db.ts)"]
-    SAVE --> DB[(Turso libSQL<br/>articles, scoped by userId)]
+    SAVE --> DB[(Cloudflare D1<br/>articles, scoped by userId)]
     U2[User opens reader/:id] --> GET["GET /api/articles/:id"]
     GET --> CACHE{"caches.default<br/>5-min TTL?"}
     CACHE -->|hit| RENDER[ReaderView renders]
@@ -107,7 +107,7 @@ flowchart TD
 
 3. **Read.** Opening `reader/:id` calls `GET /api/articles/:id`. Reads are
    served from Cloudflare's `caches.default` with a 5-minute TTL when available,
-   falling back to Turso; writes explicitly bust that cache. `ReaderView` renders
+   falling back to D1; writes explicitly bust that cache. `ReaderView` renders
    the sanitised HTML with the user's theme/font/size preferences.
 
 4. **Annotate.** Selecting text surfaces *Add note* / *Ask AI*. A note is a
@@ -134,11 +134,11 @@ mental model.
   server rendering to justify SSR. A static SPA served from one Worker is
   cheaper, simpler to reason about, and avoids the OpenNext build complexity the
   project ran into. → [0001-vite-spa-hono-worker.md](decisions/0001-vite-spa-hono-worker.md).
-- **Turso + Drizzle for structured data.** A SQLite-compatible edge database
+- **D1 + Drizzle for structured data.** A SQLite-compatible edge database
   keeps latency low near the Worker while giving typed, migratable schema.
   JSON-in-text columns (`notes`, `aiChat`, `summary`, …) avoid a table sprawl
   for data that is always read with its parent article. →
-  [0002-turso-drizzle.md](decisions/0002-turso-drizzle.md).
+  [0010-cloudflare-d1.md](decisions/0010-cloudflare-d1.md).
 - **R2 for PDFs, DB stores only a reference.** Large binaries do not belong in a
   row-oriented DB; R2 is cheap object storage bound directly to the Worker, and
   proxied downloads keep the bucket private. →

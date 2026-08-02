@@ -4,20 +4,8 @@ const mode = process.argv[2] ?? 'runtime';
 
 const requiredByMode = {
   build: [],
-  runtime: [
-    'BETTER_AUTH_SECRET',
-    'GOOGLE_CLIENT_ID',
-    'GOOGLE_CLIENT_SECRET',
-    'TURSO_AUTH_TOKEN',
-    'TURSO_DATABASE_URL',
-  ],
-  deploy: [
-    'BETTER_AUTH_SECRET',
-    'GOOGLE_CLIENT_ID',
-    'GOOGLE_CLIENT_SECRET',
-    'TURSO_AUTH_TOKEN',
-    'TURSO_DATABASE_URL',
-  ],
+  runtime: ['BETTER_AUTH_SECRET', 'GOOGLE_CLIENT_ID', 'GOOGLE_CLIENT_SECRET'],
+  deploy: ['BETTER_AUTH_SECRET', 'GOOGLE_CLIENT_ID', 'GOOGLE_CLIENT_SECRET'],
 };
 
 const required = requiredByMode[mode];

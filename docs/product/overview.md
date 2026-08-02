@@ -12,7 +12,7 @@ browser and syncs with Chrome's native Reading List.
 
 - **End users:** individual readers saving articles and PDFs. Sign-in is Google
   OAuth via better-auth; data is per-user isolated at the database level.
-- **Operators:** the maintainer running Turso schema migrations and Cloudflare
+- **Operators:** the maintainer running D1 schema migrations and Cloudflare
   Workers deploys. Currently single-user in production.
 
 ## Where
@@ -27,7 +27,7 @@ browser and syncs with Chrome's native Reading List.
 
 **In scope:** article/PDF capture, rich annotations, tags/lists/boards,
 full-text search, AI chat and summaries, RSS/Atom inbox with OPML import,
-memory capture, Turso persistence, R2 PDF storage, free-ai gateway + BYOK +
+memory capture, D1 persistence, R2 PDF storage, free-ai gateway + BYOK +
 local-ai dev bridge.
 
 **Out of scope (deliberate):**

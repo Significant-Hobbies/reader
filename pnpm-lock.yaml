@@ -17,9 +17,6 @@ importers:
       '@ai-sdk/react':
         specifier: 3.0.86
         version: 3.0.86(react@19.2.8)(zod@4.4.3)
-      '@libsql/client':
-        specifier: 0.17.4
-        version: 0.17.4
       '@mozilla/readability':
         specifier: 0.6.0
         version: 0.6.0
@@ -6669,10 +6666,12 @@ snapshots:
     transitivePeerDependencies:
       - bufferutil
       - utf-8-validate
+    optional: true
 
   '@libsql/core@0.17.4':
     dependencies:
       js-base64: 3.9.1
+    optional: true
 
   '@libsql/darwin-arm64@0.5.29':
     optional: true
@@ -6687,6 +6686,7 @@ snapshots:
     transitivePeerDependencies:
       - bufferutil
       - utf-8-validate
+    optional: true
 
   '@libsql/isomorphic-ws@0.1.5':
     dependencies:
@@ -6695,6 +6695,7 @@ snapshots:
     transitivePeerDependencies:
       - bufferutil
       - utf-8-validate
+    optional: true
 
   '@libsql/linux-arm-gnueabihf@0.5.29':
     optional: true
@@ -6836,7 +6837,8 @@ snapshots:
       '@tybys/wasm-util': 0.10.3
     optional: true
 
-  '@neon-rs/load@0.0.4': {}
+  '@neon-rs/load@0.0.4':
+    optional: true
 
   '@next/env@16.2.4':
     optional: true
@@ -8428,7 +8430,8 @@ snapshots:
 
   destr@2.0.5: {}
 
-  detect-libc@2.0.2: {}
+  detect-libc@2.0.2:
+    optional: true
 
   detect-libc@2.1.2: {}
 
@@ -8951,7 +8954,8 @@ snapshots:
 
   jose@6.2.4: {}
 
-  js-base64@3.9.1: {}
+  js-base64@3.9.1:
+    optional: true
 
   js-tokens@4.0.0: {}
 
@@ -9001,6 +9005,7 @@ snapshots:
       '@libsql/linux-x64-gnu': 0.5.29
       '@libsql/linux-x64-musl': 0.5.29
       '@libsql/win32-x64-msvc': 0.5.29
+    optional: true
 
   lightningcss-android-arm64@1.32.0:
     optional: true
@@ -9800,7 +9805,8 @@ snapshots:
 
   prismjs@1.30.0: {}
 
-  promise-limit@2.7.0: {}
+  promise-limit@2.7.0:
+    optional: true
 
   prompts@2.4.2:
     dependencies:

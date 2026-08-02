@@ -13,8 +13,9 @@ maintenance-first support.
 
 ## Dependencies
 
-- Vite + React 19 SPA, Hono Worker, Turso + Drizzle, Cloudflare R2, better-auth
-  Google OAuth, and optional AI providers.
+- Vite + React 19 SPA, Hono Worker, Cloudflare D1 + Drizzle, Cloudflare R2,
+  better-auth Google OAuth, and optional AI providers. D1 is authoritative;
+  the retired Turso database was deleted on 2026-08-02.
 
 ## Timeline
 
@@ -40,6 +41,7 @@ maintenance-first support.
   AI-assisted reading.
 - Account-backed and device-local capture paths.
 - Owned editorial product changelog at `/changelog`.
+- HTML-only public sitemap with cataloged Markdown mirrors for agent discovery.
 
 ## Work queue
 
