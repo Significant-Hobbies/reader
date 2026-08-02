@@ -14,16 +14,17 @@ maintenance-first support.
 ## Dependencies
 
 - Vite + React 19 SPA, Hono Worker, Cloudflare D1 + Drizzle, Cloudflare R2,
-  better-auth Google OAuth, and optional AI providers. Turso remains
-  temporarily preserved as the rollback source for the D1 cutover observation
-  window.
+  better-auth Google OAuth, and optional AI providers. D1 is authoritative;
+  the retired Turso database was deleted on 2026-08-02.
 
 ## Timeline
 
+- **2026-08-02:** Deleted the retired `reader` Turso database after D1 cutover
+  acceptance and verified the public Worker remained healthy.
 - **2026-08-01:** Migrated production relational persistence from Turso to a
   project-owned Cloudflare D1 database after schema, row-count, aggregate,
   ownership, auth/session, and document-path parity checks. R2 remains the PDF
-  object store; Turso is preserved for the bounded rollback observation window.
+  object store.
 - **2026-07-31:** Kept the public sitemap HTML-only and added source-level
   sitemap/catalog/Markdown parity coverage.
 - **2026-07-31:** Added locally verified Open Graph/Twitter image metadata and
