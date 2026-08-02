@@ -21,6 +21,8 @@ Personal libraries require auth and are not agent-indexed. Public marketing surf
 ## Product links
 
 - Home: https://read.significanthobbies.com/ — App (auth for library)
+- FAQ: https://read.significanthobbies.com/faq — Frequently asked questions
+- Changelog: https://read.significanthobbies.com/changelog — Verified product history
 - Login: https://read.significanthobbies.com/login — Sign in
 
 ## Machine surfaces

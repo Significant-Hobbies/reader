@@ -19,6 +19,20 @@
       "description": "Product home"
     },
     {
+      "id": "faq",
+      "url": "https://read.significanthobbies.com/faq",
+      "md": "https://read.significanthobbies.com/faq.md",
+      "kind": "static",
+      "description": "Frequently asked questions"
+    },
+    {
+      "id": "changelog",
+      "url": "https://read.significanthobbies.com/changelog",
+      "md": "https://read.significanthobbies.com/changelog.md",
+      "kind": "static",
+      "description": "Verified product history"
+    },
+    {
       "id": "login",
       "url": "https://read.significanthobbies.com/login",
       "md": "https://read.significanthobbies.com/login.md",

@@ -19,14 +19,10 @@ maintenance-first support.
 
 ## Timeline
 
-- **2026-08-02:** Deleted the retired `reader` Turso database after D1 cutover
-  acceptance and verified the public Worker remained healthy.
-- **2026-08-01:** Migrated production relational persistence from Turso to a
-  project-owned Cloudflare D1 database after schema, row-count, aggregate,
-  ownership, auth/session, and document-path parity checks. R2 remains the PDF
-  object store.
-- **2026-07-31:** Kept the public sitemap HTML-only and added source-level
-  sitemap/catalog/Markdown parity coverage.
+- **2026-07-31:** Kept the public sitemap limited to the four canonical HTML
+  pages while retaining six machine resources through robots, llms, and the
+  agent catalog. Explicit tests now enforce sitemap, catalog, and Markdown
+  parity; production deployment remains separate.
 - **2026-07-31:** Added locally verified Open Graph/Twitter image metadata and
   SoftwareApplication structured data to the public landing layout; production
   deployment remains separate.
