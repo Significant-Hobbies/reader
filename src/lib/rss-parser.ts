@@ -41,6 +41,12 @@ function cleanText(value: string | null | undefined, maxLength = 2_000): string 
   return (document.body.textContent ?? '').replace(/\s+/g, ' ').trim().slice(0, maxLength);
 }
 
+function normalizeText(value: string | null | undefined, maxLength = 2_000): string {
+  const text = value ?? '';
+  if (text.includes('<')) return cleanText(text, maxLength);
+  return text.replace(/\s+/g, ' ').trim().slice(0, maxLength);
+}
+
 function cleanHtml(value: string | null | undefined): string | undefined {
   const cleaned = sanitizeHtml(value ?? '', {
     allowedTags: sanitizeHtml.defaults.allowedTags,
@@ -56,7 +62,7 @@ function cleanHtml(value: string | null | undefined): string | undefined {
 function firstText(element: Element, names: string[]): string {
   for (const name of names) {
     const node = element.getElementsByTagName(name)[0];
-    const value = cleanText(node?.textContent);
+    const value = normalizeText(node?.textContent);
     if (value) return value;
   }
   return '';
@@ -132,7 +138,7 @@ export function parseOpml(xml: string): OpmlSubscription[] {
     if (!feedUrl || seen.has(feedUrl)) continue;
     seen.add(feedUrl);
     subscriptions.push({
-      title: cleanText(
+      title: normalizeText(
         outline.getAttribute('title') || outline.getAttribute('text') || new URL(feedUrl).hostname,
         500
       ),
