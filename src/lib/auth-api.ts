@@ -1,6 +1,21 @@
 import { API_KEY_PREFIX, verifyApiKey } from './api-keys';
 import { createAuth, type AuthEnv } from './auth';
 
+/** Resolve only a dedicated long-lived Reader API key; never use browser auth. */
+export async function getApiKeyUserId(headers: Headers): Promise<string | null> {
+  const authHeader = headers.get('authorization') ?? headers.get('Authorization');
+  if (!authHeader) return null;
+  const [scheme, value, extra] = authHeader.trim().split(/\s+/, 3);
+  if (
+    extra !== undefined ||
+    scheme?.toLowerCase() !== 'bearer' ||
+    !value?.startsWith(API_KEY_PREFIX)
+  ) {
+    return null;
+  }
+  return verifyApiKey(value);
+}
+
 /**
  * Resolve the authenticated user for an API request.
  *
@@ -18,7 +33,7 @@ export async function getAuthenticatedUserId(
   if (authHeader) {
     const [scheme, value] = authHeader.split(' ', 2);
     if (scheme?.toLowerCase() === 'bearer' && value?.startsWith(API_KEY_PREFIX)) {
-      const userId = await verifyApiKey(value);
+      const userId = await getApiKeyUserId(headers);
       if (userId) return userId;
       return null;
     }

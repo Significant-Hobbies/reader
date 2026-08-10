@@ -1,5 +1,5 @@
 import crypto from 'crypto';
-import { and, desc, eq, inArray } from 'drizzle-orm';
+import { and, count, desc, eq, inArray, like, or, type SQL } from 'drizzle-orm';
 import type { IOptions } from 'sanitize-html';
 import sanitizeHtml from 'sanitize-html';
 
@@ -380,6 +380,58 @@ export async function fetchArticleSummaries(
     console.error('articles-db: fetchArticleSummaries failed', error);
     throw error;
   }
+}
+
+export type ArticleSearchOptions = {
+  query?: string;
+  listId?: string;
+  projectId?: string;
+  type?: 'article' | 'link' | 'pdf';
+  limit: number;
+  offset: number;
+};
+
+/** Bounded owner-scoped search for integration clients. */
+export async function searchArticleSummaries(
+  userId: string,
+  options: ArticleSearchOptions
+): Promise<{ items: ArticleSummary[]; total: number; nextOffset: number | null }> {
+  if (options.projectId && options.projectId !== defaultProjectId(userId)) {
+    return { items: [], total: 0, nextOffset: null };
+  }
+  const conditions: SQL[] = [eq(articles.userId, userId)];
+  const query = options.query?.trim().replaceAll(/[%_]/g, '').slice(0, 200);
+  if (query) {
+    const pattern = `%${query}%`;
+    const search = or(
+      like(articles.title, pattern),
+      like(articles.url, pattern),
+      like(articles.byline, pattern),
+      like(articles.tags, pattern)
+    );
+    if (search) conditions.push(search);
+  }
+  if (options.type) conditions.push(eq(articles.type, options.type));
+  if (options.listId) {
+    conditions.push(like(articles.listIds, `%"${options.listId.replaceAll('"', '')}"%`));
+  }
+  const where = and(...conditions);
+  const [rows, totals] = await Promise.all([
+    db
+      .select()
+      .from(articles)
+      .where(where)
+      .orderBy(desc(articles.createdAt))
+      .limit(options.limit)
+      .offset(options.offset),
+    db.select({ value: count() }).from(articles).where(where),
+  ]);
+  const total = totals[0]?.value ?? 0;
+  return {
+    items: rows.map(rowToSummary),
+    total,
+    nextOffset: options.offset + rows.length < total ? options.offset + rows.length : null,
+  };
 }
 
 export async function fetchArticlesForSourceMap(userId: string): Promise<Article[]> {
