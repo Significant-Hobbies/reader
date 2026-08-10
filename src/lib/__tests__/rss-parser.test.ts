@@ -47,6 +47,19 @@ describe('parseFeed', () => {
     expect(feed.entries[0].content).not.toContain('<script');
   });
 
+  it('strips markup embedded in feed metadata', () => {
+    const rss = `<?xml version="1.0"?><rss version="2.0"><channel>
+      <title><![CDATA[Example <strong>RSS</strong>]]></title><link>https://example.com/</link>
+      <item><guid>post-1</guid><title><![CDATA[First <em>entry</em>]]></title>
+      <description>Summary</description></item>
+    </channel></rss>`;
+
+    expect(parseFeed(rss)).toMatchObject({
+      title: 'Example RSS',
+      entries: [{ title: 'First entry' }],
+    });
+  });
+
   it('normalizes Atom entries and alternate links', () => {
     const atom = `<?xml version="1.0"?><feed xmlns="http://www.w3.org/2005/Atom">
       <title>Example Atom</title><link rel="alternate" href="https://example.com/" />
