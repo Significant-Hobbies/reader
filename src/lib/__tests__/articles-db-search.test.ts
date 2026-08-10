@@ -12,7 +12,7 @@ vi.mock('../db/client', () => ({
 
 import { describe, expect, it } from 'vitest';
 
-import { searchArticles } from '../articles-db';
+import { searchArticles, searchArticleSummaries } from '../articles-db';
 
 describe('searchArticles', () => {
   it('handles search terms with regex characters without throwing', async () => {
@@ -43,5 +43,18 @@ describe('searchArticles', () => {
     });
 
     await expect(searchArticles('user-1', 'a(')).resolves.toHaveLength(1);
+  });
+
+  it('fails closed for a project identifier outside the owner virtual project', async () => {
+    mockedSelect.mockClear();
+    await expect(
+      searchArticleSummaries('user-1', {
+        query: 'agent',
+        projectId: 'another-user_default',
+        limit: 10,
+        offset: 0,
+      })
+    ).resolves.toEqual({ items: [], total: 0, nextOffset: null });
+    expect(mockedSelect).not.toHaveBeenCalled();
   });
 });
