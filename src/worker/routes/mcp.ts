@@ -45,7 +45,7 @@ mcpReads.get('/reading/:id', async (c) => {
     status: article.status,
     tags: article.tags,
     notes: article.notes,
-    summary: article.summary,
+    summary: article.aiSummary,
     keyPoints: article.keyPoints,
     type: article.type,
     category: article.category,
