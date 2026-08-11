@@ -1,5 +1,12 @@
 import { API_KEY_PREFIX, verifyApiKey } from './api-keys';
 import { createAuth, type AuthEnv } from './auth';
+import { findReaderUserByGoogleId, verifyReaderAuth0Subject } from './auth0-mcp';
+import type { WorkerEnv } from './worker-env';
+
+export type McpAuthResult =
+  | { status: 'authorized'; userId: string }
+  | { status: 'account_not_found' }
+  | { status: 'invalid' };
 
 /** Resolve only a dedicated long-lived Reader API key; never use browser auth. */
 export async function getApiKeyUserId(headers: Headers): Promise<string | null> {
@@ -14,6 +21,30 @@ export async function getApiKeyUserId(headers: Headers): Promise<string | null> 
     return null;
   }
   return verifyApiKey(value);
+}
+
+/** Resolve a Reader PAT or a short-lived, user-specific Auth0 MCP token. */
+export async function authenticateMcpReader(
+  headers: Headers,
+  env: Pick<WorkerEnv, 'AUTH0_ISSUER' | 'AUTH0_MCP_AUDIENCE'>
+): Promise<McpAuthResult> {
+  const authHeader = headers.get('authorization') ?? headers.get('Authorization');
+  if (!authHeader) return { status: 'invalid' };
+  const [scheme, value, extra] = authHeader.trim().split(/\s+/, 3);
+  if (extra !== undefined || scheme?.toLowerCase() !== 'bearer' || !value) {
+    return { status: 'invalid' };
+  }
+  if (value.startsWith(API_KEY_PREFIX)) {
+    const userId = await verifyApiKey(value);
+    return userId ? { status: 'authorized', userId } : { status: 'invalid' };
+  }
+  if (!/^[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+$/u.test(value)) {
+    return { status: 'invalid' };
+  }
+  const googleId = await verifyReaderAuth0Subject(value, env);
+  if (!googleId) return { status: 'invalid' };
+  const userId = await findReaderUserByGoogleId(googleId);
+  return userId ? { status: 'authorized', userId } : { status: 'account_not_found' };
 }
 
 /**
