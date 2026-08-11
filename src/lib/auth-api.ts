@@ -1,7 +1,10 @@
 import { API_KEY_PREFIX, verifyApiKey } from './api-keys';
 import { createAuth, type AuthEnv } from './auth';
-import { findReaderUserByGoogleId, verifyReaderAuth0Subject } from './auth0-mcp';
-import type { WorkerEnv } from './worker-env';
+import {
+  findReaderUserByGoogleId,
+  type ReaderAuth0Env,
+  verifyReaderAuth0Subject,
+} from './auth0-mcp';
 
 export type McpAuthResult =
   | { status: 'authorized'; userId: string }
@@ -26,7 +29,7 @@ export async function getApiKeyUserId(headers: Headers): Promise<string | null> 
 /** Resolve a Reader PAT or a short-lived, user-specific Auth0 MCP token. */
 export async function authenticateMcpReader(
   headers: Headers,
-  env: Pick<WorkerEnv, 'AUTH0_ISSUER' | 'AUTH0_MCP_AUDIENCE'>
+  env: ReaderAuth0Env
 ): Promise<McpAuthResult> {
   const authHeader = headers.get('authorization') ?? headers.get('Authorization');
   if (!authHeader) return { status: 'invalid' };

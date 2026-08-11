@@ -3,13 +3,16 @@ import { verifyWithJwks } from 'hono/jwt';
 
 import { db } from './db/client';
 import { accounts, baAccounts } from './db/schema';
-import type { WorkerEnv } from './worker-env';
 
 const REQUIRED_SCOPE = 'reader.read';
 const MAX_TOKEN_LIFETIME_SECONDS = 3_600;
 const GOOGLE_SUBJECT = /^google-oauth2\|([A-Za-z0-9._-]{3,256})$/u;
 
 type JwksOptions = Parameters<typeof verifyWithJwks>[1];
+export type ReaderAuth0Env = {
+  AUTH0_ISSUER?: string;
+  AUTH0_MCP_AUDIENCE?: string;
+};
 
 function auth0Issuer(value: string | undefined): string | null {
   try {
@@ -60,7 +63,7 @@ function stringClaims(value: unknown): string[] {
 
 export async function verifyReaderAuth0Subject(
   token: string,
-  env: Pick<WorkerEnv, 'AUTH0_ISSUER' | 'AUTH0_MCP_AUDIENCE'>,
+  env: ReaderAuth0Env,
   keys?: JwksOptions['keys']
 ): Promise<string | null> {
   const issuer = auth0Issuer(env.AUTH0_ISSUER);
@@ -74,7 +77,7 @@ export async function verifyReaderAuth0Subject(
         allowedAlgorithms: ['RS256'],
         verification: { iss: issuer, aud: audience },
       },
-      { cf: { cacheEverything: true, cacheTtl: 3_600 } }
+      { cf: { cacheEverything: true, cacheTtl: 3_600 } } as RequestInit
     );
     const match = typeof payload.sub === 'string' ? GOOGLE_SUBJECT.exec(payload.sub) : null;
     const permissions = new Set([
