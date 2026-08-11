@@ -3,7 +3,7 @@ import { describe, expect, it } from 'vitest';
 import { verifyReaderAuth0Subject } from './auth0-mcp';
 
 const issuer = 'https://fleet-test.us.auth0.com/';
-const audience = 'https://mcp.significanthobbies.com/reader/mcp';
+const audience = 'https://reader-mcp.significanthobbies.com/reader/mcp';
 
 function base64url(value: Uint8Array | string): string {
   const bytes = typeof value === 'string' ? new TextEncoder().encode(value) : value;
@@ -62,7 +62,7 @@ describe('Reader Auth0 MCP verification', () => {
     );
 
     for (const overrides of [
-      { aud: 'https://mcp.significanthobbies.com/calorie/mcp' },
+      { aud: 'https://calorie-mcp.significanthobbies.com/calorie/mcp' },
       { permissions: ['calorie.read'] },
       { sub: 'auth0|not-google' },
       { exp: Math.floor(Date.now() / 1000) + 7_200 },
