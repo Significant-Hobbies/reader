@@ -5,6 +5,7 @@ const MAX_OPML_BYTES = 1_000_000;
 export const MAX_FEED_BYTES = 2_000_000;
 const MAX_OPML_FEEDS = 500;
 const MAX_FEED_ENTRIES = 200;
+const DOM_PARSER = new DOMParser();
 
 export interface OpmlSubscription {
   title: string;
@@ -34,10 +35,11 @@ function byteLength(value: string): number {
 
 function cleanText(value: string | null | undefined, maxLength = 2_000): string {
   const sanitized = sanitizeHtml(value ?? '', { allowedTags: [], allowedAttributes: {} });
-  const document = new DOMParser().parseFromString(
-    `<html><body>${sanitized}</body></html>`,
-    'text/html'
-  );
+  return textFromSanitizedHtml(sanitized, maxLength);
+}
+
+function textFromSanitizedHtml(value: string, maxLength: number): string {
+  const document = DOM_PARSER.parseFromString(`<html><body>${value}</body></html>`, 'text/html');
   return (document.body.textContent ?? '').replace(/\s+/g, ' ').trim().slice(0, maxLength);
 }
 
@@ -98,14 +100,18 @@ export function createEntryExternalId(parts: {
   title: string;
   publishedAt?: Date;
 }): string {
-  const explicitId = cleanText(parts.id, 1_000);
+  const rawId = parts.id ?? '';
+  const explicitId =
+    rawId.includes('<') || rawId.includes('&')
+      ? cleanText(rawId, 1_000)
+      : rawId.replace(/\s+/g, ' ').trim().slice(0, 1_000);
   if (explicitId) return explicitId;
   const identity = [parts.url ?? '', parts.title, parts.publishedAt?.toISOString() ?? ''].join('|');
   return `generated:${stableHash(identity)}`;
 }
 
 function parseXml(xml: string) {
-  const document = new DOMParser().parseFromString(xml, 'text/xml');
+  const document = DOM_PARSER.parseFromString(xml, 'text/xml');
   if (!document?.documentElement) throw new Error('Malformed XML document');
   return document;
 }
@@ -172,7 +178,7 @@ function normalizeEntry(element: Element, atom: boolean): NormalizedFeedEntry | 
     atom ? ['content', 'summary'] : ['content:encoded', 'description']
   );
   const content = cleanHtml(rawContent);
-  const excerpt = cleanText(rawContent, 500) || undefined;
+  const excerpt = content ? textFromSanitizedHtml(content, 500) || undefined : undefined;
   const publishedAt = parseDate(
     firstRawText(element, atom ? ['published', 'updated'] : ['pubDate', 'dc:date', 'date'])
   );
