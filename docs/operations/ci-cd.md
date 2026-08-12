@@ -7,9 +7,11 @@ for triggers and steps; this page documents intent.
 
 **Triggers:** push to `main`/`master`, PR to `main`/`master`.
 
-**Steps:** checkout → pnpm setup → Node 24 →
-`pnpm install --frozen-lockfile --ignore-scripts` → `validate:env:build` →
-`lint` (if present) → `type-check` (if present) → `test` (if present).
+**Steps:** checkout → pnpm setup → Node 24 + Python 3.12 →
+`pnpm install --frozen-lockfile --ignore-scripts` → install pinned Lizard →
+`pnpm quality` (format, lint, types, app/Worker coverage, extension checks,
+unused code, complexity, duplication, cycles, dependency risk, suppressions,
+docs, production builds, and repository hygiene).
 
 No deploy. No secrets beyond what `validate:env:build` needs (none for
 `build` mode).

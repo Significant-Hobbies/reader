@@ -13,7 +13,7 @@
     "cf:build": "pnpm build && pnpm --filter ./landing-astro build && node scripts/overlay-astro-landing.mjs",
     "preview": "vite preview",
     "deploy": "pnpm validate:env:deploy && pnpm cf:build && pnpm exec wrangler deploy --tag \"$(git rev-parse HEAD)\"",
-    "lint": "biome check .",
+    "lint": "node scripts/check-code-health.mjs lint",
     "type-check": "pnpm typecheck",
     "typecheck": "tsc --noEmit -p tsconfig.app.json && tsc --noEmit -p tsconfig.worker.json",
     "validate:env:build": "node scripts/validate-env.mjs build",
@@ -27,7 +27,6 @@
     "db:generate": "drizzle-kit generate",
     "db:migrate:local": "wrangler d1 migrations apply DB --local --config wrangler.local.toml",
     "db:migrate:remote": "wrangler d1 migrations apply DB --remote",
-    "migrate:firestore": "tsx scripts/migrate-firestore-to-d1.ts",
     "prepare": "husky",
     "format": "biome format --write .",
     "format:check": "biome format .",
@@ -36,7 +35,15 @@
     "docs:dev": "blume dev",
     "docs:build": "blume build",
     "knip": "knip --no-exit-code --reporter symbols",
-    "knip:strict": "knip --reporter symbols"
+    "knip:strict": "knip --reporter symbols",
+    "quality:unused": "node scripts/check-code-health.mjs unused",
+    "quality:complexity": "node scripts/check-code-health.mjs complexity",
+    "quality:duplication": "node scripts/check-code-health.mjs duplication",
+    "quality:cycles": "node scripts/check-code-health.mjs cycles",
+    "quality:dependencies": "node scripts/check-code-health.mjs dependencies",
+    "quality:suppressions": "node scripts/check-code-health.mjs suppressions",
+    "quality:hygiene": "node scripts/check-code-health.mjs hygiene",
+    "quality": "pnpm format:check && pnpm lint && pnpm typecheck && pnpm test:coverage && pnpm --filter web-annotator-extension type-check && pnpm --filter web-annotator-extension test && pnpm quality:unused && pnpm quality:complexity && pnpm quality:duplication && pnpm quality:cycles && pnpm quality:dependencies && pnpm quality:suppressions && pnpm docs:check && pnpm cf:build && pnpm --filter web-annotator-extension build && pnpm quality:hygiene"
   },
   "packageManager": "pnpm@10.33.2",
   "engines": {
@@ -60,11 +67,11 @@
     "@tanstack/react-query": "5.101.4",
     "@xyflow/react": "12.11.2",
     "ai": "6.0.168",
-    "better-auth": "1.6.11",
+    "better-auth": "1.6.27",
     "class-variance-authority": "0.7.1",
     "drizzle-orm": "0.45.2",
     "eventsource-parser": "3.1.0",
-    "hono": "4.12.32",
+    "hono": "4.13.1",
     "linkedom": "0.18.13",
     "lucide-react": "1.27.0",
     "pdfjs-dist": "5.4.624",
@@ -73,7 +80,7 @@
     "react-dom": "19.2.8",
     "react-markdown": "10.1.0",
     "react-pdf": "10.4.1",
-    "react-router-dom": "7.18.1",
+    "react-router-dom": "7.18.2",
     "remark-gfm": "4.0.1",
     "sanitize-html": "2.17.6"
   },
@@ -88,11 +95,12 @@
     "@types/react-dom": "19",
     "@types/sanitize-html": "2.16.1",
     "@vitejs/plugin-react": "6.0.4",
+    "@vitest/coverage-v8": "4.1.10",
     "concurrently": "9.2.1",
-    "dotenv": "17.4.2",
     "drizzle-kit": "0.31.10",
     "happy-dom": "20.11.1",
     "husky": "9.1.7",
+    "jscpd": "5.0.14",
     "knip": "^6.29.0",
     "lint-staged": "16.4.0",
     "tailwindcss": "^4.3.3",
@@ -105,7 +113,16 @@
   },
   "pnpm": {
     "overrides": {
-      "shell-quote": "1.9.0"
+      "dompurify@<=3.4.12": "3.4.13",
+      "js-yaml@>=4.0.0 <4.3.1": "4.3.1",
+      "nanoid@<3.3.18": "3.3.18",
+      "next@>=16.0.0 <16.2.11": "16.2.11",
+      "postcss@<=8.5.22": "8.5.23",
+      "sharp@<0.35.0": "0.35.3",
+      "shell-quote": "1.9.0",
+      "svgo@>=4.0.0 <4.0.2": "4.0.2",
+      "undici@>=7.0.0 <7.29.0": "7.29.0",
+      "ws@>=8.0.0 <8.21.0": "8.21.0"
     }
   }
 }

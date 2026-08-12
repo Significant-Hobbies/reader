@@ -10,13 +10,16 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v6
+        with:
+          fetch-depth: 2
       - uses: pnpm/action-setup@v6
       - uses: actions/setup-node@v6
         with:
           node-version: '24'
           cache: pnpm
+      - uses: actions/setup-python@v6
+        with:
+          python-version: '3.12'
       - run: pnpm install --frozen-lockfile --ignore-scripts
-      - run: pnpm run validate:env:build
-      - run: pnpm run --if-present lint
-      - run: pnpm run --if-present type-check
-      - run: pnpm run --if-present test
+      - run: python -m pip install lizard==1.23.0
+      - run: pnpm quality
