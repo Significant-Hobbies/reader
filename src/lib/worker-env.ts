@@ -6,6 +6,8 @@ export type WorkerEnv = {
   BETTER_AUTH_BASE_URL?: string;
   GOOGLE_CLIENT_ID?: string;
   GOOGLE_CLIENT_SECRET?: string;
+  AUTH0_ISSUER?: string;
+  AUTH0_MCP_AUDIENCE?: string;
   AI_GATEWAY_API_KEY?: string;
   AI_API_KEY?: string;
   AI_BASE_URL?: string;

@@ -2,14 +2,14 @@ import { Hono } from 'hono';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 const mocks = vi.hoisted(() => ({
-  getApiKeyUserId: vi.fn(),
+  authenticateMcpReader: vi.fn(),
   searchArticleSummaries: vi.fn(),
   fetchArticleById: vi.fn(),
   fetchLists: vi.fn(),
 }));
 
 vi.mock('../../../lib/auth-api', () => ({
-  getApiKeyUserId: mocks.getApiKeyUserId,
+  authenticateMcpReader: mocks.authenticateMcpReader,
 }));
 vi.mock('../../../lib/articles-db', () => ({
   searchArticleSummaries: mocks.searchArticleSummaries,
@@ -25,25 +25,33 @@ app.route('/api/mcp', mcpRoutes);
 describe('Reader MCP read projections', () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    mocks.getApiKeyUserId.mockResolvedValue('owner-1');
+    mocks.authenticateMcpReader.mockResolvedValue({ status: 'authorized', userId: 'owner-1' });
     mocks.searchArticleSummaries.mockResolvedValue({ items: [], total: 0, nextOffset: null });
     mocks.fetchLists.mockResolvedValue([]);
   });
 
   it('fails closed without an owner credential', async () => {
-    mocks.getApiKeyUserId.mockResolvedValue(null);
+    mocks.authenticateMcpReader.mockResolvedValue({ status: 'invalid' });
     const response = await app.request('/api/mcp/reading?q=test');
     expect(response.status).toBe(401);
     expect(mocks.searchArticleSummaries).not.toHaveBeenCalled();
   });
 
   it('does not treat a browser session cookie as an MCP credential', async () => {
-    mocks.getApiKeyUserId.mockResolvedValue(null);
+    mocks.authenticateMcpReader.mockResolvedValue({ status: 'invalid' });
     const response = await app.request('/api/mcp/reading?q=test', {
       headers: { Cookie: 'better-auth.session_token=browser-session' },
     });
     expect(response.status).toBe(401);
-    expect(mocks.getApiKeyUserId).toHaveBeenCalledOnce();
+    expect(mocks.authenticateMcpReader).toHaveBeenCalledOnce();
+    expect(mocks.searchArticleSummaries).not.toHaveBeenCalled();
+  });
+
+  it('explains when the Google account has not used Reader yet', async () => {
+    mocks.authenticateMcpReader.mockResolvedValue({ status: 'account_not_found' });
+    const response = await app.request('/api/mcp/reading?q=test');
+    expect(response.status).toBe(403);
+    expect(await response.json()).toMatchObject({ code: 'ACCOUNT_NOT_FOUND' });
     expect(mocks.searchArticleSummaries).not.toHaveBeenCalled();
   });
 
