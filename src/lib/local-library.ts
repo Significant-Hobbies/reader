@@ -1,6 +1,6 @@
 'use client';
 
-import type { Article, ArticleStatus, List, Note } from '../types';
+import type { Article, ArticleStatus, List } from '../types';
 
 const DB_NAME = 'reader-local-library';
 const DB_VERSION = 1;
