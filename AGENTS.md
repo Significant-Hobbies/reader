@@ -31,6 +31,7 @@ pnpm cf:build         # build + landing-astro + overlay into dist/
 pnpm deploy           # validate env + cf:build + wrangler deploy (manual; CI does not auto-deploy)
 pnpm typecheck        # tsc --noEmit (app + worker tsconfigs)
 pnpm test             # vitest run
+pnpm quality          # complete local/CI code-health gate
 pnpm test:e2e         # playwright
 pnpm lint             # biome check .
 pnpm format           # biome format --write .

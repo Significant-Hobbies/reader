@@ -57,7 +57,7 @@ function normalizeUrlForLookup(value: string): string {
   }
 }
 
-export async function listLibraryItems(): Promise<ReaderLibraryItem[]> {
+async function listLibraryItems(): Promise<ReaderLibraryItem[]> {
   const auth = await authHeaders();
   const response = await fetch(`${API_BASE}/api/articles`, {
     headers: auth,

@@ -1,9 +1,7 @@
 # PROJECT_STATUS — Reader
 
-> **Pointer.** The canonical current-state view is now
-> [`STATUS.md`](STATUS.md). This file is kept for fleet tooling that reads
-> `PROJECT_STATUS.md` by name (e.g. the `name-domains` skill). For the full
-> product/feature/architecture record, see [`docs/`](docs/index.md).
+This is Reader's durable current and shipped product truth. For the full
+product, feature, and architecture record, see [`docs/`](docs/index.md).
 
 ## Why / What
 
@@ -22,6 +20,11 @@ maintenance-first support.
 
 ## Timeline
 
+- **2026-08-12:** Adopted the Fleet code-health contract across the app,
+  Worker, landing, and Chrome extension with truthful whole-library coverage,
+  unused-code, cycle, complexity, duplication, dependency, suppression, build,
+  docs, and repository-hygiene ratchets in CI. Removed the retired Firebase
+  migration and unused extension/UI surfaces; remaining debt is in GitHub.
 - **2026-08-09:** Adopted the verified Ultracite-backed Biome baseline through
   the existing non-writing check, with explicit compatibility exceptions and
   no source rewrite, production dependency, storage/auth/AI, migration, or
@@ -51,6 +54,7 @@ maintenance-first support.
 - HTML-only public sitemap with cataloged Markdown mirrors for agent discovery.
 - Exact Ultracite-backed Biome presets with explicit local compatibility
   exceptions; `pnpm check` remains non-writing.
+- One `pnpm quality` command reproduces the complete hosted code-health gate.
 
 ## Work queue
 

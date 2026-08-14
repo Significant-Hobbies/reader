@@ -61,7 +61,7 @@ function emitServer(event: string, props: Record<string, unknown>, distinctId?: 
   });
 }
 
-export function trackEvent(
+function trackEvent(
   event: string,
   properties: Record<string, unknown> = {},
   distinctId?: string
@@ -94,12 +94,12 @@ function emit<K extends keyof AnalyticsEventMap>(
 }
 
 /** Fire once, on the first session after an account is created. */
-export function trackSignup(): void {
+function trackSignup(): void {
   emit('signup', {});
 }
 
 /** Fire once, when the user first reaches real product value (first saved source). */
-export function trackActivated(distinctId?: string): void {
+function trackActivated(distinctId?: string): void {
   emit('activated', {}, distinctId);
 }
 
@@ -109,7 +109,7 @@ export function trackCoreAction(action: CoreAction, distinctId?: string): void {
 }
 
 /** Fire on session start for a user who has prior activity. */
-export function trackReturned(): void {
+function trackReturned(): void {
   emit('returned', {});
 }
 

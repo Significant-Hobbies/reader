@@ -1,29 +1,7 @@
-import type { AIConfig, AIChatMessage } from './types';
-import { AI_CONFIG_STORAGE_KEY, DEFAULT_AI_CONFIG } from './types';
+import type { AIChatMessage } from './types';
 
 const CHAT_HISTORY_PREFIX = 'chat:';
 const MAX_CACHED_CONVERSATIONS = 20;
-
-export async function loadAIConfig(): Promise<AIConfig> {
-  try {
-    const result = await chrome.storage.local.get(AI_CONFIG_STORAGE_KEY);
-    const raw = result[AI_CONFIG_STORAGE_KEY];
-    if (!raw) return DEFAULT_AI_CONFIG;
-
-    const parsed = typeof raw === 'string' ? JSON.parse(raw) : raw;
-    return {
-      provider: parsed.provider || DEFAULT_AI_CONFIG.provider,
-      model: parsed.model || DEFAULT_AI_CONFIG.model,
-      apiKey: parsed.apiKey || '',
-    };
-  } catch {
-    return DEFAULT_AI_CONFIG;
-  }
-}
-
-export async function saveAIConfig(config: AIConfig): Promise<void> {
-  await chrome.storage.local.set({ [AI_CONFIG_STORAGE_KEY]: config });
-}
 
 export async function loadChatHistory(url: string): Promise<AIChatMessage[]> {
   try {

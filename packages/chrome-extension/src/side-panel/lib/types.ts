@@ -43,7 +43,7 @@ export const DEFAULT_AI_CONFIG: AIConfig = {
 
 export const AI_CONFIG_STORAGE_KEY = 'web-annotator-ai-config-v1';
 
-export interface AuthUser {
+interface AuthUser {
   uid: string;
   email: string;
   displayName: string;
