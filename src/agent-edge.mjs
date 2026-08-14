@@ -54,7 +54,7 @@ export const AGENT_SURFACE = {
         "id": "login",
         "url": "https://read.significanthobbies.com/login",
         "md": "https://read.significanthobbies.com/login.md",
-        "kind": "static",
+        "kind": "auth",
         "description": "Sign in"
       }
     ],

@@ -13,16 +13,29 @@ function sitemapUrls(): string[] {
 
 describe('public agent surface parity', () => {
   it('keeps the sitemap limited to canonical HTML surfaces', () => {
-    const catalogUrls = AGENT_SURFACE.catalog.surfaces.map((surface) => surface.url);
+    const catalogUrls = AGENT_SURFACE.catalog.surfaces
+      .filter((surface) => surface.kind !== 'auth')
+      .map((surface) => surface.url);
     const urls = sitemapUrls();
 
     expect(urls).toEqual(catalogUrls);
-    expect(urls).toHaveLength(4);
+    expect(urls).toHaveLength(3);
+    expect(urls).not.toContain('https://read.significanthobbies.com/login');
     for (const url of urls) {
       const path = new URL(url).pathname;
       expect(path).not.toMatch(/\.(?:json|md|txt|xml)$/);
       expect(path).not.toMatch(/^\/api(?:\/|$)/);
     }
+  });
+
+  it('keeps auth-only surfaces out of the public HTML sitemap', () => {
+    const urls = new Set(sitemapUrls());
+    const authSurfaces = AGENT_SURFACE.catalog.surfaces.filter(
+      (surface) => surface.kind === 'auth'
+    );
+
+    expect(authSurfaces).not.toHaveLength(0);
+    for (const surface of authSurfaces) expect(urls).not.toContain(surface.url);
   });
 
   it('provides a substantive Markdown counterpart for every HTML surface', () => {

@@ -80,7 +80,7 @@ function hasAuthCookie(request: Request): boolean {
   return AUTH_COOKIE_FRAGMENTS.some((fragment) => cookie.includes(fragment));
 }
 
-function withSecurityHeaders(response: Response): Response {
+function withSecurityHeaders(response: Response, pathname: string): Response {
   const headers = new Headers(response.headers);
   for (const [key, value] of Object.entries(SECURITY_HEADERS)) {
     headers.set(key, value);
@@ -90,6 +90,7 @@ function withSecurityHeaders(response: Response): Response {
   const contentType = headers.get('content-type') ?? '';
   if (contentType.includes('text/html')) {
     headers.set('Cache-Control', 'public, max-age=300, s-maxage=600, stale-while-revalidate=86400');
+    if (pathname === '/login') headers.set('X-Robots-Tag', 'noindex, follow');
   }
   return new Response(response.body, {
     status: response.status,
@@ -124,7 +125,7 @@ export default {
 
     const assetResponse = await env.ASSETS.fetch(request);
     if (assetResponse.ok) {
-      return withSecurityHeaders(assetResponse);
+      return withSecurityHeaders(assetResponse, url.pathname);
     }
 
     if (request.method !== 'GET') {
@@ -133,11 +134,11 @@ export default {
 
     if (url.pathname === '/') {
       const landing = await env.ASSETS.fetch(new Request(new URL('/index.html', url), request));
-      return landing.ok ? withSecurityHeaders(landing) : assetResponse;
+      return landing.ok ? withSecurityHeaders(landing, url.pathname) : assetResponse;
     }
 
     // Assets serves app.html at /app; fetching /app.html returns 307 (not ok).
     const spa = await env.ASSETS.fetch(new Request(new URL('/app', url), request));
-    return spa.ok ? withSecurityHeaders(spa) : assetResponse;
+    return spa.ok ? withSecurityHeaders(spa, url.pathname) : assetResponse;
   },
 };
