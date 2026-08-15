@@ -21,9 +21,9 @@ const productionPaths = [
 const sourceExtensions = new Set(['.astro', '.js', '.jsx', '.mjs', '.mts', '.ts', '.tsx']);
 
 const baselines = {
-  lintWarnings: 39,
-  complexity: { violations: 37, maxCcn: 68, maxLength: 606, maxParams: 11 },
-  duplication: { clones: 37, duplicatedLines: 493 },
+  lintWarnings: 38,
+  complexity: { violations: 35, maxCcn: 68, maxLength: 606, maxParams: 11 },
+  duplication: { clones: 32, duplicatedLines: 413 },
   unused: {
     files: 0,
     exports: 0,

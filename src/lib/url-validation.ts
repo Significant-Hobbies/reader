@@ -76,28 +76,24 @@ export async function validateExternalUrl(
   return { ok: true, url: parsed };
 }
 
-function isBlockedIp(ip: string): boolean {
-  const family = isIP(ip);
-  if (family === 4) {
-    const parts = ip.split('.').map(Number);
-    const [a, b] = parts;
-    // Loopback: 127.0.0.0/8
-    if (a === 127) return true;
-    // 10.0.0.0/8
-    if (a === 10) return true;
-    // 172.16.0.0/12
-    if (a === 172 && b >= 16 && b <= 31) return true;
-    // 192.168.0.0/16
-    if (a === 192 && b === 168) return true;
-    // Link-local: 169.254.0.0/16 (includes cloud metadata 169.254.169.254)
-    if (a === 169 && b === 254) return true;
-    // 0.0.0.0/8
-    if (a === 0) return true;
-    return false;
-  }
+function isBlockedIpv4(ip: string): boolean {
+  const [a, b] = ip.split('.').map(Number);
+  // Loopback: 127.0.0.0/8
+  if (a === 127) return true;
+  // 10.0.0.0/8
+  if (a === 10) return true;
+  // 172.16.0.0/12
+  if (a === 172 && b >= 16 && b <= 31) return true;
+  // 192.168.0.0/16
+  if (a === 192 && b === 168) return true;
+  // Link-local: 169.254.0.0/16 (includes cloud metadata 169.254.169.254)
+  if (a === 169 && b === 254) return true;
+  // 0.0.0.0/8
+  if (a === 0) return true;
+  return false;
+}
 
-  if (family !== 6) return false;
-
+function isBlockedIpv6(ip: string): boolean {
   const normalized = ip.toLowerCase();
   if (normalized === '::' || normalized === '::1') return true;
   if (normalized.startsWith('fc') || normalized.startsWith('fd')) return true; // fc00::/7
@@ -110,8 +106,14 @@ function isBlockedIp(ip: string): boolean {
     return true; // fe80::/10
   }
   if (normalized.startsWith('::ffff:')) {
-    return isBlockedIp(normalized.slice('::ffff:'.length));
+    return isBlockedIpv4(normalized.slice('::ffff:'.length));
   }
+  return false;
+}
 
+function isBlockedIp(ip: string): boolean {
+  const family = isIP(ip);
+  if (family === 4) return isBlockedIpv4(ip);
+  if (family === 6) return isBlockedIpv6(ip);
   return false;
 }
