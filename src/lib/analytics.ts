@@ -1,10 +1,10 @@
 /**
- * Owner-facing analytics — the fixed 4-event taxonomy.
+ * Owner-facing analytics — the fixed 5-event taxonomy.
  *
- * Every fleet project emits exactly these four events — `signup`, `activated`,
- * `core_action`, `returned` — so a single PostHog project can build one
- * cross-fleet funnel (signup -> activated -> core_action) and a D1/D7 retention
- * insight, with no custom dashboard.
+ * Every fleet project emits exactly these five events — `signup`, `activated`,
+ * `core_action`, `returned`, `page_view` — so a single PostHog project can
+ * build one cross-fleet funnel (signup -> activated -> core_action) and a
+ * D1/D7 retention insight, with no custom dashboard.
  *
  * Every event carries `project_id: "reader"`. This wrapper is intentionally thin
  * so it can later be promoted into `posthog-js`.
@@ -43,6 +43,8 @@ interface AnalyticsEventMap {
   core_action: { project_id: typeof PROJECT; action: CoreAction };
   /** A return session by a user with prior activity. */
   returned: { project_id: typeof PROJECT };
+  /** A page view — fired on route change, tracked manually with project_id. */
+  page_view: { project_id: typeof PROJECT };
 }
 
 function emitServer(event: string, props: Record<string, unknown>, distinctId?: string) {
@@ -111,6 +113,11 @@ export function trackCoreAction(action: CoreAction, distinctId?: string): void {
 /** Fire on session start for a user who has prior activity. */
 function trackReturned(): void {
   emit('returned', {});
+}
+
+/** Fire on each route change to record a page view. */
+export function trackPageView(): void {
+  emit('page_view', {});
 }
 
 // --- Browser once-per-user / once-per-session gating -----------------------
