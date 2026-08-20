@@ -109,9 +109,10 @@ renders Markdown/MDX. Markdown in `docs/` is the source of truth; Blume is
 not.
 → https://useblume.dev/docs/
 
-## OpenSpec
+## Spec-driven development
 
-**OpenSpec**
-Spec-driven development workflow used for non-trivial feature work. See
+**GitHub Issues**
+Repository-owned proposal, design, requirements, and task tracking for
+non-trivial feature work. See
 [development/openspec.md](../development/openspec.md).
-→ https://github.com/Fission-AI/OpenSpec
+→ https://github.com/Significant-Hobbies/reader/issues

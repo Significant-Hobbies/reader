@@ -43,7 +43,7 @@ docs/
     commands.md                 # pnpm scripts and what they do
     conventions.md              # code style, formatting, pre-commit hooks
     testing.md                  # vitest + playwright
-    openspec.md                 # spec-driven change workflow
+    openspec.md                 # GitHub-Issue spec workflow
   operations/
     deploy.md                   # Cloudflare Workers deploy + secrets
     env.md                      # environment variables and validation
@@ -89,8 +89,9 @@ docs/
 - [`STATUS.md`](../STATUS.md) — short current-state view (objective, active
   work, blockers, next steps).
 - [`README.md`](../README.md) — product readme for humans landing in the repo.
-- [`openspec/`](../openspec/) — spec-driven change workflow tooling and
-  archived change proposals. Referenced from [development/openspec.md](development/openspec.md).
+- [GitHub Issues](https://github.com/Significant-Hobbies/reader/issues) —
+  operational work and non-trivial feature specs. See
+  [development/openspec.md](development/openspec.md).
 - [`public/`](../public/) — runtime agent-indexing surfaces (`llms.txt`,
   `index.md`, `api-ai.json`, `robots.txt`, `sitemap.xml`) served by the Worker.
   Documented in [product/surfaces.md](product/surfaces.md).

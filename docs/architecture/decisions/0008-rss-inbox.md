@@ -2,7 +2,7 @@
 
 **Date:** 2026-07-13
 **Status:** Current
-**Specs:** [`openspec/specs/rss-*`](../../../openspec/specs/) · Archived change: [`openspec/changes/archive/2026-07-13-add-rss-reader/`](../../../openspec/changes/archive/2026-07-13-add-rss-reader/)
+**Planning record:** migrated to [GitHub Issues](https://github.com/Significant-Hobbies/reader/issues); this ADR preserves the shipped decision.
 
 ## Context
 

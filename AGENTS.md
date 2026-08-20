@@ -83,16 +83,16 @@ Full command map: [docs/development/commands.md](docs/development/commands.md).
 - **[docs/product/](docs/product/)** — purpose, features, surfaces.
 - **[docs/architecture/](docs/architecture/)** — overview, data flow, ADRs.
 - **[docs/development/](docs/development/)** — setup, commands, conventions,
-  testing, OpenSpec.
+  testing, and the GitHub-Issue spec workflow.
 - **[docs/operations/](docs/operations/)** — deploy, env, CI/CD, jobs,
   runbooks.
 - **[docs/knowledge/](docs/knowledge/)** — current lessons, external
   references, failed approaches.
 - **[docs/archive/](docs/archive/)** — historical records (pre-Vite ADRs,
   lessons, migration plans, security audit).
-- **[openspec/](openspec/)** — spec-driven change workflow tooling and
-  archived change proposals. See
-  [docs/development/openspec.md](docs/development/openspec.md).
+- **[GitHub Issues](https://github.com/Significant-Hobbies/reader/issues)** —
+  proposals, design notes, requirements, and task checklists for non-trivial
+  changes. See [docs/development/openspec.md](docs/development/openspec.md).
 - **[public/](public/)** — runtime agent-indexing surfaces (`llms.txt`,
   `index.md`, `api-ai.json`, `robots.txt`, `sitemap.xml`). See
   [docs/product/surfaces.md](docs/product/surfaces.md).
@@ -134,7 +134,6 @@ src/
   lib/                    # DB, auth, AI, storage, SSRF validation, RSS, memories, etc.
 packages/chrome-extension/ # Chrome MV3 extension (separate Vite build)
 landing-astro/            # Astro landing page (overlaid into dist/ during cf:build)
-openspec/                 # Spec-driven change workflow tooling + archived changes
 docs/                     # Canonical documentation (source of truth)
 drizzle/                  # Migration SQL files + meta
 scripts/                  # local-ai.mjs, validate-env.mjs, overlay-astro-landing.mjs, check-docs.mjs
@@ -149,7 +148,7 @@ Detailed file map: [docs/architecture/overview.md](docs/architecture/overview.md
 
 ### Adding Tasks
 
-- Track Reader work in this repository's GitHub issues or OpenSpec changes.
+- Track Reader work in this repository's GitHub Issues.
 - Keep cross-project infrastructure work in Fleet Workspace, not SaaS Maker.
 
 ### Using SaaS Maker

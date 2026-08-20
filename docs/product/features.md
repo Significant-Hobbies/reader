@@ -36,7 +36,8 @@ update when behaviour changes. For the API route map, see
 - Save an entry to the library exactly once (idempotent); creates an article
   record when content is available, otherwise a link-type article.
 - See [architecture/decisions/0008-rss-inbox.md](../architecture/decisions/0008-rss-inbox.md)
-  and the OpenSpec specs under [`openspec/specs/`](../../openspec/specs/).
+  and the repository's [GitHub Issues](https://github.com/Significant-Hobbies/reader/issues)
+  for current operational follow-up.
 
 ## Organisation & search
 

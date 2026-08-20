@@ -63,5 +63,5 @@ docs: consolidate knowledge system
 
 ## Spec-driven changes
 
-Non-trivial feature work uses the OpenSpec workflow. See
+Non-trivial feature work uses the GitHub-Issue spec workflow. See
 [openspec.md](openspec.md).
