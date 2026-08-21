@@ -149,13 +149,14 @@ Detailed file map: [docs/architecture/overview.md](docs/architecture/overview.md
 ### Adding Tasks
 
 - Track Reader work in this repository's GitHub Issues.
-- Keep cross-project infrastructure work in Fleet Workspace, not SaaS Maker.
+- Keep reusable cross-project automation in Workflows and Skills and private
+  portfolio metadata in Site Health, not SaaS Maker.
 
 ### Using SaaS Maker
 
 - Do not use the retired SaaS Maker task queue or API as a system of record.
-- Fleet Workspace owns shared project metadata and infrastructure; Reader
-  remains independently versioned and deployed.
+- Site Health owns private portfolio metadata; Workflows and Skills owns shared
+  automation. Reader remains independently versioned and deployed.
 
 ### Free AI First
 
