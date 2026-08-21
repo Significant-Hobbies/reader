@@ -70,7 +70,7 @@ const loadAIConfig = (): AIConfig => {
 // Props
 // ---------------------------------------------------------------------------
 
-export interface ReaderCoreHandlers {
+interface ReaderCoreHandlers {
   onArticleChange?: (patch: Partial<Article>) => Promise<void> | void;
   onSpawnNote?: (anchor: ElementAnchor, text: string) => void;
   onSpawnAIChat?: (anchor: ElementAnchor, text: string) => void;
