@@ -5,29 +5,34 @@ import { createPortal } from 'react-dom';
 
 import type { Note } from '../../types';
 
-interface NoteMarkerGroupProps {
-  anchorElement: HTMLElement;
-  notes: { note: Note; index: number }[];
+interface TooltipHandlers {
+  onShow: (text: string, e: React.MouseEvent) => void;
+  onHide: () => void;
+  onMove: (e: MouseEvent) => void;
+}
+
+interface NoteCallbacks {
   onScrollTo: (note: Note) => void;
   registerMarker: (noteId: number, el: HTMLElement | null) => void;
   onStartDrag: (note: Note, displayIndex: number) => (event: React.MouseEvent) => void;
+}
+
+interface NoteMarkerGroupProps {
+  anchorElement: HTMLElement;
+  notes: { note: Note; index: number }[];
   ignoreClicksRef: React.MutableRefObject<boolean>;
-  onShowTooltip: (text: string, e: React.MouseEvent) => void;
-  onHideTooltip: () => void;
-  onMoveTooltip: (e: MouseEvent) => void;
+  tooltip: TooltipHandlers;
+  callbacks: NoteCallbacks;
 }
 
 function NoteMarkerGroup({
   anchorElement,
   notes,
-  onScrollTo,
-  registerMarker,
-  onStartDrag,
   ignoreClicksRef,
-  onShowTooltip,
-  onHideTooltip,
-  onMoveTooltip,
+  tooltip,
+  callbacks,
 }: NoteMarkerGroupProps) {
+  const { onScrollTo, registerMarker, onStartDrag } = callbacks;
   const tagName = anchorElement.tagName.toLowerCase();
   const isMedia = ['img', 'video', 'iframe'].includes(tagName);
   const portalTarget = useMemo(() => {
@@ -70,10 +75,10 @@ function NoteMarkerGroup({
           ref={(el) => registerMarker(note.id, el)}
           onMouseDown={onStartDrag(note, index)}
           onMouseEnter={(e) =>
-            onShowTooltip(note.text?.trim() || note.anchor?.textPreview || `Note ${index + 1}`, e)
+            tooltip.onShow(note.text?.trim() || note.anchor?.textPreview || `Note ${index + 1}`, e)
           }
-          onMouseMove={(e) => onMoveTooltip(e.nativeEvent)}
-          onMouseLeave={onHideTooltip}
+          onMouseMove={(e) => tooltip.onMove(e.nativeEvent)}
+          onMouseLeave={tooltip.onHide}
           onClick={(e) => {
             e.stopPropagation();
             if (ignoreClicksRef.current) return;

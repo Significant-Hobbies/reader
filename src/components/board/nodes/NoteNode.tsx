@@ -29,6 +29,60 @@ type NoteData = {
   onBrowseContent?: (articleId: string, websiteNodeId: string) => void;
 };
 
+const COLOR_HEX: Record<string, string> = {
+  yellow: '#fde047',
+  blue: '#93c5fd',
+  green: '#86efac',
+  pink: '#f9a8d4',
+  purple: '#c4b5fd',
+  orange: '#fdba74',
+};
+
+function ColorPicker({
+  colorKey,
+  onColorChange,
+}: {
+  colorKey: string;
+  onColorChange: (c: string) => void;
+}) {
+  return (
+    <div className="flex gap-0.5 border-b border-black/10 px-2 py-1">
+      {COLOR_KEYS.map((c) => (
+        <button
+          key={c}
+          onClick={() => onColorChange(c)}
+          className={`h-4 w-4 rounded-full border ${
+            c === colorKey ? 'border-gray-800 ring-1 ring-gray-800' : 'border-transparent'
+          }`}
+          style={{ backgroundColor: COLOR_HEX[c] ?? '#fde047' }}
+        />
+      ))}
+    </div>
+  );
+}
+
+function ElementAnchorButton({
+  anchor,
+  onBrowse,
+}: {
+  anchor: NonNullable<NoteData['elementAnchor']>;
+  onBrowse: (articleId: string, websiteNodeId: string) => void;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={(e) => {
+        e.stopPropagation();
+        onBrowse(anchor.articleId, anchor.websiteNodeId);
+      }}
+      className="mb-2 inline-flex max-w-full items-center gap-1 rounded-md bg-blue-500/15 px-2 py-0.5 text-[10px] font-medium text-blue-300 transition-colors hover:bg-blue-500/25"
+    >
+      <span className="font-mono">[{anchor.tagName || 'el'}]</span>
+      <span className="truncate">&ldquo;{(anchor.textPreview || '').slice(0, 50)}&rdquo;</span>
+    </button>
+  );
+}
+
 function NoteNodeComponent({ id, data, selected }: NodeProps) {
   const nodeData = data as unknown as NoteData;
   const { updateNodeData } = useReactFlow();
@@ -67,52 +121,14 @@ function NoteNodeComponent({ id, data, selected }: NodeProps) {
       />
       <Handle type="target" position={Position.Top} className="!h-2 !w-2 !bg-gray-600" />
 
-      {selected && (
-        <div className="flex gap-0.5 border-b border-black/10 px-2 py-1">
-          {COLOR_KEYS.map((c) => (
-            <button
-              key={c}
-              onClick={() => handleColorChange(c)}
-              className={`h-4 w-4 rounded-full border ${
-                c === colorKey ? 'border-gray-800 ring-1 ring-gray-800' : 'border-transparent'
-              }`}
-              style={{
-                backgroundColor:
-                  c === 'yellow'
-                    ? '#fde047'
-                    : c === 'blue'
-                      ? '#93c5fd'
-                      : c === 'green'
-                        ? '#86efac'
-                        : c === 'pink'
-                          ? '#f9a8d4'
-                          : c === 'purple'
-                            ? '#c4b5fd'
-                            : '#fdba74',
-              }}
-            />
-          ))}
-        </div>
-      )}
+      {selected && <ColorPicker colorKey={colorKey} onColorChange={handleColorChange} />}
 
       <div className="p-3">
-        {nodeData.elementAnchor && (
-          <button
-            type="button"
-            onClick={(e) => {
-              e.stopPropagation();
-              nodeData.onBrowseContent?.(
-                nodeData.elementAnchor!.articleId,
-                nodeData.elementAnchor!.websiteNodeId
-              );
-            }}
-            className="mb-2 inline-flex max-w-full items-center gap-1 rounded-md bg-blue-500/15 px-2 py-0.5 text-[10px] font-medium text-blue-300 transition-colors hover:bg-blue-500/25"
-          >
-            <span className="font-mono">[{nodeData.elementAnchor.tagName || 'el'}]</span>
-            <span className="truncate">
-              &ldquo;{(nodeData.elementAnchor.textPreview || '').slice(0, 50)}&rdquo;
-            </span>
-          </button>
+        {nodeData.elementAnchor && nodeData.onBrowseContent && (
+          <ElementAnchorButton
+            anchor={nodeData.elementAnchor}
+            onBrowse={nodeData.onBrowseContent}
+          />
         )}
         {isEditing && !nodeData.readOnly ? (
           <textarea

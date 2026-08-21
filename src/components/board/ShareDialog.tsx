@@ -21,9 +21,11 @@ export function ShareDialog({
     <ShareLinkDialog
       open={open}
       onClose={onClose}
-      apiPath={`/api/boards/${boardId}`}
-      sharePathPrefix=""
-      entityLabel="Board"
+      config={{
+        apiPath: `/api/boards/${boardId}`,
+        sharePathPrefix: '',
+        entityLabel: 'Board',
+      }}
       shareId={shareId}
       onShareIdChange={onShareIdChange}
     />

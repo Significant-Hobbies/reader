@@ -22,7 +22,7 @@ const sourceExtensions = new Set(['.astro', '.js', '.jsx', '.mjs', '.mts', '.ts'
 
 const baselines = {
   lintWarnings: 38,
-  complexity: { violations: 35, maxCcn: 68, maxLength: 606, maxParams: 11 },
+  complexity: { violations: 0, maxCcn: 15, maxLength: 100, maxParams: 7 },
   duplication: { clones: 32, duplicatedLines: 413 },
   unused: {
     files: 0,

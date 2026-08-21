@@ -553,9 +553,11 @@ function BoardCanvas({ board, readOnly }: BoardCanvasClientProps) {
           <BoardToolbar
             boardName={boardName}
             onBoardNameChange={saveBoardName}
-            onAddNote={addNoteNode}
-            onAddWebsite={() => setShowWebsiteDialog(true)}
-            onAddAIChat={addAIChatNode}
+            addHandlers={{
+              onAddNote: addNoteNode,
+              onAddWebsite: () => setShowWebsiteDialog(true),
+              onAddAIChat: addAIChatNode,
+            }}
             saveStatus={saveStatus}
             boardId={board.id}
             shareId={board.shareId}

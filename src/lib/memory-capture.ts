@@ -118,13 +118,21 @@ function scoreMatch(
   return score;
 }
 
-export function normalizeMemoryCapture(input: MemoryCaptureInput): MemoryCapture | null {
-  const body =
-    input.kind === 'pdf_document'
-      ? (input.extractedText ?? stripHtml(input.content ?? '')).trim()
-      : stripHtml(input.content ?? input.extractedText ?? '').trim();
+function buildMemoryBody(input: MemoryCaptureInput): string {
+  if (input.kind === 'pdf_document') {
+    return (input.extractedText ?? stripHtml(input.content ?? '')).trim();
+  }
+  return stripHtml(input.content ?? input.extractedText ?? '').trim();
+}
 
-  if (!input.id?.trim() || !input.url?.trim() || !input.title?.trim() || !body) {
+function hasRequiredFields(input: MemoryCaptureInput, body: string): boolean {
+  return Boolean(input.id?.trim() && input.url?.trim() && input.title?.trim() && body);
+}
+
+export function normalizeMemoryCapture(input: MemoryCaptureInput): MemoryCapture | null {
+  const body = buildMemoryBody(input);
+
+  if (!hasRequiredFields(input, body)) {
     return null;
   }
 

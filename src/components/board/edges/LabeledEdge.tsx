@@ -9,17 +9,9 @@ import {
 } from '@xyflow/react';
 import { useCallback, useState } from 'react';
 
-export function LabeledEdge({
-  id,
-  sourceX,
-  sourceY,
-  targetX,
-  targetY,
-  sourcePosition,
-  targetPosition,
-  data,
-  selected,
-}: EdgeProps) {
+export function LabeledEdge(props: EdgeProps) {
+  const { id, sourceX, sourceY, targetX, targetY, sourcePosition, targetPosition, data, selected } =
+    props;
   const { updateEdgeData } = useReactFlow();
   const [isEditing, setIsEditing] = useState(false);
 

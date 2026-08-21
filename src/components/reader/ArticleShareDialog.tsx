@@ -21,9 +21,11 @@ export function ArticleShareDialog({
     <ShareLinkDialog
       open={open}
       onClose={onClose}
-      apiPath={`/api/articles/${articleId}`}
-      sharePathPrefix="article/"
-      entityLabel="Article"
+      config={{
+        apiPath: `/api/articles/${articleId}`,
+        sharePathPrefix: 'article/',
+        entityLabel: 'Article',
+      }}
       shareId={shareId}
       onShareIdChange={onShareIdChange}
     />

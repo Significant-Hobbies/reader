@@ -20,6 +20,104 @@ interface PDFViewerProps {
   settings: ReaderSettings;
 }
 
+function PDFToolbar({
+  pageNumber,
+  numPages,
+  scale,
+  handlers,
+}: {
+  pageNumber: number;
+  numPages: number | null;
+  scale: number;
+  handlers: {
+    onPrevPage: () => void;
+    onNextPage: () => void;
+    onZoomOut: () => void;
+    onZoomIn: () => void;
+    onResetZoom: () => void;
+  };
+}) {
+  return (
+    <div className="mb-6 flex flex-wrap items-center justify-between gap-4 rounded-lg border border-[var(--gray-5)] bg-[var(--gray-2)]/80 p-4">
+      <div className="flex items-center gap-2">
+        <button
+          onClick={handlers.onPrevPage}
+          disabled={pageNumber <= 1}
+          className="rounded-md bg-[var(--accent-9)] px-3 py-2 text-white transition hover:bg-[var(--accent-10)] disabled:cursor-not-allowed disabled:opacity-50"
+        >
+          Previous
+        </button>
+        <span className="min-w-[120px] text-center text-sm text-[var(--gray-11)]">
+          Page {pageNumber} of {numPages || '...'}
+        </span>
+        <button
+          onClick={handlers.onNextPage}
+          disabled={!numPages || pageNumber >= numPages}
+          className="rounded-md bg-[var(--accent-9)] px-3 py-2 text-white transition hover:bg-[var(--accent-10)] disabled:cursor-not-allowed disabled:opacity-50"
+        >
+          Next
+        </button>
+      </div>
+
+      <div className="flex items-center gap-2">
+        <button
+          onClick={handlers.onZoomOut}
+          className="rounded-md border border-[var(--gray-6)] bg-[var(--gray-3)] px-3 py-2 text-[var(--gray-12)] transition hover:bg-[var(--gray-4)]"
+          title="Zoom out"
+        >
+          -
+        </button>
+        <button
+          onClick={handlers.onResetZoom}
+          className="min-w-[60px] rounded-md border border-[var(--gray-6)] bg-[var(--gray-3)] px-3 py-2 text-sm text-[var(--gray-12)] transition hover:bg-[var(--gray-4)]"
+          title="Reset zoom"
+        >
+          {Math.round(scale * 100)}%
+        </button>
+        <button
+          onClick={handlers.onZoomIn}
+          className="rounded-md border border-[var(--gray-6)] bg-[var(--gray-3)] px-3 py-2 text-[var(--gray-12)] transition hover:bg-[var(--gray-4)]"
+          title="Zoom in"
+        >
+          +
+        </button>
+      </div>
+    </div>
+  );
+}
+
+function PDFLoadingError({
+  isLoading,
+  error,
+  onRetry,
+}: {
+  isLoading: boolean;
+  error: string | null;
+  onRetry: () => void;
+}) {
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center py-20">
+        <div className="h-12 w-12 animate-spin rounded-full border-b-2 border-[var(--accent-10)]"></div>
+      </div>
+    );
+  }
+  if (error) {
+    return (
+      <div className="mb-6 flex flex-wrap items-center justify-between gap-3 rounded-lg border border-red-700 bg-red-900/50 px-6 py-4 text-red-200">
+        <span className="text-sm">{error}</span>
+        <button
+          onClick={onRetry}
+          className="rounded-md border border-red-500/50 bg-red-500/20 px-3 py-1.5 text-sm font-medium text-red-100 transition hover:bg-red-500/30"
+        >
+          Try again
+        </button>
+      </div>
+    );
+  }
+  return null;
+}
+
 export function PDFViewer({ pdfUrl, settings }: PDFViewerProps) {
   const [numPages, setNumPages] = useState<number | null>(null);
   const [pageNumber, setPageNumber] = useState(1);
@@ -51,92 +149,29 @@ export function PDFViewer({ pdfUrl, settings }: PDFViewerProps) {
     setReloadKey((key) => key + 1);
   }
 
-  const goToPrevPage = () => {
-    setPageNumber((prev) => Math.max(1, prev - 1));
-  };
-
-  const goToNextPage = () => {
-    setPageNumber((prev) => Math.min(numPages || 1, prev + 1));
-  };
-
-  const zoomIn = () => {
-    setScale((prev) => Math.min(2.5, prev + 0.2));
-  };
-
-  const zoomOut = () => {
-    setScale((prev) => Math.max(0.5, prev - 0.2));
-  };
-
-  const resetZoom = () => {
-    setScale(1.0);
-  };
+  const goToPrevPage = () => setPageNumber((prev) => Math.max(1, prev - 1));
+  const goToNextPage = () => setPageNumber((prev) => Math.min(numPages || 1, prev + 1));
+  const zoomIn = () => setScale((prev) => Math.min(2.5, prev + 0.2));
+  const zoomOut = () => setScale((prev) => Math.max(0.5, prev - 0.2));
+  const resetZoom = () => setScale(1.0);
 
   return (
     <div className={`min-h-full transition-colors duration-300 ${themeClasses}`}>
       <div className="mx-auto max-w-5xl px-4 py-8">
-        <div className="mb-6 flex flex-wrap items-center justify-between gap-4 rounded-lg border border-[var(--gray-5)] bg-[var(--gray-2)]/80 p-4">
-          <div className="flex items-center gap-2">
-            <button
-              onClick={goToPrevPage}
-              disabled={pageNumber <= 1}
-              className="rounded-md bg-[var(--accent-9)] px-3 py-2 text-white transition hover:bg-[var(--accent-10)] disabled:cursor-not-allowed disabled:opacity-50"
-            >
-              Previous
-            </button>
-            <span className="min-w-[120px] text-center text-sm text-[var(--gray-11)]">
-              Page {pageNumber} of {numPages || '...'}
-            </span>
-            <button
-              onClick={goToNextPage}
-              disabled={!numPages || pageNumber >= numPages}
-              className="rounded-md bg-[var(--accent-9)] px-3 py-2 text-white transition hover:bg-[var(--accent-10)] disabled:cursor-not-allowed disabled:opacity-50"
-            >
-              Next
-            </button>
-          </div>
+        <PDFToolbar
+          pageNumber={pageNumber}
+          numPages={numPages}
+          scale={scale}
+          handlers={{
+            onPrevPage: goToPrevPage,
+            onNextPage: goToNextPage,
+            onZoomOut: zoomOut,
+            onZoomIn: zoomIn,
+            onResetZoom: resetZoom,
+          }}
+        />
 
-          <div className="flex items-center gap-2">
-            <button
-              onClick={zoomOut}
-              className="rounded-md border border-[var(--gray-6)] bg-[var(--gray-3)] px-3 py-2 text-[var(--gray-12)] transition hover:bg-[var(--gray-4)]"
-              title="Zoom out"
-            >
-              -
-            </button>
-            <button
-              onClick={resetZoom}
-              className="min-w-[60px] rounded-md border border-[var(--gray-6)] bg-[var(--gray-3)] px-3 py-2 text-sm text-[var(--gray-12)] transition hover:bg-[var(--gray-4)]"
-              title="Reset zoom"
-            >
-              {Math.round(scale * 100)}%
-            </button>
-            <button
-              onClick={zoomIn}
-              className="rounded-md border border-[var(--gray-6)] bg-[var(--gray-3)] px-3 py-2 text-[var(--gray-12)] transition hover:bg-[var(--gray-4)]"
-              title="Zoom in"
-            >
-              +
-            </button>
-          </div>
-        </div>
-
-        {isLoading && (
-          <div className="flex items-center justify-center py-20">
-            <div className="h-12 w-12 animate-spin rounded-full border-b-2 border-[var(--accent-10)]"></div>
-          </div>
-        )}
-
-        {error && (
-          <div className="mb-6 flex flex-wrap items-center justify-between gap-3 rounded-lg border border-red-700 bg-red-900/50 px-6 py-4 text-red-200">
-            <span className="text-sm">{error}</span>
-            <button
-              onClick={retryLoad}
-              className="rounded-md border border-red-500/50 bg-red-500/20 px-3 py-1.5 text-sm font-medium text-red-100 transition hover:bg-red-500/30"
-            >
-              Try again
-            </button>
-          </div>
-        )}
+        <PDFLoadingError isLoading={isLoading} error={error} onRetry={retryLoad} />
 
         {!error && (
           <div className="flex justify-center">

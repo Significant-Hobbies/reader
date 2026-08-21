@@ -70,15 +70,31 @@ const loadAIConfig = (): AIConfig => {
 // Props
 // ---------------------------------------------------------------------------
 
+export interface ReaderCoreHandlers {
+  onArticleChange?: (patch: Partial<Article>) => Promise<void> | void;
+  onSpawnNote?: (anchor: ElementAnchor, text: string) => void;
+  onSpawnAIChat?: (anchor: ElementAnchor, text: string) => void;
+}
+
 export interface ReaderCoreProps {
   article: Article;
   readOnly?: boolean;
   localMode?: boolean;
-  onArticleChange?: (patch: Partial<Article>) => Promise<void> | void;
-  onSpawnNote?: (anchor: ElementAnchor, text: string) => void;
-  onSpawnAIChat?: (anchor: ElementAnchor, text: string) => void;
   compact?: boolean;
   headerActions?: React.ReactNode;
+  handlers?: ReaderCoreHandlers;
+}
+
+function computeMenuPosition(
+  clientX: number,
+  clientY: number,
+  range: Range
+): { x: number; y: number } {
+  if (Number.isFinite(clientX) && Number.isFinite(clientY) && (clientX > 0 || clientY > 0)) {
+    return { x: clientX, y: clientY };
+  }
+  const rect = range.getBoundingClientRect();
+  return { x: rect.right, y: rect.bottom };
 }
 
 // ---------------------------------------------------------------------------
@@ -89,12 +105,11 @@ export function ReaderCore({
   article,
   readOnly = false,
   localMode = false,
-  onArticleChange,
-  onSpawnNote,
-  onSpawnAIChat,
   compact = false,
   headerActions,
+  handlers = {},
 }: ReaderCoreProps) {
+  const { onArticleChange, onSpawnNote, onSpawnAIChat } = handlers;
   const id = article.id;
   const queryClient = useQueryClient();
 
@@ -505,16 +520,9 @@ export function ReaderCore({
         return false;
       }
 
-      let x = clientX;
-      let y = clientY;
-      if (!Number.isFinite(x) || !Number.isFinite(y) || (x <= 0 && y <= 0)) {
-        const rect = range.getBoundingClientRect();
-        x = rect.right;
-        y = rect.bottom;
-      }
-
+      const pos = computeMenuPosition(clientX, clientY, range);
       const anchorElement =
-        getAnchorElementFromPoint(x, y) ||
+        getAnchorElementFromPoint(pos.x, pos.y) ||
         (commonNode.closest?.('[data-note-anchor-index]') as HTMLElement | null);
 
       const anchorPayload = anchorElement
@@ -525,8 +533,8 @@ export function ReaderCore({
         : undefined;
 
       setSelectionMenu({
-        x,
-        y,
+        x: pos.x,
+        y: pos.y,
         text: selectedText,
         anchor: anchorPayload,
       });
@@ -1016,14 +1024,20 @@ export function ReaderCore({
               {!localMode && (
                 <>
                   <ArticleSummary
-                    articleId={article.id}
-                    articleContent={article.content}
-                    articleTitle={article.title}
-                    initialSummary={article.aiSummary}
-                    initialKeyPoints={article.keyPoints}
-                    endpointUrl={aiConfig.endpointUrl}
-                    model={aiConfig.model}
-                    apiKey={aiConfig.apiKey}
+                    article={{
+                      id: article.id,
+                      content: article.content,
+                      title: article.title,
+                    }}
+                    initial={{
+                      summary: article.aiSummary,
+                      keyPoints: article.keyPoints,
+                    }}
+                    aiConfig={{
+                      endpointUrl: aiConfig.endpointUrl,
+                      model: aiConfig.model,
+                      apiKey: aiConfig.apiKey,
+                    }}
                     theme={settings.theme}
                     onSummarySaved={handleSummarySaved}
                   />
@@ -1055,13 +1069,13 @@ export function ReaderCore({
                   key={`anchor-${anchorIndex}`}
                   anchorElement={anchorElement}
                   notes={groupedNotes}
-                  onScrollTo={scrollToNote}
-                  registerMarker={registerMarker}
-                  onStartDrag={startMarkerDrag}
                   ignoreClicksRef={ignoreMarkerClickRef}
-                  onShowTooltip={showTooltip}
-                  onHideTooltip={hideTooltip}
-                  onMoveTooltip={moveTooltip}
+                  tooltip={{ onShow: showTooltip, onHide: hideTooltip, onMove: moveTooltip }}
+                  callbacks={{
+                    onScrollTo: scrollToNote,
+                    registerMarker,
+                    onStartDrag: startMarkerDrag,
+                  }}
                 />
               );
             })}

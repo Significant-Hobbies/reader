@@ -17,6 +17,109 @@ interface AddWebsiteDialogProps {
   onAddReader: (data: { articleId: string; url: string; title: string }) => void;
 }
 
+const MODE_BUTTONS: { mode: 'card' | 'iframe' | 'pdf'; label: string; sublabel: string }[] = [
+  { mode: 'card', label: 'Import Site', sublabel: 'Readable source' },
+  { mode: 'iframe', label: 'Embed Site', sublabel: 'Live preview' },
+  { mode: 'pdf', label: 'PDF/Paper', sublabel: 'Original PDF' },
+];
+
+function ModeSelector({
+  mode,
+  onSelect,
+}: {
+  mode: 'card' | 'iframe' | 'pdf';
+  onSelect: (m: 'card' | 'iframe' | 'pdf') => void;
+}) {
+  return (
+    <div className="mb-3 grid grid-cols-3 gap-2">
+      {MODE_BUTTONS.map((btn) => (
+        <button
+          key={btn.mode}
+          type="button"
+          onClick={() => onSelect(btn.mode)}
+          className={`flex-1 rounded-lg px-3 py-2 text-xs font-medium transition-colors ${
+            mode === btn.mode
+              ? 'bg-blue-600 text-white'
+              : 'border border-gray-700 text-gray-400 hover:text-gray-200'
+          }`}
+        >
+          {btn.label}
+          <span className="mt-0.5 block text-[10px] opacity-70">{btn.sublabel}</span>
+        </button>
+      ))}
+    </div>
+  );
+}
+
+async function uploadPdf(
+  file: File,
+  onAddReader: (data: { articleId: string; url: string; title: string }) => void
+): Promise<void> {
+  const formData = new FormData();
+  formData.append('file', file);
+  formData.append('category', 'Paper');
+
+  const response = await fetch('/api/pdf/upload', { method: 'POST', body: formData });
+  if (!response.ok) {
+    const errorData = await response.json().catch(() => ({}));
+    throw new Error(errorData.error || 'Failed to import PDF');
+  }
+
+  const data = (await response.json()) as { id: string; title?: string; pdfUrl?: string };
+  onAddReader({
+    articleId: data.id,
+    url: data.pdfUrl || `pdf://${file.name}`,
+    title: data.title || file.name.replace(/\.pdf$/i, ''),
+  });
+}
+
+async function fetchWebsiteCard(
+  rawUrl: string,
+  onAdd: (data: {
+    url: string;
+    title: string;
+    excerpt: string;
+    favicon?: string;
+    articleId?: string;
+  }) => void
+): Promise<void> {
+  const response = await fetch(`/api/snapshot?url=${encodeURIComponent(rawUrl)}`);
+  if (!response.ok) throw new Error('Failed to fetch website');
+
+  const { snapshot } = await response.json();
+  const plainText = (snapshot.content || '')
+    .replace(/<[^>]+>/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim();
+  const excerpt = plainText.slice(0, 300).trim();
+
+  let favicon: string | undefined;
+  try {
+    favicon = `${new URL(rawUrl).origin}/favicon.ico`;
+  } catch {
+    // ignore
+  }
+
+  let articleId: string | undefined;
+  try {
+    const articleRes = await fetch('/api/articles', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        url: rawUrl,
+        title: snapshot.title || rawUrl,
+        byline: snapshot.byline,
+        content: snapshot.content || '',
+      }),
+    });
+    if (articleRes.ok) articleId = (await articleRes.json()).id;
+  } catch {
+    // Article creation failed — still add the card without articleId
+  }
+
+  onAdd({ url: rawUrl, title: snapshot.title || rawUrl, excerpt, favicon, articleId });
+}
+
 export function AddWebsiteDialog({
   open,
   onClose,
@@ -33,45 +136,23 @@ export function AddWebsiteDialog({
 
   if (!open) return null;
 
+  const resetAndClose = () => {
+    setUrl('');
+    setSelectedFile(null);
+    if (fileInputRef.current) fileInputRef.current.value = '';
+    onClose();
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setError(null);
+
     if (mode === 'pdf') {
       if (!selectedFile) return;
       setLoading(true);
-      setError(null);
-
       try {
-        const formData = new FormData();
-        formData.append('file', selectedFile);
-        formData.append('category', 'Paper');
-
-        const response = await fetch('/api/pdf/upload', {
-          method: 'POST',
-          body: formData,
-        });
-
-        if (!response.ok) {
-          const errorData = await response.json().catch(() => ({}));
-          throw new Error(errorData.error || 'Failed to import PDF');
-        }
-
-        const data = (await response.json()) as {
-          id: string;
-          title?: string;
-          pdfUrl?: string;
-        };
-
-        onAddReader({
-          articleId: data.id,
-          url: data.pdfUrl || `pdf://${selectedFile.name}`,
-          title: data.title || selectedFile.name.replace(/\.pdf$/i, ''),
-        });
-
-        setSelectedFile(null);
-        if (fileInputRef.current) {
-          fileInputRef.current.value = '';
-        }
-        onClose();
+        await uploadPdf(selectedFile, onAddReader);
+        resetAndClose();
       } catch (err) {
         setError(err instanceof Error ? err.message : 'Failed to import PDF');
       } finally {
@@ -82,72 +163,18 @@ export function AddWebsiteDialog({
 
     let trimmedUrl = url.trim();
     if (!trimmedUrl) return;
-
-    if (!/^https?:\/\//i.test(trimmedUrl)) {
-      trimmedUrl = `https://${trimmedUrl}`;
-    }
+    if (!/^https?:\/\//i.test(trimmedUrl)) trimmedUrl = `https://${trimmedUrl}`;
 
     if (mode === 'iframe') {
       onAddIframe({ url: trimmedUrl });
-      setUrl('');
-      onClose();
+      resetAndClose();
       return;
     }
 
     setLoading(true);
-    setError(null);
-
     try {
-      const response = await fetch(`/api/snapshot?url=${encodeURIComponent(trimmedUrl)}`);
-      if (!response.ok) throw new Error('Failed to fetch website');
-
-      const { snapshot } = await response.json();
-
-      const plainText = (snapshot.content || '')
-        .replace(/<[^>]+>/g, ' ')
-        .replace(/\s+/g, ' ')
-        .trim();
-      const excerpt = plainText.slice(0, 300).trim();
-
-      let favicon: string | undefined;
-      try {
-        const urlObj = new URL(trimmedUrl);
-        favicon = `${urlObj.origin}/favicon.ico`;
-      } catch {
-        // ignore
-      }
-
-      // Create (or find existing) article so it appears in the main articles list
-      let articleId: string | undefined;
-      try {
-        const articleRes = await fetch('/api/articles', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            url: trimmedUrl,
-            title: snapshot.title || trimmedUrl,
-            byline: snapshot.byline,
-            content: snapshot.content || '',
-          }),
-        });
-        if (articleRes.ok) {
-          const articleData = await articleRes.json();
-          articleId = articleData.id;
-        }
-      } catch {
-        // Article creation failed — still add the card without articleId
-      }
-
-      onAdd({
-        url: trimmedUrl,
-        title: snapshot.title || trimmedUrl,
-        excerpt,
-        favicon,
-        articleId,
-      });
-
-      setUrl('');
-      onClose();
+      await fetchWebsiteCard(trimmedUrl, onAdd);
+      resetAndClose();
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to fetch website');
     } finally {
@@ -191,44 +218,7 @@ export function AddWebsiteDialog({
             />
           )}
 
-          <div className="mb-3 grid grid-cols-3 gap-2">
-            <button
-              type="button"
-              onClick={() => setMode('card')}
-              className={`flex-1 rounded-lg px-3 py-2 text-xs font-medium transition-colors ${
-                mode === 'card'
-                  ? 'bg-blue-600 text-white'
-                  : 'border border-gray-700 text-gray-400 hover:text-gray-200'
-              }`}
-            >
-              Import Site
-              <span className="mt-0.5 block text-[10px] opacity-70">Readable source</span>
-            </button>
-            <button
-              type="button"
-              onClick={() => setMode('iframe')}
-              className={`flex-1 rounded-lg px-3 py-2 text-xs font-medium transition-colors ${
-                mode === 'iframe'
-                  ? 'bg-blue-600 text-white'
-                  : 'border border-gray-700 text-gray-400 hover:text-gray-200'
-              }`}
-            >
-              Embed Site
-              <span className="mt-0.5 block text-[10px] opacity-70">Live preview</span>
-            </button>
-            <button
-              type="button"
-              onClick={() => setMode('pdf')}
-              className={`flex-1 rounded-lg px-3 py-2 text-xs font-medium transition-colors ${
-                mode === 'pdf'
-                  ? 'bg-blue-600 text-white'
-                  : 'border border-gray-700 text-gray-400 hover:text-gray-200'
-              }`}
-            >
-              PDF/Paper
-              <span className="mt-0.5 block text-[10px] opacity-70">Original PDF</span>
-            </button>
-          </div>
+          <ModeSelector mode={mode} onSelect={setMode} />
 
           {error && <p className="mb-3 text-xs text-red-400">{error}</p>}
 

@@ -111,8 +111,10 @@ function ReaderNodeComponent({ id, data, selected }: NodeProps) {
               article={article}
               readOnly={nodeData.readOnly}
               compact
-              onSpawnNote={nodeData.readOnly ? undefined : handleSpawnNote}
-              onSpawnAIChat={nodeData.readOnly ? undefined : handleSpawnAIChat}
+              handlers={{
+                onSpawnNote: nodeData.readOnly ? undefined : handleSpawnNote,
+                onSpawnAIChat: nodeData.readOnly ? undefined : handleSpawnAIChat,
+              }}
             />
           </div>
         )}

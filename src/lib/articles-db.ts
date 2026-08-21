@@ -135,14 +135,6 @@ export function normalizeTags(payload: unknown): string[] {
     .slice(0, 20); // Max 20 tags per article
 }
 
-/** Calculate reading time in minutes from HTML content (225 wpm). */
-function calculateReadingTime(htmlContent: string): number {
-  const plainText = sanitizePlainText(htmlContent);
-  const words = plainText.split(/\s+/).filter((word) => word.length > 0);
-  const WORDS_PER_MINUTE = 225;
-  return Math.max(1, Math.round(words.length / WORDS_PER_MINUTE));
-}
-
 function normalizeNotes(payload: unknown): Note[] {
   if (!Array.isArray(payload)) return [];
   return payload
@@ -274,6 +266,37 @@ function normalizeArticleType(value: unknown): 'article' | 'pdf' | 'link' {
   return value === 'pdf' || value === 'link' ? value : 'article';
 }
 
+function parseAiSummary(summary: unknown): string | undefined {
+  if (typeof summary === 'string') return summary;
+  if (summary && typeof (summary as Record<string, string>).medium === 'string')
+    return (summary as Record<string, string>).medium;
+  return undefined;
+}
+
+function optionalArr<T>(value: unknown): T[] | undefined {
+  return Array.isArray(value) ? (value as T[]) : undefined;
+}
+
+function optionalNum(value: unknown): number | undefined {
+  return typeof value === 'number' ? value : undefined;
+}
+
+function arrCount(arr: unknown): number {
+  return Array.isArray(arr) ? arr.length : 0;
+}
+
+function arrOrEmpty<T>(value: unknown): T[] {
+  return Array.isArray(value) ? (value as T[]) : [];
+}
+
+function buildPdfUrl(type: string, row: ArticleRow): string | undefined {
+  return type === 'pdf' && row.pdfStorageKey ? getPdfDownloadUrl(row.id) : undefined;
+}
+
+function buildShareIdField(shareId: string | null): Record<string, string> {
+  return shareId ? { shareId } : {};
+}
+
 function rowToArticle(row: ArticleRow): Article {
   const tags = parseJsonColumn<string[]>(row.tags, []);
   const listIds = parseJsonColumn<string[]>(row.listIds, []);
@@ -283,13 +306,6 @@ function rowToArticle(row: ArticleRow): Article {
   const keyPoints = parseJsonColumn<string[] | null>(row.keyPoints, null);
   const pdfMetadata = parseJsonColumn<PdfMetadata | null>(row.pdfMetadata, null);
   const sessionReview = parseJsonColumn<SessionReview | null>(row.sessionReview, null);
-
-  const aiSummary =
-    typeof summary === 'string'
-      ? summary
-      : summary && typeof summary.medium === 'string'
-        ? summary.medium
-        : undefined;
 
   const type = normalizeArticleType(row.type);
 
@@ -301,25 +317,22 @@ function rowToArticle(row: ArticleRow): Article {
     content: row.content ?? '',
     notes,
     aiChat,
-    aiSummary,
-    keyPoints: Array.isArray(keyPoints) ? keyPoints : undefined,
+    aiSummary: parseAiSummary(summary),
+    keyPoints: optionalArr<string>(keyPoints),
     projectId: defaultProjectId(row.userId),
     status: normalizeStatus(row.status),
     tags: normalizeTags(tags),
-    readingTimeMinutes:
-      typeof row.readingTimeMinutes === 'number' ? row.readingTimeMinutes : undefined,
+    readingTimeMinutes: optionalNum(row.readingTimeMinutes),
     type,
-    // For PDFs, synthesize a same-origin proxy URL. The client calls this and
-    // the route verifies auth + ownership before streaming bytes from Blob.
-    pdfUrl: type === 'pdf' && row.pdfStorageKey ? getPdfDownloadUrl(row.id) : undefined,
+    pdfUrl: buildPdfUrl(type, row),
     extractedText: row.extractedText ?? undefined,
     pdfMetadata: pdfMetadata ?? undefined,
     category: row.category ?? undefined,
     sessionReview: sessionReview ?? undefined,
-    notesCount: Array.isArray(notes) ? notes.length : 0,
-    listIds: Array.isArray(listIds) ? listIds : [],
+    notesCount: arrCount(notes),
+    listIds: arrOrEmpty<string>(listIds),
     userId: row.userId,
-    ...(row.shareId ? { shareId: row.shareId } : {}),
+    ...buildShareIdField(row.shareId),
     createdAt: toIso(row.createdAt),
     updatedAt: toIso(row.updatedAt),
   };
@@ -391,14 +404,13 @@ export type ArticleSearchOptions = {
   offset: number;
 };
 
-/** Bounded owner-scoped search for integration clients. */
-export async function searchArticleSummaries(
-  userId: string,
-  options: ArticleSearchOptions
-): Promise<{ items: ArticleSummary[]; total: number; nextOffset: number | null }> {
-  if (options.projectId && options.projectId !== defaultProjectId(userId)) {
-    return { items: [], total: 0, nextOffset: null };
-  }
+export type ArticleSearchResult = {
+  items: ArticleSummary[];
+  total: number;
+  nextOffset: number | null;
+};
+
+function buildSearchConditions(userId: string, options: ArticleSearchOptions): SQL[] {
   const conditions: SQL[] = [eq(articles.userId, userId)];
   const query = options.query?.trim().replaceAll(/[%_]/g, '').slice(0, 200);
   if (query) {
@@ -415,23 +427,7 @@ export async function searchArticleSummaries(
   if (options.listId) {
     conditions.push(like(articles.listIds, `%"${options.listId.replaceAll('"', '')}"%`));
   }
-  const where = and(...conditions);
-  const [rows, totals] = await Promise.all([
-    db
-      .select()
-      .from(articles)
-      .where(where)
-      .orderBy(desc(articles.createdAt))
-      .limit(options.limit)
-      .offset(options.offset),
-    db.select({ value: count() }).from(articles).where(where),
-  ]);
-  const total = totals[0]?.value ?? 0;
-  return {
-    items: rows.map(rowToSummary),
-    total,
-    nextOffset: options.offset + rows.length < total ? options.offset + rows.length : null,
-  };
+  return conditions;
 }
 
 export async function fetchArticlesForSourceMap(userId: string): Promise<Article[]> {
@@ -741,6 +737,46 @@ function calculateRelevance(
   return score;
 }
 
+function buildMatchedFields(
+  sanitizedQuery: string,
+  title: string,
+  content: string,
+  notes: Note[],
+  aiChat: AIChatMessage[]
+): { matchedFields: string[]; snippets: { field: string; text: string }[] } {
+  const matchedFields: string[] = [];
+  const snippets: { field: string; text: string }[] = [];
+  const lowerQuery = sanitizedQuery.toLowerCase();
+
+  if (title.toLowerCase().includes(lowerQuery)) {
+    matchedFields.push('title');
+    snippets.push({ field: 'title', text: highlightSearchTerms(title, sanitizedQuery) });
+  }
+
+  const plainContent = stripHtmlTags(content);
+  if (plainContent.toLowerCase().includes(lowerQuery)) {
+    matchedFields.push('content');
+    snippets.push({ field: 'content', text: getSnippet(plainContent, sanitizedQuery) });
+  }
+
+  const matchingNotes = notes.filter((note) => note.text.toLowerCase().includes(lowerQuery));
+  if (matchingNotes.length > 0) {
+    matchedFields.push('notes');
+    snippets.push({ field: 'notes', text: getSnippet(matchingNotes[0].text, sanitizedQuery, 100) });
+  }
+
+  const matchingChat = aiChat.filter((msg) => msg.content.toLowerCase().includes(lowerQuery));
+  if (matchingChat.length > 0) {
+    matchedFields.push('aiChat');
+    snippets.push({
+      field: 'aiChat',
+      text: getSnippet(matchingChat[0].content, sanitizedQuery, 100),
+    });
+  }
+
+  return { matchedFields, snippets };
+}
+
 function matchesQuery(
   query: string,
   title: string,
@@ -790,38 +826,13 @@ export async function searchArticles(
 
       if (!matchesQuery(sanitizedQuery, title, content, notes, aiChat)) continue;
 
-      const matchedFields: string[] = [];
-      const snippets: { field: string; text: string }[] = [];
-      const lowerQuery = sanitizedQuery.toLowerCase();
-
-      if (title.toLowerCase().includes(lowerQuery)) {
-        matchedFields.push('title');
-        snippets.push({ field: 'title', text: highlightSearchTerms(title, sanitizedQuery) });
-      }
-
-      const plainContent = stripHtmlTags(content);
-      if (plainContent.toLowerCase().includes(lowerQuery)) {
-        matchedFields.push('content');
-        snippets.push({ field: 'content', text: getSnippet(plainContent, sanitizedQuery) });
-      }
-
-      const matchingNotes = notes.filter((note) => note.text.toLowerCase().includes(lowerQuery));
-      if (matchingNotes.length > 0) {
-        matchedFields.push('notes');
-        snippets.push({
-          field: 'notes',
-          text: getSnippet(matchingNotes[0].text, sanitizedQuery, 100),
-        });
-      }
-
-      const matchingChat = aiChat.filter((msg) => msg.content.toLowerCase().includes(lowerQuery));
-      if (matchingChat.length > 0) {
-        matchedFields.push('aiChat');
-        snippets.push({
-          field: 'aiChat',
-          text: getSnippet(matchingChat[0].content, sanitizedQuery, 100),
-        });
-      }
+      const { matchedFields, snippets } = buildMatchedFields(
+        sanitizedQuery,
+        title,
+        content,
+        notes,
+        aiChat
+      );
 
       const relevanceScore = calculateRelevance(sanitizedQuery, title, content, notes, aiChat);
       const listIds = parseJsonColumn<string[]>(row.listIds, []);
@@ -903,6 +914,14 @@ export async function revokeArticleShareId(articleId: string, userId: string): P
   }
 }
 
+function mapShareNotes(notes: Note[]): { id: number; text: string; anchor: Note['anchor'] }[] {
+  return notes.map((n) => ({
+    id: Number((n as { id?: unknown }).id) || 0,
+    text: String((n as { text?: unknown }).text || ''),
+    anchor: (n as { anchor?: Note['anchor'] }).anchor,
+  }));
+}
+
 export async function fetchArticleByShareId(
   shareId: string
 ): Promise<Omit<Article, 'userId' | 'id' | 'aiChat'> | null> {
@@ -917,24 +936,13 @@ export async function fetchArticleByShareId(
     const keyPoints = parseJsonColumn<string[] | null>(row.keyPoints, null);
     const pdfMetadata = parseJsonColumn<PdfMetadata | null>(row.pdfMetadata, null);
 
-    const aiSummary =
-      typeof summary === 'string'
-        ? summary
-        : summary && typeof summary.medium === 'string'
-          ? summary.medium
-          : undefined;
-
     return {
       url: row.url,
       title: row.title || row.url,
       byline: row.byline ?? undefined,
       content: row.content ?? '',
-      notes: notes.map((n) => ({
-        id: Number((n as { id?: unknown }).id) || 0,
-        text: String((n as { text?: unknown }).text || ''),
-        anchor: (n as { anchor?: Note['anchor'] }).anchor,
-      })),
-      aiSummary,
+      notes: mapShareNotes(notes),
+      aiSummary: parseAiSummary(summary),
       keyPoints: Array.isArray(keyPoints) ? keyPoints : undefined,
       tags: Array.isArray(tags) ? tags : [],
       readingTimeMinutes:
@@ -979,6 +987,67 @@ export class ArticleUpdateValidationError extends Error {
   }
 }
 
+function buildSummaryUpdate(aiSummary: unknown) {
+  if (typeof aiSummary !== 'string') return undefined;
+  const trimmedSummary = sanitizePlainText(aiSummary).slice(0, 5000);
+  return trimmedSummary.length > 0
+    ? (serializeJsonColumn({ medium: trimmedSummary }) as unknown as {
+        short?: string;
+        medium?: string;
+        long?: string;
+      })
+    : null;
+}
+
+function buildKeyPointsUpdate(keyPoints: unknown) {
+  if (keyPoints === undefined) return undefined;
+  const normalizedKeyPoints = normalizeKeyPointsInput(keyPoints);
+  return normalizedKeyPoints
+    ? (serializeJsonColumn(normalizedKeyPoints) as unknown as string[])
+    : null;
+}
+
+function buildArticleUpdates(
+  payload: Record<string, unknown>
+): Partial<typeof articles.$inferInsert> {
+  const { notes, aiChat, title, status, tags, aiSummary, keyPoints, category, sessionReview } =
+    payload;
+  const updates: Partial<typeof articles.$inferInsert> = {
+    updatedAt: new Date(),
+  };
+
+  if (notes !== undefined) {
+    updates.notes = serializeJsonColumn(normalizeNotes(notes)) as unknown as Note[];
+  }
+  if (aiChat !== undefined) {
+    updates.aiChat = serializeJsonColumn(
+      normalizeAIChatMessages(aiChat)
+    ) as unknown as AIChatMessage[];
+  }
+  if (typeof title === 'string') {
+    const trimmedTitle = sanitizeTitle(title);
+    if (trimmedTitle.length > 0) updates.title = trimmedTitle;
+  }
+  const normalizedStatus = normalizeUpdateStatus(status);
+  if (normalizedStatus) updates.status = normalizedStatus;
+  if (tags !== undefined) {
+    updates.tags = serializeJsonColumn(normalizeTags(tags)) as unknown as string[];
+  }
+  if (typeof category === 'string') {
+    const trimmedCategory = sanitizePlainText(category).slice(0, 50);
+    updates.category = trimmedCategory.length > 0 ? trimmedCategory : null;
+  }
+  const summaryUpdate = buildSummaryUpdate(aiSummary);
+  if (summaryUpdate !== undefined) updates.summary = summaryUpdate;
+  const keyPointsUpdate = buildKeyPointsUpdate(keyPoints);
+  if (keyPointsUpdate !== undefined) updates.keyPoints = keyPointsUpdate;
+  if (sessionReview !== undefined && sessionReview !== null && typeof sessionReview === 'object') {
+    updates.sessionReview = serializeJsonColumn(sessionReview) as unknown as SessionReview;
+  }
+
+  return updates;
+}
+
 /**
  * Apply partial updates to an article. Mirrors the field whitelist that the
  * old PUT /api/articles/[id] handler enforced against Firestore.
@@ -998,66 +1067,7 @@ export async function updateArticle(
     );
   }
 
-  const { notes, aiChat, title, status, tags, aiSummary, keyPoints, category, sessionReview } =
-    payload;
-  const updates: Partial<typeof articles.$inferInsert> = {
-    updatedAt: new Date(),
-  };
-
-  if (notes !== undefined) {
-    const normalized = normalizeNotes(notes);
-    updates.notes = serializeJsonColumn(normalized) as unknown as Note[];
-  }
-
-  if (aiChat !== undefined) {
-    const normalized = normalizeAIChatMessages(aiChat);
-    updates.aiChat = serializeJsonColumn(normalized) as unknown as AIChatMessage[];
-  }
-
-  if (typeof title === 'string') {
-    const trimmedTitle = sanitizeTitle(title);
-    if (trimmedTitle.length > 0) {
-      updates.title = trimmedTitle;
-    }
-  }
-
-  const normalizedStatus = normalizeUpdateStatus(status);
-  if (normalizedStatus) {
-    updates.status = normalizedStatus;
-  }
-
-  if (tags !== undefined) {
-    const normalized = normalizeTags(tags);
-    updates.tags = serializeJsonColumn(normalized) as unknown as string[];
-  }
-
-  if (typeof category === 'string') {
-    const trimmedCategory = sanitizePlainText(category).slice(0, 50);
-    updates.category = trimmedCategory.length > 0 ? trimmedCategory : null;
-  }
-
-  if (typeof aiSummary === 'string') {
-    const trimmedSummary = sanitizePlainText(aiSummary).slice(0, 5000);
-    updates.summary =
-      trimmedSummary.length > 0
-        ? (serializeJsonColumn({ medium: trimmedSummary }) as unknown as {
-            short?: string;
-            medium?: string;
-            long?: string;
-          })
-        : null;
-  }
-
-  if (keyPoints !== undefined) {
-    const normalizedKeyPoints = normalizeKeyPointsInput(keyPoints);
-    updates.keyPoints = normalizedKeyPoints
-      ? (serializeJsonColumn(normalizedKeyPoints) as unknown as string[])
-      : null;
-  }
-
-  if (sessionReview !== undefined && sessionReview !== null && typeof sessionReview === 'object') {
-    updates.sessionReview = serializeJsonColumn(sessionReview) as unknown as SessionReview;
-  }
+  const updates = buildArticleUpdates(payload);
 
   try {
     await db
@@ -1082,4 +1092,39 @@ export async function deleteArticle(id: string, userId: string): Promise<void> {
   }
 
   await invalidateArticleCache(id, userId);
+}
+
+/** Calculate reading time in minutes from HTML content (225 wpm). */
+function calculateReadingTime(htmlContent: string): number {
+  const plainText = sanitizePlainText(htmlContent);
+  const words = plainText.split(/\s+/).filter((word) => word.length > 0);
+  const WORDS_PER_MINUTE = 225;
+  return Math.max(1, Math.round(words.length / WORDS_PER_MINUTE));
+}
+
+/** Bounded owner-scoped search for integration clients. */
+export async function searchArticleSummaries(
+  userId: string,
+  options: ArticleSearchOptions
+): Promise<ArticleSearchResult> {
+  if (options.projectId && options.projectId !== defaultProjectId(userId)) {
+    return { items: [], total: 0, nextOffset: null };
+  }
+  const where = and(...buildSearchConditions(userId, options));
+  const [rows, totals] = await Promise.all([
+    db
+      .select()
+      .from(articles)
+      .where(where)
+      .orderBy(desc(articles.createdAt))
+      .limit(options.limit)
+      .offset(options.offset),
+    db.select({ value: count() }).from(articles).where(where),
+  ]);
+  const total = totals[0]?.value ?? 0;
+  return {
+    items: rows.map(rowToSummary),
+    total,
+    nextOffset: options.offset + rows.length < total ? options.offset + rows.length : null,
+  };
 }

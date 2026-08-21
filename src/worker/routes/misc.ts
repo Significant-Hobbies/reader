@@ -177,6 +177,52 @@ misc.get('/research/source-map', async (c) => {
   }
 });
 
+const SNAPSHOT_USER_AGENT =
+  'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36';
+
+async function fetchSnapshot(targetUrl: string): Promise<{
+  title: string;
+  content: string;
+  byline: string | null;
+  siteName: string | null;
+  url: string;
+}> {
+  const { response } = await fetchWithValidatedRedirects(targetUrl, {
+    headers: {
+      'User-Agent': SNAPSHOT_USER_AGENT,
+      Accept: 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
+    },
+    signal: AbortSignal.timeout(30000),
+  });
+
+  if (!response.ok) {
+    throw new Error(`Failed to fetch URL: ${response.status} ${response.statusText}`);
+  }
+
+  const body = await response.arrayBuffer();
+  if (body.byteLength > MAX_RESPONSE_SIZE) {
+    throw new Error('Response too large');
+  }
+
+  const html = new TextDecoder().decode(body);
+  const { document } = parseHTML(html);
+
+  const reader = new Readability(document);
+  const article = reader.parse();
+
+  if (!article) {
+    throw new Error('Failed to parse article content');
+  }
+
+  return {
+    title: article.title ?? '',
+    content: article.content ?? '',
+    byline: article.byline ?? null,
+    siteName: article.siteName ?? null,
+    url: targetUrl,
+  };
+}
+
 misc.get('/snapshot', async (c) => {
   const userId = await getAuthenticatedUserId(c.req.raw.headers, c.env);
   if (!userId) return c.json({ error: 'Unauthorized' }, 401);
@@ -192,43 +238,8 @@ misc.get('/snapshot', async (c) => {
   }
 
   try {
-    const { response } = await fetchWithValidatedRedirects(validation.url, {
-      headers: {
-        'User-Agent':
-          'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36',
-        Accept: 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
-      },
-      signal: AbortSignal.timeout(30000),
-    });
-
-    if (!response.ok) {
-      throw new Error(`Failed to fetch URL: ${response.status} ${response.statusText}`);
-    }
-
-    const body = await response.arrayBuffer();
-    if (body.byteLength > MAX_RESPONSE_SIZE) {
-      throw new Error('Response too large');
-    }
-
-    const html = new TextDecoder().decode(body);
-    const { document } = parseHTML(html);
-
-    const reader = new Readability(document);
-    const article = reader.parse();
-
-    if (!article) {
-      throw new Error('Failed to parse article content');
-    }
-
-    return c.json({
-      snapshot: {
-        title: article.title ?? '',
-        content: article.content ?? '',
-        byline: article.byline ?? null,
-        siteName: article.siteName ?? null,
-        url: targetUrl,
-      },
-    });
+    const snapshot = await fetchSnapshot(validation.url.href);
+    return c.json({ snapshot });
   } catch (error: unknown) {
     console.error('Snapshot error:', error);
     return c.json({ message: 'Failed to capture the website content.' }, 500);

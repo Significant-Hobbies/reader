@@ -246,6 +246,42 @@ function getSnippet(text: string, query: string, maxLength = 150): string {
   return highlightSearchTerms(snippet, query);
 }
 
+function buildMemoryMatchFields(
+  terms: string[],
+  title: string,
+  plainContent: string,
+  tagsText: string,
+  sanitizedQuery: string
+): {
+  matchedFields: string[];
+  snippets: { field: string; text: string }[];
+  relevanceScore: number;
+} {
+  const matchedFields: string[] = [];
+  const snippets: { field: string; text: string }[] = [];
+  let relevanceScore = 0;
+
+  const lowerTitle = title.toLowerCase();
+  const lowerContent = plainContent.toLowerCase();
+
+  if (terms.some((term) => lowerTitle.includes(term))) {
+    matchedFields.push('title');
+    snippets.push({ field: 'title', text: highlightSearchTerms(title, sanitizedQuery) });
+    relevanceScore += 10;
+  }
+  if (terms.some((term) => lowerContent.includes(term))) {
+    matchedFields.push('content');
+    snippets.push({ field: 'content', text: getSnippet(plainContent, sanitizedQuery) });
+    relevanceScore += 5;
+  }
+  if (terms.some((term) => tagsText.includes(term))) {
+    matchedFields.push('tags');
+    relevanceScore += 3;
+  }
+
+  return { matchedFields, snippets, relevanceScore };
+}
+
 // Follow-up: upgrade to SQL LIKE or FTS5 once dataset grows; current impl is
 // in-memory to match searchArticles (articles-db.ts).
 export async function searchMemories(userId: string, query: string): Promise<SearchResult[]> {
@@ -277,24 +313,13 @@ export async function searchMemories(userId: string, query: string): Promise<Sea
       );
       if (!matchesAll) continue;
 
-      const matchedFields: string[] = [];
-      const snippets: { field: string; text: string }[] = [];
-      let relevanceScore = 0;
-
-      if (terms.some((term) => lowerTitle.includes(term))) {
-        matchedFields.push('title');
-        snippets.push({ field: 'title', text: highlightSearchTerms(title, sanitizedQuery) });
-        relevanceScore += 10;
-      }
-      if (terms.some((term) => lowerContent.includes(term))) {
-        matchedFields.push('content');
-        snippets.push({ field: 'content', text: getSnippet(plainContent, sanitizedQuery) });
-        relevanceScore += 5;
-      }
-      if (terms.some((term) => tagsText.includes(term))) {
-        matchedFields.push('tags');
-        relevanceScore += 3;
-      }
+      const { matchedFields, snippets, relevanceScore } = buildMemoryMatchFields(
+        terms,
+        title,
+        plainContent,
+        tagsText,
+        sanitizedQuery
+      );
 
       results.push({
         id: row.id,

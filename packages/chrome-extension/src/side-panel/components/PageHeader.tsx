@@ -15,8 +15,7 @@ async function signOut(onAuthChange: (auth: AuthState) => void): Promise<void> {
   onAuthChange({ isAuthenticated: false, user: null });
 }
 
-export function PageHeader({ page, auth, onAuthChange }: PageHeaderProps) {
-  const [connecting, setConnecting] = useState(false);
+function ConnectForm({ onAuthChange }: { onAuthChange: (auth: AuthState) => void }) {
   const [pasteValue, setPasteValue] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [checking, setChecking] = useState(false);
@@ -35,7 +34,6 @@ export function PageHeader({ page, auth, onAuthChange }: PageHeaderProps) {
       await setApiKey(trimmed);
       await syncAllChromeReadingListToReader().catch(() => null);
       onAuthChange({ isAuthenticated: true, user: result.user });
-      setConnecting(false);
       setPasteValue('');
     } else {
       await clearApiKey();
@@ -43,6 +41,44 @@ export function PageHeader({ page, auth, onAuthChange }: PageHeaderProps) {
     }
     setChecking(false);
   };
+
+  return (
+    <div className="mt-3 space-y-2 rounded-xl border border-gray-800 bg-gray-950/80 p-2.5">
+      <p className="text-xs text-gray-400">
+        Create a key at{' '}
+        <a
+          href={`${getApiBase()}/extension`}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="inline-flex items-center gap-0.5 text-blue-300 hover:text-blue-200"
+        >
+          Reader extension setup
+          <ExternalLink className="h-3 w-3" />
+        </a>{' '}
+        then paste it below.
+      </p>
+      <input
+        type="password"
+        value={pasteValue}
+        onChange={(e) => setPasteValue(e.target.value)}
+        placeholder="rdr_..."
+        className="h-8 w-full rounded-lg border border-gray-700 bg-gray-900 px-2 text-xs text-gray-100 placeholder:text-gray-500 focus:ring-2 focus:ring-blue-500 focus:outline-none"
+      />
+      {error && <p className="text-xs text-red-300">{error}</p>}
+      <button
+        type="button"
+        onClick={() => void handleConnect()}
+        disabled={!pasteValue.trim() || checking}
+        className="w-full rounded-lg bg-blue-600 px-3 py-1.5 text-xs font-medium text-white hover:bg-blue-500 disabled:cursor-not-allowed disabled:opacity-50"
+      >
+        {checking ? 'Checking...' : 'Save key'}
+      </button>
+    </div>
+  );
+}
+
+export function PageHeader({ page, auth, onAuthChange }: PageHeaderProps) {
+  const [connecting, setConnecting] = useState(false);
 
   return (
     <div className="border-b border-gray-800 bg-gray-900/80 px-4 py-3">
@@ -87,39 +123,7 @@ export function PageHeader({ page, auth, onAuthChange }: PageHeaderProps) {
           )}
         </div>
       </div>
-      {!auth.isAuthenticated && connecting && (
-        <div className="mt-3 space-y-2 rounded-xl border border-gray-800 bg-gray-950/80 p-2.5">
-          <p className="text-xs text-gray-400">
-            Create a key at{' '}
-            <a
-              href={`${getApiBase()}/extension`}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="inline-flex items-center gap-0.5 text-blue-300 hover:text-blue-200"
-            >
-              Reader extension setup
-              <ExternalLink className="h-3 w-3" />
-            </a>{' '}
-            then paste it below.
-          </p>
-          <input
-            type="password"
-            value={pasteValue}
-            onChange={(e) => setPasteValue(e.target.value)}
-            placeholder="rdr_..."
-            className="h-8 w-full rounded-lg border border-gray-700 bg-gray-900 px-2 text-xs text-gray-100 placeholder:text-gray-500 focus:ring-2 focus:ring-blue-500 focus:outline-none"
-          />
-          {error && <p className="text-xs text-red-300">{error}</p>}
-          <button
-            type="button"
-            onClick={() => void handleConnect()}
-            disabled={!pasteValue.trim() || checking}
-            className="w-full rounded-lg bg-blue-600 px-3 py-1.5 text-xs font-medium text-white hover:bg-blue-500 disabled:cursor-not-allowed disabled:opacity-50"
-          >
-            {checking ? 'Checking...' : 'Save key'}
-          </button>
-        </div>
-      )}
+      {!auth.isAuthenticated && connecting && <ConnectForm onAuthChange={onAuthChange} />}
     </div>
   );
 }

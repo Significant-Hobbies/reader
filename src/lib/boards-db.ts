@@ -31,86 +31,55 @@ function sanitizeElementAnchor(anchor: unknown): Record<string, unknown> | undef
   return result;
 }
 
-function sanitizeBoardNode(node: unknown): BoardNode | null {
-  if (typeof node !== 'object' || node === null) return null;
-  const n = node as Record<string, unknown>;
-  const id = typeof n.id === 'string' ? n.id.trim() : '';
-  if (!id) return null;
-  const type = n.type;
-  if (
-    type !== 'website' &&
-    type !== 'note' &&
-    type !== 'aiChat' &&
-    type !== 'iframe' &&
-    type !== 'reader'
-  )
-    return null;
-  const pos = n.position as Record<string, unknown> | undefined;
-  const x = Number(pos?.x ?? 0);
-  const y = Number(pos?.y ?? 0);
-  if (!Number.isFinite(x) || !Number.isFinite(y)) return null;
-  const base: Record<string, unknown> = { id, type, position: { x, y } };
-  if (typeof n.width === 'number' && Number.isFinite(n.width)) base.width = n.width;
-  if (typeof n.height === 'number' && Number.isFinite(n.height)) base.height = n.height;
-  const data = n.data as Record<string, unknown> | undefined;
-  if (!data || typeof data !== 'object') return null;
-  if (type === 'website') {
-    const websiteData: Record<string, unknown> = {
-      url: sanitizePlainText(data.url).slice(0, 2048),
-      title: sanitizeTitle(data.title, 'Untitled'),
-      excerpt: sanitizePlainText(data.excerpt).slice(0, 500),
-    };
-    if (typeof data.favicon === 'string') websiteData.favicon = data.favicon.slice(0, 2048);
-    if (typeof data.articleId === 'string' && data.articleId.trim())
-      websiteData.articleId = data.articleId.trim();
-    return { ...base, type: 'website', data: websiteData } as unknown as BoardNode;
-  }
-  if (type === 'note') {
-    const noteData: Record<string, unknown> = {
-      text: sanitizePlainText(data.text).slice(0, MAX_NOTE_TEXT_LENGTH),
-      color: typeof data.color === 'string' ? data.color.slice(0, 20) : 'yellow',
-    };
-    const anchor = sanitizeElementAnchor(data.elementAnchor);
-    if (anchor) noteData.elementAnchor = anchor;
-    return { ...base, type: 'note', data: noteData } as unknown as BoardNode;
-  }
-  if (type === 'iframe') {
-    const iframeData: Record<string, unknown> = { url: sanitizePlainText(data.url).slice(0, 2048) };
-    if (typeof data.title === 'string') iframeData.title = sanitizeTitle(data.title, '');
-    return { ...base, type: 'iframe', data: iframeData } as unknown as BoardNode;
-  }
-  if (type === 'reader') {
-    const readerData: Record<string, unknown> = {
-      articleId: typeof data.articleId === 'string' ? data.articleId.trim() : '',
-      url: sanitizePlainText(data.url).slice(0, 2048),
-      title: sanitizeTitle(data.title, 'Untitled'),
-    };
-    if (!readerData.articleId) return null;
-    return { ...base, type: 'reader', data: readerData } as unknown as BoardNode;
-  }
-  // aiChat
-  const messages = Array.isArray(data.messages) ? data.messages : [];
-  const sanitizedMessages: AIChatMessage[] = messages
-    .map((m: unknown) => {
-      if (typeof m !== 'object' || m === null) return null;
-      const msg = m as Record<string, unknown>;
-      if (msg.role !== 'user' && msg.role !== 'assistant') return null;
-      const content = sanitizePlainText(msg.content).slice(0, MAX_AI_MESSAGE_LENGTH);
-      if (!content) return null;
-      const result: Record<string, unknown> = { role: msg.role, content };
-      const msgAnchor = sanitizeElementAnchor(msg.elementAnchor);
-      if (msgAnchor) result.elementAnchor = msgAnchor;
-      return result as unknown as AIChatMessage;
-    })
-    .filter((m): m is AIChatMessage => m !== null)
-    .slice(-MAX_AI_MESSAGES_PER_NODE);
-  const chatData: Record<string, unknown> = { messages: sanitizedMessages };
-  if (typeof data.contextLabel === 'string')
-    chatData.contextLabel = sanitizePlainText(data.contextLabel).slice(0, 200);
-  const chatAnchor = sanitizeElementAnchor(data.elementAnchor);
-  if (chatAnchor) chatData.elementAnchor = chatAnchor;
-  return { ...base, type: 'aiChat', data: chatData } as unknown as BoardNode;
+function sanitizeWebsiteData(data: Record<string, unknown>): Record<string, unknown> {
+  const websiteData: Record<string, unknown> = {
+    url: sanitizePlainText(data.url).slice(0, 2048),
+    title: sanitizeTitle(data.title, 'Untitled'),
+    excerpt: sanitizePlainText(data.excerpt).slice(0, 500),
+  };
+  if (typeof data.favicon === 'string') websiteData.favicon = data.favicon.slice(0, 2048);
+  if (typeof data.articleId === 'string' && data.articleId.trim())
+    websiteData.articleId = data.articleId.trim();
+  return websiteData;
 }
+
+function sanitizeNoteData(data: Record<string, unknown>): Record<string, unknown> {
+  const noteData: Record<string, unknown> = {
+    text: sanitizePlainText(data.text).slice(0, MAX_NOTE_TEXT_LENGTH),
+    color: typeof data.color === 'string' ? data.color.slice(0, 20) : 'yellow',
+  };
+  const anchor = sanitizeElementAnchor(data.elementAnchor);
+  if (anchor) noteData.elementAnchor = anchor;
+  return noteData;
+}
+
+function sanitizeIframeData(data: Record<string, unknown>): Record<string, unknown> {
+  const iframeData: Record<string, unknown> = { url: sanitizePlainText(data.url).slice(0, 2048) };
+  if (typeof data.title === 'string') iframeData.title = sanitizeTitle(data.title, '');
+  return iframeData;
+}
+
+function sanitizeReaderData(data: Record<string, unknown>): Record<string, unknown> | null {
+  const readerData: Record<string, unknown> = {
+    articleId: typeof data.articleId === 'string' ? data.articleId.trim() : '',
+    url: sanitizePlainText(data.url).slice(0, 2048),
+    title: sanitizeTitle(data.title, 'Untitled'),
+  };
+  if (!readerData.articleId) return null;
+  return readerData;
+}
+
+const SANITIZE_BY_TYPE: Record<
+  string,
+  (data: Record<string, unknown>) => Record<string, unknown> | null
+> = {
+  website: sanitizeWebsiteData,
+  note: sanitizeNoteData,
+  iframe: sanitizeIframeData,
+  reader: sanitizeReaderData,
+};
+
+const VALID_NODE_TYPES = new Set(['website', 'note', 'aiChat', 'iframe', 'reader']);
 
 function sanitizeBoardEdge(edge: unknown): BoardEdge | null {
   if (typeof edge !== 'object' || edge === null) return null;
@@ -380,4 +349,66 @@ export async function deleteBoard(id: string, userId: string): Promise<void> {
     console.error('boards-db: deleteBoard failed', error);
     throw error;
   }
+}
+
+function sanitizeAiChatNode(
+  base: Record<string, unknown>,
+  data: Record<string, unknown>
+): BoardNode {
+  const messages = Array.isArray(data.messages) ? data.messages : [];
+  const sanitizedMessages: AIChatMessage[] = messages
+    .map((m: unknown) => {
+      if (typeof m !== 'object' || m === null) return null;
+      const msg = m as Record<string, unknown>;
+      if (msg.role !== 'user' && msg.role !== 'assistant') return null;
+      const content = sanitizePlainText(msg.content).slice(0, MAX_AI_MESSAGE_LENGTH);
+      if (!content) return null;
+      const result: Record<string, unknown> = { role: msg.role, content };
+      const msgAnchor = sanitizeElementAnchor(msg.elementAnchor);
+      if (msgAnchor) result.elementAnchor = msgAnchor;
+      return result as unknown as AIChatMessage;
+    })
+    .filter((m): m is AIChatMessage => m !== null)
+    .slice(-MAX_AI_MESSAGES_PER_NODE);
+  const chatData: Record<string, unknown> = { messages: sanitizedMessages };
+  if (typeof data.contextLabel === 'string')
+    chatData.contextLabel = sanitizePlainText(data.contextLabel).slice(0, 200);
+  const chatAnchor = sanitizeElementAnchor(data.elementAnchor);
+  if (chatAnchor) chatData.elementAnchor = chatAnchor;
+  return { ...base, type: 'aiChat', data: chatData } as unknown as BoardNode;
+}
+
+function parseNodeBase(
+  n: Record<string, unknown>
+): { id: string; type: unknown; base: Record<string, unknown> } | null {
+  const id = typeof n.id === 'string' ? n.id.trim() : '';
+  if (!id) return null;
+  const type = n.type;
+  if (!VALID_NODE_TYPES.has(type as string)) return null;
+  const pos = n.position as Record<string, unknown> | undefined;
+  const x = Number(pos?.x ?? 0);
+  const y = Number(pos?.y ?? 0);
+  if (!Number.isFinite(x) || !Number.isFinite(y)) return null;
+  const base: Record<string, unknown> = { id, type, position: { x, y } };
+  if (typeof n.width === 'number' && Number.isFinite(n.width)) base.width = n.width;
+  if (typeof n.height === 'number' && Number.isFinite(n.height)) base.height = n.height;
+  return { id, type, base };
+}
+
+function sanitizeBoardNode(node: unknown): BoardNode | null {
+  if (typeof node !== 'object' || node === null) return null;
+  const parsed = parseNodeBase(node as Record<string, unknown>);
+  if (!parsed) return null;
+  const { type, base } = parsed;
+  const data = (node as Record<string, unknown>).data as Record<string, unknown> | undefined;
+  if (!data || typeof data !== 'object') return null;
+
+  const sanitizeData = SANITIZE_BY_TYPE[type as string];
+  if (sanitizeData) {
+    const sanitizedData = sanitizeData(data);
+    if (!sanitizedData) return null;
+    return { ...base, type, data: sanitizedData } as unknown as BoardNode;
+  }
+
+  return sanitizeAiChatNode(base, data);
 }

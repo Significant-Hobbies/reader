@@ -13,6 +13,62 @@ interface TagInputProps {
   maxTags?: number;
 }
 
+function TagBadges({ tags, onRemove }: { tags: string[]; onRemove: (tag: string) => void }) {
+  return (
+    <>
+      {tags.map((tag) => (
+        <Badge
+          key={tag}
+          variant="blue"
+          className="flex cursor-default items-center gap-1 px-2 py-1"
+        >
+          <span>{tag}</span>
+          <button
+            type="button"
+            onClick={() => onRemove(tag)}
+            className="transition-colors hover:text-red-300"
+            aria-label={`Remove ${tag}`}
+          >
+            <X className="h-3 w-3" />
+          </button>
+        </Badge>
+      ))}
+    </>
+  );
+}
+
+function SuggestionsDropdown({
+  suggestions,
+  selectedIndex,
+  onSelect,
+  onHover,
+}: {
+  suggestions: string[];
+  selectedIndex: number;
+  onSelect: (suggestion: string) => void;
+  onHover: (index: number) => void;
+}) {
+  return (
+    <div className="absolute z-50 mt-1 max-h-60 w-full overflow-y-auto rounded-lg border border-gray-700 bg-gray-900 shadow-xl">
+      {suggestions.map((suggestion, index) => (
+        <button
+          key={suggestion}
+          type="button"
+          onClick={() => onSelect(suggestion)}
+          onMouseEnter={() => onHover(index)}
+          className={`w-full px-3 py-2 text-left text-sm transition-colors ${
+            index === selectedIndex
+              ? 'bg-blue-600/30 text-blue-200'
+              : 'text-gray-300 hover:bg-gray-800'
+          }`}
+        >
+          {suggestion}
+        </button>
+      ))}
+    </div>
+  );
+}
+
 export function TagInput({
   tags,
   suggestions,
@@ -38,7 +94,6 @@ export function TagInput({
         setShowSuggestions(false);
       }
     };
-
     document.addEventListener('mousedown', handleClickOutside);
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
@@ -60,11 +115,9 @@ export function TagInput({
   const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
     if (e.key === 'Enter') {
       e.preventDefault();
-      if (filteredSuggestions.length > 0 && showSuggestions) {
+      if (filteredSuggestions.length > 0 && showSuggestions)
         addTag(filteredSuggestions[selectedIndex]);
-      } else if (inputValue.trim()) {
-        addTag(inputValue);
-      }
+      else if (inputValue.trim()) addTag(inputValue);
     } else if (e.key === 'Backspace' && !inputValue && tags.length > 0) {
       removeTag(tags[tags.length - 1]);
     } else if (e.key === 'ArrowDown' && showSuggestions) {
@@ -88,23 +141,7 @@ export function TagInput({
   return (
     <div ref={containerRef} className="relative w-full">
       <div className="flex min-h-[48px] flex-wrap gap-2 rounded-lg border border-gray-700 bg-gray-900/60 p-3 transition-colors focus-within:border-blue-500">
-        {tags.map((tag) => (
-          <Badge
-            key={tag}
-            variant="blue"
-            className="flex cursor-default items-center gap-1 px-2 py-1"
-          >
-            <span>{tag}</span>
-            <button
-              type="button"
-              onClick={() => removeTag(tag)}
-              className="transition-colors hover:text-red-300"
-              aria-label={`Remove ${tag}`}
-            >
-              <X className="h-3 w-3" />
-            </button>
-          </Badge>
-        ))}
+        <TagBadges tags={tags} onRemove={removeTag} />
         <input
           ref={inputRef}
           type="text"
@@ -119,23 +156,12 @@ export function TagInput({
       </div>
 
       {showSuggestions && filteredSuggestions.length > 0 && (
-        <div className="absolute z-50 mt-1 max-h-60 w-full overflow-y-auto rounded-lg border border-gray-700 bg-gray-900 shadow-xl">
-          {filteredSuggestions.map((suggestion, index) => (
-            <button
-              key={suggestion}
-              type="button"
-              onClick={() => addTag(suggestion)}
-              onMouseEnter={() => setSelectedIndex(index)}
-              className={`w-full px-3 py-2 text-left text-sm transition-colors ${
-                index === selectedIndex
-                  ? 'bg-blue-600/30 text-blue-200'
-                  : 'text-gray-300 hover:bg-gray-800'
-              }`}
-            >
-              {suggestion}
-            </button>
-          ))}
-        </div>
+        <SuggestionsDropdown
+          suggestions={filteredSuggestions}
+          selectedIndex={selectedIndex}
+          onSelect={addTag}
+          onHover={setSelectedIndex}
+        />
       )}
 
       {tags.length >= maxTags && (
