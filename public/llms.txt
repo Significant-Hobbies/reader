@@ -25,6 +25,24 @@
 - [HTML sitemap](https://read.significanthobbies.com/sitemap.xml): Canonical public pages
 - [This index](https://read.significanthobbies.com/llms.txt)
 
+## Developer docs
+
+- [OpenAPI specification](https://read.significanthobbies.com/openapi.json): Full API surface description (OpenAPI 3.1)
+- [Agent catalog](https://read.significanthobbies.com/api/ai): JSON inventory of public agent surfaces
+
+## CLI
+
+```bash
+# Fetch the agent catalog
+curl -s https://read.significanthobbies.com/api/ai | jq .
+
+# Get the OpenAPI spec
+curl -s https://read.significanthobbies.com/openapi.json | jq .
+
+# Fetch the homepage as markdown
+curl -s -H 'Accept: text/markdown' https://read.significanthobbies.com/
+```
+
 ## Optional
 
 - [Foundry](https://sassmaker.com): Parent fleet showcase
