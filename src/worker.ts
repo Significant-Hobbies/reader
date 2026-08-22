@@ -91,6 +91,9 @@ function withSecurityHeaders(response: Response, pathname: string): Response {
   if (contentType.includes('text/html')) {
     headers.set('Cache-Control', 'public, max-age=300, s-maxage=600, stale-while-revalidate=86400');
     if (pathname === '/login') headers.set('X-Robots-Tag', 'noindex, follow');
+    // Add Vary: Accept for pages that have markdown alternates.
+    const existingVary = headers.get('Vary');
+    headers.set('Vary', existingVary ? `${existingVary}, Accept` : 'Accept, Accept-Encoding');
   }
   return new Response(response.body, {
     status: response.status,

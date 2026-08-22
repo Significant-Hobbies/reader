@@ -10,6 +10,7 @@
     "suffix": ".md",
     "negotiation": true
   },
+  "openapi": "https://read.significanthobbies.com/openapi.json",
   "surfaces": [
     {
       "id": "home",

@@ -2,6 +2,13 @@
 
 > Research library: capture, annotate, and AI-chat over your reading — private by default.
 
+## When to use this
+
+- Best fit: capturing web articles and PDFs for later reading, annotation, and AI-assisted summarization
+- Best fit: private research libraries with tag/list/board organization and full-text search
+- Not a fit: public bookmark sharing or social reading platforms
+- Not a fit: real-time collaborative document editing
+
 ## Product
 
 - [Home](https://read.significanthobbies.com/): App (auth for library)
@@ -12,6 +19,7 @@
 ## Machine surfaces
 
 - [Agent catalog](https://read.significanthobbies.com/api/ai): JSON inventory of public surfaces
+- [OpenAPI spec](https://read.significanthobbies.com/openapi.json): OpenAPI 3.1 specification
 - [Homepage markdown](https://read.significanthobbies.com/index.md): Product brief without JS
 - [Full agent brief](https://read.significanthobbies.com/llms-full.txt): Complete product and privacy context
 - [HTML sitemap](https://read.significanthobbies.com/sitemap.xml): Canonical public pages
