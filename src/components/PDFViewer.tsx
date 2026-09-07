@@ -67,6 +67,7 @@ function PDFToolbar({
           onClick={handlers.onZoomOut}
           className="rounded-md border border-[var(--gray-6)] bg-[var(--gray-3)] px-3 py-2 text-[var(--gray-12)] transition hover:bg-[var(--gray-4)]"
           title="Zoom out"
+          aria-label="Zoom out"
         >
           -
         </button>
@@ -74,6 +75,7 @@ function PDFToolbar({
           onClick={handlers.onResetZoom}
           className="min-w-[60px] rounded-md border border-[var(--gray-6)] bg-[var(--gray-3)] px-3 py-2 text-sm text-[var(--gray-12)] transition hover:bg-[var(--gray-4)]"
           title="Reset zoom"
+          aria-label="Reset zoom"
         >
           {Math.round(scale * 100)}%
         </button>
@@ -81,6 +83,7 @@ function PDFToolbar({
           onClick={handlers.onZoomIn}
           className="rounded-md border border-[var(--gray-6)] bg-[var(--gray-3)] px-3 py-2 text-[var(--gray-12)] transition hover:bg-[var(--gray-4)]"
           title="Zoom in"
+          aria-label="Zoom in"
         >
           +
         </button>
@@ -171,7 +174,10 @@ export function PDFViewer({
   const resetZoom = () => setScale(1.0);
 
   return (
-    <div className={`min-h-full transition-colors duration-300 ${themeClasses}`}>
+    <div
+      data-pdf-theme={settings.theme}
+      className={`min-h-full transition-colors duration-300 ${themeClasses}`}
+    >
       <div className="mx-auto max-w-5xl px-4 py-8">
         <PDFToolbar
           pageNumber={pageNumber}

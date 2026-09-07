@@ -97,9 +97,11 @@ function ThemeSelector({
 export const AppearanceToolbar = ({
   settings,
   onUpdate,
+  showTypography = true,
 }: {
   settings: ReaderSettings;
   onUpdate: (s: Partial<ReaderSettings>) => void;
+  showTypography?: boolean;
 }) => {
   const [isOpen, setIsOpen] = useState(false);
   const toolbarRef = useRef<HTMLDivElement>(null);
@@ -130,21 +132,31 @@ export const AppearanceToolbar = ({
             ? 'bg-[var(--gray-4)] text-[var(--gray-12)]'
             : 'text-[var(--gray-10)] hover:bg-[var(--gray-3)] hover:text-[var(--gray-12)]'
         }`}
-        title="Appearance Settings"
+        title={showTypography ? 'Appearance Settings' : 'Viewer background'}
+        aria-label={showTypography ? 'Appearance settings' : 'Viewer background'}
+        aria-expanded={isOpen}
       >
-        <span className="font-serif text-xl">Aa</span>
+        <span className={showTypography ? 'font-serif text-xl' : 'text-sm'}>
+          {showTypography ? 'Aa' : 'Background'}
+        </span>
       </button>
 
       {isOpen && (
-        <div className="absolute top-full left-0 z-50 mt-2 flex w-64 flex-col gap-4 rounded-lg border border-[var(--gray-6)] bg-[var(--gray-2)] p-4 shadow-[0_18px_45px_rgba(0,0,0,0.28)]">
-          <FontFamilySelector
-            current={settings.fontFamily}
-            onSelect={(font) => onUpdate({ fontFamily: font })}
-          />
-          <FontSizeSelector
-            current={settings.fontSize}
-            onChange={(size) => onUpdate({ fontSize: size })}
-          />
+        <div
+          className={`absolute top-full ${showTypography ? 'left-0' : 'right-0'} z-50 mt-2 flex w-64 flex-col gap-4 rounded-lg border border-[var(--gray-6)] bg-[var(--gray-2)] p-4 shadow-[0_18px_45px_rgba(0,0,0,0.28)]`}
+        >
+          {showTypography && (
+            <>
+              <FontFamilySelector
+                current={settings.fontFamily}
+                onSelect={(font) => onUpdate({ fontFamily: font })}
+              />
+              <FontSizeSelector
+                current={settings.fontSize}
+                onChange={(size) => onUpdate({ fontSize: size })}
+              />
+            </>
+          )}
           <ThemeSelector current={settings.theme} onSelect={(theme) => onUpdate({ theme })} />
         </div>
       )}

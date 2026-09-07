@@ -27,7 +27,7 @@ Web Annotator solves this by providing a personal research library where you can
 ### Content Management
 
 - **Clean Article Extraction**: Save articles from any URL using Mozilla Readability
-- **PDF Support**: Guest PDFs render locally with page navigation and page-linked notes. Create, edit, delete, and revisit notes after reload. Notes stay in this browser; they are not text highlights or annotations embedded in the PDF. Account PDFs render with AI chat; account PDF annotation controls remain unimplemented.
+- **PDF Support**: Guest PDFs render locally with page navigation and page-linked notes. Create, edit, delete, and revisit notes after reload. Notes stay in this browser; they are not text highlights or annotations embedded in the PDF. Account PDFs support page navigation, zoom, viewer background, Listen, and an AI chat entry. Account PDF notes remain unimplemented; no placeholder note tab or ineffective typography controls are shown.
 - **Rich Annotations**: Add contextual notes with optional DOM anchoring
 - **Selection Actions**: After selecting text (mouse up) or selection + right-click, quickly choose `Add note` or `Ask AI`
 - **Reading Time Estimates**: Auto-calculated reading time displayed for every article

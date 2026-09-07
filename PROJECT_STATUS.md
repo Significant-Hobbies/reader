@@ -59,7 +59,9 @@ maintenance-first support.
   saved page anchors and reload. Existing PDF.js API/worker versions are aligned
   to 5.4.624 after a built-browser test exposed a version mismatch.
   Notes stay browser-local; they are not text highlights or embedded PDF edits.
-  Account PDF annotation controls are still unimplemented.
+  Account PDF annotation controls are still unimplemented. A follow-up removed
+  their empty tab and ineffective PDF font controls, retained background/zoom/page
+  controls, and fixed a reproduced mobile sidebar that hid the PDF.
 
 - Articles and PDFs with highlights, notes, search, boards, lists, and
   AI-assisted reading.

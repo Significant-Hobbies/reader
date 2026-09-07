@@ -93,3 +93,17 @@ The page-note contract does not claim selection highlights, embedded PDF export,
 account PDF annotations, large-document performance, or hosted qualification.
 Those broader live/article/account journeys remain #55. No real documents or
 production upload/storage were used.
+
+## Account PDF supported controls
+
+`pnpm test:account-pdf` serves the built app with a synthetic signed-in session
+and synthetic article response, while blocking all external requests and API
+writes. It verifies rendered PDF text, page navigation, zoom, a computed sepia
+background, absence of inert Notes/font controls, and desktop/mobile overflow.
+Listen passes the current page text to a stubbed speech-synthesis sink; this
+checks text wiring, not device audio. AI chat entry is available, but no provider
+request or model response is tested. The before mobile screenshot reproduces
+the fixed-width sidebar hiding the PDF; final screenshots cover 390/768/1440.
+
+Account page-note implementation and real Google/D1/R2/provider qualification
+remain actionable in #55. No hosted account or document is used by this fixture.
