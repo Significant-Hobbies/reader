@@ -70,6 +70,9 @@ function PdfArticleView({ article }: { article: Article }) {
           <div>
             <p className="text-xs font-medium text-[var(--accent-11)] uppercase">Local PDF</p>
             <h1 className="text-xl font-semibold">{article.title}</h1>
+            <p className="text-sm text-gray-400">
+              Stored in this browser. Reader notes are not available for local PDFs yet.
+            </p>
           </div>
           <a
             href={article.pdfUrl}

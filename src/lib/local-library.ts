@@ -190,20 +190,43 @@ export async function updateLocalArticle(
   id: string,
   patch: Partial<Omit<LocalArticle, 'id' | 'createdAt' | 'userId'>>
 ): Promise<LocalArticle> {
-  const article = await getLocalArticle(id);
-  if (!article) {
-    throw new Error('Local item not found');
-  }
-
-  const updated: LocalArticle = {
-    ...article,
-    ...patch,
-    notesCount: patch.notes ? patch.notes.length : (patch.notesCount ?? article.notesCount ?? 0),
-    updatedAt: new Date().toISOString(),
-  };
-
-  await runStore(ARTICLES_STORE, 'readwrite', (store) => store.put(updated));
-  return updated;
+  const db = await openLocalDb();
+  return new Promise((resolve, reject) => {
+    // One readwrite transaction serializes concurrent title/note/status patches.
+    // Reading in a separate transaction allows the later writer to erase edits.
+    const transaction = db.transaction(ARTICLES_STORE, 'readwrite');
+    const store = transaction.objectStore(ARTICLES_STORE);
+    const request = store.get(id);
+    let updated: LocalArticle;
+    let failure: Error | null = null;
+    request.onsuccess = () => {
+      const article = request.result as LocalArticle | undefined;
+      if (!article) {
+        failure = new Error('Local item not found');
+        transaction.abort();
+        return;
+      }
+      updated = {
+        ...article,
+        ...patch,
+        notesCount: patch.notes
+          ? patch.notes.length
+          : (patch.notesCount ?? article.notesCount ?? 0),
+        updatedAt: new Date().toISOString(),
+      };
+      store.put(updated);
+    };
+    transaction.oncomplete = () => {
+      db.close();
+      resolve(updated);
+    };
+    const rejectTransaction = () => {
+      db.close();
+      reject(failure ?? transaction.error ?? new Error('Local library update failed'));
+    };
+    transaction.onabort = rejectTransaction;
+    transaction.onerror = rejectTransaction;
+  });
 }
 
 export async function deleteLocalArticle(id: string) {

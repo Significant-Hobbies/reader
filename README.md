@@ -14,7 +14,7 @@ A modern web application for capturing and annotating articles with a distractio
 | Auth         | better-auth + Google OAuth                                                                   |
 | File storage | Cloudflare R2 (`reader-pdfs`, bound as `PDFS_BUCKET`)                                        |
 | AI           | free-ai-gateway (Workers AI chokepoint); BYOK providers (OpenAI/Anthropic/Gemini) + local AI |
-| CI/CD        | GitHub Actions — auto-deploy to Cloudflare on push to `main`                                 |
+| CI/CD        | GitHub Actions checks on push; production deployment is manual                                 |
 
 ## Problem
 
@@ -27,7 +27,7 @@ Web Annotator solves this by providing a personal research library where you can
 ### Content Management
 
 - **Clean Article Extraction**: Save articles from any URL using Mozilla Readability
-- **PDF Support**: Upload, view, and annotate PDF documents with text extraction
+- **PDF Support**: Account PDFs use the PDF reader and annotation path. Guest PDFs are stored in this browser and open in an embedded viewer; Reader notes are not available for local PDFs yet.
 - **Rich Annotations**: Add contextual notes with optional DOM anchoring
 - **Selection Actions**: After selecting text (mouse up) or selection + right-click, quickly choose `Add note` or `Ask AI`
 - **Reading Time Estimates**: Auto-calculated reading time displayed for every article
@@ -268,13 +268,21 @@ This project is private and not licensed for public use.
 
 <!-- ACTIVE-AI-TASK-LOG:START -->
 
-## Active AI Task Log
+## Task reconciliation (2026-09-07)
+
+The audit began with zero open GitHub Issues and PRs; no issues were closed.
+Remaining work is [#55: actual import/read/annotate/reopen qualification](https://github.com/Significant-Hobbies/reader/issues/55)
+and [#56: guest PDF annotation](https://github.com/Significant-Hobbies/reader/issues/56).
+These preserve the full product journey; local persistence tests are not a
+hosted shareability receipt. See [testing evidence and limits](docs/development/testing.md#local-library-persistence).
+
+### Historical Active AI task log
 
 This section is maintained by the SaaS Maker Active-AI product/design loop so future agents do not reopen duplicate UI tasks.
 
 - Business lane: P0 Can make money
 - Rule: do not create another broad "improve the UI" task unless the acceptance criteria differ materially from the tasks listed here.
-- Source of truth for task status: SaaS Maker task board. README entries are durable context only.
+- Source of truth for current task status: this repository's GitHub Issues. The historical rows below retain earlier reports, not fresh runtime qualification.
 
 | Task                                                                    | Status | Priority | Last known note     |
 | ----------------------------------------------------------------------- | ------ | -------- | ------------------- |

@@ -20,6 +20,14 @@ maintenance-first support.
 
 ## Timeline
 
+- **2026-09-07:** Fixed a reproduced local IndexedDB lost-update bug: concurrent
+  title and note edits now merge within one readwrite transaction. Isolated
+  Chromium proves article content/notes/count and synthetic PDF bytes survive
+  reload; route fixtures verify guest rejection and account-scoped access calls.
+  [Evidence and limits](docs/development/testing.md#local-library-persistence).
+  Live journey qualification remains [#55](https://github.com/Significant-Hobbies/reader/issues/55);
+  guest PDF annotations remain [#56](https://github.com/Significant-Hobbies/reader/issues/56).
+  No deployment or live upload was performed.
 - **2026-08-12:** Adopted the Fleet code-health contract across the app,
   Worker, landing, and Chrome extension with truthful whole-library coverage,
   unused-code, cycle, complexity, duplication, dependency, suppression, build,

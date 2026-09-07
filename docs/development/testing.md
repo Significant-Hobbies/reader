@@ -25,6 +25,25 @@ branches, and 34% statements. Thresholds may move up, never silently down.
 - `PLAYWRIGHT_BROWSERS_PATH=0` is recommended in serverless environments (see
   `.env.example`).
 
+## Local library persistence
+
+`pnpm test:local-library` launches isolated Playwright Chromium and serves only
+synthetic in-memory responses. It runs the actual `local-library.ts` module with
+real IndexedDB and FileReader, saves a synthetic article and PDF byte fixture,
+applies concurrent title/note patches, reloads the page, and checks content,
+notes/count, and PDF bytes. The prior implementation reloaded with `notes: []`;
+the single-transaction repair preserves both edits. CI installs the existing
+Playwright Chromium runtime and runs this command after quality checks.
+
+This is storage integration evidence, not PDF-rendering or Reader UI evidence.
+The PDF payload is a byte-storage fixture, not a document rendering benchmark.
+Guest data is browser-local and is not automatically transferred into an account.
+Article API tests use mocked identity/database boundaries: they prove guest
+rejection and correct ownership arguments, not deployed Google auth or D1/R2.
+Real import/selection/annotation UI, pending-save navigation, hosted persistence,
+and session changes remain tracked in [#55](https://github.com/Significant-Hobbies/reader/issues/55).
+Guest PDF annotation controls remain [#56](https://github.com/Significant-Hobbies/reader/issues/56).
+
 ## Type-checking
 
 `pnpm typecheck` runs `tsc --noEmit` against both `tsconfig.app.json` (SPA)

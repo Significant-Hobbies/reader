@@ -23,6 +23,7 @@
     "test:watch": "vitest",
     "test:coverage": "vitest run --coverage",
     "test:e2e": "playwright test",
+    "test:local-library": "node scripts/qualify-local-library.mjs",
     "memory:demo": "tsx scripts/memory-capture-demo.ts",
     "db:generate": "drizzle-kit generate",
     "db:migrate:local": "wrangler d1 migrations apply DB --local --config wrangler.local.toml",
