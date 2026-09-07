@@ -101,6 +101,8 @@ test('article reopen uses current persisted annotations instead of overwriting t
 });
 
 async function addSelectedNote(page: Page) {
+  await page.locator('#synthetic-evidence').scrollIntoViewIfNeeded();
+  await browserExpect(page.locator('#synthetic-evidence')).toBeInViewport();
   await page.locator('#synthetic-evidence').evaluate((element) => {
     const range = document.createRange();
     range.selectNodeContents(element);
@@ -204,6 +206,8 @@ test('account article selection notes survive retry, edit, reload and delete wit
       page.getByRole('button', { name: 'Alice revised selection note', exact: true })
     ).toBeVisible();
     mkdirSync('.fleet/evidence/account-article', { recursive: true });
+    await page.locator('#synthetic-evidence').scrollIntoViewIfNeeded();
+    await browserExpect(page.locator('#synthetic-evidence')).toBeInViewport();
     await page.screenshot({
       path: '.fleet/evidence/account-article/after-1440.png',
       fullPage: true,
@@ -219,7 +223,8 @@ test('account article selection notes survive retry, edit, reload and delete wit
       animations: 'disabled',
     });
     await page.getByRole('button', { name: 'Close sidebar', exact: true }).click();
-    await browserExpect(page.locator('#synthetic-evidence')).toBeVisible();
+    await page.locator('#synthetic-evidence').scrollIntoViewIfNeeded();
+    await browserExpect(page.locator('#synthetic-evidence')).toBeInViewport();
     await page.screenshot({
       path: '.fleet/evidence/account-article/read-390.png',
       fullPage: true,
