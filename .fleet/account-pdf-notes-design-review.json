@@ -2,7 +2,7 @@
   "$schema": "fleet.design-review.v1",
   "version": 1,
   "project": "reader",
-  "target": "Account PDF supported reading controls",
+  "target": "Account PDF page-note persistence",
   "surfaceMode": "read",
   "mode": "preserve",
   "register": "product",
@@ -15,7 +15,7 @@
     "probes": [],
     "selected": "existing-account-pdf-viewer",
     "approval": "not-required",
-    "before": ".fleet/evidence/account-pdf/before-390.png",
+    "before": ".fleet/evidence/account-pdf-notes/before-390.png",
     "library": {
       "strategy": "upstream-first",
       "primary": "existing-project-system",
@@ -37,7 +37,7 @@
       "purposeAlignment": "match",
       "driftNote": "",
       "audience": "People who save serious reading and need to retain useful notes beside the source.",
-      "job": "Read an account PDF with actual page, zoom, viewer-background and Listen controls without misleading note or typography affordances.",
+      "job": "Create, revisit, edit and delete account PDF page notes without exposing another account\u2019s saved notes or drafts.",
       "thesis": "Keep the document central and show only supported reading tools; expose AI chat as an explicit optional action.",
       "system": "Existing charcoal shell and Button palette, gray hierarchy, responsive stacked mobile panels and retained 400px desktop tools panel. PDF backgrounds change behind the unchanged document artwork.",
       "signature": "The document stays visible at narrow widths while the tools panel moves below it.",
@@ -48,19 +48,15 @@
     "screenshots": [
       {
         "width": 390,
-        "path": ".fleet/evidence/account-pdf/after-390.png"
-      },
-      {
-        "width": 768,
-        "path": ".fleet/evidence/account-pdf/after-768.png"
+        "path": ".fleet/evidence/account-pdf-notes/after-390.png"
       },
       {
         "width": 1440,
-        "path": ".fleet/evidence/account-pdf/after-1440.png"
+        "path": ".fleet/evidence/account-pdf-notes/after-1440.png"
       }
     ],
     "projectCheck": {
-      "command": "pnpm quality; pnpm test:guest-pdf; pnpm test:account-pdf",
+      "command": "pnpm quality; pnpm test:guest-pdf; pnpm test:account-pdf; pnpm test:account-notes",
       "status": "pass"
     },
     "critique": {
@@ -90,7 +86,7 @@
       "score": 90,
       "minimum": 85
     },
-    "reviewMethod": "Source and built-browser review of page/zoom/computed background and speech-text wiring. The current screenshots also show the shared account page-note editor, separately qualified by the real-handler account-notes suite. Independent parent 390/1440 review found no blocking issue. Speech assertion proves text wiring only, not listening quality."
+    "reviewMethod": "Real Hono article handlers and Drizzle persistence in isolated SQLite, with synthetic authentication/PDF bytes. Built browser verifies page-note create/edit/delete/reload, failed PUT retry, and delayed PUT/GET delivery across same-SPA Alice-to-Bob visibility refresh. Parent reviewed source and 390/1440 screenshots with no blocking finding. External requests blocked; no hosted upload/provider/deploy. Whole-array note API does not merge concurrent editors."
   },
   "ownerFeedback": {
     "decision": "agent-selected",

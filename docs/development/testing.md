@@ -90,7 +90,7 @@ worker 5.4.624. An override aligns react-pdf with the already-declared 5.4.624
 package; no new production package was added. The worker remains bundled locally.
 
 The page-note contract does not claim selection highlights, embedded PDF export,
-account PDF annotations, large-document performance, or hosted qualification.
+account PDF persistence, large-document performance, or hosted qualification.
 Those broader live/article/account journeys remain #55. No real documents or
 production upload/storage were used.
 
@@ -105,5 +105,29 @@ checks text wiring, not device audio. AI chat entry is available, but no provide
 request or model response is tested. The before mobile screenshot reproduces
 the fixed-width sidebar hiding the PDF; final screenshots cover 390/768/1440.
 
-Account page-note implementation and real Google/D1/R2/provider qualification
-remain actionable in #55. No hosted account or document is used by this fixture.
+Account page-note persistence is covered separately below. Real Google/D1/R2/provider
+qualification remains actionable in #55. No hosted account or document is used.
+
+## Account PDF notes through real handlers
+
+After `pnpm build` and installing Playwright Chromium, run `pnpm test:account-notes`.
+This separate Vitest suite serves the built SPA and routes its requests through
+unchanged Hono article handlers and Drizzle queries, backed by isolated in-memory
+SQLite using a small D1 adapter. Only authentication and synthetic PDF bytes are
+fixtures. No production database, credentials, migration or hosted upload is used.
+
+The handler test verifies persisted page anchors, plain-text sanitization,
+invalid page numbers, note counts, delete, and Bob/guest rejection of Alice reads
+and writes. The browser test creates a page-two note, injects one failed PUT,
+checks the retained draft and untouched database, retries, reloads, follows the
+page reference, edits, reopens and deletes. It switches Alice to Bob in the same
+SPA via Better Auth's visibility refresh while PUT and GET responses are held,
+then releases both late responses, proving cached content/drafts stay isolated,
+rejects Bob's write to Alice's PDF, and independently saves/reopens Bob's note.
+Desktop/mobile screenshots and document overflow are checked. External requests
+are blocked; only known analytics attempts are permitted by the test assertion.
+
+This proves one active editor per account/document. The existing whole-note-array
+PUT contract does not merge concurrent edits from multiple tabs or devices.
+Text-selection highlights, embedded annotations/export, live OAuth/R2/D1,
+large-document behavior and actual listening/AI quality remain unqualified.

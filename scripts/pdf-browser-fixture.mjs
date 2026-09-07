@@ -30,11 +30,25 @@ export function syntheticPdf() {
   return Buffer.from(pdf);
 }
 
-export async function serveBuiltReader() {
+export async function serveBuiltReader(apiHandler) {
   const root = path.resolve('dist');
   const server = createServer(async (request, response) => {
     try {
       const pathname = new URL(request.url, 'http://local').pathname;
+      if (pathname.startsWith('/api/') && apiHandler) {
+        const chunks = [];
+        for await (const chunk of request) chunks.push(chunk);
+        const result = await apiHandler(
+          new Request(new URL(request.url, 'http://local'), {
+            method: request.method,
+            headers: request.headers,
+            ...(!['GET', 'HEAD'].includes(request.method) ? { body: Buffer.concat(chunks) } : {}),
+          })
+        );
+        response.writeHead(result.status, Object.fromEntries(result.headers));
+        response.end(Buffer.from(await result.arrayBuffer()));
+        return;
+      }
       const file = path.join(root, pathname.startsWith('/assets/') ? pathname : '/app.html');
       const mime =
         {

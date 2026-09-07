@@ -61,6 +61,7 @@ type NoteInput = {
 };
 
 type NoteAnchorInput = {
+  pageNumber?: unknown;
   elementIndex?: unknown;
   tagName?: unknown;
   textPreview?: unknown;
@@ -112,6 +113,12 @@ const normalizeAnchor = (anchor: NoteAnchorInput) => {
 
   return {
     elementIndex: Math.max(0, Math.round(index)),
+    pageNumber:
+      typeof anchor.pageNumber === 'number' &&
+      Number.isSafeInteger(anchor.pageNumber) &&
+      anchor.pageNumber >= 1
+        ? anchor.pageNumber
+        : undefined,
     tagName: anchor.tagName
       ? sanitizePlainText(anchor.tagName).toLowerCase().slice(0, 40)
       : undefined,

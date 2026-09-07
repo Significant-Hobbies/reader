@@ -1,3 +1,4 @@
+import { accountArticleKey } from '../lib/article-query';
 import { useQuery } from '@tanstack/react-query';
 import { lazy, Suspense, useEffect } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
@@ -38,7 +39,7 @@ export default function ReaderPage() {
     isLoading,
     error,
   } = useQuery<Article>({
-    queryKey: ['article', id],
+    queryKey: accountArticleKey(user, id),
     queryFn: async () => {
       const response = await fetch(`/api/articles/${id}`);
       if (!response.ok) {
@@ -114,7 +115,7 @@ export default function ReaderPage() {
   return (
     <Suspense fallback={<ReaderLoading />}>
       {article.type === 'pdf' ? (
-        <PDFReaderClient articleId={id} />
+        <PDFReaderClient key={`${user.id}:${id}`} articleId={id} />
       ) : (
         <ReaderClient articleId={id} />
       )}

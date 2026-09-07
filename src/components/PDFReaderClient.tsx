@@ -1,11 +1,13 @@
-'use client';
+import { accountArticleKey } from '../lib/article-query';
 
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useNavigate } from 'react-router-dom';
 import { useState } from 'react';
 
-import type { Article, ReaderSettings } from '../types';
+import type { Article, Note, ReaderSettings } from '../types';
 import { AppearanceToolbar } from './AppearanceToolbar';
+import { useAuth } from './AuthProvider';
+import { PdfPageNotes } from './PdfPageNotes';
 import { Navbar } from './Navbar';
 import { NotesAIChat } from './NotesAIChat';
 import { PDFViewer } from './PDFViewer';
@@ -48,9 +50,12 @@ async function fetchArticle(id: string): Promise<Article> {
 
 export default function PDFReaderClient({ articleId }: { articleId: string }) {
   const id = articleId;
+  const { user } = useAuth();
+  const queryClient = useQueryClient();
+  const [page, setPage] = useState(1);
+  const [pages, setPages] = useState(0);
   const navigate = useNavigate();
 
-  const [showChat, setShowChat] = useState(false);
   const [settings, setSettings] = useState<ReaderSettings>({
     fontSize: 'medium',
     theme: 'dark',
@@ -62,10 +67,21 @@ export default function PDFReaderClient({ articleId }: { articleId: string }) {
     isLoading: isArticleLoading,
     error: articleError,
   } = useQuery<Article>({
-    queryKey: ['article', id],
+    queryKey: accountArticleKey(user, id),
     queryFn: () => fetchArticle(id),
-    enabled: Boolean(id),
+    enabled: Boolean(id && user),
   });
+
+  async function saveNotes(notes: Note[]) {
+    const response = await fetch(`/api/articles/${id}`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ notes }),
+    });
+    if (!response.ok) throw new Error('Could not save notes');
+    const saved = await fetchArticle(id);
+    queryClient.setQueryData(accountArticleKey(user, id), saved);
+  }
 
   const updateSettings = (newSettings: Partial<ReaderSettings>) => {
     setSettings((prev) => ({ ...prev, ...newSettings }));
@@ -109,51 +125,94 @@ export default function PDFReaderClient({ articleId }: { articleId: string }) {
               )}
             </div>
 
-            <div className="ml-auto flex w-full items-center justify-end gap-2 sm:w-auto">
-              <TTSPlayer
-                getText={() => {
-                  const layer = document.querySelector('.react-pdf__Page__textContent');
-                  return layer?.textContent?.trim() ?? '';
-                }}
-              />
-              <AppearanceToolbar
-                settings={settings}
-                onUpdate={updateSettings}
-                showTypography={false}
-              />
-            </div>
+            <PdfReadingTools settings={settings} onUpdate={updateSettings} />
           </div>
 
           {/* PDF Content */}
           <div className="min-h-0 flex-grow overflow-auto">
-            <PDFViewer pdfUrl={article.pdfUrl} settings={settings} />
+            <PDFViewer
+              pdfUrl={article.pdfUrl}
+              settings={settings}
+              page={page}
+              onPageChange={setPage}
+              onDocumentLoad={setPages}
+            />
           </div>
         </div>
 
-        <aside className="flex min-h-0 w-full flex-col rounded-lg border border-[var(--gray-5)] bg-[var(--gray-2)]/85 lg:w-[400px] lg:shrink-0">
-          <div className="border-b border-[var(--gray-5)] p-4">
-            <h2 className="text-lg font-semibold">PDF tools</h2>
-            <p className="mt-2 text-sm leading-relaxed text-gray-400">
-              Page notes are available for browser-local PDFs. Account PDF notes are not available
-              yet.
-            </p>
-          </div>
-          <div className={showChat ? 'min-h-[24rem] flex-1 overflow-auto' : 'flex-1'}>
-            {showChat ? (
-              <NotesAIChat article={article} notes={[]} queuedPrompt={null} />
-            ) : (
-              <div className="p-4">
-                <p className="mb-4 text-sm leading-relaxed text-gray-300">
-                  Ask about this PDF with your configured AI provider.
-                </p>
-                <Button type="button" onClick={() => setShowChat(true)}>
-                  Open AI chat
-                </Button>
-              </div>
-            )}
-          </div>
-        </aside>
+        <AccountPdfNotes
+          article={article}
+          page={page}
+          pages={pages}
+          onPage={setPage}
+          onSave={saveNotes}
+        />
       </div>
     </div>
+  );
+}
+
+function PdfReadingTools({
+  settings,
+  onUpdate,
+}: {
+  settings: ReaderSettings;
+  onUpdate: (settings: Partial<ReaderSettings>) => void;
+}) {
+  return (
+    <div className="ml-auto flex w-full items-center justify-end gap-2 sm:w-auto">
+      <TTSPlayer
+        getText={() => {
+          const layer = document.querySelector('.react-pdf__Page__textContent');
+          return layer?.textContent?.trim() ?? '';
+        }}
+      />
+      <AppearanceToolbar settings={settings} onUpdate={onUpdate} showTypography={false} />
+    </div>
+  );
+}
+
+function AccountPdfNotes({
+  article,
+  page,
+  pages,
+  onPage,
+  onSave,
+}: {
+  article: Article;
+  page: number;
+  pages: number;
+  onPage: (page: number) => void;
+  onSave: (notes: Note[]) => Promise<void>;
+}) {
+  const [showChat, setShowChat] = useState(false);
+  return (
+    <aside className="flex min-h-0 w-full flex-col rounded-lg border border-[var(--gray-5)] bg-[var(--gray-2)]/85 lg:w-[400px] lg:shrink-0">
+      <div className="border-b border-[var(--gray-5)] p-4 overflow-y-auto">
+        <p className="mb-4 text-sm text-gray-400">Notes are saved to your account.</p>
+        <PdfPageNotes
+          notes={article.notes ?? []}
+          page={page}
+          pages={pages}
+          onPage={onPage}
+          onSave={onSave}
+          storage="account"
+        />
+      </div>
+      <div className={showChat ? 'min-h-[24rem] flex-1 overflow-auto' : 'flex-1'}>
+        {showChat ? (
+          <NotesAIChat article={article} notes={article.notes ?? []} queuedPrompt={null} />
+        ) : (
+          <div className="p-4">
+            <p className="mb-4 text-sm leading-relaxed text-gray-300">
+              Ask about this PDF with your configured AI provider.
+            </p>
+            <Button type="button" onClick={() => setShowChat(true)}>
+              Open AI chat
+            </Button>
+          </div>
+        )}
+      </div>
+    </aside>
   );
 }

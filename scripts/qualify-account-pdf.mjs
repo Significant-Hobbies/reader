@@ -68,12 +68,7 @@ test('account PDF exposes only supported reading controls', { timeout: 60000 }, 
 
 async function verifyAccountControls(page) {
   await expect(page.getByRole('button', { name: 'Notes', exact: true })).toHaveCount(0);
-  await expect(
-    page.getByText(
-      'Page notes are available for browser-local PDFs. Account PDF notes are not available yet.',
-      { exact: true }
-    )
-  ).toBeVisible();
+  await expect(page.getByText('Notes are saved to your account.', { exact: true })).toBeVisible();
   await page.getByRole('button', { name: 'Viewer background', exact: true }).click();
   await expect(page.getByRole('slider')).toHaveCount(0);
   await expect(page.getByRole('button', { name: 'Serif', exact: true })).toHaveCount(0);
