@@ -18,6 +18,9 @@ pdfjs.GlobalWorkerOptions.workerSrc = new URL(
 interface PDFViewerProps {
   pdfUrl: string;
   settings: ReaderSettings;
+  page?: number;
+  onPageChange?: (page: number) => void;
+  onDocumentLoad?: (pages: number) => void;
 }
 
 function PDFToolbar({
@@ -39,11 +42,11 @@ function PDFToolbar({
 }) {
   return (
     <div className="mb-6 flex flex-wrap items-center justify-between gap-4 rounded-lg border border-[var(--gray-5)] bg-[var(--gray-2)]/80 p-4">
-      <div className="flex items-center gap-2">
+      <div className="flex flex-wrap items-center gap-2">
         <button
           onClick={handlers.onPrevPage}
           disabled={pageNumber <= 1}
-          className="rounded-md bg-[var(--accent-9)] px-3 py-2 text-white transition hover:bg-[var(--accent-10)] disabled:cursor-not-allowed disabled:opacity-50"
+          className="min-h-11 rounded-md bg-zinc-100 px-3 py-2 text-zinc-950 transition hover:bg-zinc-200 disabled:cursor-not-allowed disabled:opacity-50"
         >
           Previous
         </button>
@@ -53,13 +56,13 @@ function PDFToolbar({
         <button
           onClick={handlers.onNextPage}
           disabled={!numPages || pageNumber >= numPages}
-          className="rounded-md bg-[var(--accent-9)] px-3 py-2 text-white transition hover:bg-[var(--accent-10)] disabled:cursor-not-allowed disabled:opacity-50"
+          className="min-h-11 rounded-md bg-zinc-100 px-3 py-2 text-zinc-950 transition hover:bg-zinc-200 disabled:cursor-not-allowed disabled:opacity-50"
         >
           Next
         </button>
       </div>
 
-      <div className="flex items-center gap-2">
+      <div className="flex flex-wrap items-center gap-2">
         <button
           onClick={handlers.onZoomOut}
           className="rounded-md border border-[var(--gray-6)] bg-[var(--gray-3)] px-3 py-2 text-[var(--gray-12)] transition hover:bg-[var(--gray-4)]"
@@ -118,9 +121,20 @@ function PDFLoadingError({
   return null;
 }
 
-export function PDFViewer({ pdfUrl, settings }: PDFViewerProps) {
+export function PDFViewer({
+  pdfUrl,
+  settings,
+  page,
+  onPageChange,
+  onDocumentLoad,
+}: PDFViewerProps) {
   const [numPages, setNumPages] = useState<number | null>(null);
-  const [pageNumber, setPageNumber] = useState(1);
+  const [internalPage, setInternalPage] = useState(1);
+  const pageNumber = page ?? internalPage;
+  const setPageNumber = (next: number) => {
+    setInternalPage(next);
+    onPageChange?.(next);
+  };
   const [scale, setScale] = useState(1.0);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -131,6 +145,7 @@ export function PDFViewer({ pdfUrl, settings }: PDFViewerProps) {
 
   function onDocumentLoadSuccess({ numPages }: { numPages: number }) {
     setNumPages(numPages);
+    onDocumentLoad?.(numPages);
     setIsLoading(false);
     setError(null);
   }
@@ -149,8 +164,8 @@ export function PDFViewer({ pdfUrl, settings }: PDFViewerProps) {
     setReloadKey((key) => key + 1);
   }
 
-  const goToPrevPage = () => setPageNumber((prev) => Math.max(1, prev - 1));
-  const goToNextPage = () => setPageNumber((prev) => Math.min(numPages || 1, prev + 1));
+  const goToPrevPage = () => setPageNumber(Math.max(1, pageNumber - 1));
+  const goToNextPage = () => setPageNumber(Math.min(numPages || 1, pageNumber + 1));
   const zoomIn = () => setScale((prev) => Math.min(2.5, prev + 0.2));
   const zoomOut = () => setScale((prev) => Math.max(0.5, prev - 0.2));
   const resetZoom = () => setScale(1.0);

@@ -1,0 +1,99 @@
+{
+  "$schema": "fleet.design-review.v1",
+  "version": 1,
+  "project": "reader",
+  "target": "Guest PDF page notes",
+  "surfaceMode": "read",
+  "mode": "preserve",
+  "register": "product",
+  "context": {
+    "product": "PROJECT_STATUS.md",
+    "design": "src/components/LocalPdfReader.tsx"
+  },
+  "direction": {
+    "references": [],
+    "probes": [],
+    "selected": "existing-reader-pdf-and-notes",
+    "approval": "not-required",
+    "before": ".fleet/evidence/guest-pdf/before-1440.png",
+    "library": {
+      "strategy": "upstream-first",
+      "primary": "existing-project-system",
+      "sources": [
+        "https://github.com/Significant-Hobbies/reader/blob/main/src/components/PDFViewer.tsx",
+        "https://github.com/Significant-Hobbies/reader/blob/main/src/components/ui/button.tsx"
+      ],
+      "runtime": "existing",
+      "customReplacement": {
+        "used": false,
+        "authorization": "not-required",
+        "reason": "Reuses project PDFViewer and Button; adds page-note behavior within established gray/accent reading surface."
+      }
+    },
+    "contract": {
+      "purpose": "Reader turns a saved article or PDF into a focused place to read, annotate, revisit, and discuss it.",
+      "purposeSource": "Site Health reader dossier purposeContract and PROJECT_STATUS.md",
+      "canonicalPurpose": "Reader turns a saved article or PDF into a focused place to read, annotate, revisit, and discuss it.",
+      "purposeAlignment": "match",
+      "driftNote": "",
+      "audience": "People who save serious reading and need to retain useful notes beside the source.",
+      "job": "Import a guest PDF, read pages, save page-linked notes and revisit them after reload.",
+      "thesis": "Keep the document central and place compact page notes beside it, stacking below at narrow widths.",
+      "system": "Existing charcoal reading shell, gray text hierarchy, project Button colors, 16/24px gutters, single-column mobile and document-plus-22rem-notes desktop.",
+      "signature": "Each note returns to its numbered PDF page.",
+      "risk": "Native PDF iframe is replaced by the existing local PDF.js renderer; a real synthetic document validates rendering and the worker stays bundled locally."
+    }
+  },
+  "evidence": {
+    "screenshots": [
+      {
+        "width": 390,
+        "path": ".fleet/evidence/guest-pdf/after-390.png"
+      },
+      {
+        "width": 768,
+        "path": ".fleet/evidence/guest-pdf/after-768.png"
+      },
+      {
+        "width": 1440,
+        "path": ".fleet/evidence/guest-pdf/after-1440.png"
+      }
+    ],
+    "projectCheck": {
+      "command": "pnpm quality; pnpm test:guest-pdf",
+      "status": "pass"
+    },
+    "critique": {
+      "score": 36,
+      "maximum": 40
+    },
+    "audit": {
+      "score": 18,
+      "maximum": 20
+    },
+    "unresolved": {
+      "p0": 0,
+      "p1": 0
+    },
+    "detector": {
+      "posture": "advisory",
+      "findings": [
+        "Two border-accent-on-rounded warnings identify existing loading spinners, not cards; preserved.",
+        "Low-contrast Previous/Next controls found in browser review were fixed and screenshots regenerated."
+      ]
+    },
+    "comprehension": {
+      "status": "not-applicable"
+    },
+    "visualQuality": {
+      "priority": "P2",
+      "score": 90,
+      "minimum": 85
+    },
+    "reviewMethod": "Independent parent source and 1440/390 screenshot review found no blocker. Its mobile opacity-transition observation was resolved with explicit enabled/disabled and settled-opacity assertions at all three widths before recapture. An additional critique-agent spawn failed at the four-thread limit; detector/browser assessment performed in this context. Before capture records the PDF API/worker mismatch during implementation, not the original iframe surface."
+  },
+  "ownerFeedback": {
+    "decision": "agent-selected",
+    "note": "Owner explicitly requested the bounded guest PDF annotation repair and safe checked push. Existing visual system preserved. Hosted upload/deployment remain outside authorization."
+  }
+}

@@ -26,7 +26,7 @@ maintenance-first support.
   reload; route fixtures verify guest rejection and account-scoped access calls.
   [Evidence and limits](docs/development/testing.md#local-library-persistence).
   Live journey qualification remains [#55](https://github.com/Significant-Hobbies/reader/issues/55);
-  guest PDF annotations remain [#56](https://github.com/Significant-Hobbies/reader/issues/56).
+  guest PDF page notes are now implemented in [#56](https://github.com/Significant-Hobbies/reader/issues/56).
   No deployment or live upload was performed.
 - **2026-08-12:** Adopted the Fleet code-health contract across the app,
   Worker, landing, and Chrome extension with truthful whole-library coverage,
@@ -54,6 +54,12 @@ maintenance-first support.
 - Chrome MV3 capture extension.
 
 ## Features (shipped)
+
+- Guest PDF page notes: local import/render/navigation, note create/edit/delete,
+  saved page anchors and reload. Existing PDF.js API/worker versions are aligned
+  to 5.4.624 after a built-browser test exposed a version mismatch.
+  Notes stay browser-local; they are not text highlights or embedded PDF edits.
+  Account PDF annotation controls are still unimplemented.
 
 - Articles and PDFs with highlights, notes, search, boards, lists, and
   AI-assisted reading.

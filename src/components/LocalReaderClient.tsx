@@ -8,6 +8,7 @@ import { useIsMobileViewport } from '../hooks/useIsMobileViewport';
 import { getLocalArticle, updateLocalArticle } from '../lib/local-library';
 import type { Article } from '../types';
 import { Navbar } from './Navbar';
+import { LocalPdfReader } from './LocalPdfReader';
 import { ReaderCore } from './reader/ReaderCore';
 
 function LoadingState() {
@@ -61,38 +62,6 @@ function LinkArticleView({ article }: { article: Article }) {
   );
 }
 
-function PdfArticleView({ article }: { article: Article }) {
-  return (
-    <div className="flex h-screen flex-col bg-[#15130f] font-sans text-gray-100">
-      <Navbar />
-      <main className="flex flex-1 flex-col gap-4 overflow-hidden p-4 md:p-6">
-        <div className="flex items-center justify-between rounded-lg border border-[var(--gray-5)] bg-[var(--gray-2)] px-4 py-3">
-          <div>
-            <p className="text-xs font-medium text-[var(--accent-11)] uppercase">Local PDF</p>
-            <h1 className="text-xl font-semibold">{article.title}</h1>
-            <p className="text-sm text-gray-400">
-              Stored in this browser. Reader notes are not available for local PDFs yet.
-            </p>
-          </div>
-          <a
-            href={article.pdfUrl}
-            target="_blank"
-            rel="noreferrer"
-            className="rounded-md border border-[var(--gray-6)] px-3 py-1.5 text-sm text-[var(--gray-12)] hover:bg-[var(--gray-3)]"
-          >
-            Open
-          </a>
-        </div>
-        <iframe
-          title={article.title}
-          src={article.pdfUrl}
-          className="min-h-0 flex-1 rounded-lg border border-[var(--gray-5)] bg-white"
-        />
-      </main>
-    </div>
-  );
-}
-
 export default function LocalReaderClient({ articleId }: { articleId: string }) {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
@@ -113,7 +82,19 @@ export default function LocalReaderClient({ articleId }: { articleId: string }) 
 
   if (article.type === 'link') return <LinkArticleView article={article} />;
 
-  if (article.type === 'pdf' && article.pdfUrl) return <PdfArticleView article={article} />;
+  if (article.type === 'pdf' && article.pdfUrl) {
+    return (
+      <LocalPdfReader
+        key={article.id}
+        article={article}
+        onSave={async (notes) => {
+          const updated = await updateLocalArticle(article.id, { notes });
+          queryClient.setQueryData(['article', articleId, 'local'], updated);
+          await queryClient.invalidateQueries({ queryKey: ['articles'] });
+        }}
+      />
+    );
+  }
 
   return (
     <div className="flex h-screen flex-col overflow-hidden bg-[#15130f] font-sans text-gray-100">

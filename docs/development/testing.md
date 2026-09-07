@@ -42,7 +42,7 @@ Article API tests use mocked identity/database boundaries: they prove guest
 rejection and correct ownership arguments, not deployed Google auth or D1/R2.
 Real import/selection/annotation UI, pending-save navigation, hosted persistence,
 and session changes remain tracked in [#55](https://github.com/Significant-Hobbies/reader/issues/55).
-Guest PDF annotation controls remain [#56](https://github.com/Significant-Hobbies/reader/issues/56).
+Guest PDF page notes are implemented in [#56](https://github.com/Significant-Hobbies/reader/issues/56); see the separate browser evidence below.
 
 ## Type-checking
 
@@ -74,3 +74,22 @@ any increase in that count; each cleanup should lower the baseline.
 `pnpm docs:check` (`scripts/check-docs.mjs`) validates `docs/` link integrity
 and structure. CI runs it in `.github/workflows/docs.yml`. See
 [../operations/ci-cd.md](../operations/ci-cd.md).
+
+## Guest PDF page-note journey
+
+After `pnpm cf:build`, run `pnpm test:guest-pdf`. It serves the actual built app
+on an isolated loopback port and imports a valid two-page synthetic PDF through
+the library dialog. The test verifies rendered page text, page navigation, a
+page-2 note, a failed IndexedDB write with the draft retained, retry, reload,
+return-to-page anchor, edit, reopen, delete, and reload without the deleted note.
+It blocks external requests and asserts zero API writes. Screenshots and
+overflow checks cover 390, 768, and 1440 pixels. CI runs this after the build.
+
+This exposed and fixed a pre-existing mismatch between PDF.js API 5.4.296 and
+worker 5.4.624. An override aligns react-pdf with the already-declared 5.4.624
+package; no new production package was added. The worker remains bundled locally.
+
+The page-note contract does not claim selection highlights, embedded PDF export,
+account PDF annotations, large-document performance, or hosted qualification.
+Those broader live/article/account journeys remain #55. No real documents or
+production upload/storage were used.

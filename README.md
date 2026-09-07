@@ -27,7 +27,7 @@ Web Annotator solves this by providing a personal research library where you can
 ### Content Management
 
 - **Clean Article Extraction**: Save articles from any URL using Mozilla Readability
-- **PDF Support**: Account PDFs use the PDF reader and annotation path. Guest PDFs are stored in this browser and open in an embedded viewer; Reader notes are not available for local PDFs yet.
+- **PDF Support**: Guest PDFs render locally with page navigation and page-linked notes. Create, edit, delete, and revisit notes after reload. Notes stay in this browser; they are not text highlights or annotations embedded in the PDF. Account PDFs render with AI chat; account PDF annotation controls remain unimplemented.
 - **Rich Annotations**: Add contextual notes with optional DOM anchoring
 - **Selection Actions**: After selecting text (mouse up) or selection + right-click, quickly choose `Add note` or `Ask AI`
 - **Reading Time Estimates**: Auto-calculated reading time displayed for every article
@@ -270,9 +270,9 @@ This project is private and not licensed for public use.
 
 ## Task reconciliation (2026-09-07)
 
-The audit began with zero open GitHub Issues and PRs; no issues were closed.
-Remaining work is [#55: actual import/read/annotate/reopen qualification](https://github.com/Significant-Hobbies/reader/issues/55)
-and [#56: guest PDF annotation](https://github.com/Significant-Hobbies/reader/issues/56).
+The initial audit found no prior open GitHub Issues or PRs.
+Remaining work is [#55: actual import/read/annotate/reopen qualification](https://github.com/Significant-Hobbies/reader/issues/55).
+[#56: guest PDF page notes](https://github.com/Significant-Hobbies/reader/issues/56) is implemented with a built-browser synthetic import/render/note/reload/edit/delete journey.
 These preserve the full product journey; local persistence tests are not a
 hosted shareability receipt. See [testing evidence and limits](docs/development/testing.md#local-library-persistence).
 
