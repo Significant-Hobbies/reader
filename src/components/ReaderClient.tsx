@@ -6,6 +6,8 @@ import { useNavigate } from 'react-router-dom';
 import { useState } from 'react';
 
 import { useIsMobileViewport } from '../hooks/useIsMobileViewport';
+import { accountArticleKey } from '../lib/article-query';
+import { useAuth } from './AuthProvider';
 import type { Article } from '../types';
 import { Navbar } from './Navbar';
 import { ArticleShareDialog } from './reader/ArticleShareDialog';
@@ -13,6 +15,8 @@ import { ReaderCore } from './reader/ReaderCore';
 import { TTSPlayer } from './TTSPlayer';
 
 export default function ReaderClient({ articleId }: { articleId: string }) {
+  const { user } = useAuth();
+  const articleQueryKey = accountArticleKey(user, articleId);
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const [shareOpen, setShareOpen] = useState(false);
@@ -23,7 +27,7 @@ export default function ReaderClient({ articleId }: { articleId: string }) {
     isLoading,
     error,
   } = useQuery<Article>({
-    queryKey: ['article', articleId],
+    queryKey: articleQueryKey,
     queryFn: async () => {
       const response = await fetch(`/api/articles/${articleId}`);
       if (!response.ok) {
@@ -32,7 +36,7 @@ export default function ReaderClient({ articleId }: { articleId: string }) {
       }
       return response.json();
     },
-    enabled: Boolean(articleId),
+    enabled: Boolean(articleId && user),
   });
 
   if (isLoading) {
@@ -72,6 +76,7 @@ export default function ReaderClient({ articleId }: { articleId: string }) {
       <div className="flex flex-1 overflow-hidden p-2 md:p-6">
         <ReaderCore
           article={article}
+          handlers={{ articleQueryKey }}
           compact={isMobile}
           headerActions={
             <>
@@ -96,7 +101,7 @@ export default function ReaderClient({ articleId }: { articleId: string }) {
         articleId={articleId}
         shareId={article.shareId}
         onShareIdChange={(newShareId) => {
-          queryClient.setQueryData<Article>(['article', articleId], (old) =>
+          queryClient.setQueryData<Article>(articleQueryKey, (old) =>
             old ? { ...old, shareId: newShareId } : old
           );
         }}

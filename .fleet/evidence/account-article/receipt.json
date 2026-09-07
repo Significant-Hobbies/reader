@@ -1,0 +1,21 @@
+{
+  "sourceBefore": "09866165252689297718414a55c3eecee7f5956b",
+  "scope": "Account article selection annotations and cached/pending reconciliation",
+  "before": "Same-SPA /extension round trip retained old ReaderCore notes; editing replaced two newer SQLite notes with one stale edit through the real PUT handler.",
+  "checks": [
+    "pnpm quality",
+    "pnpm test:account-notes"
+  ],
+  "evidence": [
+    "after-1440.png",
+    "read-390.png",
+    "notes-390.png"
+  ],
+  "boundaries": [
+    "Synthetic account authentication and article HTML only",
+    "Real Hono article handlers, Drizzle and isolated SQLite with D1 adapter",
+    "External requests blocked; auxiliary research/provider services unavailable",
+    "No hosted import, upload, deployment or migration",
+    "Whole-note-array contract does not merge concurrent editors"
+  ]
+}

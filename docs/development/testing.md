@@ -131,3 +131,31 @@ This proves one active editor per account/document. The existing whole-note-arra
 PUT contract does not merge concurrent edits from multiple tabs or devices.
 Text-selection highlights, embedded annotations/export, live OAuth/R2/D1,
 large-document behavior and actual listening/AI quality remain unqualified.
+
+## Account article annotation and reconciliation
+
+`pnpm test:account-notes` also runs two built-browser article tests through the
+same real Hono/Drizzle/SQLite fixture. Authentication is synthetic; auxiliary
+research/provider services explicitly return unavailable and external requests
+are blocked. Article bodies are synthetic HTML; no hosted import is performed.
+
+The cached-reopen regression stays within the same `AppProvidersLayout` by
+visiting `/extension`, so QueryClient survives. After updating the isolated
+database, reopening must show both fresh notes without a write. Adding a note
+must preserve them and allocate a unique ID. Before repair, editing the stale
+note replaced both newer database notes with a single old-cache edit.
+
+The lifecycle test makes a genuine DOM text selection, opens Add note, injects
+a failed PUT, verifies no automatic retry after the debounce, retries, reloads,
+edits and reopens. While a PUT is held, another edit and a physical marker drag
+are queued; a fresh server GET cannot replace the dirty draft, no second write
+starts, and releasing the first write persists the latest text/paragraph anchor.
+A second delayed save crosses an Alice-to-Bob session refresh in the same SPA;
+Alice's editor disappears and Bob cannot mutate her document. Bob independently
+creates/reopens a note; Alice's deletion survives reload. Desktop and mobile
+reading/sidebar screenshots verify reachable content and controls.
+
+These tests prove the scoped source and local persistence behavior. The API
+still replaces the whole note array; it does not merge competing edits from
+multiple tabs/devices. Hosted capture, OAuth/D1/R2, extension capture, provider
+responses and broader editing journeys remain #55.

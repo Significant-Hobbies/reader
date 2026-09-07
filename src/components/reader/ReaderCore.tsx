@@ -1,6 +1,6 @@
 'use client';
 
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { useMutation, useQuery, useQueryClient, type QueryKey } from '@tanstack/react-query';
 import {
   ArrowUp,
   ChevronDown,
@@ -71,6 +71,7 @@ const loadAIConfig = (): AIConfig => {
 // ---------------------------------------------------------------------------
 
 interface ReaderCoreHandlers {
+  articleQueryKey?: QueryKey;
   onArticleChange?: (patch: Partial<Article>) => Promise<void> | void;
   onSpawnNote?: (anchor: ElementAnchor, text: string) => void;
   onSpawnAIChat?: (anchor: ElementAnchor, text: string) => void;
@@ -109,9 +110,10 @@ export function ReaderCore({
   headerActions,
   handlers = {},
 }: ReaderCoreProps) {
-  const { onArticleChange, onSpawnNote, onSpawnAIChat } = handlers;
+  const { onArticleChange, onSpawnNote, onSpawnAIChat, articleQueryKey } = handlers;
   const id = article.id;
   const queryClient = useQueryClient();
+  const cacheKey = useMemo(() => articleQueryKey ?? ['article', id], [articleQueryKey, id]);
 
   // ---- State ----
   const [notes, setNotes] = useState<Note[]>([]);
@@ -166,7 +168,9 @@ export function ReaderCore({
     y: number;
   } | null>(null);
   const [annotatableElements, setAnnotatableElements] = useState<HTMLElement[]>([]);
-  const hasInitializedNotesRef = useRef(false);
+  const notesSavePendingRef = useRef(false);
+  const currentNotesRef = useRef(notes);
+  currentNotesRef.current = notes;
   const nextNoteIdRef = useRef<number>(0);
   const lastArticleIdRef = useRef<string | null>(null);
 
@@ -180,6 +184,7 @@ export function ReaderCore({
     reset: resetNotesMutation,
   } = useMutation({
     mutationFn: async (updatedNotes: Note[]) => {
+      notesSavePendingRef.current = true;
       if (readOnly) return updatedNotes;
       if (onArticleChange) {
         await onArticleChange({ notes: updatedNotes, notesCount: updatedNotes.length });
@@ -195,10 +200,14 @@ export function ReaderCore({
       }
       return updatedNotes;
     },
+    onSettled: () => {
+      notesSavePendingRef.current = false;
+    },
     onSuccess: (updatedNotes) => {
       if (readOnly) return;
+      if (updatedNotes !== currentNotesRef.current) return;
       setHasUnsavedNoteChanges(false);
-      queryClient.setQueryData<Article>(['article', id], (prev) =>
+      queryClient.setQueryData<Article>(cacheKey, (prev) =>
         prev ? { ...prev, notes: updatedNotes, notesCount: updatedNotes.length } : prev
       );
       queryClient.invalidateQueries({ queryKey: ['articles'] });
@@ -238,7 +247,7 @@ export function ReaderCore({
     },
     onSuccess: (newTitle) => {
       if (readOnly) return;
-      queryClient.setQueryData<Article>(['article', id], (prev) =>
+      queryClient.setQueryData<Article>(cacheKey, (prev) =>
         prev ? { ...prev, title: newTitle } : prev
       );
       queryClient.invalidateQueries({ queryKey: ['articles'] });
@@ -268,8 +277,16 @@ export function ReaderCore({
       0
     );
     nextNoteIdRef.current = maxExistingId;
-    hasInitializedNotesRef.current = false;
   }, [article, resetNotesMutation]);
+
+  // Refresh clean annotations when a cached article is revalidated. Never replace
+  // a draft or an in-flight edit with an older server snapshot.
+  useEffect(() => {
+    if (hasUnsavedNoteChanges || isNotesSaving) return;
+    const refreshed = article.notes ?? [];
+    setNotes(refreshed);
+    nextNoteIdRef.current = Math.max(nextNoteIdRef.current, ...refreshed.map((note) => note.id));
+  }, [article.notes, hasUnsavedNoteChanges, isNotesSaving]);
 
   // Debounced title save
   useEffect(() => {
@@ -290,17 +307,14 @@ export function ReaderCore({
   useEffect(() => {
     if (readOnly) return;
     if (!id) return;
-    if (!hasInitializedNotesRef.current) {
-      hasInitializedNotesRef.current = true;
-      return;
-    }
+    if (!hasUnsavedNoteChanges || isNotesSaving || isNotesError) return;
 
     const timeoutId = setTimeout(() => {
       persistNotes(notes);
     }, 1000);
 
     return () => clearTimeout(timeoutId);
-  }, [notes, id, persistNotes, readOnly]);
+  }, [notes, id, persistNotes, readOnly, hasUnsavedNoteChanges, isNotesSaving, isNotesError]);
 
   // Annotation target refresh
   const refreshAnnotationTargets = useCallback(() => {
@@ -465,7 +479,7 @@ export function ReaderCore({
   }, []);
 
   const markNotesChanged = useCallback(() => {
-    resetNotesMutation();
+    if (!notesSavePendingRef.current) resetNotesMutation();
     setRecentlySaved(false);
     setHasUnsavedNoteChanges(true);
   }, [resetNotesMutation]);
@@ -700,6 +714,7 @@ export function ReaderCore({
     notesMutationError instanceof Error ? notesMutationError.message : 'Failed to save notes';
 
   const retryNoteSave = useCallback(() => {
+    if (notesSavePendingRef.current) return;
     resetNotesMutation();
     persistNotes(notes);
   }, [notes, persistNotes, resetNotesMutation]);
@@ -837,10 +852,8 @@ export function ReaderCore({
         const newAnchor = buildAnchorPayload(anchorElement);
         setNotes((prev) => {
           const next = prev.map((n) => (n.id === draggedId ? { ...n, anchor: newAnchor } : n));
-          hasInitializedNotesRef.current = true;
           if (!readOnly) {
             markNotesChanged();
-            persistNotes(next);
           }
           return next;
         });
@@ -854,14 +867,7 @@ export function ReaderCore({
       document.addEventListener('mousemove', handleMove);
       document.addEventListener('mouseup', handleUp);
     },
-    [
-      buildAnchorPayload,
-      getAnchorElementFromPoint,
-      hideTooltip,
-      markNotesChanged,
-      persistNotes,
-      readOnly,
-    ]
+    [buildAnchorPayload, getAnchorElementFromPoint, hideTooltip, markNotesChanged, readOnly]
   );
 
   // ---- Memos ----
@@ -898,11 +904,11 @@ export function ReaderCore({
   const handleSummarySaved = useCallback(
     (summary: string, keyPoints: string[]) => {
       onArticleChange?.({ aiSummary: summary, keyPoints });
-      queryClient.setQueryData<Article>(['article', id], (prev) =>
+      queryClient.setQueryData<Article>(cacheKey, (prev) =>
         prev ? { ...prev, aiSummary: summary, keyPoints } : prev
       );
     },
-    [id, onArticleChange, queryClient]
+    [cacheKey, onArticleChange, queryClient]
   );
 
   // ---- Render ----

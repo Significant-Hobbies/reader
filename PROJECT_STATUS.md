@@ -66,6 +66,14 @@ maintenance-first support.
   Hosted Google/D1/R2 qualification remains #55. Existing background/zoom/page
   controls remain supported; mobile panels stack to keep the PDF visible.
 
+- Account article annotations: cached reopen refreshes clean notes before editing,
+  autosave runs only for dirty notes and serializes in-flight changes, including
+  marker reanchoring. Failed writes require retry or a new edit. Account/article
+  cache keys and reader mounts align. Real-handler/SQLite/browser regression
+  covers stale-cache data loss, fresh server props during a dirty edit, selection
+  notes, retry, reanchor, reload/delete and delayed-save account isolation.
+  Concurrent editors still use a whole-array last-write-wins API.
+
 - Articles and PDFs with highlights, notes, search, boards, lists, and
   AI-assisted reading.
 - Account-backed and device-local capture paths.

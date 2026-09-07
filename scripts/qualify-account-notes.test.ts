@@ -1,9 +1,8 @@
-import { readFileSync, mkdirSync } from 'node:fs';
-import { DatabaseSync } from 'node:sqlite';
-import { Hono } from 'hono';
+import { mkdirSync } from 'node:fs';
+import type { Hono } from 'hono';
 import { chromium, expect as browserExpect } from '@playwright/test';
 import { expect, test, vi } from 'vitest';
-import { createDb, setDb, type DbEnv } from '../src/lib/db/client';
+import { accountFixture } from './account-handler-fixture';
 import { serveBuiltReader, syntheticPdf } from './pdf-browser-fixture.mjs';
 
 // Authentication is the only mocked application boundary. Article ownership,
@@ -12,52 +11,6 @@ vi.mock('../src/lib/auth-api', () => ({
   getAuthenticatedUserId: async (headers: Headers) =>
     headers.get('cookie')?.match(/fixture-user=(alice|bob)/)?.[1] ?? null,
 }));
-import articleRoutes from '../src/worker/routes/articles';
-
-function fixture() {
-  const sqlite = new DatabaseSync(':memory:');
-  sqlite.exec(readFileSync('drizzle/0000_baseline.sql', 'utf8'));
-  const binding = {
-    prepare(sql: string) {
-      const statement = sqlite.prepare(sql);
-      return {
-        bind(...values: (string | number | null)[]) {
-          return {
-            async raw() {
-              const columns = statement.columns().map((column) => column.name);
-              return statement.all(...values).map((row) => columns.map((column) => row[column]));
-            },
-            async all() {
-              return { results: statement.all(...values) };
-            },
-            async run() {
-              return { success: true, meta: statement.run(...values) };
-            },
-          };
-        },
-      };
-    },
-  };
-  setDb(createDb({ DB: binding as unknown as DbEnv['DB'] }));
-  for (const user of ['alice', 'bob']) {
-    sqlite
-      .prepare('INSERT INTO user (id, name, email) VALUES (?, ?, ?)')
-      .run(user, user, `${user}@example.invalid`);
-    sqlite
-      .prepare(
-        "INSERT INTO articles (id, user_id, url, title, type, notes, pdf_storage_key) VALUES (?, ?, ?, ?, 'pdf', '[]', ?)"
-      )
-      .run(
-        `${user}-pdf`,
-        user,
-        'https://example.invalid/synthetic.pdf',
-        `${user} synthetic PDF`,
-        `synthetic/${user}.pdf`
-      );
-  }
-  const app = new Hono().route('/api/articles', articleRoutes);
-  return { sqlite, app };
-}
 
 function request(app: Hono, user: string, id: string, notes?: unknown[]) {
   return app.request(`/api/articles/${id}`, {
@@ -68,7 +21,7 @@ function request(app: Hono, user: string, id: string, notes?: unknown[]) {
 }
 
 test('real account handlers persist page anchors and reject foreign reads and writes', async () => {
-  const { sqlite, app } = fixture();
+  const { sqlite, app } = accountFixture();
   try {
     const notes = [
       { id: 1, text: '<b>Page evidence</b>', anchor: { elementIndex: 1, pageNumber: 2 } },
@@ -102,7 +55,7 @@ test('real account handlers persist page anchors and reject foreign reads and wr
 });
 
 test('built account PDF creates, edits, deletes and reopens real persisted notes for two isolated accounts', async () => {
-  const { sqlite, app } = fixture();
+  const { sqlite, app } = accountFixture();
   let failNextSave = false;
   let holdMethod: string | null = null;
   let releaseResponse: (() => void) | undefined;

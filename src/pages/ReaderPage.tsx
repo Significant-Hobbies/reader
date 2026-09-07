@@ -117,7 +117,7 @@ export default function ReaderPage() {
       {article.type === 'pdf' ? (
         <PDFReaderClient key={`${user.id}:${id}`} articleId={id} />
       ) : (
-        <ReaderClient articleId={id} />
+        <ReaderClient key={`${user.id}:${id}`} articleId={id} />
       )}
     </Suspense>
   );
