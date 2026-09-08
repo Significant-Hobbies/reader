@@ -43,7 +43,7 @@
     "quality:suppressions": "node scripts/check-code-health.mjs suppressions",
     "quality:hygiene": "node scripts/check-code-health.mjs hygiene",
     "quality": "pnpm format:check && pnpm lint && pnpm typecheck && pnpm test:coverage && pnpm --filter web-annotator-extension type-check && pnpm --filter web-annotator-extension test && pnpm quality:unused && pnpm quality:complexity && pnpm quality:duplication && pnpm quality:cycles && pnpm quality:dependencies && pnpm quality:suppressions && pnpm docs:check && pnpm cf:build && pnpm --filter web-annotator-extension build && pnpm quality:hygiene",
-    "test:guest-pdf": "node --test scripts/qualify-guest-pdf.mjs",
+    "test:guest-pdf": "node --test scripts/qualify-guest-pdf.mjs scripts/qualify-import-signin.mjs",
     "test:account-pdf": "node --test scripts/qualify-account-pdf.mjs",
     "test:account-notes": "vitest run --config vitest.account-notes.config.ts"
   },

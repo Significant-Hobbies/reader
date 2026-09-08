@@ -20,6 +20,9 @@ interface AddArticleDialogProps {
   onSaveLink: (url: string, title?: string, category?: string) => Promise<void>;
   onUploadPDF: (file: File, category?: string) => Promise<void>;
   initialMode?: AddArticleMode;
+  initialUrl?: string;
+  initialCategory?: string;
+  importRequiresSignIn?: boolean;
   isSubmitting?: boolean;
   uploadProgress?: number | null;
 }
@@ -118,19 +121,19 @@ function DialogFooter({
 }
 
 function UrlImportForm({
-  url,
-  setUrl,
+  urlState,
   categoryState,
   isSubmitting,
   onSubmit,
   onCancel,
+  importRequiresSignIn,
 }: {
-  url: string;
-  setUrl: (v: string) => void;
+  urlState: { value: string; onChange: (v: string) => void };
   categoryState: { value: string; onChange: (v: string) => void };
   isSubmitting: boolean;
   onSubmit: (e: React.FormEvent) => void;
   onCancel: () => void;
+  importRequiresSignIn: boolean;
 }) {
   return (
     <form onSubmit={onSubmit} className="space-y-4">
@@ -140,13 +143,15 @@ function UrlImportForm({
           id="url"
           type="url"
           placeholder="https://example.com/article-to-import"
-          value={url}
-          onChange={(e) => setUrl(e.target.value)}
+          value={urlState.value}
+          onChange={(e) => urlState.onChange(e.target.value)}
           disabled={isSubmitting}
           required
         />
         <p className="text-xs leading-5 text-[var(--gray-9)]">
-          Reader will fetch a clean article view and keep annotations in your library.
+          {importRequiresSignIn
+            ? 'Sign in to import web articles into your account library. Your URL will be kept for you. PDFs and outside links can stay in this browser without an account.'
+            : 'Reader will fetch a clean article view and keep annotations in your account library.'}
         </p>
       </div>
 
@@ -162,9 +167,9 @@ function UrlImportForm({
       <DialogFooter
         isSubmitting={isSubmitting}
         onCancel={onCancel}
-        submitLabel="Import to Reader"
+        submitLabel={importRequiresSignIn ? 'Sign in to import' : 'Import to Reader'}
         submittingLabel="Importing..."
-        disabled={!url || isSubmitting}
+        disabled={!urlState.value || isSubmitting}
       />
     </form>
   );
@@ -352,12 +357,15 @@ export function AddArticleDialog({
   onSaveLink,
   onUploadPDF,
   initialMode = 'url',
+  initialUrl = '',
+  initialCategory = '',
+  importRequiresSignIn = false,
   isSubmitting = false,
 }: AddArticleDialogProps) {
   const [tab, setTab] = useState<AddArticleMode>(initialMode);
-  const [url, setUrl] = useState('');
+  const [url, setUrl] = useState(initialUrl);
   const [linkTitle, setLinkTitle] = useState('');
-  const [category, setCategory] = useState('');
+  const [category, setCategory] = useState(initialCategory);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [error, setError] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -527,8 +535,8 @@ export function AddArticleDialog({
 
           {tab === 'url' && (
             <UrlImportForm
-              url={url}
-              setUrl={setUrl}
+              importRequiresSignIn={importRequiresSignIn}
+              urlState={{ value: url, onChange: setUrl }}
               categoryState={{ value: category, onChange: setCategory }}
               isSubmitting={isSubmitting}
               onSubmit={handleUrlSubmit}

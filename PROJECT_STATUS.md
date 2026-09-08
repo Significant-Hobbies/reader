@@ -26,7 +26,10 @@ maintenance-first support.
   session dispatch, protected snapshot/article reads, and discovery. Release
   and full hosted qualification remain tracked in
   [#55](https://github.com/Significant-Hobbies/reader/issues/55). Guest URL import
-  still needs resolution: its UI offers import, while snapshot requires auth.
+  now explains sign-in and preserves the URL/category in tab storage for review
+  after authentication. Restoring a draft never imports automatically; explicit
+  cancellation clears it. The built-browser regression covers guest handoff,
+  simulated account return, extraction failure, reload, and cancellation.
 - **2026-09-07:** Fixed a reproduced local IndexedDB lost-update bug: concurrent
   title and note edits now merge within one readwrite transaction. Isolated
   Chromium proves article content/notes/count and synthetic PDF bytes survive

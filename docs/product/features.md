@@ -8,7 +8,11 @@ update when behaviour changes. For the API route map, see
 
 - **Article capture from URL** via `@mozilla/readability` + `linkedom` running
   server-side in the `/api/snapshot` flow. HTML is sanitised before storage and
-  re-sanitised on read for defence-in-depth.
+  re-sanitised on read for defence-in-depth. URL extraction requires sign-in.
+  Guest import keeps the URL/category in this tab for up to 24 hours, then
+  returns to an editable draft after sign-in; it never imports automatically.
+  Explicit cancellation or successful import clears that draft. Local PDFs
+  and outside links remain available without an account.
 - **PDF upload, view, annotate, text extraction.** PDFs are stored in
   Cloudflare R2 (`PDFS_BUCKET`); downloads are proxied through
   `/api/pdfs/:id/download` so auth + ownership are enforced server-side. PDF

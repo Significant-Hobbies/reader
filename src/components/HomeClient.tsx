@@ -17,6 +17,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { lazy, Suspense, type MouseEvent, useState } from 'react';
 
 import { trackActivatedOnce, trackCoreAction } from '../lib/analytics';
+import { clearImportDraft, readImportDraft, saveImportDraft } from '../lib/import-draft';
 import { getTagColor } from '../lib/tag-utils';
 import type { ArticleStatus, ArticleSummary, List } from '../types';
 import type { AddArticleMode } from './AddArticleDialog';
@@ -91,6 +92,7 @@ function LoadingLibrarySkeleton() {
 }
 
 export default function HomeClient() {
+  const [pendingImport, setPendingImport] = useState(readImportDraft);
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [activeToolbarId, setActiveToolbarId] = useState<string | null>(null);
   const [pendingDeleteId, setPendingDeleteId] = useState<string | null>(null);
@@ -99,7 +101,7 @@ export default function HomeClient() {
   const [contentFilter, setContentFilter] = useState<ContentFilter>('all');
   const [newListName, setNewListName] = useState('');
   const [isListModalOpen, setIsListModalOpen] = useState(false);
-  const [showAddArticleDialog, setShowAddArticleDialog] = useState(false);
+  const [showAddArticleDialog, setShowAddArticleDialog] = useState(Boolean(pendingImport));
   const [addArticleMode, setAddArticleMode] = useState<AddArticleMode>('url');
 
   const navigate = useNavigate();
@@ -388,8 +390,14 @@ export default function HomeClient() {
   });
 
   const handleUrlSubmit = async (url: string, category?: string) => {
+    if (!user) {
+      saveImportDraft(url, category);
+      navigate('/login');
+      return;
+    }
     try {
       const newArticleId = await importMutation.mutateAsync({ url, category });
+      clearImportDraft();
       navigate(`/reader/${newArticleId}`);
     } catch (error) {
       console.error('Import failed:', error);
@@ -936,7 +944,10 @@ export default function HomeClient() {
             ) : (
               <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">
                 {articles.length === 0 ? (
-                  <LibraryEmptyOnboarding onAddSource={openAddArticleDialog} />
+                  <LibraryEmptyOnboarding
+                    onAddSource={openAddArticleDialog}
+                    importRequiresSignIn={isLocalMode}
+                  />
                 ) : filteredArticles.length === 0 ? (
                   <div className="col-span-full rounded-lg border border-dashed border-zinc-800 bg-zinc-950 p-0">
                     <div className="mx-auto flex max-w-xl flex-col items-center px-6 py-16 text-center">
@@ -998,12 +1009,21 @@ export default function HomeClient() {
           <AddArticleDialog
             key={addArticleMode}
             open={showAddArticleDialog}
-            onOpenChange={setShowAddArticleDialog}
+            onOpenChange={(open) => {
+              setShowAddArticleDialog(open);
+              if (!open) {
+                clearImportDraft();
+                setPendingImport(null);
+              }
+            }}
             onSubmitUrl={handleUrlSubmit}
             onSaveLink={handleSaveLink}
             onUploadPDF={handlePDFUpload}
             initialMode={addArticleMode}
-            isSubmitting={isImporting}
+            initialUrl={pendingImport?.url}
+            initialCategory={pendingImport?.category}
+            importRequiresSignIn={!user}
+            isSubmitting={isImporting || authLoading}
           />
         </Suspense>
       ) : null}

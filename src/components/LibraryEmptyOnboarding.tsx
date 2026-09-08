@@ -40,9 +40,13 @@ const importOnboardingActions: Array<{
 
 type LibraryEmptyOnboardingProps = {
   onAddSource: (mode?: AddArticleMode) => void;
+  importRequiresSignIn?: boolean;
 };
 
-export function LibraryEmptyOnboarding({ onAddSource }: LibraryEmptyOnboardingProps) {
+export function LibraryEmptyOnboarding({
+  onAddSource,
+  importRequiresSignIn = false,
+}: LibraryEmptyOnboardingProps) {
   return (
     <section className="reader-card col-span-full overflow-hidden rounded-lg border border-zinc-800 bg-zinc-950">
       <div className="grid gap-0 lg:grid-cols-[minmax(0,1fr)_22rem]">
@@ -87,7 +91,9 @@ export function LibraryEmptyOnboarding({ onAddSource }: LibraryEmptyOnboardingPr
                     {action.description}
                   </p>
                   <span className="mt-4 inline-flex items-center gap-1.5 text-sm font-medium text-[var(--accent-11)]">
-                    {action.cta}
+                    {action.mode === 'url' && importRequiresSignIn
+                      ? 'Sign in to import'
+                      : action.cta}
                     <Plus className="h-3.5 w-3.5" />
                   </span>
                 </button>
