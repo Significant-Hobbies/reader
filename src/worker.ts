@@ -117,9 +117,12 @@ export default {
   async fetch(request: Request, env: WorkerEnv, ctx: ExecutionContext): Promise<Response> {
     const url = new URL(request.url);
 
-    // Fleet agent indexing (GEO) — before SPA/ASSETS fallback
-    const agent = await handleAgentEdge(request, env);
-    if (agent) return agent;
+    // Discovery owns /api/ai, but its catch-all must not swallow product APIs.
+    const normalizedPath = url.pathname.replace(/\/{2,}/g, '/').replace(/\/+$/, '');
+    if (!url.pathname.startsWith('/api/') || normalizedPath === '/api/ai') {
+      const agent = await handleAgentEdge(request, env);
+      if (agent) return agent;
+    }
 
     if (url.pathname.startsWith('/api/')) {
       try {

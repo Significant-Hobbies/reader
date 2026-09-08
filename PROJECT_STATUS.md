@@ -20,6 +20,13 @@ maintenance-first support.
 
 ## Timeline
 
+- **2026-09-08:** Repaired Worker dispatch after live session and snapshot GETs
+  returned discovery `not_found` responses. Product APIs now reach Hono while
+  `/api/ai` retains discovery GET/HEAD. Entry-point regression tests exercise
+  session dispatch, protected snapshot/article reads, and discovery. Release
+  and full hosted qualification remain tracked in
+  [#55](https://github.com/Significant-Hobbies/reader/issues/55). Guest URL import
+  still needs resolution: its UI offers import, while snapshot requires auth.
 - **2026-09-07:** Fixed a reproduced local IndexedDB lost-update bug: concurrent
   title and note edits now merge within one readwrite transaction. Isolated
   Chromium proves article content/notes/count and synthetic PDF bytes survive
