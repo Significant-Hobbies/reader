@@ -1,4 +1,5 @@
 import { accountArticleKey } from '../lib/article-query';
+import { saveAccountNotes } from '../lib/save-account-notes';
 
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useNavigate } from 'react-router-dom';
@@ -72,13 +73,8 @@ export default function PDFReaderClient({ articleId }: { articleId: string }) {
     enabled: Boolean(id && user),
   });
 
-  async function saveNotes(notes: Note[]) {
-    const response = await fetch(`/api/articles/${id}`, {
-      method: 'PUT',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ notes }),
-    });
-    if (!response.ok) throw new Error('Could not save notes');
+  async function saveNotes(notes: Note[], baseNotes: Note[]) {
+    await saveAccountNotes(id, baseNotes, notes);
     const saved = await fetchArticle(id);
     queryClient.setQueryData(accountArticleKey(user, id), saved);
   }
@@ -183,7 +179,7 @@ function AccountPdfNotes({
   page: number;
   pages: number;
   onPage: (page: number) => void;
-  onSave: (notes: Note[]) => Promise<void>;
+  onSave: (notes: Note[], baseNotes: Note[]) => Promise<void>;
 }) {
   const [showChat, setShowChat] = useState(false);
   return (

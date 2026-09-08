@@ -272,6 +272,22 @@ test('account article selection notes survive retry, edit, reload and delete wit
     await new Promise((resolve) => setTimeout(resolve, 1200));
     expect(writes).toHaveLength(writesWhileHeld);
     releaseSave?.();
+    await browserExpect(page.getByText(/These notes changed in another editor/)).toBeVisible();
+    await browserExpect(page.getByPlaceholder('Write your observation...')).toHaveValue(
+      'Alice newer unsaved note'
+    );
+    expect(
+      JSON.parse(
+        String(sqlite.prepare("SELECT notes FROM articles WHERE id = 'alice-pdf'").get()?.notes)
+      )[0].text
+    ).toBe('Concurrent server observation');
+    // Repeating a conflicting write must not turn it into an overwrite.
+    await page.getByRole('button', { name: 'Retry', exact: true }).click();
+    await browserExpect(page.getByText(/These notes changed in another editor/)).toBeVisible();
+    // The user compares the saved version and explicitly reapplies the copied draft.
+    await page.reload();
+    await page.getByRole('button', { name: 'Concurrent server observation', exact: true }).click();
+    await page.getByPlaceholder('Write your observation...').fill('Alice newer unsaved note');
     await browserExpect
       .poll(
         () =>
@@ -281,11 +297,6 @@ test('account article selection notes survive retry, edit, reload and delete wit
       )
       .toBe('Alice newer unsaved note');
     await browserExpect(page.getByText('Notes saved', { exact: true }).first()).toBeVisible();
-    expect(
-      JSON.parse(
-        String(sqlite.prepare("SELECT notes FROM articles WHERE id = 'alice-pdf'").get()?.notes)
-      )[0].anchor.elementIndex
-    ).toBe(2);
     releaseSave = undefined;
     holdNextSave = true;
     await page.getByPlaceholder('Write your observation...').fill('Alice delayed private note');
@@ -338,7 +349,7 @@ test('account article selection notes survive retry, edit, reload and delete wit
       )
     ).toHaveLength(1);
     expect(errors).toEqual([]);
-    expect(writes).toHaveLength(9);
+    expect(writes).toHaveLength(10);
   } finally {
     releaseSave?.();
     await browser.close();

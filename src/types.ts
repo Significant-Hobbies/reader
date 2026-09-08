@@ -1,4 +1,4 @@
-export interface NoteAnchor {
+interface NoteAnchor {
   elementIndex: number;
   tagName?: string;
   textPreview?: string;
@@ -17,6 +17,7 @@ export interface Note {
   id: number;
   text: string;
   anchor?: NoteAnchor;
+  sourceKey?: string; // Stable identity for a note mirrored from a board node.
 }
 
 export interface AIChatMessage {

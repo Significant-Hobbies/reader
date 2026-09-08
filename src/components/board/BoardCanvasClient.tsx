@@ -175,7 +175,7 @@ function BoardCanvas({ board, readOnly }: BoardCanvasClientProps) {
   }, [nodes, edges, debouncedSave, readOnly]);
 
   // Sync linked note/chat nodes back to their articles
-  useBoardArticleSync(readOnly ? [] : nodes);
+  const articleSync = useBoardArticleSync(board.id, nodes, !readOnly);
 
   const onConnect = useCallback(
     (connection: Connection) => {
@@ -507,7 +507,18 @@ function BoardCanvas({ board, readOnly }: BoardCanvasClientProps) {
   const defaultEdgeOptions = useMemo(() => ({ type: 'labeled' }), []);
 
   return (
-    <div className="relative h-full w-full" style={{ touchAction: 'none' }}>
+    <div className="relative h-dvh w-full bg-[#15130f]" style={{ touchAction: 'none' }}>
+      {articleSync.error && (
+        <div
+          role="alert"
+          className="absolute bottom-4 left-4 right-4 z-50 rounded-md border border-red-500/30 bg-[var(--gray-2)] p-3 text-sm text-red-300"
+        >
+          {articleSync.error}
+          <button type="button" className="ml-3 underline" onClick={articleSync.retry}>
+            Retry linked sync
+          </button>
+        </div>
+      )}
       <ReactFlow
         nodes={nodes}
         edges={edges}

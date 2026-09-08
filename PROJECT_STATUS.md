@@ -82,7 +82,7 @@ maintenance-first support.
   cache keys and reader mounts align. Real-handler/SQLite/browser regression
   covers stale-cache data loss, fresh server props during a dirty edit, selection
   notes, retry, reanchor, reload/delete and delayed-save account isolation.
-  Concurrent editors still use a whole-array last-write-wins API.
+  Concurrent note saves now merge independent changes with an atomic database comparison. Overlapping edits return a conflict and retain the draft. Linked board notes have stable identities and explicit failed-sync retry; the standalone board canvas has a viewport height. Production qualification remains #55.
 
 - Articles and PDFs with highlights, notes, search, boards, lists, and
   AI-assisted reading.

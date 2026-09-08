@@ -272,7 +272,7 @@ This project is private and not licensed for public use.
 
 The initial audit found no prior open GitHub Issues or PRs.
 Remaining work is [#55: actual import/read/annotate/reopen qualification](https://github.com/Significant-Hobbies/reader/issues/55).
-Account article selection notes now have a real-handler browser receipt for create/retry/edit/reanchor/reload/delete and account isolation. Cached reopen refreshes clean notes; pending writes preserve newer drafts. The whole-array API does not merge concurrent editors.
+Account article selection notes now have a real-handler browser receipt for create/retry/edit/reanchor/reload/delete and account isolation. Cached reopen refreshes clean notes; pending writes preserve newer drafts. Note saves merge independent changes against the editor's original snapshot; overlapping edits preserve the server version and the draft for explicit comparison. See [the save contract and qualification limits](docs/development/testing.md#concurrent-note-saves).
 [#56: guest PDF page notes](https://github.com/Significant-Hobbies/reader/issues/56) is implemented with a built-browser synthetic import/render/note/reload/edit/delete journey.
 These preserve the full product journey; local persistence tests are not a
 hosted shareability receipt. See [testing evidence and limits](docs/development/testing.md#local-library-persistence).

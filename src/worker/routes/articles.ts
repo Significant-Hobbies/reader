@@ -16,6 +16,7 @@ import {
   verifyArticleOwnership,
 } from '../../lib/articles-db';
 import { getAuthenticatedUserId } from '../../lib/auth-api';
+import { NoteConflictError } from '../../lib/note-merge';
 import { addArticleToList, removeArticleFromList } from '../../lib/lists-db';
 import type { WorkerEnv } from '../../lib/worker-env';
 import type { SessionReview } from '../../types';
@@ -163,15 +164,17 @@ articles.put('/:id', async (c) => {
     }
 
     try {
-      await updateArticle(id, userId, payload);
+      const notes = await updateArticle(id, userId, payload);
+      return c.json({ success: true, ...(notes ? { notes } : {}) });
     } catch (error) {
       if (error instanceof ArticleUpdateValidationError) {
         return c.json({ error: error.message }, 400);
       }
+      if (error instanceof NoteConflictError) {
+        return c.json({ error: error.message, code: 'note_conflict' }, 409);
+      }
       throw error;
     }
-
-    return c.json({ success: true });
   } catch (error) {
     console.error('Error updating article:', error);
     return c.json({ error: 'Failed to update article' }, 500);

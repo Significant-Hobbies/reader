@@ -17,6 +17,8 @@ import { createPortal } from 'react-dom';
 import type { AIConfig } from '../../lib/ai-config';
 import { AI_CONFIG_STORAGE_KEY, DEFAULT_AI_CONFIG } from '../../lib/ai-config';
 import { trackCoreAction } from '../../lib/analytics';
+import { mergeNoteChanges } from '../../lib/note-merge';
+import { saveAccountNotes } from '../../lib/save-account-notes';
 import { ANNOTATABLE_SELECTOR } from '../../lib/annotatable';
 import { buildResearchBrief, type SourceRelationshipMap } from '../../lib/research-brief';
 import type { Article, ElementAnchor, Note, ReaderSettings, SessionReview } from '../../types';
@@ -170,6 +172,7 @@ export function ReaderCore({
   const [annotatableElements, setAnnotatableElements] = useState<HTMLElement[]>([]);
   const notesSavePendingRef = useRef(false);
   const currentNotesRef = useRef(notes);
+  const savedNotesRef = useRef(article.notes ?? []);
   currentNotesRef.current = notes;
   const nextNoteIdRef = useRef<number>(0);
   const lastArticleIdRef = useRef<string | null>(null);
@@ -185,31 +188,29 @@ export function ReaderCore({
   } = useMutation({
     mutationFn: async (updatedNotes: Note[]) => {
       notesSavePendingRef.current = true;
-      if (readOnly) return updatedNotes;
+      if (readOnly) return { submitted: updatedNotes, saved: updatedNotes };
       if (onArticleChange) {
         await onArticleChange({ notes: updatedNotes, notesCount: updatedNotes.length });
-        return updatedNotes;
+        return { submitted: updatedNotes, saved: updatedNotes };
       }
-      const response = await fetch(`/api/articles/${id}`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ notes: updatedNotes }),
-      });
-      if (!response.ok) {
-        throw new Error('Failed to save notes');
-      }
-      return updatedNotes;
+      const saved = await saveAccountNotes(id, savedNotesRef.current, updatedNotes);
+      return { submitted: updatedNotes, saved };
     },
     onSettled: () => {
       notesSavePendingRef.current = false;
     },
-    onSuccess: (updatedNotes) => {
+    onSuccess: ({ submitted, saved }) => {
       if (readOnly) return;
-      if (updatedNotes !== currentNotesRef.current) return;
-      setHasUnsavedNoteChanges(false);
+      savedNotesRef.current = saved;
       queryClient.setQueryData<Article>(cacheKey, (prev) =>
-        prev ? { ...prev, notes: updatedNotes, notesCount: updatedNotes.length } : prev
+        prev ? { ...prev, notes: saved, notesCount: saved.length } : prev
       );
+      if (submitted !== currentNotesRef.current) {
+        setNotes(mergeNoteChanges(submitted, currentNotesRef.current, saved));
+        return;
+      }
+      setNotes(saved);
+      setHasUnsavedNoteChanges(false);
       queryClient.invalidateQueries({ queryKey: ['articles'] });
       setRecentlySaved(true);
     },
@@ -261,6 +262,7 @@ export function ReaderCore({
     if (!article) return;
     if (article.id === lastArticleIdRef.current) return;
     lastArticleIdRef.current = article.id;
+    savedNotesRef.current = article.notes ?? [];
 
     startTransition(() => {
       setNotes(article.notes ?? []);
@@ -284,6 +286,7 @@ export function ReaderCore({
   useEffect(() => {
     if (hasUnsavedNoteChanges || isNotesSaving) return;
     const refreshed = article.notes ?? [];
+    savedNotesRef.current = refreshed;
     setNotes(refreshed);
     nextNoteIdRef.current = Math.max(nextNoteIdRef.current, ...refreshed.map((note) => note.id));
   }, [article.notes, hasUnsavedNoteChanges, isNotesSaving]);

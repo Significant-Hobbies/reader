@@ -22,7 +22,7 @@ export default function BoardPage() {
     isLoading,
     error,
   } = useQuery<Board>({
-    queryKey: ['board', id],
+    queryKey: ['board', user?.id, id],
     queryFn: async () => {
       const response = await fetch(`/api/boards/${id}`);
       if (!response.ok) {
@@ -61,5 +61,5 @@ export default function BoardPage() {
     return null;
   }
 
-  return <BoardCanvasClient board={board} />;
+  return <BoardCanvasClient key={`${user.id}:${id}`} board={board} />;
 }

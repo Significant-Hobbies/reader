@@ -3,6 +3,7 @@ import { DatabaseSync } from 'node:sqlite';
 import { Hono } from 'hono';
 import { createDb, setDb, type DbEnv } from '../src/lib/db/client';
 import articleRoutes from '../src/worker/routes/articles';
+import boardRoutes from '../src/worker/routes/boards';
 
 export function accountFixture() {
   const sqlite = new DatabaseSync(':memory:');
@@ -45,6 +46,6 @@ export function accountFixture() {
         `synthetic/${user}.pdf`
       );
   }
-  const app = new Hono().route('/api/articles', articleRoutes);
+  const app = new Hono().route('/api/articles', articleRoutes).route('/api/boards', boardRoutes);
   return { sqlite, app };
 }

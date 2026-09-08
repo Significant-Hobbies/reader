@@ -127,8 +127,7 @@ rejects Bob's write to Alice's PDF, and independently saves/reopens Bob's note.
 Desktop/mobile screenshots and document overflow are checked. External requests
 are blocked; only known analytics attempts are permitted by the test assertion.
 
-This proves one active editor per account/document. The existing whole-note-array
-PUT contract does not merge concurrent edits from multiple tabs or devices.
+Concurrent note changes are covered by the save contract below.
 Text-selection highlights, embedded annotations/export, live OAuth/R2/D1,
 large-document behavior and actual listening/AI quality remain unqualified.
 
@@ -149,13 +148,46 @@ The lifecycle test makes a genuine DOM text selection, opens Add note, injects
 a failed PUT, verifies no automatic retry after the debounce, retries, reloads,
 edits and reopens. While a PUT is held, another edit and a physical marker drag
 are queued; a fresh server GET cannot replace the dirty draft, no second write
-starts, and releasing the first write persists the latest text/paragraph anchor.
+starts, and a conflicting server edit is preserved after releasing the first write.
+The draft and marker remain available; retry cannot overwrite the newer note.
+The test then explicitly reloads, compares, and reapplies the copied draft.
 A second delayed save crosses an Alice-to-Bob session refresh in the same SPA;
 Alice's editor disappears and Bob cannot mutate her document. Bob independently
 creates/reopens a note; Alice's deletion survives reload. Desktop and mobile
 reading/sidebar screenshots verify reachable content and controls.
 
-These tests prove the scoped source and local persistence behavior. The API
-still replaces the whole note array; it does not merge competing edits from
-multiple tabs/devices. Hosted capture, OAuth/D1/R2, extension capture, provider
-responses and broader editing journeys remain #55.
+These tests prove scoped source and local persistence behavior. Hosted capture,
+OAuth/D1/R2, extension capture, provider responses and broader editing journeys
+remain #55.
+
+
+## Concurrent note saves
+
+Account note PUTs require `notes` and `baseNotes`: the desired notes and the
+snapshot from which the editor made its changes. The server normalizes both,
+compares each changed note against current storage, and preserves unrelated
+concurrent additions or edits. The database update also compares the original
+stored notes atomically, retrying a bounded intervening write. HTTP 409 means
+an overlapping edit; HTTP 400 rejects missing snapshots or duplicate/invalid
+IDs. A successful response includes canonical `notes`. Old clients must reload
+before saving notes; unversioned replacement is deliberately rejected.
+
+Article and PDF editors keep drafts on conflict and explain copying changes
+before reload/comparison. Successful acknowledgements advance the saved
+baseline; opening a page or refreshing clean data does not write annotations.
+The real-handler suite exercises simultaneous saves, conflicting edits,
+edit/delete races, lost-acknowledgement retry and deletion preserving another
+editor's additions. Pure merge tests cover the note-level invariants.
+
+Linked board notes use identities derived from board/node IDs, with `sourceKey`
+provenance preserved in the existing JSON note field. Array order is not an
+identity. Only acknowledged writes advance synchronization, and failed writes
+have an explicit retry. Legacy notes without provenance are retained: the
+repair never guesses which old notes to delete from their text or position.
+Board query/cache mounts are account-scoped. The standalone canvas uses the
+viewport height so its nodes remain visible and clickable.
+
+This contract covers notes. Board-document arrays and AI conversations retain
+their existing separate persistence contracts; this is not a claim of a
+collaborative board editor or concurrent chat merging. No database schema,
+provider configuration, or production dependency changed.

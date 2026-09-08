@@ -1,4 +1,5 @@
-import { useState } from 'react';
+import { useRef, useState } from 'react';
+import { NoteConflictError } from '../lib/note-merge';
 import type { Note } from '../types';
 import { Button } from './ui/button';
 
@@ -14,32 +15,36 @@ export function PdfPageNotes({
   page: number;
   pages: number;
   onPage: (page: number) => void;
-  onSave: (notes: Note[]) => Promise<void>;
+  onSave: (notes: Note[], baseNotes: Note[]) => Promise<void>;
   storage: 'browser' | 'account';
 }) {
   const [draft, setDraft] = useState('');
+  const draftBase = useRef<Note[] | null>(null);
   const [editing, setEditing] = useState<Note | null>(null);
   const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState('');
   const [error, setError] = useState('');
   const anchorPage = editing?.anchor?.pageNumber ?? page;
 
-  async function persist(next: Note[], clearDraft: boolean) {
+  async function persist(next: Note[], clearDraft: boolean, base: Note[] = notes) {
     setBusy(true);
     setError('');
     setMessage('');
     try {
-      await onSave(next);
+      await onSave(next, base);
       if (clearDraft) {
         setDraft('');
         setEditing(null);
+        draftBase.current = null;
       }
       setMessage(storage === 'browser' ? 'Saved in this browser.' : 'Saved to your account.');
-    } catch {
+    } catch (failure) {
       setError(
-        storage === 'browser'
-          ? 'Could not save this change. Your draft is still here. Check browser storage and retry.'
-          : 'Could not save this change. Your draft is still here. Check your connection and retry.'
+        failure instanceof NoteConflictError
+          ? failure.message
+          : storage === 'browser'
+            ? 'Could not save this change. Your draft is still here. Check browser storage and retry.'
+            : 'Could not save this change. Your draft is still here. Check your connection and retry.'
       );
     } finally {
       setBusy(false);
@@ -48,14 +53,17 @@ export function PdfPageNotes({
 
   function save() {
     if (!draft.trim() || busy || !pages) return;
+    const base = draftBase.current ?? notes;
     const note: Note = {
       id: editing?.id ?? Math.max(Date.now(), ...notes.map((item) => item.id + 1)),
       text: draft.trim(),
+      ...(editing?.sourceKey ? { sourceKey: editing.sourceKey } : {}),
       anchor: { elementIndex: anchorPage - 1, pageNumber: anchorPage },
     };
     void persist(
-      editing ? notes.map((item) => (item.id === editing.id ? note : item)) : [...notes, note],
-      true
+      editing ? base.map((item) => (item.id === editing.id ? note : item)) : [...base, note],
+      true,
+      base
     );
   }
 
@@ -81,6 +89,7 @@ export function PdfPageNotes({
           aria-label="Page note"
           value={draft}
           onChange={(event) => {
+            draftBase.current ??= notes;
             setDraft(event.target.value);
             setMessage('');
           }}
@@ -101,6 +110,7 @@ export function PdfPageNotes({
               disabled={busy}
               onClick={() => {
                 setEditing(null);
+                draftBase.current = null;
                 setDraft('');
                 setError('');
               }}
@@ -123,6 +133,7 @@ export function PdfPageNotes({
         disabled={busy || !pages}
         onPage={(target) => onPage(Math.min(pages, target))}
         onEdit={(note) => {
+          draftBase.current = notes;
           setEditing(note);
           setDraft(note.text);
           setError('');

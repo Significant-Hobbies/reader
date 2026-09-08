@@ -1,5 +1,5 @@
 import crypto from 'crypto';
-import { and, count, desc, eq, inArray, like, or, type SQL } from 'drizzle-orm';
+import { and, count, desc, eq, inArray, isNull, like, or, type SQL } from 'drizzle-orm';
 import type { IOptions } from 'sanitize-html';
 import sanitizeHtml from 'sanitize-html';
 
@@ -14,6 +14,7 @@ import type {
 import { db } from './db/client';
 import { articles, lists } from './db/schema';
 import { getPdfDownloadUrl } from './storage';
+import { mergeNoteChanges, NoteConflictError } from './note-merge';
 
 // ---------------------------------------------------------------------------
 // Sanitize / normalize utilities (previously in articles-service.ts)
@@ -58,6 +59,7 @@ type NoteInput = {
   id: string | number;
   text?: unknown;
   anchor?: unknown;
+  sourceKey?: unknown;
 };
 
 type NoteAnchorInput = {
@@ -151,6 +153,7 @@ function normalizeNotes(payload: unknown): Note[] {
         id: Number(note.id) || Date.now(),
         text: sanitizePlainText(note.text),
       };
+      if (typeof note.sourceKey === 'string') normalizedNote.sourceKey = note.sourceKey;
       if (isNoteAnchorInput(note.anchor)) {
         const normalizedAnchor = normalizeAnchor(note.anchor);
         if (normalizedAnchor) normalizedNote.anchor = normalizedAnchor;
@@ -994,6 +997,57 @@ export class ArticleUpdateValidationError extends Error {
   }
 }
 
+function validatedNoteSnapshot(value: unknown): Note[] {
+  if (!Array.isArray(value)) {
+    throw new ArticleUpdateValidationError(
+      'Saving notes requires both notes and baseNotes arrays.'
+    );
+  }
+  const ids = new Set<number>();
+  for (const note of value) {
+    if (
+      !isNoteInput(note) ||
+      !Number.isSafeInteger(note.id) ||
+      Number(note.id) < 1 ||
+      ids.has(Number(note.id))
+    ) {
+      throw new ArticleUpdateValidationError('Notes require unique positive integer IDs and text.');
+    }
+    ids.add(Number(note.id));
+  }
+  return normalizeNotes(value);
+}
+
+async function updateArticleNotes(
+  id: string,
+  userId: string,
+  payload: Record<string, unknown>,
+  updates: Partial<typeof articles.$inferInsert>
+): Promise<Note[]> {
+  const base = validatedNoteSnapshot(payload.baseNotes);
+  const next = validatedNoteSnapshot(payload.notes);
+  const owner = and(eq(articles.id, id), eq(articles.userId, userId));
+  for (let attempt = 0; attempt < 3; attempt++) {
+    const [row] = await db.select({ notes: articles.notes }).from(articles).where(owner).limit(1);
+    if (!row) throw new NoteConflictError();
+    const current = validatedNoteSnapshot(
+      row.notes == null ? [] : parseJsonColumn<unknown>(row.notes, null)
+    );
+    const merged = mergeNoteChanges(base, next, current);
+    const previous = row.notes == null ? isNull(articles.notes) : eq(articles.notes, row.notes);
+    const saved = await db
+      .update(articles)
+      .set({
+        ...updates,
+        notes: serializeJsonColumn(merged) as unknown as Note[],
+      })
+      .where(and(owner, previous))
+      .returning({ id: articles.id });
+    if (saved.length > 0) return merged;
+  }
+  throw new NoteConflictError();
+}
+
 function buildSummaryUpdate(aiSummary: unknown) {
   if (typeof aiSummary !== 'string') return undefined;
   const trimmedSummary = sanitizePlainText(aiSummary).slice(0, 5000);
@@ -1066,7 +1120,7 @@ export async function updateArticle(
   id: string,
   userId: string,
   payload: Record<string, unknown>
-): Promise<void> {
+): Promise<Note[] | undefined> {
   const localOnlyField = Object.keys(payload).find((key) => LOCAL_ONLY_AI_SETTINGS_FIELDS.has(key));
   if (localOnlyField) {
     throw new ArticleUpdateValidationError(
@@ -1075,6 +1129,12 @@ export async function updateArticle(
   }
 
   const updates = buildArticleUpdates(payload);
+
+  if (payload.notes !== undefined) {
+    const notes = await updateArticleNotes(id, userId, payload, updates);
+    await invalidateArticleCache(id, userId);
+    return notes;
+  }
 
   try {
     await db
