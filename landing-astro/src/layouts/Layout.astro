@@ -78,6 +78,14 @@ const SITE_URL = 'https://read.significanthobbies.com';
     />
   </head>
   <body class="antialiased">
+    <script
+      is:inline
+      defer
+      src="https://health.sassmaker.com/tracker.js"
+      data-key="ahk_pub_37a5218b0597ba297485ebf3da9494a7d60eebacbe5ed73de0160de77489ea5d"
+      data-project="app-import-126da40da98ff062b1a644b460fe99614c95a45c614569ff8e76257f5610068d"
+      data-identity="persistent"
+    ></script>
     <slot />
     <portfolio-project-strip current-project="reader"></portfolio-project-strip>
     <script
@@ -92,5 +100,17 @@ const SITE_URL = 'https://read.significanthobbies.com';
       data-name="Reader"
       defer
     ></script>
+    <script is:inline type="module" src="https://sassmaker.com/newsletter-capture.js"></script>
+    <script is:inline>
+      document.addEventListener('click', (event) => {
+        const target = event.target;
+        if (!(target instanceof Element)) return;
+        const link = target.closest('[data-app-health-event]');
+        const name = link?.getAttribute('data-app-health-event');
+        if (name && window.appHealth && typeof window.appHealth.track === 'function') {
+          window.appHealth.track(name);
+        }
+      });
+    </script>
   </body>
 </html>

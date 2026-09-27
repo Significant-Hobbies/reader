@@ -71,7 +71,7 @@ const capabilities = [
           <a href="/faq">FAQ</a>
           <a href="/changelog">Changelog</a>
         </nav>
-        <a class="btn-signin" href="/login">Sign in</a>
+        <a class="btn-signin" href="/login" data-app-health-event="signin_started">Sign in</a>
       </div>
     </header>
 
@@ -86,8 +86,8 @@ const capabilities = [
             question, and find again.
           </p>
           <div class="cta-row">
-            <a class="btn-primary" href="/library">Open Reader <span aria-hidden="true">↗</span></a>
-            <a class="btn-secondary" href="/sample">Try a sample document</a>
+            <a class="btn-primary" href="/library" data-app-health-event="library_opened">Open Reader <span aria-hidden="true">↗</span></a>
+            <a class="btn-secondary" href="/sample" data-app-health-event="sample_opened">Try a sample document</a>
           </div>
           <ul class="truth-row" aria-label="Current product state">
             <li>Browser-local start</li>
@@ -266,8 +266,8 @@ const capabilities = [
           <h2>Bring one source you mean to understand.</h2>
           <p>Start in this browser, or sign in with Google for the account-backed library.</p>
           <div class="cta-row centered">
-            <a class="btn-primary" href="/library">Open Reader <span aria-hidden="true">↗</span></a>
-            <a class="btn-secondary" href="/sample">Try the sample</a>
+            <a class="btn-primary" href="/library" data-app-health-event="library_opened">Open Reader <span aria-hidden="true">↗</span></a>
+            <a class="btn-secondary" href="/sample" data-app-health-event="sample_opened">Try the sample</a>
           </div>
         </div>
       </section>
@@ -282,6 +282,7 @@ const capabilities = [
         <span>Current state</span>
         <p>Personal-use · maintenance-first · no public checkout</p>
       </div>
+      <saas-maker-newsletter-capture catalog-id="reader" product-name="Reader" kind="newsletter" source="footer" privacy-url="https://read.significanthobbies.com/privacy"></saas-maker-newsletter-capture>
       <nav aria-label="Footer">
         <a href="/about">About</a>
         <a href="/privacy">Privacy</a>
