@@ -128,7 +128,7 @@ const SITE_URL = 'https://read.significanthobbies.com';
           navigated = true;
           window.location.assign(link.href);
         };
-        window.setTimeout(navigate, 800);
+        window.setTimeout(navigate, 5000);
         Promise.resolve(window.appHealth.flush?.()).catch(() => {}).finally(navigate);
       });
     </script>
