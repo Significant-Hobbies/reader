@@ -16,6 +16,7 @@ import miscRoutes from './worker/routes/misc';
 import pdfRoutes from './worker/routes/pdf';
 import rssRoutes from './worker/routes/rss';
 import shareRoutes from './worker/routes/share';
+import { appHealthMiddleware } from './worker/app-health';
 
 const SECURITY_HEADERS: Record<string, string> = {
   'X-Content-Type-Options': 'nosniff',
@@ -39,6 +40,8 @@ api.use('*', async (c, next) => {
   bindWorkerEnv(c.env);
   await next();
 });
+
+api.use('*', appHealthMiddleware);
 
 api.use('/api/*', async (c, next) => {
   await next();
