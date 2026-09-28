@@ -239,8 +239,20 @@ test('built account PDF creates, edits, deletes and reopens real persisted notes
     const context = await browser.newContext({ viewport: { width: 390, height: 1000 } });
     await context.addCookies([{ name: 'fixture-user', value: 'alice', url: origin }]);
     await context.route('**/*', (route) => {
-      if (new URL(route.request().url()).origin === origin) return route.continue();
-      external.push(new URL(route.request().url()).hostname);
+      const requestUrl = new URL(route.request().url());
+      if (requestUrl.origin === origin) return route.continue();
+      if (
+        requestUrl.origin === 'https://api.sassmaker.com' &&
+        requestUrl.pathname === '/v1/capture-config/reader'
+      ) {
+        return route.fulfill({
+          status: 404,
+          contentType: 'application/json',
+          headers: { 'Access-Control-Allow-Origin': origin },
+          body: JSON.stringify({ error: { code: 'not_found' } }),
+        });
+      }
+      external.push(requestUrl.hostname);
       return route.abort();
     });
     const page = await context.newPage();
@@ -436,9 +448,22 @@ test('built board edits retry failed linked notes without overwriting article da
   try {
     const context = await browser.newContext({ viewport: { width: 1440, height: 1000 } });
     await context.addCookies([{ name: 'fixture-user', value: 'alice', url: origin }]);
-    await context.route('**/*', (route) =>
-      new URL(route.request().url()).origin === origin ? route.continue() : route.abort()
-    );
+    await context.route('**/*', (route) => {
+      const requestUrl = new URL(route.request().url());
+      if (requestUrl.origin === origin) return route.continue();
+      if (
+        requestUrl.origin === 'https://api.sassmaker.com' &&
+        requestUrl.pathname === '/v1/capture-config/reader'
+      ) {
+        return route.fulfill({
+          status: 404,
+          contentType: 'application/json',
+          headers: { 'Access-Control-Allow-Origin': origin },
+          body: JSON.stringify({ error: { code: 'not_found' } }),
+        });
+      }
+      return route.abort();
+    });
     const page = await context.newPage();
     page.on('pageerror', (error) => errors.push(error.message));
     await page.goto(`${origin}/board/alice-board`);
