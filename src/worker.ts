@@ -43,6 +43,15 @@ api.use('*', async (c, next) => {
 
 api.use('*', appHealthMiddleware);
 
+api.on(['GET', 'HEAD'], '*', async (c, next) => {
+  const path = c.req.path.replace(/\/{2,}/g, '/').replace(/\/+$/, '');
+  if (path === '/api/ai') {
+    const response = await handleAgentEdge(c.req.raw, c.env);
+    if (response) return response;
+  }
+  await next();
+});
+
 api.use('/api/*', async (c, next) => {
   await next();
   const response = c.res;
@@ -120,9 +129,9 @@ export default {
   async fetch(request: Request, env: WorkerEnv, ctx: ExecutionContext): Promise<Response> {
     const url = new URL(request.url);
 
-    // Discovery owns /api/ai, but its catch-all must not swallow product APIs.
-    const normalizedPath = url.pathname.replace(/\/{2,}/g, '/').replace(/\/+$/, '');
-    if (!url.pathname.startsWith('/api/') || normalizedPath === '/api/ai') {
+    // Discovery outside /api/* remains separate from product API routes.
+    // /api/ai passes through Hono so App Health sees its public GET/HEAD traffic.
+    if (!url.pathname.startsWith('/api/')) {
       const agent = await handleAgentEdge(request, env);
       if (agent) return agent;
     }
