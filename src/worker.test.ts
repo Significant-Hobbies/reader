@@ -1,10 +1,21 @@
 import { beforeEach, expect, it, vi } from 'vitest';
 import type { WorkerEnv } from './lib/worker-env';
 
-const mocks = vi.hoisted(() => ({ auth: vi.fn(), user: vi.fn(), assets: vi.fn() }));
+const mocks = vi.hoisted(() => ({
+  auth: vi.fn(),
+  user: vi.fn(),
+  assets: vi.fn(),
+  appHealth: vi.fn(),
+}));
 vi.mock('./lib/auth', () => ({ createAuth: () => ({ handler: mocks.auth }) }));
 vi.mock('./lib/auth-api', () => ({ getAuthenticatedUserId: mocks.user }));
 vi.mock('./worker/bind-env', () => ({ bindWorkerEnv: vi.fn() }));
+vi.mock('./worker/app-health', () => ({
+  appHealthMiddleware: async (_context: unknown, next: () => Promise<void>) => {
+    mocks.appHealth();
+    await next();
+  },
+}));
 
 import worker from './worker';
 
@@ -48,4 +59,5 @@ it('preserves discovery GET and HEAD without invoking account services', async (
   expect(await head.text()).toBe('');
   expect(mocks.auth).not.toHaveBeenCalled();
   expect(mocks.user).not.toHaveBeenCalled();
+  expect(mocks.appHealth).toHaveBeenCalledTimes(3);
 });
