@@ -1,5 +1,6 @@
 const EXACT_SPA_ROUTES = new Set([
   '/about',
+  '/app',
   '/privacy',
   '/welcome',
   '/sample',

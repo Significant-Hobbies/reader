@@ -1,5 +1,5 @@
 import type { ComponentType } from 'react';
-import { createBrowserRouter } from 'react-router-dom';
+import { createBrowserRouter, Navigate } from 'react-router-dom';
 
 import RootLayout from './RootLayout';
 
@@ -27,6 +27,7 @@ export const router = createBrowserRouter([
     hydrateFallbackElement: <RouteLoading />,
     children: [
       { path: 'about', lazy: () => lazyPage(() => import('./pages/AboutPage')) },
+      { path: 'app', element: <Navigate to="/library" replace /> },
       { path: 'privacy', lazy: () => lazyPage(() => import('./pages/PrivacyPage')) },
       { path: 'welcome', lazy: () => lazyPage(() => import('./pages/WelcomePage')) },
       { path: 'sample', lazy: () => lazyPage(() => import('./pages/SamplePage')) },
