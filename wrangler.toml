@@ -23,6 +23,11 @@ cpu_ms = 30000
 [ai]
 binding = "AI"
 
+[[services]]
+binding = "FREE_AI"
+service = "free-ai-gateway"
+entrypoint = "FleetGateway"
+
 [[durable_objects.bindings]]
 name = "NEURON_BUDGET"
 class_name = "NeuronBudgetDO"

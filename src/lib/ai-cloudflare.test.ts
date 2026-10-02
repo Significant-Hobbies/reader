@@ -1,4 +1,4 @@
-import { generateText } from 'ai';
+import { generateText, jsonSchema, Output, streamText } from 'ai';
 import { describe, expect, it, vi } from 'vitest';
 import { getLanguageModel } from './ai-cloudflare';
 import { findSharedAiBudgetDenied, SharedAiBudgetDenied } from './shared-ai-budget';
@@ -105,5 +105,68 @@ describe('Workers AI language model budget integration', () => {
     expect(model.modelId).toBe('provider-model');
     expect(fetch).not.toHaveBeenCalled();
     expect(run).not.toHaveBeenCalled();
+  });
+});
+
+describe('Free AI gateway SDK adapter', () => {
+  it('preserves JSON mode, token bounds, stream passthrough, attribution, and production fail-closed behavior', async () => {
+    const requests: Request[] = [];
+    const fetch = vi.fn(async (request: Request) => {
+      requests.push(request);
+      const body = JSON.parse(await request.clone().text()) as { stream?: boolean };
+      if (body.stream) {
+        return new Response(
+          'data: {"choices":[{"delta":{"content":"streamed"},"finish_reason":null}]}\n\n' +
+            'data: {"choices":[{"delta":{},"finish_reason":"stop"}]}\n\n' +
+            'data: [DONE]\n\n',
+          { headers: { 'content-type': 'text/event-stream' } }
+        );
+      }
+      return Response.json({
+        choices: [
+          { message: { role: 'assistant', content: '{"ok":true}' }, finish_reason: 'stop' },
+        ],
+      });
+    });
+    const binding = { fetch } as unknown as Fetcher;
+    const model = getLanguageModel({
+      freeAiBinding: binding,
+      endpointUrl: '',
+      apiKey: '',
+      model: 'ignored',
+      nodeEnv: 'test',
+    });
+
+    await generateText({
+      model,
+      prompt: 'Synthetic JSON request',
+      output: Output.object({
+        schema: jsonSchema({
+          type: 'object',
+          properties: { ok: { type: 'boolean' } },
+          required: ['ok'],
+        }),
+      }),
+      maxOutputTokens: 73,
+      maxRetries: 0,
+    });
+    const stream = streamText({ model, prompt: 'Synthetic stream request', maxRetries: 0 });
+    await expect(stream.text).resolves.toBe('streamed');
+
+    expect(fetch).toHaveBeenCalledTimes(2);
+    for (const request of requests) {
+      expect(request.url).toBe('https://fleet-gateway.internal/v1/chat/completions');
+      expect(request.headers.get('x-gateway-project-id')).toBe('reader');
+      expect(request.headers.get('authorization')).toBe('Bearer service-binding');
+      expect(JSON.parse(await request.clone().text()).model).toBe('auto');
+    }
+    const jsonBody = JSON.parse(await requests[0].clone().text());
+    expect(jsonBody.response_format).toEqual({ type: 'json_object' });
+    expect(jsonBody.max_tokens).toBe(73);
+    expect(JSON.parse(await requests[1].clone().text()).stream).toBe(true);
+
+    expect(() =>
+      getLanguageModel({ endpointUrl: '', apiKey: '', model: 'ignored', nodeEnv: 'production' })
+    ).toThrow(/required in production/);
   });
 });

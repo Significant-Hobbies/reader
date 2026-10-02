@@ -91,6 +91,8 @@ ai.post('/chat', async (c) => {
     const result = streamText({
       model: getLanguageModel({
         binding: c.env.AI,
+        freeAiBinding: c.env.FREE_AI,
+        nodeEnv: c.env.NODE_ENV,
         budgetNamespace: c.env.NEURON_BUDGET,
         endpointUrl,
         apiKey,
@@ -169,6 +171,8 @@ Remember to respond with valid JSON in the exact format specified.`;
     const result = await generateText({
       model: getLanguageModel({
         binding: c.env.AI,
+        freeAiBinding: c.env.FREE_AI,
+        nodeEnv: c.env.NODE_ENV,
         budgetNamespace: c.env.NEURON_BUDGET,
         endpointUrl,
         apiKey,
