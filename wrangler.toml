@@ -23,6 +23,11 @@ cpu_ms = 30000
 [ai]
 binding = "AI"
 
+[[durable_objects.bindings]]
+name = "NEURON_BUDGET"
+class_name = "NeuronBudgetDO"
+script_name = "free-ai-gateway"
+
 [vars]
 NODE_ENV = "production"
 BETTER_AUTH_URL = "https://read.significanthobbies.com"

@@ -3,6 +3,7 @@ import type { LanguageModel } from 'ai';
 import { createWorkersAI, type WorkersAISettings } from 'workers-ai-provider';
 
 import type { AIConfig } from './ai-vendor';
+import { createBudgetedWorkersAiBinding, type SharedBudgetNamespace } from './shared-ai-budget';
 
 type WorkersAiBinding = Extract<WorkersAISettings, { binding: unknown }>['binding'];
 
@@ -26,12 +27,13 @@ function createAIModel(
 /** Default model when the project's direct endpoint is Workers AI. */
 const DEFAULT_WORKERS_AI_MODEL = '@cf/meta/llama-3.3-70b-instruct-fp8-fast';
 
-interface CreateLanguageModelArgs {
+interface CreateLanguageModelArgs<Id = never> {
   binding?: WorkersAiBinding;
   endpointUrl: string;
   apiKey: string;
   model: string;
   headers?: Record<string, string>;
+  budgetNamespace?: SharedBudgetNamespace<Id>;
 }
 
 function getDirectBaseUrl(): string {
@@ -50,20 +52,23 @@ function getDirectApiKey(): string {
  * Returns a model for an explicit BYOK endpoint or the project's own direct
  * free-provider/local endpoint. No shared gateway fallback exists.
  */
-export function getLanguageModel({
+export function getLanguageModel<Id = never>({
   binding,
   endpointUrl,
   apiKey,
   model,
   headers,
-}: CreateLanguageModelArgs): LanguageModel {
+  budgetNamespace,
+}: CreateLanguageModelArgs<Id>): LanguageModel {
   // Honour explicit BYO config first (settings UI etc.).
   if (endpointUrl && apiKey) {
     return createAIModel({ endpointUrl, apiKey, model } as AIConfig, { headers });
   }
 
   if (binding) {
-    return createWorkersAI({ binding })(model || DEFAULT_WORKERS_AI_MODEL);
+    return createWorkersAI({
+      binding: createBudgetedWorkersAiBinding(binding, budgetNamespace),
+    })(model || DEFAULT_WORKERS_AI_MODEL);
   }
 
   const resolvedModel = model || DEFAULT_WORKERS_AI_MODEL;

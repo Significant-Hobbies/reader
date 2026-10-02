@@ -11,6 +11,7 @@ export type WorkerEnv = {
   AI_API_KEY?: string;
   AI_BASE_URL?: string;
   AI?: Ai;
+  NEURON_BUDGET?: DurableObjectNamespace;
   LOCAL_AI_URL?: string;
   CLI_BRIDGE_URL?: string;
   NODE_ENV?: string;
