@@ -5,7 +5,12 @@ import { Hono } from 'hono';
 import { parseHTML } from 'linkedom';
 
 import { getLanguageModel } from '../../lib/ai-cloudflare';
-import { fetchAllTags, fetchArticlesForSourceMap, searchArticles } from '../../lib/articles-db';
+import {
+  fetchAllTags,
+  fetchArticlesForSourceMap,
+  sanitizeArticleHTML,
+  searchArticles,
+} from '../../lib/articles-db';
 import { getAuthenticatedUserId } from '../../lib/auth-api';
 import type { BrowserMemorySnapshotInput } from '../../lib/browser-memory-import';
 import { importBrowserMemorySnapshots } from '../../lib/browser-memory-import';
@@ -187,7 +192,7 @@ async function fetchSnapshot(targetUrl: string): Promise<{
   siteName: string | null;
   url: string;
 }> {
-  const { response } = await fetchWithValidatedRedirects(targetUrl, {
+  const { response, url } = await fetchWithValidatedRedirects(targetUrl, {
     headers: {
       'User-Agent': SNAPSHOT_USER_AGENT,
       Accept: 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
@@ -206,6 +211,12 @@ async function fetchSnapshot(targetUrl: string): Promise<{
 
   const html = new TextDecoder().decode(body);
   const { document } = parseHTML(html);
+  // Readability resolves URLs itself. Use the validated source, not an HTML base tag,
+  // and match documentURI so its local fragment links remain local.
+  Object.defineProperties(document, {
+    baseURI: { value: url.href },
+    documentURI: { value: url.href },
+  });
 
   const reader = new Readability(document);
   const article = reader.parse();
@@ -216,10 +227,10 @@ async function fetchSnapshot(targetUrl: string): Promise<{
 
   return {
     title: article.title ?? '',
-    content: article.content ?? '',
+    content: sanitizeArticleHTML(article.content ?? '', url.href),
     byline: article.byline ?? null,
     siteName: article.siteName ?? null,
-    url: targetUrl,
+    url: url.href,
   };
 }
 

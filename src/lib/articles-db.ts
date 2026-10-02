@@ -104,7 +104,34 @@ async function filterOwnedListIds(userId: string, listIds: string[]): Promise<st
 export const sanitizePlainText = (value: unknown) =>
   sanitizeHtml(String(value ?? ''), plainTextSanitizeOptions).trim();
 
-const sanitizeHTML = (value: unknown) => sanitizeHtml(String(value ?? ''), htmlSanitizeOptions);
+export function sanitizeArticleHTML(value: unknown, sourceUrl: string): string {
+  let baseUrl: URL | undefined;
+  try {
+    const parsed = new URL(sourceUrl);
+    if (parsed.protocol === 'http:' || parsed.protocol === 'https:') baseUrl = parsed;
+  } catch {
+    // Non-web article types may have no usable source URL.
+  }
+
+  return sanitizeHtml(String(value ?? ''), {
+    ...htmlSanitizeOptions,
+    transformTags: {
+      '*': (tagName, attribs) => {
+        for (const attribute of ['href', 'src']) {
+          const value = attribs[attribute]?.trim();
+          if (!baseUrl || !value || value.startsWith('#')) continue;
+          try {
+            attribs[attribute] = new URL(value, baseUrl).href;
+          } catch {
+            delete attribs[attribute];
+          }
+        }
+        // sanitize-html applies its scheme and attribute checks after this transform.
+        return { tagName, attribs };
+      },
+    },
+  });
+}
 
 export const sanitizeTitle = (value: unknown, fallback = '') =>
   sanitizePlainText(value ?? fallback).slice(0, 500);
@@ -207,7 +234,7 @@ export function sanitizeArticlePayload(payload: {
     url: sanitizedUrl,
     title: sanitizeTitle(payload.title, sanitizedUrl),
     byline: sanitizePlainText(payload.byline || ''),
-    content: sanitizeHTML(payload.content || ''),
+    content: sanitizeArticleHTML(payload.content || '', sanitizedUrl),
     projectId: sanitizePlainText(payload.projectId || defProjectId) || defProjectId,
     tags: normalizeTags(payload.tags),
     userId: payload.userId,
