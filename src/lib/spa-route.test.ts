@@ -4,6 +4,7 @@ import { isSpaRoute } from './spa-route';
 describe('Reader SPA route boundary', () => {
   it.each([
     '/about',
+    '/app',
     '/privacy',
     '/sample',
     '/library',
