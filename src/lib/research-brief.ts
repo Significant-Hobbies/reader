@@ -32,6 +32,7 @@ interface SourceMapContradiction extends SourceMapItem {
 
 export interface SourceRelationshipMap {
   sources: SourceMapSource[];
+  /** Legacy response key: shared terms only, never verified agreement. */
   consensus: SourceMapItem[];
   contradictions: SourceMapContradiction[];
 }
@@ -103,20 +104,6 @@ const STOP_WORDS = new Set([
   'without',
   'would',
 ]);
-const NEGATION_TERMS = ['not', 'no ', 'never', 'without', 'cannot', "can't", 'failed to'];
-const CONTRAST_TERMS = ['however', 'but', 'contrary', 'instead', 'although', 'despite', 'whereas'];
-const OPPOSING_TERM_PAIRS: Array<[string, string]> = [
-  ['increase', 'decrease'],
-  ['increased', 'decreased'],
-  ['improve', 'worsen'],
-  ['improved', 'worsened'],
-  ['support', 'challenge'],
-  ['supports', 'challenges'],
-  ['benefit', 'risk'],
-  ['benefits', 'risks'],
-  ['effective', 'ineffective'],
-  ['reliable', 'unreliable'],
-];
 
 export function buildResearchBrief(article: Article): ResearchBrief {
   const text = normalizeWhitespace(stripHtml(article.extractedText || article.content));
@@ -155,8 +142,10 @@ export function buildSourceRelationshipMap(
   const scopedCandidates = focus
     ? [
         focus,
-        ...candidates.filter((candidate) =>
-          candidate.claims.some((claim) => hasSharedTopic(claim, focus.claims))
+        ...candidates.filter(
+          (candidate) =>
+            candidate.source.id !== focus.source.id &&
+            candidate.claims.some((claim) => hasSharedTopic(claim, focus.claims))
         ),
       ]
     : candidates;
@@ -164,8 +153,9 @@ export function buildSourceRelationshipMap(
   const sourcesById = new Map<string, SourceMapSource>();
   scopedCandidates.forEach((candidate) => sourcesById.set(candidate.source.id, candidate.source));
 
-  const consensus = buildConsensus(scopedCandidates);
-  const contradictions = buildContradictions(scopedCandidates);
+  const consensus = buildSharedTerms(scopedCandidates);
+  // Keyword overlap and sentence polarity cannot establish conflicting claims.
+  const contradictions: SourceMapContradiction[] = [];
   const usedSourceIds = new Set([
     ...consensus.flatMap((item) => item.sourceIds),
     ...contradictions.flatMap((item) => item.sourceIds),
@@ -282,7 +272,6 @@ interface SourceCandidate {
 interface ClaimCandidate {
   text: string;
   keywords: string[];
-  polarity: number;
 }
 
 function articleToCandidate(article: Article): SourceCandidate {
@@ -296,7 +285,7 @@ function articleToCandidate(article: Article): SourceCandidate {
     article.content,
   ];
   const text = normalizeWhitespace(stripHtml(textParts.filter(Boolean).join('. ')));
-  const claims = splitSentences(text)
+  const claims = Array.from(new Set(splitSentences(text)))
     .map((sentence) => ({
       sentence,
       score: scoreSentence(sentence),
@@ -317,7 +306,7 @@ function articleToCandidate(article: Article): SourceCandidate {
   };
 }
 
-function buildConsensus(candidates: SourceCandidate[]): SourceMapItem[] {
+function buildSharedTerms(candidates: SourceCandidate[]): SourceMapItem[] {
   const groups = new Map<string, { claims: ClaimCandidate[]; sourceIds: Set<string> }>();
 
   candidates.forEach((candidate) => {
@@ -340,47 +329,15 @@ function buildConsensus(candidates: SourceCandidate[]): SourceMapItem[] {
     .map(([topic, group], index) => ({
       id: `consensus-${index + 1}`,
       topic: toTopicLabel(topic),
-      summary: summarizeConsensus(topic, group.claims),
+      summary: `Saved sources contain the term "${topic}".`,
       sourceIds: Array.from(group.sourceIds),
     }));
-}
-
-function buildContradictions(candidates: SourceCandidate[]): SourceMapContradiction[] {
-  const contradictions: SourceMapContradiction[] = [];
-
-  for (let leftIndex = 0; leftIndex < candidates.length; leftIndex += 1) {
-    for (let rightIndex = leftIndex + 1; rightIndex < candidates.length; rightIndex += 1) {
-      const left = candidates[leftIndex];
-      const right = candidates[rightIndex];
-
-      for (const leftClaim of left.claims) {
-        for (const rightClaim of right.claims) {
-          const shared = sharedKeywords(leftClaim, rightClaim);
-          if (shared.length === 0 || !claimsConflict(leftClaim, rightClaim)) continue;
-
-          contradictions.push({
-            id: `contradiction-${contradictions.length + 1}`,
-            topic: toTopicLabel(shared[0]),
-            summary: `Saved sources diverge on ${shared[0]}.`,
-            sourceIds: [left.source.id, right.source.id],
-            claimA: toClaimText(leftClaim.text),
-            claimB: toClaimText(rightClaim.text),
-          });
-          break;
-        }
-        if (contradictions.length >= MAX_MAP_ITEMS) return contradictions;
-      }
-    }
-  }
-
-  return contradictions;
 }
 
 function toClaimCandidate(sentence: string): ClaimCandidate {
   return {
     text: trimExcerpt(sentence),
     keywords: extractKeywords(sentence),
-    polarity: getPolarity(sentence),
   };
 }
 
@@ -401,13 +358,6 @@ function extractKeywords(value: string) {
     .map(([word]) => word);
 }
 
-function getPolarity(value: string) {
-  const lower = value.toLowerCase();
-  const hasNegative = NEGATION_TERMS.some((term) => lower.includes(term));
-  const hasContrast = CONTRAST_TERMS.some((term) => lower.includes(term));
-  return hasNegative || hasContrast ? -1 : 1;
-}
-
 function hasSharedTopic(claim: ClaimCandidate, focusClaims: ClaimCandidate[]) {
   return focusClaims.some((focusClaim) => sharedKeywords(claim, focusClaim).length > 0);
 }
@@ -415,25 +365,6 @@ function hasSharedTopic(claim: ClaimCandidate, focusClaims: ClaimCandidate[]) {
 function sharedKeywords(left: ClaimCandidate, right: ClaimCandidate) {
   const rightKeywords = new Set(right.keywords);
   return left.keywords.filter((keyword) => rightKeywords.has(keyword));
-}
-
-function claimsConflict(left: ClaimCandidate, right: ClaimCandidate) {
-  const leftLower = left.text.toLowerCase();
-  const rightLower = right.text.toLowerCase();
-  const hasOpposingTerms = OPPOSING_TERM_PAIRS.some(
-    ([a, b]) =>
-      (leftLower.includes(a) && rightLower.includes(b)) ||
-      (leftLower.includes(b) && rightLower.includes(a))
-  );
-
-  return hasOpposingTerms || left.polarity !== right.polarity;
-}
-
-function summarizeConsensus(topic: string, claims: ClaimCandidate[]) {
-  const sample = claims.find((claim) => claim.keywords.includes(topic)) ?? claims[0];
-  return sample
-    ? `Multiple saved sources point to ${topic}: ${toClaimText(sample.text)}`
-    : `Multiple saved sources mention ${topic}.`;
 }
 
 function toTopicLabel(topic: string) {

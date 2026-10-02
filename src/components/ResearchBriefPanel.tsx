@@ -107,7 +107,7 @@ function SourceMapSection({
   isLoading: boolean;
   styles: ThemeStyles;
 }) {
-  if (!isLoading && !sourceMap?.consensus.length && !sourceMap?.contradictions.length) return null;
+  if (!isLoading && !sourceMap?.consensus.length) return null;
   return (
     <div className={`rounded-md border ${styles.border} ${styles.panelBg} p-4`}>
       <h4 className={`mb-3 flex items-center gap-2 text-sm font-semibold ${styles.text}`}>
@@ -121,8 +121,12 @@ function SourceMapSection({
           {sourceMap && sourceMap.consensus.length > 0 && (
             <div>
               <div className={`mb-2 text-xs font-semibold uppercase ${styles.muted}`}>
-                Consensus
+                Shared terms
               </div>
+              <p className={`mb-2 text-xs ${styles.muted}`}>
+                Word matches help you compare sources; agreement or disagreement has not been
+                assessed.
+              </p>
               <ul className="space-y-2">
                 {sourceMap.consensus.map((item) => (
                   <li key={item.id} className={`text-sm leading-6 ${styles.text}`}>
@@ -131,25 +135,6 @@ function SourceMapSection({
                   </li>
                 ))}
               </ul>
-            </div>
-          )}
-          {sourceMap && sourceMap.contradictions.length > 0 && (
-            <div>
-              <div className={`mb-2 text-xs font-semibold uppercase ${styles.muted}`}>
-                Contradictions
-              </div>
-              <div className="space-y-3">
-                {sourceMap.contradictions.map((item) => (
-                  <div key={item.id} className={`rounded-md border ${styles.border} p-3`}>
-                    <div className={`mb-2 text-sm font-medium ${styles.text}`}>
-                      {item.topic}
-                      <SourceCount count={item.sourceIds.length} className={styles.muted} />
-                    </div>
-                    <p className={`text-xs leading-5 ${styles.muted}`}>{item.claimA}</p>
-                    <p className={`mt-2 text-xs leading-5 ${styles.muted}`}>{item.claimB}</p>
-                  </div>
-                ))}
-              </div>
             </div>
           )}
         </div>

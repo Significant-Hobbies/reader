@@ -1,4 +1,7 @@
 import { describe, expect, it } from 'vitest';
+import { createElement } from 'react';
+import { renderToStaticMarkup } from 'react-dom/server';
+import { ResearchBriefPanel } from '../../components/ResearchBriefPanel';
 
 import type { Article } from '../../types';
 import { buildResearchBrief, buildSourceRelationshipMap } from '../research-brief';
@@ -45,7 +48,44 @@ describe('buildResearchBrief', () => {
 });
 
 describe('buildSourceRelationshipMap', () => {
-  it('maps consensus across saved sources that share a topic', () => {
+  it('keeps unrelated changes excerpts neutral and does not duplicate the focused source', () => {
+    const left = {
+      ...baseArticle,
+      id: 'physics',
+      notes: [],
+      content:
+        'A tiny early deflection changes its momentum and therefore its eventual destination.',
+    };
+    const right = {
+      ...baseArticle,
+      id: 'people',
+      notes: [],
+      content: 'This changes not only their odds of success, but also their personality.',
+    };
+    const map = buildSourceRelationshipMap([left, right], left.id);
+    expect(map.contradictions).toEqual([]);
+    const rendered = renderToStaticMarkup(
+      createElement(ResearchBriefPanel, {
+        brief: buildResearchBrief(left),
+        sourceMap: map,
+      })
+    );
+    expect(rendered).toContain('Shared terms');
+    expect(rendered).toContain('agreement or disagreement has not been assessed');
+    expect(rendered).not.toContain('Consensus');
+    expect(rendered).not.toContain('Contradictions');
+    expect(map.sources.map((source) => source.id)).toEqual(['physics', 'people']);
+    expect(map.consensus).toContainEqual({
+      id: expect.any(String),
+      topic: 'Changes',
+      summary: 'Saved sources contain the term "changes".',
+      sourceIds: ['physics', 'people'],
+    });
+    expect(buildSourceRelationshipMap([left], left.id).consensus).toEqual([]);
+    expect(buildSourceRelationshipMap([left, right, left], left.id)).toEqual(map);
+  });
+
+  it('maps shared terms without claiming consensus', () => {
     const map = buildSourceRelationshipMap([
       baseArticle,
       {
@@ -58,10 +98,13 @@ describe('buildSourceRelationshipMap', () => {
     ]);
 
     expect(map.consensus[0].sourceIds).toEqual(['article-1', 'article-2']);
-    expect(map.consensus[0].summary).toContain('feedback');
+    expect(map.consensus[0].summary).toBe(
+      `Saved sources contain the term "${map.consensus[0].topic.toLowerCase()}".`
+    );
+    expect(map.contradictions).toEqual([]);
   });
 
-  it('maps contradictions across saved sources on shared topics', () => {
+  it('does not infer contradictions from shared terms and negation', () => {
     const map = buildSourceRelationshipMap([
       {
         ...baseArticle,
@@ -77,7 +120,7 @@ describe('buildSourceRelationshipMap', () => {
       },
     ]);
 
-    expect(map.contradictions[0].sourceIds).toEqual(['article-positive', 'article-negative']);
-    expect(map.contradictions[0].topic).toBe('Automation');
+    expect(map.consensus.some((item) => item.topic === 'Automation')).toBe(true);
+    expect(map.contradictions).toEqual([]);
   });
 });
