@@ -76,8 +76,8 @@ function createFreeAiGatewayModel(
 }
 
 /**
- * Returns a model for an explicit BYOK endpoint or the project's own direct
- * free-provider/local endpoint. No shared gateway fallback exists.
+ * Explicit BYOK endpoints win. Managed requests use the Fleet gateway; local
+ * direct endpoints are a development-only fallback.
  */
 export function getLanguageModel<Id = never>({
   binding,

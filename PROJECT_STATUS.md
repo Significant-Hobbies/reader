@@ -7,7 +7,7 @@ Explicit BYOK remains first; production requires the service binding, and
 gateway-managed SDK retries are disabled. Existing structured-output parsing,
 token limits, and streaming responses are preserved. SDK contract tests and full
 local `pnpm quality` pass (152 app tests and 20 extension tests); Cloudflare
-build and top-level/preview Wrangler dry-runs pass. Pending PR review and
+build and top-level Wrangler dry-run pass. Pending PR review and
 production release; no deployment was performed. Tracked in
 [Free AI issue #83](https://github.com/sass-maker/free-ai/issues/83).
 
