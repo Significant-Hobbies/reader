@@ -11,6 +11,7 @@ export type WorkerEnv = {
   AI_API_KEY?: string;
   AI_BASE_URL?: string;
   AI?: Ai;
+  FREE_AI?: { fetch(request: Request): Promise<Response> };
   NEURON_BUDGET?: DurableObjectNamespace;
   LOCAL_AI_URL?: string;
   CLI_BRIDGE_URL?: string;

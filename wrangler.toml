@@ -23,6 +23,11 @@ cpu_ms = 30000
 [ai]
 binding = "AI"
 
+[[services]]
+binding = "FREE_AI"
+service = "free-ai-gateway"
+entrypoint = "FleetGateway"
+
 [[durable_objects.bindings]]
 name = "NEURON_BUDGET"
 class_name = "NeuronBudgetDO"
@@ -33,6 +38,14 @@ NODE_ENV = "production"
 BETTER_AUTH_URL = "https://read.significanthobbies.com"
 AUTH0_ISSUER = "https://dev-0suel086hm1blvg7.us.auth0.com/"
 AUTH0_MCP_AUDIENCE = "https://mcp.significanthobbies.com/reader/mcp"
+
+[env.preview]
+name = "reader-preview"
+
+[[env.preview.services]]
+binding = "FREE_AI"
+service = "free-ai-gateway"
+entrypoint = "FleetGateway"
 
 [[r2_buckets]]
 binding = "PDFS_BUCKET"

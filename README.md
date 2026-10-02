@@ -13,7 +13,7 @@ A modern web application for capturing and annotating articles with a distractio
 | Database     | Cloudflare D1 via Drizzle ORM                                                                |
 | Auth         | better-auth + Google OAuth                                                                   |
 | File storage | Cloudflare R2 (`reader-pdfs`, bound as `PDFS_BUCKET`)                                        |
-| AI           | free-ai-gateway (Workers AI chokepoint); BYOK providers (OpenAI/Anthropic/Gemini) + local AI |
+| AI           | free-ai-gateway routes managed requests to available providers; explicit BYOK and local AI |
 | CI/CD        | GitHub Actions checks on push; production deployment is manual                                 |
 
 ## Problem

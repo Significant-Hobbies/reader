@@ -1,5 +1,16 @@
 # PROJECT_STATUS — Reader
 
+## Free AI gateway source update — 2 October
+
+Managed AI calls now use the Fleet gateway with canonical `reader` attribution.
+Explicit BYOK remains first; production requires the service binding, and
+gateway-managed SDK retries are disabled. Existing structured-output parsing,
+token limits, and streaming responses are preserved. SDK contract tests and full
+local `pnpm quality` pass (152 app tests and 20 extension tests); Cloudflare
+build and top-level/preview Wrangler dry-runs pass. Pending PR review and
+production release; no deployment was performed. Tracked in
+[Free AI issue #83](https://github.com/sass-maker/free-ai/issues/83).
+
 This is Reader's durable current and shipped product truth. For the full
 product, feature, and architecture record, see [`docs/`](docs/index.md).
 

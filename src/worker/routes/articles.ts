@@ -293,6 +293,8 @@ articles.post('/:id/session-review', async (c) => {
     const result = await generateText({
       model: getLanguageModel({
         binding: c.env.AI,
+        freeAiBinding: c.env.FREE_AI,
+        nodeEnv: c.env.NODE_ENV,
         budgetNamespace: c.env.NEURON_BUDGET,
         endpointUrl,
         apiKey,
@@ -300,7 +302,7 @@ articles.post('/:id/session-review', async (c) => {
       }),
       system: SESSION_REVIEW_SYSTEM_PROMPT,
       prompt: buildSessionReviewPrompt(article.title, noteInputs),
-      maxRetries: 1,
+      maxRetries: endpointUrl && apiKey ? 1 : 0,
     });
 
     let parsed: {
