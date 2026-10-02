@@ -293,6 +293,7 @@ articles.post('/:id/session-review', async (c) => {
     const result = await generateText({
       model: getLanguageModel({
         binding: c.env.AI,
+        budgetNamespace: c.env.NEURON_BUDGET,
         endpointUrl,
         apiKey,
         model,

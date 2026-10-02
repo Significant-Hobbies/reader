@@ -373,6 +373,7 @@ misc.post('/ext/chat', async (c) => {
     const result = streamText({
       model: getLanguageModel({
         binding: c.env.AI,
+        budgetNamespace: c.env.NEURON_BUDGET,
         endpointUrl: '',
         apiKey: '',
         model: '',
