@@ -42,6 +42,8 @@ const releases = [
   title="Reader changelog — meaningful product improvements"
   description="Verified improvements to Reader’s capture, reading, annotation, retrieval, and reliability workflows."
   canonicalPath="/changelog"
+  showStandaloneProjectStrip={false}
+  useAuthoredFooterHost={true}
 >
   <div class="page">
     <header class="header">
@@ -107,7 +109,19 @@ const releases = [
       </ol>
     </main>
 
-    <footer class="site-footer">
+    <fleet-footer-extension
+      data-fleet-footer-project="reader"
+      product-name="Reader"
+      art-src="/footer-art/reader-precise-original-v1.webp"
+      art-width="2172"
+      art-height="724"
+      art-position="50% 50%"
+      art-credit="Original illustration for Reader"
+      theme="light"
+      font-base="https://sassmaker.com/fonts/fleet-footer-precise-v1/"
+    >
+      <saas-maker-newsletter-capture slot="capture" catalog-id="reader" product-name="Reader" kind="newsletter" source="footer" privacy-url="https://read.significanthobbies.com/privacy"></saas-maker-newsletter-capture>
+      <footer slot="navigation" data-fleet-footer-navigation class="site-footer">
       <div>
         <a class="brand footer-brand" href="/"><span class="brand-mark" aria-hidden="true">R</span><span>Reader</span></a>
         <p>A maintained personal research library for turning saved sources into working knowledge.</p>
@@ -116,7 +130,6 @@ const releases = [
         <span>Current state</span>
         <p>Personal-use · maintenance-first · no public checkout</p>
       </div>
-      <saas-maker-newsletter-capture catalog-id="reader" product-name="Reader" kind="newsletter" source="footer" privacy-url="https://read.significanthobbies.com/privacy"></saas-maker-newsletter-capture>
       <nav aria-label="Footer">
         <a href="/about">About</a>
         <a href="/privacy">Privacy</a>
@@ -135,6 +148,7 @@ const releases = [
           ></a
         >
       </nav>
-    </footer>
+      </footer>
+    </fleet-footer-extension>
   </div>
 </Layout>

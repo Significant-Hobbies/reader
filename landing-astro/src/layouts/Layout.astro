@@ -5,9 +5,16 @@ interface Props {
   title: string;
   description: string;
   canonicalPath?: string;
+  showStandaloneProjectStrip?: boolean;
+  useAuthoredFooterHost?: boolean;
 }
 
-const { title, canonicalPath = '/' } = Astro.props;
+const {
+  title,
+  canonicalPath = '/',
+  showStandaloneProjectStrip = true,
+  useAuthoredFooterHost = false,
+} = Astro.props;
 
 const SITE_URL = 'https://read.significanthobbies.com';
 ---
@@ -87,20 +94,84 @@ const SITE_URL = 'https://read.significanthobbies.com';
       data-identity="persistent"
     ></script>
     <slot />
-    <portfolio-project-strip current-project="reader"></portfolio-project-strip>
+    {showStandaloneProjectStrip && <portfolio-project-strip current-project="reader"></portfolio-project-strip>}
     <script
       is:inline
-      src="https://sassmaker.com/project-strip.js"
+      src="https://sassmaker.com/project-strip.js?v=precise-b0adaa67"
       data-project="reader"
+      data-host-only={useAuthoredFooterHost ? 'true' : undefined}
+      data-theme="light"
       defer
     ></script>
     <script
       is:inline
-      src="https://sassmaker.com/ai-chat-footer.js"
+      src="https://sassmaker.com/ai-chat-footer.js?v=precise-b0adaa67"
       data-name="Reader"
+      data-project="reader"
+      data-host-only={useAuthoredFooterHost ? 'true' : undefined}
+      data-theme="light"
+      data-art-src="/footer-art/reader-precise-original-v1.webp"
       defer
     ></script>
     <script is:inline type="module" src="https://sassmaker.com/newsletter-capture.js"></script>
+    <style is:inline>
+      fleet-footer-extension[data-fleet-footer-project="reader"] [data-fleet-footer-cta].closing {
+        padding: 0;
+        background: transparent;
+        color: var(--ink);
+        text-align: left;
+      }
+      fleet-footer-extension[data-fleet-footer-project="reader"] .closing-inner {
+        max-width: none;
+        margin: 0;
+      }
+      fleet-footer-extension[data-fleet-footer-project="reader"] .closing .section-index {
+        color: var(--rust-dark);
+      }
+      fleet-footer-extension[data-fleet-footer-project="reader"] .closing h2 {
+        margin: 0.35rem 0 0;
+        font-size: clamp(1.2rem, 1.8vw, 1.65rem);
+        line-height: 1.2;
+      }
+      fleet-footer-extension[data-fleet-footer-project="reader"] .closing p:not(.section-index) {
+        margin: 0.65rem 0 0;
+        color: var(--ink-soft);
+      }
+      fleet-footer-extension[data-fleet-footer-project="reader"] .closing .cta-row {
+        justify-content: flex-start;
+        margin-top: 1rem;
+      }
+      fleet-footer-extension[data-fleet-footer-project="reader"] .closing .btn-secondary {
+        border-color: var(--ink);
+        color: var(--ink);
+      }
+      fleet-footer-extension[data-fleet-footer-project="reader"] .closing .btn-secondary:hover {
+        background: var(--night);
+        color: var(--paper-light);
+      }
+      fleet-footer-extension[data-fleet-footer-project="reader"] .site-footer {
+        display: flex;
+        width: 100%;
+        max-width: none;
+        margin: 0;
+        padding: 0;
+        flex-direction: column;
+        gap: 1rem;
+      }
+      fleet-footer-extension[data-fleet-footer-project="reader"] .site-footer > div {
+        min-width: 0;
+      }
+      fleet-footer-extension[data-fleet-footer-project="reader"] .site-footer nav {
+        display: flex;
+        width: 100%;
+        flex-wrap: wrap;
+        gap: 0.7rem 1rem;
+      }
+      fleet-footer-extension[data-fleet-footer-project="reader"] .site-footer nav a {
+        max-width: 100%;
+        overflow-wrap: anywhere;
+      }
+    </style>
     <script is:inline>
       document.addEventListener('click', (event) => {
         const target = event.target;
