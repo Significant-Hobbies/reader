@@ -9,12 +9,7 @@ interface Props {
   useAuthoredFooterHost?: boolean;
 }
 
-const {
-  title,
-  canonicalPath = '/',
-  showStandaloneProjectStrip = true,
-  useAuthoredFooterHost = false,
-} = Astro.props;
+const { title, canonicalPath = '/' } = Astro.props;
 
 const SITE_URL = 'https://read.significanthobbies.com';
 ---
@@ -94,12 +89,12 @@ const SITE_URL = 'https://read.significanthobbies.com';
       data-identity="persistent"
     ></script>
     <slot />
-    {showStandaloneProjectStrip && <portfolio-project-strip current-project="reader"></portfolio-project-strip>}
+    {Astro.props.showStandaloneProjectStrip !== false && <portfolio-project-strip current-project="reader"></portfolio-project-strip>}
     <script
       is:inline
       src="https://sassmaker.com/project-strip.js?v=precise-b0adaa67"
       data-project="reader"
-      data-host-only={useAuthoredFooterHost ? 'true' : undefined}
+      data-host-only={Astro.props.useAuthoredFooterHost === true ? 'true' : undefined}
       data-theme="light"
       defer
     ></script>
@@ -108,7 +103,7 @@ const SITE_URL = 'https://read.significanthobbies.com';
       src="https://sassmaker.com/ai-chat-footer.js?v=precise-b0adaa67"
       data-name="Reader"
       data-project="reader"
-      data-host-only={useAuthoredFooterHost ? 'true' : undefined}
+      data-host-only={Astro.props.useAuthoredFooterHost === true ? 'true' : undefined}
       data-theme="light"
       data-art-src="/footer-art/reader-precise-original-v1.webp"
       defer
