@@ -30,9 +30,6 @@ import { useAuth } from './AuthProvider';
 import { LibraryEmptyOnboarding } from './LibraryEmptyOnboarding';
 
 const Navbar = lazy(() => import('./Navbar').then((m) => ({ default: m.Navbar })));
-const ReviewPackBanner = lazy(() =>
-  import('./ReviewPackBanner').then((m) => ({ default: m.ReviewPackBanner }))
-);
 import { Badge } from './ui/badge';
 import { Button } from './ui/button';
 import { SegmentedControl } from './ui/segmented-control';
@@ -871,12 +868,6 @@ export default function HomeClient() {
                 </div>
               </div>
             </header>
-
-            {articles.length > 0 && (
-              <Suspense fallback={null}>
-                <ReviewPackBanner />
-              </Suspense>
-            )}
 
             {articles.length > 0 && (
               <div className="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-zinc-800 bg-zinc-950 p-3">
