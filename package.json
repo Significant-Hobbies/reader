@@ -40,9 +40,10 @@
     "quality:duplication": "node scripts/check-code-health.mjs duplication",
     "quality:cycles": "node scripts/check-code-health.mjs cycles",
     "quality:dependencies": "node scripts/check-code-health.mjs dependencies",
+    "test:dependency-security": "node --test scripts/http-cache-security.test.mjs",
     "quality:suppressions": "node scripts/check-code-health.mjs suppressions",
     "quality:hygiene": "node scripts/check-code-health.mjs hygiene",
-    "quality": "pnpm format:check && pnpm lint && pnpm typecheck && pnpm test:coverage && pnpm --filter web-annotator-extension type-check && pnpm --filter web-annotator-extension test && pnpm quality:unused && pnpm quality:complexity && pnpm quality:duplication && pnpm quality:cycles && pnpm quality:dependencies && pnpm quality:suppressions && pnpm docs:check && pnpm cf:build && pnpm --filter web-annotator-extension build && pnpm quality:hygiene",
+    "quality": "pnpm format:check && pnpm lint && pnpm typecheck && pnpm test:coverage && pnpm --filter web-annotator-extension type-check && pnpm --filter web-annotator-extension test && pnpm quality:unused && pnpm quality:complexity && pnpm quality:duplication && pnpm quality:cycles && pnpm test:dependency-security && pnpm quality:dependencies && pnpm quality:suppressions && pnpm docs:check && pnpm cf:build && pnpm --filter web-annotator-extension build && pnpm quality:hygiene",
     "test:guest-pdf": "node --test scripts/qualify-guest-pdf.mjs scripts/qualify-import-signin.mjs",
     "test:account-pdf": "node --test scripts/qualify-account-pdf.mjs",
     "test:account-notes": "vitest run --config vitest.account-notes.config.ts"
@@ -137,7 +138,11 @@
       "brace-expansion@>=2.0.0 <2.1.7": "2.1.7",
       "brace-expansion@>=5.0.0 <5.0.12": "5.0.12",
       "undici@>=7.0.0 <7.29.1": "7.29.1",
-      "devalue@<=5.9.2": "5.9.3"
+      "devalue@<=5.9.2": "5.9.3",
+      "http-cache-semantics": "4.3.0"
+    },
+    "patchedDependencies": {
+      "http-cache-semantics@4.3.0": "patches/http-cache-semantics@4.3.0.patch"
     }
   }
 }
