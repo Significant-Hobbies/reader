@@ -73,3 +73,6 @@ dist/
 .agent-logs/
 .codevetter/
 *.agent.log
+
+# Private Fleet task evidence
+.fleet-local/

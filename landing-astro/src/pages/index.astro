@@ -56,7 +56,7 @@ const capabilities = [
 ];
 ---
 
-<Layout title={TITLE} description={DESCRIPTION}>
+<Layout title={TITLE} description={DESCRIPTION} showStandaloneProjectStrip={false} useAuthoredFooterHost={true}>
   <div class="page">
     <header class="header">
       <div class="header-inner">
@@ -260,7 +260,21 @@ const capabilities = [
         <a class="text-link" href="/faq">Read the complete FAQ <span aria-hidden="true">→</span></a>
       </section>
 
-      <section class="closing">
+    </main>
+
+    <fleet-footer-extension
+      data-fleet-footer-project="reader"
+      product-name="Reader"
+      art-src="/footer-art/reader-precise-original-v1.webp"
+      art-alt="An open saved folio with ribbon notes on a warm library desk."
+      art-width="2172"
+      art-height="724"
+      art-position="50% 50%"
+      art-credit="Original illustration for Reader"
+      theme="light"
+      font-base="/fonts/fleet-footer-precise-v1/"
+    >
+      <section class="closing" slot="cta" data-fleet-footer-cta>
         <div class="closing-inner">
           <p class="section-index">OPEN THE LIBRARY</p>
           <h2>Bring one source you mean to understand.</h2>
@@ -271,9 +285,8 @@ const capabilities = [
           </div>
         </div>
       </section>
-    </main>
-
-    <footer class="site-footer">
+      <saas-maker-newsletter-capture layout="compact" integrated slot="capture" catalog-id="reader" product-name="Reader" kind="newsletter" source="footer" privacy-url="https://read.significanthobbies.com/privacy"></saas-maker-newsletter-capture>
+      <footer slot="navigation" data-fleet-footer-navigation class="site-footer">
       <div>
         <a class="brand footer-brand" href="/"><span class="brand-mark" aria-hidden="true">R</span><span>Reader</span></a>
         <p>A maintained personal research library for turning saved sources into working knowledge.</p>
@@ -282,7 +295,6 @@ const capabilities = [
         <span>Current state</span>
         <p>Personal-use · maintenance-first · no public checkout</p>
       </div>
-      <saas-maker-newsletter-capture catalog-id="reader" product-name="Reader" kind="newsletter" source="footer" privacy-url="https://read.significanthobbies.com/privacy"></saas-maker-newsletter-capture>
       <nav aria-label="Footer">
         <a href="/about">About</a>
         <a href="/privacy">Privacy</a>
@@ -301,6 +313,7 @@ const capabilities = [
           ></a
         >
       </nav>
-    </footer>
+      </footer>
+    </fleet-footer-extension>
   </div>
 </Layout>
