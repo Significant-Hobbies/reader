@@ -83,7 +83,7 @@ export default function SamplePage() {
           </p>
           <Link
             to="/library"
-            className="inline-flex items-center rounded-md bg-[var(--accent-9)] px-4 py-2 text-sm font-medium text-white hover:bg-[var(--accent-10)]"
+            className="inline-flex items-center rounded-md bg-[var(--accent-9)] px-4 py-2 text-sm font-medium text-[var(--gray-1)] hover:bg-[var(--accent-10)]"
           >
             Open my library →
           </Link>
