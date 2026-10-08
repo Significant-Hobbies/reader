@@ -50,8 +50,8 @@ Full command map: [docs/development/commands.md](docs/development/commands.md).
 - **Do not commit secrets.** `.env`, `.env.local`, `.dev.vars`,
   `firebase-service-account.json`, and any auth credential are gitignored.
   Verify `.gitignore` before any push.
-- **Do not push, deploy, run migrations, or open PRs without explicit user
-  approval.** Make changes locally and leave them staged/committed for review.
+- **Do not deploy or run migrations without explicit user approval.**
+  Commit and push safe changes.
 - **Production deploy is manual** (`workflow_dispatch` on
   `.github/workflows/deploy.yml`). CI runs on push but does not deploy.
 - **The Worker name `reader` is load-bearing** — the custom domain
@@ -71,48 +71,17 @@ Full command map: [docs/development/commands.md](docs/development/commands.md).
   (`.claude/`, `.codex/skills/`, `.symphony/`, `.clawpatch/`, any `SKILL.md`).
   They are tooling, not product code.
 
-## Documentation navigation
+## Documentation
 
-- **[docs/index.md](docs/index.md)** — canonical documentation hub. Start
-  there.
-- **[PROJECT_STATUS.md](PROJECT_STATUS.md)** — current/shipped product truth.
-- **GitHub Issues** — all open, blocked, and deferred work.
-- **[README.md](README.md)** — product readme for humans landing in the repo.
-- **[docs/product/](docs/product/)** — purpose, features, surfaces.
-- **[docs/architecture/](docs/architecture/)** — overview, data flow, ADRs.
-- **[docs/development/](docs/development/)** — setup, commands, conventions,
-  testing, and the GitHub-Issue spec workflow.
-- **[docs/operations/](docs/operations/)** — deploy, env, CI/CD, jobs,
-  runbooks.
-- **[docs/knowledge/](docs/knowledge/)** — current lessons, external
-  references, failed approaches.
-- **[docs/archive/](docs/archive/)** — historical records (pre-Vite ADRs,
-  lessons, migration plans, security audit).
-- **[GitHub Issues](https://github.com/Significant-Hobbies/reader/issues)** —
-  proposals, design notes, requirements, and task checklists for non-trivial
-  changes. See [docs/development/openspec.md](docs/development/openspec.md).
-- **[public/](public/)** — runtime agent-indexing surfaces (`llms.txt`,
-  `index.md`, `api-ai.json`, `robots.txt`, `sitemap.xml`). See
+- **[docs/index.md](docs/index.md)** is the canonical hub: layout, section
+  map, and the documentation-maintenance rules (one home per fact, archive
+  instead of delete, keep pages 150-300 lines). Start there.
+- [PROJECT_STATUS.md](PROJECT_STATUS.md) is current/shipped product truth.
+  Open, blocked, and deferred work lives in
+  [GitHub Issues](https://github.com/Significant-Hobbies/reader/issues).
+- Run `pnpm docs:check` before committing doc changes (CI runs it too).
+- Runtime agent-indexing surfaces are in [public/](public/); see
   [docs/product/surfaces.md](docs/product/surfaces.md).
-
-## Documentation-maintenance rules
-
-1. **Markdown in `docs/` is the source of truth.** Code and executable config
-   remain authoritative for implementation details; docs explain *why*, not
-   *what the code does line-by-line*.
-2. **One home per fact.** Don't duplicate — link to the canonical home. If a
-   fact moves, update links rather than copying.
-3. **Prefer `docs/archive/` over deletion.** Move superseded docs with
-   `git mv`, give them a dated filename, and prepend a one-line historical
-   marker pointing at the current canonical doc. Preserve git rename history.
-4. **Mark unresolved questions explicitly** with `TBD:` or an "Open questions"
-   section. Do not invent answers.
-5. **Keep pages focused** (150–300 lines). Split when a page grows beyond
-   that.
-6. **Validate before commit.** Run `pnpm docs:check` (or
-   `node scripts/check-docs.mjs`) — it catches broken links, missing required
-   sections, and files outside the canonical structure. CI runs it in
-   `.github/workflows/docs.yml`.
 
 ## Repo structure (high level)
 
@@ -145,13 +114,13 @@ Detailed file map: [docs/architecture/overview.md](docs/architecture/overview.md
 ### Adding Tasks
 
 - Track Reader work in this repository's GitHub Issues.
-- Keep reusable cross-project automation in Workflows and Skills and private
+- Keep reusable cross-project automation in `saas-maker/tooling/` and private
   portfolio metadata in Site Health, not SaaS Maker.
 
 ### Using SaaS Maker
 
 - Do not use the retired SaaS Maker task queue or API as a system of record.
-- Site Health owns private portfolio metadata; Workflows and Skills owns shared
+- Site Health owns private portfolio metadata; `saas-maker/tooling/` owns shared
   automation. Reader remains independently versioned and deployed.
 
 ### Free AI First
