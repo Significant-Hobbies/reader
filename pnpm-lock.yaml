@@ -26,6 +26,12 @@ overrides:
   brace-expansion@>=5.0.0 <5.0.12: 5.0.12
   undici@>=7.0.0 <7.29.1: 7.29.1
   devalue@<=5.9.2: 5.9.3
+  http-cache-semantics: 4.3.0
+
+patchedDependencies:
+  http-cache-semantics@4.3.0:
+    hash: 1bde1fe699a4c0f618ade5961734d1d414333292a27feacc6780a501009c0c74
+    path: patches/http-cache-semantics@4.3.0.patch
 
 importers:
 
@@ -3742,8 +3748,8 @@ packages:
     resolution: {integrity: sha512-Tz7u1i95/g2x2jz81+x0FBVhBhY5aRTvD3tXXdFaljuNdzDLJ8UGNRrTcj2cgQvAg3iW/h77Fz15nLW0L0CrZw==}
     engines: {node: '>=20.19.0'}
 
-  http-cache-semantics@4.2.0:
-    resolution: {integrity: sha512-dTxcvPXqPvXBQpq5dUr6mEMJX4oIEFv6bwom3FDwKRDsuIjjJGANqhBuoAn9c1RQJIdAKav33ED65E2ys+87QQ==}
+  http-cache-semantics@4.3.0:
+    resolution: {integrity: sha512-M5t5LlJpS1UHMjvwRQVdFHvPISGeLAxNcrWuJkeGh0KxsqCHZ1O3NXZU/8x7cD0BDcGW8kapxMKTvwlqrNkHkA==}
 
   husky@9.1.7:
     resolution: {integrity: sha512-5gs5ytaNjBrh5Ow3zrvdUUY+0VxIuWVL4i9irt6friV+BqdCfmV11CQTWMiBYWHbXhco+J1kHfTOUkePhCDvMA==}
@@ -7472,7 +7478,7 @@ snapshots:
       get-tsconfig: 5.0.0-beta.4
       github-slugger: 2.0.0
       html-escaper: 3.0.3
-      http-cache-semantics: 4.2.0
+      http-cache-semantics: 4.3.0(patch_hash=1bde1fe699a4c0f618ade5961734d1d414333292a27feacc6780a501009c0c74)
       js-yaml: 4.3.2
       jsonc-parser: 3.3.1
       magic-string: 1.4.2
@@ -8199,7 +8205,7 @@ snapshots:
       domutils: 4.0.2
       entities: 8.0.0
 
-  http-cache-semantics@4.2.0: {}
+  http-cache-semantics@4.3.0(patch_hash=1bde1fe699a4c0f618ade5961734d1d414333292a27feacc6780a501009c0c74): {}
 
   husky@9.1.7: {}
 
