@@ -12,7 +12,7 @@ For a fast agent briefing, read [AGENTS.md](../AGENTS.md) first, then this index
 - **Why is X the way it is?** → [architecture/decisions/](architecture/decisions/) → [knowledge/learnings.md](knowledge/learnings.md)
 - **What broke before?** → [knowledge/failed-approaches.md](knowledge/failed-approaches.md) → [archive/](archive/)
 - **Current state of the project?** → [STATUS.md](../STATUS.md)
-- **Writing code here?** → [development/conventions.md](development/conventions.md) → [development/commands.md](development/commands.md) → [development/testing.md](development/testing.md) → [development/openspec.md](development/openspec.md)
+- **Writing code here?** → [development/conventions.md](development/conventions.md) → [development/commands.md](development/commands.md) → [development/testing.md](development/testing.md) → [archive/openspec.md](archive/openspec.md)
 - **Marketing the product?** → [marketing/hooks.md](marketing/hooks.md) → [marketing/iterations/v2/draft-seo-landing-keywords.md](marketing/iterations/v2/draft-seo-landing-keywords.md)
 
 ## Layout
@@ -42,7 +42,6 @@ docs/
     commands.md                 # pnpm scripts and what they do
     conventions.md              # code style, formatting, pre-commit hooks
     testing.md                  # vitest + playwright
-    openspec.md                 # GitHub-Issue spec workflow
   operations/
     deploy.md                   # Cloudflare Workers deploy + secrets
     env.md                      # environment variables and validation
@@ -87,7 +86,7 @@ docs/
 - [`README.md`](../README.md) — product readme for humans landing in the repo.
 - [GitHub Issues](https://github.com/Significant-Hobbies/reader/issues) —
   operational work and non-trivial feature specs. See
-  [development/openspec.md](development/openspec.md).
+  [archive/openspec.md](archive/openspec.md).
 - [`public/`](../public/) — runtime agent-indexing surfaces (`llms.txt`,
   `index.md`, `api-ai.json`, `robots.txt`, `sitemap.xml`) served by the Worker.
   Documented in [product/surfaces.md](product/surfaces.md).
