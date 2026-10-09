@@ -30,6 +30,6 @@ Google-backed Auth0 OAuth maps the connection to the same Reader account. Reads 
 
 The database schema and saved data remain unchanged. Legacy web articles appear as links and their captured content remains available through MCP. Local browser data and stored PDFs are not deleted.
 
-This simplification requires a manual deployment and OAuth configuration before it can be used in ChatGPT. Source verification is separate from deployment and an authenticated ChatGPT end-to-end check.
+The simplification is deployed. Chrome extension v0.2.0 is available in [Releases](https://github.com/Significant-Hobbies/reader/releases/tag/chrome-extension-v0.2.0). The owner's Reader Links ChatGPT connection passed live search, fetch, and read/unread updates. Other accounts still need their own OAuth connection.
 
 [Documentation](docs/index.md) · [Current status](PROJECT_STATUS.md)

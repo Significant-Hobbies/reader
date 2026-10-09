@@ -16,7 +16,7 @@ Saved links, read/unread state, an add-link form, a one-click Chrome capture ext
 ## Release boundary
 
 The simplification was merged in PR #78 and deployed on 2026-10-09. Merged-main CI and the production deployment passed. The live inbox, MCP discovery, and authenticated retrieval through the existing ChatGPT app were verified.
-The direct Reader Inbox plugin was created in ChatGPT with OAuth discovery. Final account authorization and an authenticated read-state write-back check remain pending; Auth0 admin access currently requires owner MFA enrollment. Do not describe the new connection as fully working without that evidence.
+Chrome extension v0.2.0 is published as a GitHub release. The direct **Reader Links** plugin is connected in ChatGPT using a dedicated public OAuth client with PKCE and explicit `reader.read` / `reader.write` grants. Live ChatGPT search, fetch, mark-read, and restore-unread checks passed; both state changes were independently observed in the Reader inbox. The test item was restored to its original unread state.
 
 ## Operational constraints
 
