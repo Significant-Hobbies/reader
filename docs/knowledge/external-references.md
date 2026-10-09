@@ -106,5 +106,5 @@ pricing, and the difference from the S3-compatible HTTP API.
 **GitHub Issues**
 Repository-owned proposal, design, requirements, and task tracking for
 non-trivial feature work. See
-[development/openspec.md](../development/openspec.md).
+[development/openspec.md](../archive/openspec.md).
 → https://github.com/Significant-Hobbies/reader/issues
