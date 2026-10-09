@@ -15,8 +15,8 @@ Saved links, read/unread state, an add-link form, a one-click Chrome capture ext
 
 ## Release boundary
 
-The simplification is a source candidate. Production has not been deployed by this change.
-OAuth provider setup and an authenticated ChatGPT retrieval/write-back check remain required for live acceptance. Do not describe the connector as working in production without that evidence.
+The simplification was merged in PR #78 and deployed on 2026-10-09. Merged-main CI and the production deployment passed. The live inbox, MCP discovery, and authenticated retrieval through the existing ChatGPT app were verified.
+The direct Reader Inbox plugin was created in ChatGPT with OAuth discovery. Final account authorization and an authenticated read-state write-back check remain pending; Auth0 admin access currently requires owner MFA enrollment. Do not describe the new connection as fully working without that evidence.
 
 ## Operational constraints
 
