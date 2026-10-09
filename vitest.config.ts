@@ -14,6 +14,8 @@ export default defineConfig({
         'src/**/*.d.ts',
         'src/**/types.ts',
         'src/**/index.ts',
+        // Declarative table definitions retain legacy data; they contain no runtime logic.
+        'src/lib/db/schema.ts',
         'src/**/*.config.{ts,js}',
         'src/**/__tests__/**',
       ],

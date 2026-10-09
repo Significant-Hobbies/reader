@@ -7,23 +7,17 @@
 
 ## Purpose
 
-Reader is a personal research library: capture web articles and PDFs, read and
-annotate them, organise with tags/lists/boards, search, and AI-chat or
-auto-summarise the saved material. Companion Chrome MV3 extension. See
-[docs/product/overview.md](docs/product/overview.md).
+Reader is a saved-link inbox. Add URLs in the app or Chrome extension; ChatGPT retrieves links and available text and marks them read through MCP. See [docs/product/overview.md](docs/product/overview.md).
 
-## Stack (one-liner)
+## Stack
 
-Vite + React 19 SPA (single `app.html` entry) + Hono Worker on Cloudflare
-Workers (`src/worker.ts`), Cloudflare D1 via Drizzle ORM, better-auth Google
-OAuth, Cloudflare R2 for PDFs, free-ai-gateway + BYOK + local-ai dev bridge.
-No SSR, no Next.js, no Firebase.
+Vite + React SPA, Hono Cloudflare Worker, D1 via Drizzle, better-auth Google sign-in, and Auth0-backed MCP OAuth. The existing D1 schema and R2 data are preserved. There is no built-in AI, reader, PDF capture, RSS, board, or annotation workflow.
 
 ## Essential commands
 
 ```bash
 pnpm install
-pnpm dev              # Worker (:8787) + Vite SPA (:5173) + local-ai, concurrently
+pnpm dev              # Worker (:8787) + Vite SPA (:5173), concurrently
 pnpm dev:worker       # wrangler dev only
 pnpm dev:spa          # vite only (proxies /api → 8787)
 pnpm build            # validate env + vite build → dist/
@@ -59,8 +53,7 @@ Full command map: [docs/development/commands.md](docs/development/commands.md).
   Do not rename without re-provisioning.
 - **`wrangler.toml` `run_worker_first` list is required** for agent surfaces
   and `/api/*` to reach the Worker before the `ASSETS` binding.
-- **BYOK provider keys live in the browser only** — never persist or log
-  server-side. `rdr_*` API keys are hashed at rest; plaintext shown once.
+- **`rdr_*` API keys are hashed at rest; plaintext shown once.** MCP reads require `reader.read`; read-state writes require `reader.write`. Never treat a browser cookie as an MCP credential.
 - **Schema changes are additive + deliberate.** Generate and inspect SQL before applying it;
   read the SQL under `drizzle/` before applying to production. See
   [docs/operations/runbooks/migrate-schema.md](docs/operations/runbooks/migrate-schema.md).
@@ -83,29 +76,17 @@ Full command map: [docs/development/commands.md](docs/development/commands.md).
 - Runtime agent-indexing surfaces are in [public/](public/); see
   [docs/product/surfaces.md](docs/product/surfaces.md).
 
-## Repo structure (high level)
+## Active source
 
-```
-app.html                  # Single SPA HTML entry (Vite input)
-vite.config.ts            # Vite SPA build (React, Tailwind v4, Lightning CSS)
-wrangler.toml             # Worker config: main=src/worker.ts, ASSETS + PDFS_BUCKET
-src/
-  worker.ts               # Hono Worker entry — security headers, /api/* routing, asset serving
-  agent-edge.mjs          # Generated agent-edge handler (llms.txt, index.md, api/ai)
-  worker/routes/          # Hono API route modules (articles, boards, lists, ai, keys, pdf, rss, share, memories, misc)
-  pages/                  # Route page components (lazy-loaded via react-router-dom)
-  components/             # React components (ReaderView, PDFReaderClient, NotesAIChat, board/, reader/, ui/)
-  hooks/                  # Shared React hooks
-  lib/                    # DB, auth, AI, storage, SSRF validation, RSS, memories, etc.
-packages/chrome-extension/ # Chrome MV3 extension (separate Vite build)
-landing-astro/            # Astro landing page (overlaid into dist/ during cf:build)
-docs/                     # Canonical documentation (source of truth)
-drizzle/                  # Migration SQL files + meta
-scripts/                  # local-ai.mjs, validate-env.mjs, overlay-astro-landing.mjs, check-docs.mjs
-public/                   # Agent-indexing surfaces (llms.txt, index.md, api-ai.json, robots.txt, sitemap.xml)
-```
+- `src/components/HomeClient.tsx`: inbox, URL form, and read-state changes.
+- `src/components/ExtensionConnectClient.tsx`: connections and extension keys.
+- `src/lib/links-db.ts`: account-scoped link storage over the existing articles table.
+- `src/lib/link-content.ts`: bounded web-text retrieval.
+- `src/worker/routes/`: links, MCP, keys, and account identity.
+- `packages/chrome-extension/`: popup-only URL/title capture.
+- `landing-astro/`: landing overlay.
 
-Detailed file map: [docs/architecture/overview.md](docs/architecture/overview.md).
+MCP setup and the live verification boundary are in [docs/architecture/overview.md](docs/architecture/overview.md). Legacy schema columns and tables are retained deliberately; do not drop saved data as cleanup.
 
 ## Fleet guidance
 

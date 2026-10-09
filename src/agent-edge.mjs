@@ -65,19 +65,9 @@ const OPENAPI_SPEC = {
       'Get public Reader agent instructions and boundaries',
       'text/markdown'
     ),
-    '/skill.md': discoveryOperation(
-      'getReaderSourceWorkflow',
-      'Get the Reader source-workflow skill',
-      'text/markdown'
-    ),
     '/.well-known/ai-catalog.json': discoveryOperation(
       'getAiCatalog',
       'Get the standards-shaped Reader AI catalog',
-      'application/json'
-    ),
-    '/.well-known/agent-skills/index.json': discoveryOperation(
-      'getAgentSkillIndex',
-      'Get the digest-verified Reader agent-skill index',
       'application/json'
     ),
     '/sitemap.xml': discoveryOperation(

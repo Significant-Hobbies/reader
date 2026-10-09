@@ -1,94 +1,37 @@
-# Architecture Overview
+# Architecture
 
-Reader is a Vite + React 19 single-page application served from a Hono Worker
-on Cloudflare Workers. No SSR, no Next.js. The browser loads `app.html` (one
-Vite entry) and routes client-side via `react-router-dom`; the Worker handles
-`/api/*` and serves built assets via the `ASSETS` binding.
+Reader is a Vite/React SPA backed by a Hono Worker and Cloudflare D1. The Astro landing is overlaid into the same build. Google sign-in uses better-auth. Existing database tables and R2 data are retained unchanged.
 
-## Shape
+## Active paths
 
-```
-                ┌──────────────────────── Cloudflare Worker (reader) ────────────────────────┐
-                │                                                                          │
-  browser ──────► src/worker.ts                                                             │
-                │   ├── handleAgentEdge(request)   ← /llms.txt, /index.md, /api/ai, …        │
-                │   ├── api.fetch()              ← Hono router under /api/*                  │
-                │   │     ├── /api/auth/*        ← better-auth (Google OAuth, Drizzle)       │
-                │   │     ├── /api/articles      ← articles.ts                              │
-                │   │     ├── /api/boards        ← boards.ts                                │
-                │   │     ├── /api/lists         ← lists.ts                                 │
-                │   │     ├── /api/memories      ← memories.ts                              │
-                │   │     ├── /api/ai            ← ai.ts (chat / summarize / models)        │
-                │   │     ├── /api/keys          ← keys.ts (rdr_* API keys)                 │
-                │   │     ├── /api/pdfs          ← pdf.ts (R2-backed)                       │
-                │   │     ├── /api/rss           ← rss.ts (feeds + entries + OPML)          │
-                │   │     ├── /api/share         ← share.ts (public share)                  │
-                │   │     └── /api/*             ← misc.ts (search, tags, snapshot, proxy,  │
-                │   │                                    data-export, ext chat, browser-mem)│
-                │   └── env.ASSETS.fetch()       ← built SPA + landing (dist/)              │
-                │                                                                          │
-                │   Bindings: DB (D1), PDFS_BUCKET (R2), ASSETS (dist/)                     │
-                └────────────────────────────────┬─────────────────────────────────────────┘
-                                                 │
-                  ┌──────────────────────────────┼──────────────────────────────┐
-                  ▼                              ▼                              ▼
-            Cloudflare D1               Cloudflare R2                free-ai-gateway
-            via Drizzle ORM             reader-pdfs bucket            (AI_BASE_URL)
-            (articles, boards,          (PDF binaries,               + BYOK providers
-            lists, memories, rss,       proxied downloads)           + local-ai (dev)
-            api_keys, better-auth)
-```
+- `src/components/HomeClient.tsx`: the link inbox and URL form.
+- `src/components/ExtensionConnectClient.tsx`: extension keys and MCP connection information.
+- `src/lib/links-db.ts`: account-scoped capture, search, pagination, retrieval, and read states over the existing `articles` table.
+- `src/lib/link-content.ts`: bounded source-text extraction with URL and redirect validation.
+- `src/worker/routes/articles.ts`: `/api/links`; `/api/articles` is a compatibility alias for capture clients.
+- `src/worker/routes/mcp.ts`: stateless JSON-RPC over Streamable HTTP at `/api/mcp`.
+- `packages/chrome-extension/src/popup`: explicit current-tab capture. No background worker or content script.
 
-## Key files
+New links store URLs and titles. Existing web articles retain captured text. `in_progress` in legacy storage maps to `unread`; `read` remains `read`. New IDs are a deterministic hash of account and normalized URL to deduplicate concurrent captures without a migration. Fragments are removed; query parameters remain intact.
 
-- `src/worker.ts` — Hono Worker entry. Security headers, `/api/*` routing,
-  asset serving, SPA fallback, agent-edge handler.
-- `src/worker/routes/*.ts` — one Hono router per resource; mounted under
-  `/api/<resource>`.
-- `src/lib/db/schema.ts` — Drizzle schema (app tables + better-auth tables +
-  legacy NextAuth tables kept for reference).
-- `src/lib/db/client.ts` — D1 Drizzle client. Lazy proxy so the client is
-  not created at module load (required for the Workers runtime).
-- `src/lib/auth.ts` — better-auth server config (`createAuth`), Drizzle
-  adapter, Google OAuth, `oneTap` plugin, rate limiting disabled.
-- `src/lib/auth-api.ts` — `getAuthenticatedUserId()` resolves either a
-  `Bearer rdr_*` API key (extension) or a better-auth session cookie (web).
-- `src/lib/storage.ts` — R2 helpers for `PDFS_BUCKET`.
-- `src/lib/ai-cloudflare.ts` — builds a `LanguageModel` from an OpenAI-compatible
-  endpoint, routed through the free-ai gateway with `x-gateway-project-id: reader`.
-- `src/lib/url-validation.ts` + `src/lib/safe-fetch.ts` — SSRF protection and
-  redirect-safe fetch used by snapshot/proxy/RSS refresh.
-- `src/router.tsx` — client-side routes (lazy-loaded pages).
-- `wrangler.toml` — Worker config: `main = src/worker.ts`, `DB` + `ASSETS` + `PDFS_BUCKET`
-  bindings, `placement.mode = "smart"`, `nodejs_compat_v2`, custom domain.
-- `vite.config.ts` — Vite SPA build (React, Tailwind v4, Lightning CSS).
-- `app.html` — single SPA HTML entry (Vite input; carries inline shell CSS).
+MCP reads do not change read state. The `set_read` tool requires a boolean and a write-authorized credential. Every storage operation is account-scoped. MCP source content is data, never instructions.
 
-## Build & deploy pipeline
+## ChatGPT connection setup
 
-```
-pnpm deploy
-  → validate:env:deploy          (scripts/validate-env.mjs)
-  → cf:build
-      → pnpm build               (validate env + vite build → dist/)
-      → pnpm --filter ./landing-astro build
-      → node scripts/overlay-astro-landing.mjs   (overlay landing → dist/)
-  → wrangler deploy              (Worker + ASSETS binding serves dist/)
-```
+The source endpoint is `https://read.significanthobbies.com/api/mcp`. Live use requires an approved deployment and provider configuration; adding an endpoint to the code does not provision OAuth.
 
-The landing page (`landing-astro/`) is an **overlay**, not a separate product.
-It overwrites `dist/index.html` and merges `_headers`; the SPA lives at
-`dist/app.html` and is served at `/app`. SPA fallback uses
-`not_found_handling = single-page-application` semantics via the Worker's
-explicit fallback to `/app`.
+Use the existing Google-backed Auth0 integration:
 
-## Decisions
+1. Configure a resource/API identifier equal to the direct MCP endpoint. Set `AUTH0_ISSUER` to the exact Auth0 issuer with a trailing slash and `AUTH0_MCP_AUDIENCE` to the endpoint identifier.
+2. Define and grant `reader.read` and `reader.write`. Tokens must use RS256, the exact issuer and audience, the stable `google-oauth2|<subject>` identity, and a lifetime of at most one hour.
+3. Configure an OAuth authorization-code client with PKCE S256 for ChatGPT. Use the exact redirect URI shown by ChatGPT’s connection-management page; do not guess it. Ensure the provider honors the OAuth resource parameter in the access-token audience and advertises S256 in discovery.
+4. Add a custom MCP connection in ChatGPT with OAuth and this server URL. Static OAuth client credentials can be supplied through ChatGPT’s connection UI when the provider does not support dynamic registration.
+5. Sign in to Reader first with the same Google account. Then verify listing unread links, fetching a saved item, marking it read, and observing the updated inbox.
 
-The why behind this shape is in [decisions/](decisions/). Start with
-[0001-vite-spa-hono-worker.md](decisions/0001-vite-spa-hono-worker.md) for the
-migration off Next.js + OpenNext.
+The linking challenge points to `/api/mcp/.well-known/oauth-protected-resource`, keeping discovery inside the existing Worker-first API routing. A standard alias also exists at `/.well-known/oauth-protected-resource/api/mcp`. The tools declare their OAuth scopes and return linking challenges. Read-only tokens never gain write access. The older `/reader/mcp` audience and `/api/mcp/reading` projections remain compatible with the existing external bridge; adapting that bridge’s tool catalog is separate from this repository.
 
-## Data flow
+Official references: [ChatGPT custom MCP connections](https://developers.openai.com/api/docs/guides/custom-mcp-server), [OAuth requirements](https://developers.openai.com/plugins/build/auth), [Streamable HTTP](https://modelcontextprotocol.io/specification/2025-11-25/basic/transports).
 
-See [data-flow.md](data-flow.md) for the request lifecycle, auth resolution,
-storage paths, and AI routing.
+## Rollout
+
+No database migration or saved-data removal is needed. Worker name, production bindings, and secrets remain unchanged. Deploy and provider/account changes require owner approval. Test an authenticated ChatGPT connection after deployment before calling the live workflow complete.

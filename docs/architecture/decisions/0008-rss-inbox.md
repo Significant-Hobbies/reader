@@ -1,3 +1,5 @@
+> Historical decision from the previous research-library product. See [current architecture](../overview.md).
+
 # ADR-0008: RSS/Atom Inbox (manual refresh, no scheduled triggers)
 
 **Date:** 2026-07-13

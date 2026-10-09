@@ -76,3 +76,9 @@ dist/
 
 # Private Fleet task evidence
 .fleet-local/
+
+# Local Worker credentials and browser test outputs
+.dev.vars
+.dev.vars.*
+/test-results/
+/playwright-report/

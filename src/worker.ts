@@ -5,17 +5,10 @@ import { createAuth } from './lib/auth';
 import { isSpaRoute } from './lib/spa-route';
 import type { WorkerEnv } from './lib/worker-env';
 import { bindWorkerEnv } from './worker/bind-env';
-import aiRoutes from './worker/routes/ai';
 import articlesRoutes from './worker/routes/articles';
-import boardsRoutes from './worker/routes/boards';
 import keysRoutes from './worker/routes/keys';
-import listsRoutes from './worker/routes/lists';
-import memoriesRoutes from './worker/routes/memories';
-import mcpReadRoutes from './worker/routes/mcp';
+import mcpRoutes, { protectedResourceMetadata } from './worker/routes/mcp';
 import miscRoutes from './worker/routes/misc';
-import pdfRoutes from './worker/routes/pdf';
-import rssRoutes from './worker/routes/rss';
-import shareRoutes from './worker/routes/share';
 import { appHealthMiddleware } from './worker/app-health';
 
 const SECURITY_HEADERS: Record<string, string> = {
@@ -76,16 +69,11 @@ api.on(['GET', 'POST'], '/api/auth/*', (c) => {
   return auth.handler(c.req.raw);
 });
 
+api.route('/api/links', articlesRoutes);
+// Keep capture compatible with existing extension installs.
 api.route('/api/articles', articlesRoutes);
-api.route('/api/boards', boardsRoutes);
-api.route('/api/lists', listsRoutes);
-api.route('/api/memories', memoriesRoutes);
-api.route('/api/mcp', mcpReadRoutes);
-api.route('/api/ai', aiRoutes);
+api.route('/api/mcp', mcpRoutes);
 api.route('/api/keys', keysRoutes);
-api.route('/api/pdfs', pdfRoutes);
-api.route('/api/rss', rssRoutes);
-api.route('/api/share', shareRoutes);
 api.route('/api', miscRoutes);
 
 api.onError((err, c) => {
@@ -131,6 +119,10 @@ export default {
 
     // Discovery outside /api/* remains separate from product API routes.
     // /api/ai passes through Hono so App Health sees its public GET/HEAD traffic.
+    if (url.pathname === '/.well-known/oauth-protected-resource/api/mcp') {
+      return protectedResourceMetadata(request, env);
+    }
+
     if (!url.pathname.startsWith('/api/')) {
       const agent = await handleAgentEdge(request, env);
       if (agent) return agent;
@@ -152,26 +144,30 @@ export default {
       return Response.redirect(`${url.origin}/library`, 302);
     }
 
-    const assetResponse = await env.ASSETS.fetch(request);
-    if (assetResponse.ok) {
-      return withSecurityHeaders(assetResponse, url.pathname);
-    }
-
-    if (request.method !== 'GET') {
-      return assetResponse;
-    }
-
-    if (url.pathname === '/') {
-      const landing = await env.ASSETS.fetch(new Request(new URL('/index.html', url), request));
-      return landing.ok ? withSecurityHeaders(landing, url.pathname) : assetResponse;
-    }
-
-    if (!isSpaRoute(url.pathname)) {
-      return assetResponse;
-    }
-
-    // Assets serves app.html at /app; fetching /app.html returns 307 (not ok).
-    const spa = await env.ASSETS.fetch(new Request(new URL('/app', url), request));
-    return spa.ok ? withSecurityHeaders(spa, url.pathname) : assetResponse;
+    return serveAssets(request, env, url);
   },
 };
+
+async function serveAssets(request: Request, env: WorkerEnv, url: URL): Promise<Response> {
+  const assetResponse = await env.ASSETS.fetch(request);
+  if (assetResponse.ok) {
+    return withSecurityHeaders(assetResponse, url.pathname);
+  }
+
+  if (request.method !== 'GET') {
+    return assetResponse;
+  }
+
+  if (url.pathname === '/') {
+    const landing = await env.ASSETS.fetch(new Request(new URL('/index.html', url), request));
+    return landing.ok ? withSecurityHeaders(landing, url.pathname) : assetResponse;
+  }
+
+  if (!isSpaRoute(url.pathname)) {
+    return assetResponse;
+  }
+
+  // Assets serves app.html at /app; fetching /app.html returns 307 (not ok).
+  const spa = await env.ASSETS.fetch(new Request(new URL('/app', url), request));
+  return spa.ok ? withSecurityHeaders(spa, url.pathname) : assetResponse;
+}

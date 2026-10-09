@@ -1,65 +1,24 @@
 # Commands
 
-Source of truth: `scripts` in `package.json`. This page annotates intent and
-ordering; run `pnpm run` to see the live list.
-
-## Web app (root workspace)
+Use pnpm and the tracked lockfile.
 
 | Command | Purpose |
 | --- | --- |
-| `pnpm dev` | Worker (`wrangler dev`, :8787) + Vite SPA (:5173) + `local-ai.mjs`, concurrently |
-| `pnpm dev:worker` | `wrangler dev` only (Worker, :8787) |
-| `pnpm dev:spa` | `vite` only (SPA dev server, :5173, proxies `/api` → 8787) |
-| `pnpm local-ai` | Local AI bridge (`scripts/local-ai.mjs` spawns `../local-ai/index.mjs` or legacy `../cli-bridge/index.mjs`) |
-| `pnpm cli-bridge` | Alias for `pnpm local-ai` |
-| `pnpm build` | `validate-env.mjs build` + `vite build` → `dist/` |
-| `pnpm cf:build` | `pnpm build` + `landing-astro` build + `overlay-astro-landing.mjs` |
-| `pnpm preview` | `vite preview` |
-| `pnpm deploy` | `validate:env:deploy` + `cf:build` + `wrangler deploy` |
-| `pnpm lint` | `biome check .` |
-| `pnpm type-check` / `pnpm typecheck` | `tsc --noEmit -p tsconfig.app.json` + `tsc --noEmit -p tsconfig.worker.json` |
-| `pnpm validate:env:build` | `node scripts/validate-env.mjs build` |
-| `pnpm validate:env:runtime` | `node scripts/validate-env.mjs runtime` |
-| `pnpm validate:env:deploy` | `node scripts/validate-env.mjs deploy` |
-| `pnpm test` | `vitest run` |
-| `pnpm test:watch` | `vitest` |
-| `pnpm test:coverage` | `vitest run --coverage` |
-| `pnpm quality` | Complete CI code-health gate across the app, Worker, landing, and extension |
-| `pnpm test:e2e` | `playwright test` |
-| `pnpm memory:demo` | `tsx scripts/memory-capture-demo.ts` |
-| `pnpm db:generate` | Generate a tracked D1 migration from `src/lib/db/schema.ts` |
-| `pnpm db:migrate:local` | Apply tracked migrations to isolated local D1 |
-| `pnpm db:migrate:remote` | Explicitly apply tracked migrations to the configured remote D1 |
-| `pnpm prepare` | `husky` (installs pre-commit hook) |
-| `pnpm format` | `biome format --write .` |
-| `pnpm format:check` | `biome format .` |
-| `pnpm check` | `biome check .` |
-| `pnpm docs:check` | `node scripts/check-docs.mjs` — validate docs/ links + structure |
+| `pnpm dev` | Worker and Vite concurrently |
+| `pnpm dev:worker` | Local Worker |
+| `pnpm dev:spa` | SPA with API proxy to the Worker |
+| `pnpm build` | SPA production build |
+| `pnpm cf:build` | SPA plus Astro landing overlay |
+| `pnpm typecheck` | App and Worker TypeScript checks |
+| `pnpm test` | Unit and storage tests |
+| `pnpm test:coverage` | Unit tests and coverage gates |
+| `pnpm test:e2e` | Built-browser inbox checks at phone, tablet, and desktop widths |
+| `pnpm quality` | Complete local/CI gate, including extension checks and builds |
+| `pnpm lint` | Biome through the code-health wrapper |
+| `pnpm docs:check` | Documentation links and structure |
 
-## Chrome extension (`packages/chrome-extension/`)
+Build with `pnpm cf:build` before running `pnpm test:e2e`. Browser tests use synthetic accounts and links; no production data is changed.
 
-Separate Vite build; excluded from root Biome/ESLint tooling.
+Extension: `pnpm --filter web-annotator-extension build`, `type-check`, or `test`.
 
-| Command | Purpose |
-| --- | --- |
-| `pnpm dev` | `vite build --watch` → `dist/` |
-| `pnpm build` | `vite build` (production) |
-| `pnpm type-check` | `tsc --noEmit` |
-| `pnpm test` | `vitest run` |
-| `pnpm pack:zip` | `pnpm build` + zip `dist/` → `web-annotator-extension-<version>.zip` |
-
-## Landing (`landing-astro/`)
-
-| Command | Purpose |
-| --- | --- |
-| `pnpm dev` | `astro dev` |
-| `pnpm build` | `astro build` → `landing-astro/dist/` (overlaid onto `dist/` by `cf:build`) |
-| `pnpm preview` | `astro preview` |
-
-## Build pipeline ordering
-
-```
-pnpm build       = validate-env(build) → vite build
-pnpm cf:build    = pnpm build → landing-astro build → overlay-astro-landing.mjs
-pnpm deploy      = validate-env(deploy) → cf:build → wrangler deploy
-```
+Deployment remains manual and needs owner approval. Schema commands remain available for deliberate, approved migration work, but the saved-link simplification requires none.

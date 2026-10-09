@@ -1,4 +1,4 @@
-import { defineConfig, build as viteBuild } from 'vite';
+import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react';
 import { resolve } from 'path';
 import { cpSync, existsSync, mkdirSync } from 'fs';
@@ -8,29 +8,6 @@ const __dirname = import.meta.dirname;
 const buildExtensionAssets = (): import('vite').Plugin => ({
   name: 'build-extension-assets',
   async closeBundle() {
-    // Build content script as IIFE (content scripts can't use ES modules)
-    await viteBuild({
-      configFile: false,
-      build: {
-        emptyOutDir: false,
-        outDir: resolve(__dirname, 'dist'),
-        lib: {
-          entry: resolve(__dirname, 'src/content-script.ts'),
-          formats: ['iife'],
-          name: 'ContentScript',
-          fileName: () => 'content-script',
-        },
-        rollupOptions: {
-          output: {
-            extend: true,
-            entryFileNames: 'content-script.js',
-          },
-        },
-        minify: true,
-      },
-      logLevel: 'warn',
-    });
-
     // Copy manifest.json
     cpSync(resolve(__dirname, 'manifest.json'), resolve(__dirname, 'dist/manifest.json'));
 
@@ -53,12 +30,9 @@ export default defineConfig({
     rollupOptions: {
       input: {
         'popup/index': resolve(__dirname, 'popup/index.html'),
-        'side-panel/index': resolve(__dirname, 'side-panel/index.html'),
-        background: resolve(__dirname, 'src/background.ts'),
       },
       output: {
         entryFileNames: (chunk) => {
-          if (chunk.name === 'background') return 'background.js';
           return '[name]-[hash].js';
         },
         chunkFileNames: 'assets/chunks/[name]-[hash].js',

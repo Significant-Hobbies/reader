@@ -54,6 +54,22 @@ async function fixture() {
 }
 
 describe('Reader Auth0 MCP verification', () => {
+  it('requires explicit write permission rather than upgrading read tokens', async () => {
+    const signed = await fixture();
+    const env = { AUTH0_ISSUER: issuer, AUTH0_MCP_AUDIENCE: audience };
+    expect(
+      await verifyReaderAuth0Subject(await signed.token(), env, signed.keys, 'reader.write')
+    ).toBeNull();
+    expect(
+      await verifyReaderAuth0Subject(
+        await signed.token({ permissions: ['reader.read', 'reader.write'] }),
+        env,
+        signed.keys,
+        'reader.write'
+      )
+    ).toBe('google-user-1');
+  });
+
   it('accepts only the exact Google subject, audience, scope, and bounded lifetime', async () => {
     const signed = await fixture();
     const env = { AUTH0_ISSUER: issuer, AUTH0_MCP_AUDIENCE: audience };

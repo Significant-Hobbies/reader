@@ -39,12 +39,12 @@ it('routes session GETs through authentication instead of discovery 404', async 
 });
 
 it('keeps snapshot and account reads protected by their real handlers', async () => {
-  for (const path of ['/api/snapshot?url=https://example.com', '/api/articles/synthetic']) {
+  for (const path of ['/api/articles/synthetic']) {
     const response = await request(path);
     expect(response.status).toBe(401);
     expect(await response.json()).toEqual({ error: 'Unauthorized' });
   }
-  expect(mocks.user).toHaveBeenCalledTimes(2);
+  expect(mocks.user).toHaveBeenCalledTimes(1);
   expect(mocks.assets).not.toHaveBeenCalled();
 });
 

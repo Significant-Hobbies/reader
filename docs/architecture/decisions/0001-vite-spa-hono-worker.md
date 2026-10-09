@@ -1,3 +1,5 @@
+> Historical decision from the previous research-library product. See [current architecture](../overview.md).
+
 # ADR-0001: Vite + React 19 SPA + Hono Worker (migrate off Next.js + OpenNext)
 
 **Date:** ~2026-05 (Wave 2 migration landed; Worker name `reader` preserved)

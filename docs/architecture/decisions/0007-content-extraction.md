@@ -1,3 +1,5 @@
+> Historical decision from the previous research-library product. See [current architecture](../overview.md).
+
 # ADR-0007: Content Extraction Stack
 
 **Date:** 2026-02-13 (`linkedom` adopted replacing Playwright); pdfjs added 2026-02-14

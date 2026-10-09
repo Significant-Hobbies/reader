@@ -1,3 +1,5 @@
+> Historical decision from the previous research-library product. See [current architecture](../overview.md).
+
 # ADR-0006: Chrome MV3 Side Panel + hashed `rdr_*` API keys
 
 **Date:** 2026-04-04 (extension scaffolded with side panel from the start)

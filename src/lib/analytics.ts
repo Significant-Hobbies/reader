@@ -26,13 +26,7 @@ const POSTHOG_KEY =
 const POSTHOG_HOST = 'https://us.i.posthog.com';
 
 /** The product-specific action behind a `core_action` event. */
-export type CoreAction =
-  /** An article, link, or PDF was saved to the library. */
-  | 'source_saved'
-  /** An AI summary was generated for an article. */
-  | 'summary_generated'
-  /** A note / highlight was added while reading. */
-  | 'note_added';
+type CoreAction = 'source_saved';
 
 interface AnalyticsEventMap {
   /** First session after an account is created. */

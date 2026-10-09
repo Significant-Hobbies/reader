@@ -11,16 +11,12 @@
     "pack:zip": "pnpm run build && cd dist && zip -qr ../web-annotator-extension-$npm_package_version.zip ."
   },
   "dependencies": {
-    "@mozilla/readability": "0.6.0",
     "lucide-react": "1.11.0",
     "react": "19.2.5",
-    "react-dom": "19.2.5",
-    "react-markdown": "10.1.0",
-    "remark-gfm": "4.0.1"
+    "react-dom": "19.2.5"
   },
   "devDependencies": {
     "@tailwindcss/postcss": "4",
-    "@tailwindcss/typography": "0.5.19",
     "@types/chrome": "0.0.304",
     "@types/react": "19",
     "@types/react-dom": "19",

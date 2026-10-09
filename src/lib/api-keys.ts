@@ -46,8 +46,9 @@ export async function verifyApiKey(token: string): Promise<string | null> {
 
   if (!row) return null;
 
-  // Fire-and-forget — don't block the request on telemetry.
-  db.update(apiKeys)
+  // Await telemetry so Worker request completion cannot discard the update.
+  await db
+    .update(apiKeys)
     .set({ lastUsedAt: new Date() })
     .where(eq(apiKeys.id, row.id))
     .catch(() => {});

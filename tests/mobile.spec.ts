@@ -1,52 +1,106 @@
-import { expect, type Page, test } from '@playwright/test';
+import { expect, test } from '@playwright/test';
+import { mkdir } from 'node:fs/promises';
 
-/**
- * Mobile-viewport checks — runs under the `mobile` Playwright project
- * (iPhone 13 = 390px wide). Verifies the public surfaces render without a
- * horizontal scroll at the Wave 1 mobile target.
- *
- * The reader / annotation view itself is auth-gated, so it is exercised in
- * the unit/integration layer and manual verification; here we cover the
- * publicly reachable pages that must not break at 390px.
- *
- * Skipped on the `desktop` project — these assertions are mobile-specific.
- */
-
-const PUBLIC_ROUTES = ['/welcome', '/login', '/about'];
-
-async function horizontalOverflow(page: Page) {
-  return page.evaluate(() => {
-    const doc = document.documentElement;
-    return doc.scrollWidth - doc.clientWidth;
+test('the saved-link workflow works at every viewport', async ({ page }, testInfo) => {
+  const date = '2026-10-09T00:00:00.000Z';
+  const items = [
+    {
+      id: 'one',
+      url: 'https://www.sqlite.org/whentouse.html',
+      title: 'Appropriate uses for SQLite',
+      status: 'unread',
+      createdAt: date,
+    },
+    {
+      id: 'two',
+      url: 'https://paulgraham.com/makersschedule.html',
+      title: 'Maker’s schedule, manager’s schedule',
+      status: 'unread',
+      createdAt: date,
+    },
+  ];
+  await page.route('https://**', (route) => route.abort());
+  await page.route('**/api/auth/get-session', (route) =>
+    route.fulfill({
+      json: {
+        user: {
+          id: 'alice',
+          name: 'Alice',
+          email: 'alice@example.com',
+          emailVerified: true,
+          image: null,
+          createdAt: date,
+          updatedAt: date,
+        },
+        session: {
+          id: 'session',
+          userId: 'alice',
+          token: 'synthetic',
+          expiresAt: '2099-01-01T00:00:00.000Z',
+          createdAt: date,
+          updatedAt: date,
+        },
+      },
+    })
+  );
+  await page.route('**/api/links**', async (route) => {
+    const request = route.request();
+    if (request.method() === 'POST') {
+      const body = request.postDataJSON();
+      items.push({ id: 'new', ...body, status: 'unread', createdAt: date });
+      return route.fulfill({ json: { id: 'new', existing: false } });
+    }
+    if (request.method() === 'PUT') {
+      const item = items.find((entry) => request.url().endsWith(`/${entry.id}`))!;
+      item.status = request.postDataJSON().status;
+      return route.fulfill({ json: item });
+    }
+    const params = new URL(request.url()).searchParams;
+    const rows = items.filter(
+      (item) =>
+        (!params.get('status') || item.status === params.get('status')) &&
+        (!params.get('q') || item.title.includes(params.get('q')!))
+    );
+    return route.fulfill({ json: { items: rows, total: rows.length, nextOffset: null } });
   });
-}
+  await page.goto('/library');
+  await expect(page.getByRole('heading', { name: 'Your links' })).toBeVisible();
+  await expect(page.getByRole('link', { name: 'Appropriate uses for SQLite' })).toBeVisible();
+  await mkdir('.fleet-local/screenshots', { recursive: true });
+  await page.screenshot({
+    path: `.fleet-local/screenshots/inbox-${testInfo.project.name}.png`,
+    fullPage: true,
+  });
+  await page.getByRole('button', { name: 'Mark read: Appropriate uses for SQLite' }).click();
+  await expect(page.getByRole('link', { name: 'Appropriate uses for SQLite' })).toHaveCount(0);
+  await page.getByRole('button', { name: 'read', exact: true }).click();
+  await expect(page.getByRole('link', { name: 'Appropriate uses for SQLite' })).toBeVisible();
+  await page.getByRole('button', { name: 'Mark unread: Appropriate uses for SQLite' }).click();
+  await page.getByRole('button', { name: 'Add link' }).click();
+  await page.getByLabel('URL', { exact: true }).fill('https://example.com/new');
+  await page.getByLabel('Title').fill('A new link');
+  await page.getByRole('button', { name: 'Save link', exact: true }).click();
+  await expect(page.getByRole('link', { name: 'A new link' })).toBeVisible();
+  await page.getByRole('textbox', { name: 'Search links' }).fill('SQLite');
+  await expect(page.getByRole('link', { name: 'Appropriate uses for SQLite' })).toBeVisible();
+  await expect(page.getByRole('link', { name: 'A new link' })).toHaveCount(0);
+  expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(
+    true
+  );
+});
 
-test.describe('mobile viewport — 390px', () => {
-  test.skip(({ viewport }) => (viewport?.width ?? 1280) > 600, 'mobile-only checks');
-
-  for (const path of PUBLIC_ROUTES) {
-    test(`no horizontal scroll on ${path}`, async ({ page }) => {
-      await page.goto(path, { waitUntil: 'domcontentloaded' });
-      await page.waitForTimeout(400);
-      const overflow = await horizontalOverflow(page);
-      expect(overflow, `${path} should not scroll horizontally`).toBeLessThanOrEqual(1);
-    });
-  }
-
-  test('welcome landing shows hero and a clear CTA', async ({ page }) => {
-    await page.goto('/welcome', { waitUntil: 'domcontentloaded' });
-    await expect(
-      page.getByRole('heading', {
-        name: /read, annotate, and chat with everything you save/i,
-      })
-    ).toBeVisible();
-    // The primary CTA must be a real, reachable link.
-    const cta = page.getByRole('link', { name: /open your library/i }).first();
-    await expect(cta).toBeVisible();
-    const box = await cta.evaluate((el) => {
-      const r = el.getBoundingClientRect();
-      return { width: r.width, height: r.height };
-    });
-    expect(box.height, 'CTA touch-target height').toBeGreaterThanOrEqual(44);
+test('landing states the narrow product and fits the viewport', async ({ page }, testInfo) => {
+  await page.route('https://**', (route) => route.abort());
+  await page.goto('/');
+  await expect(
+    page.getByRole('heading', { name: 'Save a link. Pick it up in ChatGPT.' })
+  ).toBeVisible();
+  expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(
+    true
+  );
+  await mkdir('.fleet-local/screenshots', { recursive: true });
+  await page.screenshot({
+    path: `.fleet-local/screenshots/landing-${testInfo.project.name}.png`,
+    fullPage: true,
   });
 });

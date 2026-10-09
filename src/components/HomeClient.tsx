@@ -1,1093 +1,293 @@
-'use client';
-
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import {
-  ArrowRight,
-  BookOpen,
-  CheckCircle2,
-  Clock,
-  FileText,
-  Heart,
-  LayoutDashboard,
-  Plus,
-  Tags,
-  X,
-} from 'lucide-react';
-import { Link, useNavigate } from 'react-router-dom';
-import { lazy, Suspense, type MouseEvent, useState } from 'react';
+import { ArrowUpRight, Check, Loader2, Plus, Search, Undo2 } from 'lucide-react';
+import { useState } from 'react';
+import { Navigate } from 'react-router-dom';
 
-import { trackActivatedOnce, trackCoreAction } from '../lib/analytics';
-import { clearImportDraft, readImportDraft, saveImportDraft } from '../lib/import-draft';
-import { getTagColor } from '../lib/tag-utils';
-import type { ArticleStatus, ArticleSummary, List } from '../types';
-import type { AddArticleMode } from './AddArticleDialog';
-import { ArticleCard } from './ArticleCard';
-
-const AddArticleDialog = lazy(() =>
-  import('./AddArticleDialog').then((m) => ({ default: m.AddArticleDialog }))
-);
+import type { SavedLink } from '@/lib/links-db';
+import { trackActivatedOnce, trackCoreAction } from '@/lib/analytics';
 import { useAuth } from './AuthProvider';
-import { LibraryEmptyOnboarding } from './LibraryEmptyOnboarding';
-
-const Navbar = lazy(() => import('./Navbar').then((m) => ({ default: m.Navbar })));
-import { Badge } from './ui/badge';
+import { Navbar } from './Navbar';
 import { Button } from './ui/button';
-import { SegmentedControl } from './ui/segmented-control';
-import {
-  Dialog,
-  DialogContent,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from './ui/dialog';
 import { Input } from './ui/input';
-import { Label } from './ui/label';
 
-type ContentFilter = 'all' | 'imported' | 'links' | 'pdfs';
+type Inbox = { items: SavedLink[]; total: number; nextOffset: number | null };
 
-const contentFilters: Array<{ id: ContentFilter; label: string }> = [
-  { id: 'all', label: 'All' },
-  { id: 'imported', label: 'Imported' },
-  { id: 'links', label: 'Links' },
-  { id: 'pdfs', label: 'PDFs' },
-];
-
-function LoadingLibrarySkeleton() {
-  return (
-    <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">
-      {Array.from({ length: 6 }).map((_, index) => (
-        <div
-          key={index}
-          className="overflow-hidden rounded-xl border border-zinc-800 bg-zinc-950 p-0"
-        >
-          <div className="space-y-4 p-5">
-            <div className="flex items-center justify-between gap-3">
-              <div className="flex items-center gap-2">
-                <div className="h-9 w-9 animate-pulse rounded-lg bg-white/10" />
-                <div className="h-3 w-28 animate-pulse rounded-md bg-white/10" />
-              </div>
-              <div className="h-5 w-14 animate-pulse rounded-md bg-white/10" />
-            </div>
-            <div className="space-y-2">
-              <div className="h-5 w-11/12 animate-pulse rounded-md bg-white/15" />
-              <div className="h-5 w-7/12 animate-pulse rounded-md bg-white/10" />
-            </div>
-            <div className="flex gap-2">
-              <div className="h-5 w-16 animate-pulse rounded-md bg-white/10" />
-              <div className="h-5 w-20 animate-pulse rounded-md bg-white/10" />
-            </div>
-          </div>
-          <div className="flex items-center justify-between border-t border-zinc-800 px-5 py-3">
-            <div className="h-8 w-24 animate-pulse rounded-md bg-white/10" />
-            <div className="h-3 w-20 animate-pulse rounded-md bg-white/10" />
-          </div>
-        </div>
-      ))}
-    </div>
-  );
+async function request<T>(url: string, options?: RequestInit): Promise<T> {
+  const response = await fetch(url, { ...options, cache: 'no-store' });
+  const body = await response.json();
+  if (!response.ok) throw new Error(body.error || 'Could not complete this action.');
+  return body as T;
 }
 
 export default function HomeClient() {
-  const [pendingImport, setPendingImport] = useState(readImportDraft);
-  const [deletingId, setDeletingId] = useState<string | null>(null);
-  const [activeToolbarId, setActiveToolbarId] = useState<string | null>(null);
-  const [pendingDeleteId, setPendingDeleteId] = useState<string | null>(null);
-  const [selectedListId, setSelectedListId] = useState<string>('all');
-  const [selectedTag, setSelectedTag] = useState<string | null>(null);
-  const [contentFilter, setContentFilter] = useState<ContentFilter>('all');
-  const [newListName, setNewListName] = useState('');
-  const [isListModalOpen, setIsListModalOpen] = useState(false);
-  const [showAddArticleDialog, setShowAddArticleDialog] = useState(Boolean(pendingImport));
-  const [addArticleMode, setAddArticleMode] = useState<AddArticleMode>('url');
-
-  const navigate = useNavigate();
-  const queryClient = useQueryClient();
-  const { user, loading: authLoading } = useAuth();
-  const isLocalMode = !authLoading && !user;
-  const dataMode = isLocalMode ? 'local' : 'cloud';
-  const articleQueryKey = ['articles', dataMode] as const;
-
-  const openAddArticleDialog = (mode: AddArticleMode = 'url') => {
-    setAddArticleMode(mode);
-    setShowAddArticleDialog(true);
-  };
-
-  const handleArticleCardClick = (event: MouseEvent<HTMLElement>, articleId: string) => {
-    if (event.defaultPrevented) return;
-
-    const target = event.target;
-    if (
-      target instanceof HTMLElement &&
-      target.closest('button, a, input, textarea, select, [role="menuitem"]')
-    ) {
-      return;
-    }
-
-    navigate(`/reader/${articleId}`);
-  };
-
-  const {
-    data: articles = [],
-    isLoading,
-    error: articlesError,
-  } = useQuery<ArticleSummary[]>({
-    queryKey: articleQueryKey,
-    queryFn: async () => {
-      if (isLocalMode) {
-        const { getLocalArticles } = await import('../lib/local-library');
-        const localArticles = await getLocalArticles();
-        return localArticles.map((article) => ({
-          ...article,
-          notesCount: article.notesCount ?? article.notes?.length ?? 0,
-        }));
-      }
-
-      const response = await fetch('/api/articles', { cache: 'no-store' });
-      if (!response.ok) {
-        const err = new Error('Failed to fetch articles');
-        (err as Error & { status: number }).status = response.status;
-        throw err;
-      }
-      return response.json();
+  const { user, loading } = useAuth();
+  const client = useQueryClient();
+  const [filter, setFilter] = useState('unread');
+  const [query, setQuery] = useState('');
+  const [offset, setOffset] = useState(0);
+  const [adding, setAdding] = useState(false);
+  const [url, setUrl] = useState('');
+  const [title, setTitle] = useState('');
+  const [notice, setNotice] = useState('');
+  const inbox = useQuery({
+    queryKey: ['links', user?.id, filter, query, offset],
+    enabled: Boolean(user),
+    queryFn: () => {
+      const params = new URLSearchParams({ q: query, offset: String(offset) });
+      if (filter !== 'all') params.set('status', filter);
+      return request<Inbox>(`/api/links?${params}`);
     },
-    enabled: !authLoading,
   });
-
-  const { data: lists = [], error: listsError } = useQuery<List[]>({
-    queryKey: ['lists', dataMode],
-    queryFn: async () => {
-      if (isLocalMode) {
-        const { getLocalLists } = await import('../lib/local-library');
-        return getLocalLists();
-      }
-
-      const response = await fetch('/api/lists', { cache: 'no-store' });
-      if (!response.ok) {
-        const err = new Error('Failed to fetch lists');
-        (err as Error & { status: number }).status = response.status;
-        throw err;
-      }
-      return response.json();
-    },
-    enabled: !authLoading,
-  });
-
-  const { data: allTags = [] } = useQuery<string[]>({
-    queryKey: ['tags', dataMode],
-    queryFn: async () => {
-      if (isLocalMode) {
-        const { getLocalTags } = await import('../lib/local-library');
-        return getLocalTags();
-      }
-
-      const response = await fetch('/api/tags', { cache: 'no-store' });
-      if (!response.ok) {
-        throw new Error('Failed to fetch tags');
-      }
-      const data = await response.json();
-      return data.tags;
-    },
-    enabled: !authLoading,
-  });
-
-  const importMutation = useMutation({
-    mutationFn: async ({ url: rawUrl, category }: { url: string; category?: string }) => {
-      let properUrl = rawUrl;
-      if (!/^https?:\/\//i.test(rawUrl)) {
-        properUrl = `https://${rawUrl}`;
-      }
-
-      const response = await fetch(`/api/snapshot?url=${encodeURIComponent(properUrl)}`);
-      if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}));
-        throw new Error(errorData.error || 'Failed to fetch article content');
-      }
-
-      const data = await response.json();
-      const article = data.snapshot;
-      const snapshotTitle = (article.title || '').trim() || properUrl;
-
-      if (isLocalMode) {
-        const lib = await import('../lib/local-library');
-        const saved = await lib.saveLocalArticle({
-          url: properUrl,
-          title: snapshotTitle,
-          byline: article.byline,
-          content: article.content,
-          type: 'article',
-          listIds: selectedListId !== 'all' ? [selectedListId] : [],
-          category,
-          readingTimeMinutes: lib.estimateReadingTimeFromHtml(article.content),
-        });
-        return saved.id;
-      }
-
-      const saveResponse = await fetch('/api/articles', {
+  const save = useMutation({
+    mutationFn: () =>
+      request<{ existing: boolean }>('/api/links', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          url: properUrl,
-          title: snapshotTitle,
-          byline: article.byline,
-          content: article.content,
-          listIds: selectedListId !== 'all' ? [selectedListId] : [],
-          category,
-        }),
-      });
-
-      if (!saveResponse.ok) {
-        throw new Error('Failed to save article');
+        body: JSON.stringify({ url, title }),
+      }),
+    onSuccess: async (result) => {
+      setAdding(false);
+      setUrl('');
+      setTitle('');
+      setOffset(0);
+      setFilter('all');
+      setQuery('');
+      if (!result.existing) {
+        trackCoreAction('source_saved');
+        trackActivatedOnce();
       }
-
-      const savedData = await saveResponse.json();
-      return savedData.id as string;
-    },
-    onSuccess: () => {
-      // Analytics — core action: a source was saved. `activated` once.
-      trackActivatedOnce();
-      trackCoreAction('source_saved');
-      queryClient.invalidateQueries({ queryKey: ['articles'] });
-      queryClient.invalidateQueries({ queryKey: ['tags'] });
-      setShowAddArticleDialog(false);
+      setNotice(result.existing ? 'This link is already saved.' : 'Link saved.');
+      await client.invalidateQueries({ queryKey: ['links'] });
     },
   });
-
-  const pdfUploadMutation = useMutation({
-    mutationFn: async ({ file, category }: { file: File; category?: string }) => {
-      const formData = new FormData();
-      formData.append('file', file);
-      formData.append('listIds', JSON.stringify(selectedListId !== 'all' ? [selectedListId] : []));
-      if (category) {
-        formData.append('category', category);
-      }
-
-      if (isLocalMode) {
-        const lib = await import('../lib/local-library');
-        const pdfDataUrl = await lib.fileToDataUrl(file);
-        const saved = await lib.saveLocalArticle({
-          url: `local-pdf://${file.name}`,
-          title: file.name.replace(/\.pdf$/i, '') || file.name,
-          byline: null,
-          content: `<p>${file.name}</p>`,
-          type: 'pdf',
-          pdfUrl: pdfDataUrl,
-          pdfDataUrl,
-          listIds: selectedListId !== 'all' ? [selectedListId] : [],
-          category,
-          pdfMetadata: {
-            fileSize: file.size,
-          },
-        });
-        return saved.id;
-      }
-
-      const response = await fetch('/api/pdf/upload', {
-        method: 'POST',
-        body: formData,
-      });
-
-      if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}));
-        throw new Error(errorData.error || 'Failed to import PDF');
-      }
-
-      const data = await response.json();
-      return data.id as string;
-    },
-    onSuccess: () => {
-      // Analytics — core action: a PDF source was saved. `activated` once.
-      trackActivatedOnce();
-      trackCoreAction('source_saved');
-      queryClient.invalidateQueries({ queryKey: ['articles'] });
-      queryClient.invalidateQueries({ queryKey: ['tags'] });
-      setShowAddArticleDialog(false);
-    },
-  });
-
-  const saveLinkMutation = useMutation({
-    mutationFn: async ({
-      url: rawUrl,
-      title,
-      category,
-    }: {
-      url: string;
-      title?: string;
-      category?: string;
-    }) => {
-      let properUrl = rawUrl;
-      if (!/^https?:\/\//i.test(rawUrl)) {
-        properUrl = `https://${rawUrl}`;
-      }
-
-      if (isLocalMode) {
-        const lib = await import('../lib/local-library');
-        return lib.saveLocalArticle({
-          url: properUrl,
-          title: title?.trim() || properUrl,
-          content: '',
-          type: 'link',
-          listIds: selectedListId !== 'all' ? [selectedListId] : [],
-          category,
-        });
-      }
-
-      const response = await fetch('/api/articles', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          url: properUrl,
-          title: title?.trim() || properUrl,
-          content: '',
-          type: 'link',
-          listIds: selectedListId !== 'all' ? [selectedListId] : [],
-          category,
-        }),
-      });
-
-      if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}));
-        throw new Error(errorData.error || 'Failed to save link');
-      }
-
-      return response.json();
-    },
-    onSuccess: () => {
-      // Analytics — core action: a link source was saved. `activated` once.
-      trackActivatedOnce();
-      trackCoreAction('source_saved');
-      queryClient.invalidateQueries({ queryKey: ['articles'] });
-      queryClient.invalidateQueries({ queryKey: ['tags'] });
-      setShowAddArticleDialog(false);
-    },
-  });
-
-  const deleteMutation = useMutation({
-    mutationFn: async (articleId: string) => {
-      if (isLocalMode) {
-        const lib = await import('../lib/local-library');
-        await lib.deleteLocalArticle(articleId);
-        return;
-      }
-
-      const response = await fetch(`/api/articles/${articleId}`, {
-        method: 'DELETE',
-      });
-      if (!response.ok) {
-        throw new Error('Failed to delete article');
-      }
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['articles'] });
-      queryClient.invalidateQueries({ queryKey: ['tags'] });
-    },
-    onSettled: () => {
-      setDeletingId(null);
-    },
-  });
-
-  const handleUrlSubmit = async (url: string, category?: string) => {
-    if (!user) {
-      saveImportDraft(url, category);
-      navigate('/login');
-      return;
-    }
-    try {
-      const newArticleId = await importMutation.mutateAsync({ url, category });
-      clearImportDraft();
-      navigate(`/reader/${newArticleId}`);
-    } catch (error) {
-      console.error('Import failed:', error);
-      throw error; // Re-throw so AddArticleDialog can display it
-    }
-  };
-
-  const handlePDFUpload = async (file: File, category?: string) => {
-    try {
-      const newArticleId = await pdfUploadMutation.mutateAsync({ file, category });
-      navigate(`/reader/${newArticleId}`);
-    } catch (error) {
-      console.error('PDF processing failed:', error);
-      throw error; // Re-throw so AddArticleDialog can display it
-    }
-  };
-
-  const handleSaveLink = async (url: string, title?: string, category?: string) => {
-    try {
-      await saveLinkMutation.mutateAsync({ url, title, category });
-    } catch (error) {
-      console.error('Save link failed:', error);
-      throw error;
-    }
-  };
-
-  const isImporting =
-    importMutation.isPending || pdfUploadMutation.isPending || saveLinkMutation.isPending;
-
-  const toggleStatus = useMutation({
-    mutationFn: async ({ id, status }: { id: string; status: ArticleStatus }) => {
-      if (isLocalMode) {
-        const lib = await import('../lib/local-library');
-        await lib.updateLocalStatus(id, status);
-        return { id, status };
-      }
-
-      const response = await fetch(`/api/articles/${id}`, {
+  const mark = useMutation({
+    mutationFn: (item: SavedLink) =>
+      request(`/api/links/${encodeURIComponent(item.id)}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ status }),
-      });
-      if (!response.ok) {
-        throw new Error('Failed to update status');
-      }
-      return { id, status };
-    },
-    onSuccess: ({ id, status }) => {
-      if (isLocalMode) {
-        queryClient.invalidateQueries({ queryKey: ['articles'] });
-        return;
-      }
-
-      queryClient.setQueryData<ArticleSummary[]>(articleQueryKey, (prev) =>
-        Array.isArray(prev)
-          ? prev.map((article) => (article.id === id ? { ...article, status } : article))
-          : prev
-      );
+        body: JSON.stringify({ status: item.status === 'read' ? 'unread' : 'read' }),
+      }),
+    onSuccess: async () => {
+      setOffset(0);
+      await client.invalidateQueries({ queryKey: ['links'] });
     },
   });
 
-  const createListMutation = useMutation({
-    mutationFn: async (name: string) => {
-      if (isLocalMode) {
-        const lib = await import('../lib/local-library');
-        await lib.createLocalList(name);
-        return;
-      }
-
-      const response = await fetch('/api/lists', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ name }),
-      });
-      if (!response.ok) {
-        throw new Error('Failed to create list');
-      }
-    },
-    onSuccess: () => {
-      setNewListName('');
-      setIsListModalOpen(false);
-      queryClient.invalidateQueries({ queryKey: ['lists'] });
-    },
-  });
-
-  const deleteListMutation = useMutation({
-    mutationFn: async (listId: string) => {
-      if (isLocalMode) {
-        const lib = await import('../lib/local-library');
-        await lib.deleteLocalList(listId);
-        return;
-      }
-
-      const response = await fetch(`/api/lists/${listId}`, {
-        method: 'DELETE',
-      });
-      if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}));
-        throw new Error(errorData.error || 'Failed to delete list');
-      }
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['lists'] });
-      queryClient.invalidateQueries({ queryKey: ['articles'] });
-      setSelectedListId('all');
-    },
-  });
-
-  const addToListMutation = useMutation({
-    mutationFn: async ({ articleId, listId }: { articleId: string; listId: string }) => {
-      if (isLocalMode) {
-        const lib = await import('../lib/local-library');
-        await lib.addLocalArticleToList(articleId, listId);
-        return { articleId, listId };
-      }
-
-      const response = await fetch(`/api/articles/${articleId}/lists`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ listId }),
-      });
-      if (!response.ok) {
-        throw new Error('Failed to add to list');
-      }
-      return { articleId, listId };
-    },
-    onSuccess: ({ articleId, listId }) => {
-      if (isLocalMode) {
-        queryClient.invalidateQueries({ queryKey: ['articles'] });
-        return;
-      }
-
-      queryClient.setQueryData<ArticleSummary[]>(articleQueryKey, (prev) =>
-        Array.isArray(prev)
-          ? prev.map((article) =>
-              article.id === articleId
-                ? {
-                    ...article,
-                    listIds: [...(article.listIds || []), listId],
-                  }
-                : article
-            )
-          : prev
-      );
-    },
-  });
-
-  const removeFromListMutation = useMutation({
-    mutationFn: async ({ articleId, listId }: { articleId: string; listId: string }) => {
-      if (isLocalMode) {
-        const lib = await import('../lib/local-library');
-        await lib.removeLocalArticleFromList(articleId, listId);
-        return { articleId, listId };
-      }
-
-      const response = await fetch(`/api/articles/${articleId}/lists?listId=${listId}`, {
-        method: 'DELETE',
-      });
-      if (!response.ok) {
-        throw new Error('Failed to remove from list');
-      }
-      return { articleId, listId };
-    },
-    onSuccess: ({ articleId, listId }) => {
-      if (isLocalMode) {
-        queryClient.invalidateQueries({ queryKey: ['articles'] });
-        return;
-      }
-
-      queryClient.setQueryData<ArticleSummary[]>(articleQueryKey, (prev) =>
-        Array.isArray(prev)
-          ? prev.map((article) =>
-              article.id === articleId
-                ? {
-                    ...article,
-                    listIds: (article.listIds || []).filter((id) => id !== listId),
-                  }
-                : article
-            )
-          : prev
-      );
-    },
-  });
-
-  const handleDelete = async (articleId: string) => {
-    setDeletingId(articleId);
-    setPendingDeleteId(null);
-    setActiveToolbarId(null);
-    try {
-      await deleteMutation.mutateAsync(articleId);
-    } catch (error) {
-      const message = error instanceof Error ? error.message : 'Failed to delete article';
-      console.error(error);
-      alert(message);
-    }
-  };
-
-  const articlePendingDelete = pendingDeleteId
-    ? articles.find((article) => article.id === pendingDeleteId)
-    : null;
-
-  const closeDeleteModal = () => {
-    if (deletingId) return;
-    setPendingDeleteId(null);
-  };
-
-  const filteredArticles = articles
-    .filter((article) =>
-      selectedListId === 'all' ? true : article.listIds?.includes(selectedListId)
-    )
-    .filter((article) => {
-      if (contentFilter === 'all') return true;
-      if (contentFilter === 'imported') return article.type !== 'link';
-      if (contentFilter === 'links') return article.type === 'link';
-      return article.type === 'pdf';
-    })
-    .filter((article) => (selectedTag ? article.tags?.includes(selectedTag) : true));
-
-  const filterCounts = {
-    all: articles.length,
-    imported: articles.filter((article) => article.type !== 'link').length,
-    links: articles.filter((article) => article.type === 'link').length,
-    pdfs: articles.filter((article) => article.type === 'pdf').length,
-  };
-
-  const activeListName =
-    selectedListId === 'all' ? 'Library' : lists.find((l) => l.id === selectedListId)?.name;
-  const unreadCount = articles.filter((article) => article.status !== 'read').length;
-  const notesCount = articles.reduce((total, article) => total + article.notesCount, 0);
-  const readCount = articles.length - unreadCount;
-  const unreadMinutes = articles
-    .filter((article) => article.status !== 'read')
-    .reduce((sum, article) => sum + (article.readingTimeMinutes ?? 0), 0);
-  const nextUnreadArticle =
-    articles.find((article) => article.status !== 'read' && article.type !== 'link') ??
-    articles.find((article) => article.status !== 'read');
+  if (loading)
+    return (
+      <main className="grid min-h-screen place-items-center bg-[var(--gray-1)] text-[var(--gray-11)]">
+        <p role="status">Loading Reader…</p>
+      </main>
+    );
+  if (!user) return <Navigate to="/login" replace />;
 
   return (
-    <div className="reader-shell min-h-screen font-sans text-gray-100">
-      <Suspense fallback={null}>
-        <Navbar />
-      </Suspense>
-      <div className="relative flex">
-        {/* Sidebar for Lists */}
-        <aside className="sticky top-[65px] hidden h-[calc(100vh-65px)] w-[17rem] shrink-0 space-y-4 overflow-y-auto border-r border-zinc-800 bg-zinc-950 p-5 lg:block">
-          <div className="mb-6">
-            <h3 className="mb-3 text-xs font-semibold tracking-[0.18em] text-gray-500 uppercase">
-              Navigate
-            </h3>
-            <Link
-              to="/library"
-              className="flex w-full items-center gap-3 rounded-lg border border-zinc-800 bg-zinc-900 px-3 py-2.5 text-sm font-medium text-zinc-100"
-            >
-              <FileText size={18} />
-              Library
-            </Link>
-            <Link
-              to="/board"
-              className="mt-2 flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium text-[var(--gray-11)] transition-colors hover:bg-zinc-900 hover:text-[var(--gray-12)]"
-            >
-              <LayoutDashboard size={18} />
-              Boards
-            </Link>
-          </div>
-          <div className="mb-4 border-t border-zinc-800" />
-          <div className="mb-6 flex items-center justify-between">
-            <h3 className="text-xs font-semibold tracking-[0.18em] text-gray-500 uppercase">
-              Library
-            </h3>
-            <Dialog open={isListModalOpen} onOpenChange={setIsListModalOpen}>
-              <DialogTrigger asChild>
-                <Button size="sm" variant="outline" className="h-7 gap-1 px-2 text-xs">
-                  <Plus className="h-3.5 w-3.5" />
-                  New
-                </Button>
-              </DialogTrigger>
-              <DialogContent>
-                <DialogHeader>
-                  <DialogTitle>Create list</DialogTitle>
-                  <p className="text-sm text-gray-400">Organize your articles into a list.</p>
-                </DialogHeader>
-                <form
-                  className="space-y-4"
-                  onSubmit={(e) => {
-                    e.preventDefault();
-                    if (!newListName.trim() || createListMutation.isPending) return;
-                    createListMutation.mutate(newListName.trim());
-                  }}
-                >
-                  <div className="space-y-2">
-                    <Label htmlFor="list-name">List name</Label>
-                    <Input
-                      id="list-name"
-                      value={newListName}
-                      onChange={(e) => setNewListName(e.target.value)}
-                      placeholder="e.g. Research, Inspiration"
-                      autoFocus
-                    />
-                  </div>
-                  <DialogFooter className="flex justify-end gap-2">
-                    <Button variant="ghost" type="button" onClick={() => setIsListModalOpen(false)}>
-                      Cancel
-                    </Button>
-                    <Button type="submit" disabled={createListMutation.isPending}>
-                      {createListMutation.isPending ? 'Creating…' : 'Create'}
-                    </Button>
-                  </DialogFooter>
-                </form>
-              </DialogContent>
-            </Dialog>
-          </div>
-
-          {/* All Articles */}
-          <button
-            onClick={() => setSelectedListId('all')}
-            className={`flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors ${
-              selectedListId === 'all'
-                ? 'bg-zinc-900 text-zinc-100'
-                : 'text-[var(--gray-11)] hover:bg-zinc-900 hover:text-[var(--gray-12)]'
-            }`}
-          >
-            <FileText size={18} />
-            All Items
-          </button>
-
-          {/* Default Lists */}
-          {lists
-            .filter((list) => list.isDefault)
-            .map((list) => (
-              <button
-                key={list.id}
-                onClick={() => setSelectedListId(list.id)}
-                className={`flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors ${
-                  selectedListId === list.id
-                    ? 'bg-zinc-900 text-zinc-100'
-                    : 'text-[var(--gray-11)] hover:bg-zinc-900 hover:text-[var(--gray-12)]'
-                }`}
-              >
-                {list.icon === 'heart' && <Heart size={18} />}
-                {list.icon === 'clock' && <Clock size={18} />}
-                {list.name}
-              </button>
-            ))}
-
-          {/* Custom Lists */}
-          {lists.filter((list) => !list.isDefault).length > 0 && (
-            <>
-              <div className="my-4 border-t border-zinc-800" />
-              {lists
-                .filter((list) => !list.isDefault)
-                .map((list) => (
-                  <div key={list.id} className="flex items-center gap-2">
-                    <button
-                      onClick={() => setSelectedListId(list.id)}
-                      className={`flex flex-1 items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors ${
-                        selectedListId === list.id
-                          ? 'bg-zinc-900 text-zinc-100'
-                          : 'text-[var(--gray-11)] hover:bg-zinc-900 hover:text-[var(--gray-12)]'
-                      }`}
-                    >
-                      <div className="h-2 w-2 rounded-md bg-gray-500" />
-                      {list.name}
-                    </button>
-                    {selectedListId === list.id && !list.isDefault && (
-                      <Button
-                        size="sm"
-                        variant="ghost"
-                        className="h-8 w-8 p-0 text-red-400 hover:text-red-300"
-                        onClick={() => deleteListMutation.mutate(list.id)}
-                        disabled={deleteListMutation.isPending}
-                      >
-                        <X className="h-4 w-4" />
-                      </Button>
-                    )}
-                  </div>
-                ))}
-            </>
-          )}
-
-          {listsError && <span className="text-xs text-red-400">Failed to load lists</span>}
-        </aside>
-
-        {/* Main Content */}
-        <div className="min-w-0 flex-1 p-4 sm:p-6 lg:p-8">
-          <div className="mx-auto max-w-6xl space-y-6">
-            <header className="reader-hero overflow-hidden rounded-xl border border-zinc-800 bg-zinc-950">
-              <div className="grid gap-6 p-5 sm:p-7 lg:grid-cols-[minmax(0,1fr)_20rem] lg:p-8">
-                <div className="min-w-0">
-                  <div className="mb-4 inline-flex items-center gap-2 rounded-md border border-zinc-800 bg-zinc-900 px-3 py-1 text-xs font-medium text-[var(--gray-11)] ">
-                    <BookOpen className="h-3.5 w-3.5 text-[var(--accent-11)]" />
-                    {isLocalMode ? 'Local browser library' : 'Synced research library'}
-                  </div>
-                  <h1 className="max-w-3xl text-3xl leading-tight font-semibold text-balance text-[var(--gray-12)] sm:text-4xl">
-                    {activeListName || 'Library'}
-                  </h1>
-                  <p className="mt-4 max-w-2xl text-base leading-7 text-[var(--gray-11)]">
-                    {articles.length === 0
-                      ? 'Save links, import articles, and keep PDFs inside a calm reading workspace.'
-                      : `${articles.length} ${articles.length === 1 ? 'source' : 'sources'} ready across links, PDFs, notes, and imported articles.`}
-                  </p>
-                  <div className="mt-6 flex flex-col gap-3 sm:flex-row sm:items-center">
-                    <Button
-                      size="lg"
-                      onClick={() => openAddArticleDialog('url')}
-                      className="reader-primary-button w-full gap-2 sm:w-auto"
-                    >
-                      <Plus className="h-4 w-4" />
-                      Add Source
-                    </Button>
-                    {nextUnreadArticle && (
-                      <Link
-                        to={
-                          nextUnreadArticle.type === 'link'
-                            ? nextUnreadArticle.url
-                            : `/reader/${nextUnreadArticle.id}`
-                        }
-                        target={nextUnreadArticle.type === 'link' ? '_blank' : undefined}
-                        rel={nextUnreadArticle.type === 'link' ? 'noopener noreferrer' : undefined}
-                        className="w-full sm:w-auto"
-                      >
-                        <Button size="lg" variant="secondary" className="w-full gap-2 sm:w-auto">
-                          <BookOpen className="h-4 w-4" />
-                          Continue
-                          <ArrowRight className="h-4 w-4" />
-                        </Button>
-                      </Link>
-                    )}
-                  </div>
-                  {isLocalMode && (
-                    <Badge variant="accent" className="mt-4 rounded-md">
-                      Local only on this browser
-                    </Badge>
-                  )}
-                </div>
-
-                <div className="grid gap-3 sm:grid-cols-3 lg:grid-cols-1">
-                  {[
-                    { label: 'Read', value: `${readCount}/${articles.length}`, icon: CheckCircle2 },
-                    { label: 'Highlights', value: notesCount, icon: Tags },
-                    {
-                      label: 'Left to read',
-                      value:
-                        unreadMinutes > 0
-                          ? unreadMinutes < 60
-                            ? `${unreadMinutes} min`
-                            : `${Math.floor(unreadMinutes / 60)} hr${
-                                unreadMinutes % 60 > 0 ? ` ${unreadMinutes % 60} min` : ''
-                              }`
-                          : '0 min',
-                      icon: Clock,
-                    },
-                  ].map((stat) => {
-                    const StatIcon = stat.icon;
-                    return (
-                      <div
-                        key={stat.label}
-                        className="rounded-lg border border-zinc-800 bg-zinc-900 p-4"
-                      >
-                        <div className="flex items-center justify-between gap-3">
-                          <p className="text-xs font-semibold tracking-[0.16em] text-[var(--gray-10)] uppercase">
-                            {stat.label}
-                          </p>
-                          <StatIcon className="h-4 w-4 text-[var(--accent-11)]" />
-                        </div>
-                        <p className="mt-2 text-2xl font-semibold text-[var(--gray-12)]">
-                          {stat.value}
-                        </p>
-                      </div>
-                    );
-                  })}
-                </div>
-              </div>
-            </header>
-
-            {articles.length > 0 && (
-              <div className="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-zinc-800 bg-zinc-950 p-3">
-                <SegmentedControl
-                  value={contentFilter}
-                  onValueChange={(value) => setContentFilter(value as ContentFilter)}
-                  options={contentFilters.map((filter) => ({
-                    value: filter.id,
-                    label: (
-                      <>
-                        {filter.label}
-                        <span className="ml-1.5 text-[var(--gray-10)]">
-                          {filterCounts[filter.id]}
-                        </span>
-                      </>
-                    ),
-                  }))}
-                />
-                {(selectedTag || contentFilter !== 'all' || selectedListId !== 'all') && (
-                  <button
-                    onClick={() => {
-                      setSelectedListId('all');
-                      setSelectedTag(null);
-                      setContentFilter('all');
-                    }}
-                    className="rounded-md border border-white/10 bg-black/10 px-3 py-1.5 text-xs text-[var(--gray-11)] transition-colors hover:bg-zinc-900 hover:text-[var(--gray-12)]"
-                  >
-                    Clear filters
-                  </button>
-                )}
-              </div>
-            )}
-
-            {articles.length > 0 && allTags.length > 0 && (
-              <div className="-mx-2 flex flex-nowrap items-center gap-2 overflow-x-auto px-2 pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-                <span className="inline-flex shrink-0 items-center gap-1.5 text-xs font-semibold tracking-[0.16em] text-[var(--gray-11)] uppercase">
-                  <Tags className="h-3.5 w-3.5 text-[var(--accent-11)]" />
-                  Tags
-                </span>
-                {allTags.map((tag) => (
-                  <button
-                    key={tag}
-                    onClick={() => setSelectedTag(selectedTag === tag ? null : tag)}
-                    className={`inline-flex shrink-0 items-center rounded-md border px-3 py-1 text-xs font-medium  transition-all ${
-                      selectedTag === tag
-                        ? 'ring-1 ring-[var(--accent-9)] ring-offset-1 ring-offset-[#0d0d0c]'
-                        : ''
-                    } ${getTagColor(tag)} hover:opacity-80`}
-                  >
-                    {tag}
-                    {selectedTag === tag && <X className="ml-1 h-3 w-3" />}
-                  </button>
-                ))}
-              </div>
-            )}
-
-            {articlesError && (
-              <div className="mb-6 rounded-md border border-red-800 bg-red-950/80 px-4 py-3 text-red-200">
-                Failed to load articles. Please try again.
-              </div>
-            )}
-
-            {authLoading || isLoading ? (
-              <LoadingLibrarySkeleton />
-            ) : (
-              <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">
-                {articles.length === 0 ? (
-                  <LibraryEmptyOnboarding
-                    onAddSource={openAddArticleDialog}
-                    importRequiresSignIn={isLocalMode}
-                  />
-                ) : filteredArticles.length === 0 ? (
-                  <div className="col-span-full rounded-lg border border-dashed border-zinc-800 bg-zinc-950 p-0">
-                    <div className="mx-auto flex max-w-xl flex-col items-center px-6 py-16 text-center">
-                      <p className="mb-2 text-sm font-medium text-[var(--gray-11)] uppercase">
-                        No matching sources
-                      </p>
-                      <h2 className="text-xl font-medium text-[var(--gray-12)]">
-                        Nothing matches this view
-                      </h2>
-                      <p className="mt-3 text-base text-[var(--gray-11)]">
-                        Adjust the type, list, or tag filters to bring sources back into view.
-                      </p>
-                      <Button
-                        variant="secondary"
-                        className="mt-6"
-                        onClick={() => {
-                          setSelectedListId('all');
-                          setSelectedTag(null);
-                          setContentFilter('all');
-                        }}
-                      >
-                        Clear all filters
-                      </Button>
-                    </div>
-                  </div>
-                ) : (
-                  filteredArticles.map((article) => (
-                    <ArticleCard
-                      key={article.id}
-                      article={article}
-                      lists={lists}
-                      activeToolbarId={activeToolbarId}
-                      deletingId={deletingId}
-                      actions={{
-                        onToolbarOpenChange: setActiveToolbarId,
-                        onCardClick: handleArticleCardClick,
-                        onTagClick: setSelectedTag,
-                        onToggleStatus: (id, status) => toggleStatus.mutate({ id, status }),
-                        onAddToList: (articleId, listId) =>
-                          addToListMutation.mutate({ articleId, listId }),
-                        onRemoveFromList: (articleId, listId) =>
-                          removeFromListMutation.mutate({ articleId, listId }),
-                        onDeleteRequest: (articleId) => {
-                          setPendingDeleteId(articleId);
-                          setActiveToolbarId(null);
-                        },
-                      }}
-                    />
-                  ))
-                )}
-              </div>
-            )}
-          </div>
-        </div>
-      </div>
-
-      {showAddArticleDialog ? (
-        <Suspense fallback={null}>
-          <AddArticleDialog
-            key={addArticleMode}
-            open={showAddArticleDialog}
-            onOpenChange={(open) => {
-              setShowAddArticleDialog(open);
-              if (!open) {
-                clearImportDraft();
-                setPendingImport(null);
-              }
-            }}
-            onSubmitUrl={handleUrlSubmit}
-            onSaveLink={handleSaveLink}
-            onUploadPDF={handlePDFUpload}
-            initialMode={addArticleMode}
-            initialUrl={pendingImport?.url}
-            initialCategory={pendingImport?.category}
-            importRequiresSignIn={!user}
-            isSubmitting={isImporting || authLoading}
-          />
-        </Suspense>
-      ) : null}
-
-      {articlePendingDelete && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center">
-          <div
-            className="absolute inset-0 bg-black/70 backdrop-blur-sm"
-            onClick={closeDeleteModal}
-          />
-          <div
-            className="relative mx-4 w-full max-w-md space-y-4 rounded-lg border border-[var(--gray-6)] bg-[var(--gray-2)] p-6 shadow-2xl"
-            onClick={(event) => {
-              event.stopPropagation();
-            }}
-          >
-            <div>
-              <h3 className="text-xl font-semibold text-white">
-                Delete{' '}
-                {articlePendingDelete.type === 'pdf'
-                  ? 'PDF'
-                  : articlePendingDelete.type === 'link'
-                    ? 'saved link'
-                    : 'article'}
-                ?
-              </h3>
-              <p className="mt-2 text-sm text-gray-400">
-                {articlePendingDelete.title || articlePendingDelete.url}
-              </p>
-            </div>
-            <p className="text-sm text-gray-500">
-              This removes the{' '}
-              {articlePendingDelete.type === 'pdf'
-                ? 'PDF'
-                : articlePendingDelete.type === 'link'
-                  ? 'saved link'
-                  : 'article'}{' '}
-              and all of its notes permanently. This action cannot be undone.
+    <div className="min-h-screen bg-[var(--gray-1)] text-[var(--gray-12)]">
+      <Navbar />
+      <main className="mx-auto max-w-3xl px-5 py-10 sm:px-6">
+        <div className="mb-8 flex items-start justify-between gap-4">
+          <div>
+            <h1 className="text-3xl font-semibold tracking-tight">Your links</h1>
+            <p className="mt-2 text-sm text-[var(--gray-10)]">
+              Save here. Pick them up in ChatGPT.
             </p>
-            <div className="flex justify-end gap-3">
-              <button
+          </div>
+          <Button
+            onClick={() => {
+              setAdding(!adding);
+              save.reset();
+              setNotice('');
+            }}
+          >
+            <Plus className="h-4 w-4" /> Add link
+          </Button>
+        </div>
+
+        {adding && (
+          <form
+            className="mb-8 space-y-4 rounded-xl border border-[var(--gray-5)] bg-[var(--gray-2)] p-5"
+            onSubmit={(event) => {
+              event.preventDefault();
+              save.mutate();
+            }}
+          >
+            <div className="space-y-2">
+              <label htmlFor="link-url" className="text-sm">
+                URL
+              </label>
+              <Input
+                id="link-url"
+                type="url"
+                required
+                placeholder="https://…"
+                value={url}
+                onChange={(event) => setUrl(event.target.value)}
+                disabled={save.isPending}
+                maxLength={4096}
+              />
+            </div>
+            <div className="space-y-2">
+              <label htmlFor="link-title" className="text-sm">
+                Title <span className="text-[var(--gray-9)]">(optional)</span>
+              </label>
+              <Input
+                id="link-title"
+                value={title}
+                onChange={(event) => setTitle(event.target.value)}
+                disabled={save.isPending}
+                maxLength={500}
+              />
+            </div>
+            {save.error && (
+              <p role="alert" className="text-sm text-red-400">
+                {save.error.message}
+              </p>
+            )}
+            <div className="flex justify-end gap-2">
+              <Button
                 type="button"
-                onClick={(event) => {
-                  event.stopPropagation();
-                  closeDeleteModal();
-                }}
-                disabled={Boolean(deletingId)}
-                className="rounded-md border border-[var(--gray-6)] px-4 py-2 text-gray-200 transition hover:bg-[var(--gray-3)] disabled:opacity-40"
+                variant="ghost"
+                disabled={save.isPending}
+                onClick={() => setAdding(false)}
               >
                 Cancel
-              </button>
-              <button
-                type="button"
-                onClick={(event) => {
-                  event.stopPropagation();
-                  void handleDelete(articlePendingDelete.id);
-                }}
-                disabled={deletingId === articlePendingDelete.id}
-                className="flex items-center gap-2 rounded-md bg-red-600 px-4 py-2 text-white transition hover:bg-red-500 disabled:opacity-40"
-              >
-                {deletingId === articlePendingDelete.id ? (
-                  <>
-                    <span className="h-4 w-4 animate-spin rounded-md border-2 border-white border-t-transparent" />
-                    Deleting...
-                  </>
-                ) : (
-                  'Delete'
-                )}
-              </button>
+              </Button>
+              <Button type="submit" disabled={save.isPending}>
+                {save.isPending ? 'Saving…' : 'Save link'}
+              </Button>
             </div>
+          </form>
+        )}
+        {notice && (
+          <p role="status" className="mb-4 text-sm text-[var(--accent-11)]">
+            {notice}
+          </p>
+        )}
+        <div className="mb-5 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+          <div className="flex gap-1" aria-label="Read status">
+            {['unread', 'read', 'all'].map((value) => (
+              <button
+                key={value}
+                type="button"
+                aria-pressed={filter === value}
+                onClick={() => {
+                  setFilter(value);
+                  setOffset(0);
+                }}
+                className={`min-h-10 rounded-lg px-3 text-sm capitalize ${filter === value ? 'bg-[var(--gray-4)] text-[var(--gray-12)]' : 'text-[var(--gray-10)] hover:bg-[var(--gray-3)]'}`}
+              >
+                {value}
+              </button>
+            ))}
+          </div>
+          <div className="relative sm:w-64">
+            <Search className="pointer-events-none absolute top-3 left-3 h-4 w-4 text-[var(--gray-9)]" />
+            <Input
+              aria-label="Search links"
+              placeholder="Search links"
+              className="pl-9"
+              value={query}
+              maxLength={500}
+              onChange={(event) => {
+                setQuery(event.target.value);
+                setOffset(0);
+              }}
+            />
           </div>
         </div>
-      )}
+        {mark.error && (
+          <p role="alert" className="mb-4 text-sm text-red-400">
+            {mark.error.message}
+          </p>
+        )}
+        {inbox.isPending ? (
+          <p role="status" className="py-12 text-center text-[var(--gray-9)]">
+            Loading links…
+          </p>
+        ) : inbox.error ? (
+          <div role="alert" className="py-8">
+            <p>{inbox.error.message}</p>
+            <Button className="mt-3" variant="outline" onClick={() => void inbox.refetch()}>
+              Try again
+            </Button>
+          </div>
+        ) : inbox.data?.items.length === 0 ? (
+          <div className="rounded-xl border border-dashed border-[var(--gray-6)] px-5 py-14 text-center">
+            <h2 className="text-lg font-medium">
+              {query
+                ? 'No matching links'
+                : filter === 'unread'
+                  ? 'Nothing unread'
+                  : 'No links here yet'}
+            </h2>
+            <p className="mt-2 text-sm text-[var(--gray-10)]">
+              {query
+                ? 'Try another title or URL.'
+                : 'Add a link above or save a page with the extension.'}
+            </p>
+          </div>
+        ) : (
+          <ul className="divide-y divide-[var(--gray-5)] border-y border-[var(--gray-5)]">
+            {inbox.data?.items.map((item) => (
+              <li key={item.id} className="flex items-center gap-4 py-5">
+                <a
+                  href={item.url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="group min-w-0 flex-1"
+                >
+                  <span className="flex items-start gap-2 text-base font-medium leading-6 break-words group-hover:text-[var(--accent-11)]">
+                    <span className="min-w-0">{item.title}</span>
+                    <ArrowUpRight className="mt-1 h-4 w-4 shrink-0 text-[var(--gray-9)]" />
+                  </span>
+                  <span className="mt-1 block truncate text-xs text-[var(--gray-9)]">
+                    {new URL(item.url).hostname} · {new Date(item.createdAt).toLocaleDateString()}
+                  </span>
+                </a>
+                <button
+                  type="button"
+                  disabled={mark.isPending}
+                  onClick={() => mark.mutate(item)}
+                  aria-label={`${item.status === 'read' ? 'Mark unread' : 'Mark read'}: ${item.title}`}
+                  title={item.status === 'read' ? 'Mark unread' : 'Mark read'}
+                  className="grid h-11 w-11 shrink-0 place-items-center rounded-lg border border-[var(--gray-5)] text-[var(--gray-10)] hover:bg-[var(--gray-3)] disabled:opacity-50"
+                >
+                  {mark.isPending && mark.variables?.id === item.id ? (
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                  ) : item.status === 'read' ? (
+                    <Undo2 className="h-4 w-4" />
+                  ) : (
+                    <Check className="h-4 w-4" />
+                  )}
+                </button>
+              </li>
+            ))}
+          </ul>
+        )}
+        {inbox.data && inbox.data.total > 0 && (
+          <div className="mt-5 flex items-center justify-between gap-3 text-sm text-[var(--gray-9)]">
+            <span>
+              {inbox.data.total} {inbox.data.total === 1 ? 'link' : 'links'}
+            </span>
+            <div className="flex gap-2">
+              <Button
+                variant="ghost"
+                disabled={offset === 0}
+                onClick={() => setOffset(Math.max(0, offset - 20))}
+              >
+                Previous
+              </Button>
+              <Button
+                variant="ghost"
+                disabled={inbox.data.nextOffset === null}
+                onClick={() => setOffset(inbox.data?.nextOffset ?? 0)}
+              >
+                Next
+              </Button>
+            </div>
+          </div>
+        )}
+      </main>
     </div>
   );
 }

@@ -1,3 +1,5 @@
+> Historical decision from the previous research-library product. See [current architecture](../overview.md).
+
 # ADR-0004: better-auth (Google OAuth via Drizzle Adapter)
 
 **Date:** 2026-04-25 (replaced Firebase Auth; brief Auth.js v5 detour settled on better-auth)

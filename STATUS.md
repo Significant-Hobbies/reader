@@ -1,5 +1,5 @@
-# Status
+# Reader status
 
-This legacy filename is retained as a compatibility pointer. Durable current and
-shipped product truth lives in [PROJECT_STATUS.md](PROJECT_STATUS.md). Open work
-is tracked only in [GitHub Issues](https://github.com/Significant-Hobbies/reader/issues).
+Reader is being reduced to a saved-link inbox with a Chrome capture extension and ChatGPT MCP retrieval/read-state updates.
+
+Source scope and the rollout boundary are recorded in [PROJECT_STATUS.md](PROJECT_STATUS.md). Deployment and live OAuth/ChatGPT verification are separate from local checks.

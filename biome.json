@@ -5,7 +5,11 @@
     "ultracite/biome/react",
     "ultracite/biome/vitest"
   ],
-  "vcs": { "enabled": true, "clientKind": "git", "useIgnoreFile": true },
+  "vcs": {
+    "enabled": true,
+    "clientKind": "git",
+    "useIgnoreFile": true
+  },
   "files": {
     "ignoreUnknown": true,
     "includes": [
@@ -35,11 +39,23 @@
     "lineEnding": "lf"
   },
   "css": {
-    "formatter": { "enabled": false },
-    "parser": { "tailwindDirectives": true }
+    "formatter": {
+      "enabled": false
+    },
+    "parser": {
+      "tailwindDirectives": true
+    }
   },
-  "html": { "formatter": { "enabled": false } },
-  "json": { "formatter": { "enabled": false } },
+  "html": {
+    "formatter": {
+      "enabled": false
+    }
+  },
+  "json": {
+    "formatter": {
+      "enabled": false
+    }
+  },
   "javascript": {
     "formatter": {
       "quoteStyle": "single",
@@ -106,7 +122,9 @@
         "useOptionalChain": "off",
         "useSimplifiedLogicExpression": "off"
       },
-      "nursery": { "useSortedClasses": "off" },
+      "nursery": {
+        "useSortedClasses": "off"
+      },
       "performance": {
         "noAwaitInLoops": "off",
         "noDelete": "off",
@@ -155,5 +173,20 @@
         "useSortedProperties": "off"
       }
     }
-  }
+  },
+  "overrides": [
+    {
+      "includes": [
+        "**/*.astro"
+      ],
+      "linter": {
+        "rules": {
+          "correctness": {
+            "noUnusedImports": "off",
+            "noUnusedVariables": "off"
+          }
+        }
+      }
+    }
+  ]
 }

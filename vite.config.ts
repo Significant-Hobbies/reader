@@ -4,22 +4,21 @@ import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react';
 import tailwindcss from '@tailwindcss/vite';
 
-/** Load extracted app.css without blocking first paint — static shells carry critical CSS. */
-function deferAppCss(): Plugin {
+import { isSpaRoute } from './src/lib/spa-route';
+
+function appRoutes(): Plugin {
+  const rewrite: import('vite').Connect.NextHandleFunction = (request, _response, next) => {
+    const pathname = new URL(request.url ?? '/', 'http://localhost').pathname;
+    if (isSpaRoute(pathname)) request.url = '/app.html';
+    next();
+  };
   return {
-    name: 'defer-app-css',
-    apply: 'build',
-    transformIndexHtml: {
-      order: 'post',
-      handler(html) {
-        return html.replace(
-          /<link rel="stylesheet" crossorigin href="(\/assets\/(?:app|bootstrap)-[^"]+\.css)">/,
-          [
-            '<link rel="preload" href="$1" as="style" onload="this.onload=null;this.rel=\'stylesheet\'">',
-            '<noscript><link rel="stylesheet" href="$1"></noscript>',
-          ].join('\n    ')
-        );
-      },
+    name: 'app-routes',
+    configureServer(server) {
+      server.middlewares.use(rewrite);
+    },
+    configurePreviewServer(server) {
+      server.middlewares.use(rewrite);
     },
   };
 }
@@ -35,7 +34,7 @@ export default defineConfig(() => ({
       },
     },
   },
-  plugins: [react(), tailwindcss(), deferAppCss()],
+  plugins: [react(), tailwindcss(), appRoutes()],
   css: {
     transformer: 'lightningcss',
     lightningcss: {

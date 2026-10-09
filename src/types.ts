@@ -5,7 +5,7 @@ interface NoteAnchor {
   pageNumber?: number; // For PDF annotations
 }
 
-export interface ElementAnchor {
+interface ElementAnchor {
   articleId: string;
   websiteNodeId: string;
   elementIndex: number;
@@ -26,8 +26,6 @@ export interface AIChatMessage {
   elementAnchor?: ElementAnchor;
 }
 
-export type SummaryLength = 'short' | 'medium' | 'long';
-
 export interface SessionReview {
   generatedAt: string;
   summary: string;
@@ -36,173 +34,4 @@ export interface SessionReview {
   notesSummary: string;
 }
 
-export interface Article {
-  id: string;
-  url: string;
-  title: string;
-  byline?: string | null;
-  content: string;
-  notes?: Note[];
-  aiChat?: AIChatMessage[];
-  aiSummary?: string;
-  keyPoints?: string[];
-  sessionReview?: SessionReview;
-  notesCount?: number;
-  userId?: string;
-  projectId?: string; // DEPRECATED: Keep for migration compatibility, use listIds instead
-  status?: ArticleStatus;
-  tags?: string[];
-  readingTimeMinutes?: number;
-  createdAt?: string;
-  updatedAt?: string;
-  type?: 'article' | 'pdf' | 'link';
-  pdfUrl?: string;
-  extractedText?: string;
-  pdfMetadata?: {
-    pageCount?: number;
-    fileSize?: number;
-    storagePath?: string;
-  };
-  // NEW FIELDS:
-  listIds?: string[]; // Array of list IDs this article belongs to
-  category?: string; // Optional single category (e.g., "Research", "Tutorial", "Blog Post")
-  shareId?: string;
-}
-
-export type ArticleSummary = Omit<Article, 'content' | 'notes'> & {
-  notesCount: number;
-};
-
-export type FontSize = 'xs' | 'small' | 'medium' | 'large' | 'xl' | '2xl';
-export type Theme = 'light' | 'dark' | 'sepia';
-export type FontFamily = 'sans' | 'serif' | 'mono';
 export type ArticleStatus = 'in_progress' | 'read';
-
-export interface ReaderSettings {
-  fontSize: FontSize;
-  theme: Theme;
-  fontFamily: FontFamily;
-}
-
-export interface List {
-  id: string;
-  name: string;
-  userId: string;
-  color?: string; // For custom lists, e.g., "blue", "pink", "cyan"
-  icon?: 'heart' | 'clock' | 'dot'; // heart=Favourites, clock=Read Later, dot=custom
-  isDefault?: boolean; // true for Read Later and Favourites
-  createdAt?: string;
-  updatedAt?: string;
-}
-
-export interface RssFeed {
-  id: string;
-  feedUrl: string;
-  title: string;
-  siteUrl?: string;
-  unreadCount: number;
-  totalCount: number;
-  lastFetchedAt?: string;
-  lastError?: string;
-  createdAt: string;
-}
-
-export interface RssEntry {
-  id: string;
-  feedId: string;
-  feedTitle: string;
-  url?: string;
-  title: string;
-  author?: string;
-  excerpt?: string;
-  publishedAt?: string;
-  readAt?: string;
-  savedArticleId?: string;
-}
-
-// Board types
-interface WebsiteNodeData {
-  url: string;
-  title: string;
-  excerpt: string;
-  favicon?: string;
-  articleId?: string;
-}
-
-interface NoteNodeData {
-  text: string;
-  color: string;
-  elementAnchor?: ElementAnchor;
-}
-
-interface AIChatNodeData {
-  messages: AIChatMessage[];
-  contextLabel?: string;
-  elementAnchor?: ElementAnchor;
-}
-
-interface IframeNodeData {
-  url: string;
-  title?: string;
-}
-
-interface ReaderNodeData {
-  articleId: string;
-  url: string;
-  title: string;
-}
-
-export interface BoardNode {
-  id: string;
-  type: 'website' | 'note' | 'aiChat' | 'iframe' | 'reader';
-  position: { x: number; y: number };
-  data: WebsiteNodeData | NoteNodeData | AIChatNodeData | IframeNodeData | ReaderNodeData;
-  width?: number;
-  height?: number;
-}
-
-export interface BoardEdge {
-  id: string;
-  source: string;
-  target: string;
-  label?: string;
-  style?: 'solid' | 'dashed';
-}
-
-export interface Board {
-  id: string;
-  userId: string;
-  name: string;
-  nodes: BoardNode[];
-  edges: BoardEdge[];
-  shareId?: string;
-  createdAt?: string;
-  updatedAt?: string;
-}
-
-export type BoardSummary = Pick<Board, 'id' | 'name' | 'createdAt' | 'updatedAt'> & {
-  nodeCount: number;
-};
-
-interface SearchSnippet {
-  field: string;
-  text: string;
-}
-
-export interface SearchResult {
-  id: string;
-  url: string;
-  title: string;
-  byline?: string | null;
-  projectId?: string; // DEPRECATED: Keep for migration compatibility
-  status?: ArticleStatus;
-  notesCount: number;
-  createdAt?: string;
-  updatedAt?: string;
-  matchedFields: string[];
-  snippets: SearchSnippet[];
-  relevanceScore: number;
-  listIds?: string[]; // Array of list IDs this article belongs to
-  category?: string; // Optional single category
-  kind?: 'article' | 'memory'; // memory hits route to /memory instead of /reader
-}

@@ -1,3 +1,5 @@
+> Historical decision from the previous research-library product. See [current architecture](../overview.md).
+
 # ADR-0010: Cloudflare D1 for structured data
 
 **Status:** Accepted for migration; production cutover remains operator-gated.
