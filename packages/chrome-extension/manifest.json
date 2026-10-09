@@ -1,23 +1,14 @@
 {
   "manifest_version": 3,
-  "name": "Web Annotator",
+  "name": "Reader",
   "version": "0.1.1",
-  "description": "Open the current webpage in Web Annotator, with optional page chat.",
-  "permissions": ["activeTab", "scripting", "sidePanel", "storage", "readingList"],
-  "host_permissions": ["https://read.significanthobbies.com/*"],
-  "side_panel": {
-    "default_path": "side-panel/index.html"
-  },
-  "background": {
-    "service_worker": "background.js",
-    "type": "module"
-  },
-  "content_scripts": [
-    {
-      "matches": ["<all_urls>"],
-      "js": ["content-script.js"],
-      "run_at": "document_idle"
-    }
+  "description": "Save the current page to your Reader link inbox.",
+  "permissions": [
+    "activeTab",
+    "storage"
+  ],
+  "host_permissions": [
+    "https://read.significanthobbies.com/*"
   ],
   "icons": {
     "16": "icons/icon-16.png",
@@ -25,7 +16,7 @@
     "128": "icons/icon-128.png"
   },
   "action": {
-    "default_title": "Web Annotator",
+    "default_title": "Save to Reader",
     "default_popup": "popup/index.html"
   },
   "content_security_policy": {

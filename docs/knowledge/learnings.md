@@ -1,3 +1,5 @@
+> Historical context from before the saved-link simplification. For the active product and setup, see [architecture](../architecture/overview.md).
+
 # Engineering Lessons — Reader (current)
 
 Concrete lessons evidenced by current code, scripts, or git history. Each

@@ -27,8 +27,6 @@ type CreatedKey = {
   createdAt: number;
 };
 
-const EXTENSION_DIST_PATH = 'packages/chrome-extension/dist';
-
 function formatDate(value: ApiKeySummary['createdAt']): string {
   const date = new Date(value);
   if (Number.isNaN(date.getTime())) return 'Unknown';
@@ -158,10 +156,10 @@ export function ExtensionConnectClient() {
               <KeyRound className="h-5 w-5" />
             </div>
             <div>
-              <h1 className="text-2xl font-semibold text-white">Connect the Chrome extension</h1>
+              <h1 className="text-2xl font-semibold text-white">Connections</h1>
               <p className="mt-1 text-sm text-gray-400">
-                Generate a Reader API key, paste it into the extension once, and the side panel can
-                save articles and chats to your library.
+                Save links with the Chrome extension. Use ChatGPT to retrieve them and update what
+                you’ve read.
               </p>
             </div>
           </div>
@@ -204,15 +202,23 @@ export function ExtensionConnectClient() {
 
               {createdKey && (
                 <div className="mt-5 rounded-lg border border-blue-500/30 bg-blue-500/10 p-3">
-                  <label className="text-xs font-medium text-blue-100">New extension key</label>
+                  <label htmlFor="new-extension-key" className="text-xs font-medium text-blue-100">
+                    New extension key
+                  </label>
                   <div className="mt-2 flex gap-2">
                     <input
+                      id="new-extension-key"
                       readOnly
                       value={createdKey.token}
                       className="min-w-0 flex-1 rounded-lg border border-gray-700 bg-gray-950 px-3 py-2 font-mono text-xs text-gray-100"
                       onFocus={(event) => event.currentTarget.select()}
                     />
-                    <Button type="button" variant="secondary" onClick={() => void copyToken()}>
+                    <Button
+                      type="button"
+                      variant="secondary"
+                      aria-label="Copy extension key"
+                      onClick={() => void copyToken()}
+                    >
                       {copied ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
                     </Button>
                   </div>
@@ -226,11 +232,22 @@ export function ExtensionConnectClient() {
               <h2 className="text-base font-semibold text-white">2. Paste it in the extension</h2>
               <ol className="mt-3 space-y-2 text-sm text-gray-400">
                 <li>Open Chrome and click the Reader extension icon.</li>
-                <li>Click Connect in the side panel.</li>
-                <li>Paste the key and save it.</li>
+                <li>Paste your key into the extension popup.</li>
+                <li>Click Connect, then Save link on any web page.</li>
               </ol>
-              <p className="mt-4 text-xs text-gray-500">
-                For local unpacked installs, load this folder in Chrome: {EXTENSION_DIST_PATH}
+            </section>
+
+            <section className="rounded-xl border border-gray-800 bg-gray-900/70 p-5">
+              <h2 className="text-base font-semibold text-white">ChatGPT</h2>
+              <p className="mt-2 text-sm text-gray-400">
+                Connect Reader through MCP with the same Google account. ChatGPT can find links,
+                retrieve available content, and mark links read or unread when you ask.
+              </p>
+              <p className="mt-3 break-all rounded-lg bg-gray-950 p-3 font-mono text-xs text-gray-300">
+                {window.location.origin}/api/mcp
+              </p>
+              <p className="mt-3 text-xs text-gray-500">
+                The MCP connection uses OAuth. Extension keys are for the extension.
               </p>
             </section>
 
@@ -246,7 +263,7 @@ export function ExtensionConnectClient() {
                   to="/library"
                   className="inline-flex items-center gap-1 text-sm text-blue-300 hover:text-blue-200"
                 >
-                  Library
+                  Inbox
                   <ExternalLink className="h-3.5 w-3.5" />
                 </Link>
               </div>

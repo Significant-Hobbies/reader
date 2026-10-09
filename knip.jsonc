@@ -12,7 +12,6 @@
       "project": ["src/**/*.{ts,tsx,mjs}", "scripts/*.{mjs,ts}", "*.config.{js,ts,mjs,cjs}"],
       "ignoreDependencies": [
         // Loaded through Tailwind CSS directives rather than JavaScript imports.
-        "@tailwindcss/typography",
         // Optional documentation presentation layer; Markdown remains authoritative.
         // Spawned by the code-health checker rather than imported.
         "jscpd",
@@ -29,16 +28,12 @@
     },
     "packages/chrome-extension": {
       "entry": [
-        "src/background.ts",
-        "src/content-script.ts",
         "src/popup/main.tsx",
-        "src/side-panel/main.tsx",
         "*.config.{js,ts,mjs,cjs}"
       ],
       "project": ["src/**/*.{ts,tsx}", "*.config.{js,ts,mjs,cjs}"],
       "ignoreDependencies": [
         // CSS/PostCSS integrations are not visible in the TypeScript graph.
-        "@tailwindcss/typography",
         "autoprefixer",
         "tailwindcss"
       ]

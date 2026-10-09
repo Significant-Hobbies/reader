@@ -1,23 +1,22 @@
 import { defineConfig, devices } from '@playwright/test';
-
 export default defineConfig({
   testDir: './tests',
   fullyParallel: true,
-  forbidOnly: !!process.env.CI,
+  forbidOnly: Boolean(process.env.CI),
   retries: process.env.CI ? 2 : 0,
   reporter: process.env.CI ? 'github' : 'list',
-  use: {
-    baseURL: 'http://127.0.0.1:8787',
-    trace: 'on-first-retry',
-  },
+  use: { baseURL: 'http://127.0.0.1:47192', trace: 'on-first-retry' },
   projects: [
     { name: 'desktop', use: { ...devices['Desktop Chrome'] } },
+    {
+      name: 'tablet',
+      use: { ...devices['Desktop Chrome'], viewport: { width: 768, height: 1024 } },
+    },
     { name: 'mobile', use: { ...devices['iPhone 13'] } },
   ],
   webServer: {
-    command: 'pnpm dev',
-    url: 'http://127.0.0.1:8787',
-    reuseExistingServer: !process.env.CI,
-    timeout: 120_000,
+    command: 'pnpm exec vite preview --host 127.0.0.1 --port 47192 --strictPort',
+    url: 'http://127.0.0.1:47192',
+    reuseExistingServer: false,
   },
 });

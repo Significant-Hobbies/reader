@@ -1,297 +1,35 @@
-# Web Annotator
+# Reader
 
-**Product:** [read.significanthobbies.com](https://read.significanthobbies.com)
+A saved-link inbox for use with ChatGPT.
 
+- Paste a URL in the app or save the current tab with the Chrome extension.
+- Search links and keep a simple read/unread state.
+- Connect ChatGPT through MCP to find links, retrieve available text, and mark items read or unread.
 
-A modern web application for capturing and annotating articles with a distraction-free reading experience.
-
-## Deployment & External Services
-
-| Concern      | Service                                                                                      |
-| ------------ | -------------------------------------------------------------------------------------------- |
-| Hosting      | Cloudflare Workers (`reader`) via Hono Worker (`src/worker.ts`)                              |
-| Database     | Cloudflare D1 via Drizzle ORM                                                                |
-| Auth         | better-auth + Google OAuth                                                                   |
-| File storage | Cloudflare R2 (`reader-pdfs`, bound as `PDFS_BUCKET`)                                        |
-| AI           | free-ai-gateway routes managed requests to available providers; explicit BYOK and local AI |
-| CI/CD        | GitHub Actions checks on push; production deployment is manual                                 |
-
-## Problem
-
-Information overload is real. You find valuable articles across the web, but there's no easy way to save them in a clean format, annotate them with your thoughts, and organize them for future reference. Browser bookmarks are cluttered, read-it-later apps lack annotation capabilities, and note-taking tools don't handle web content well.
-
-Web Annotator solves this by providing a personal research library where you can capture, read, annotate, and organize web content in one place.
-
-## Features
-
-### Content Management
-
-- **Clean Article Extraction**: Save articles from any URL using Mozilla Readability
-- **PDF Support**: Guest PDFs render locally with page navigation and page-linked notes. Create, edit, delete, and revisit notes after reload. Notes stay in this browser; they are not text highlights or annotations embedded in the PDF. Account PDFs support page navigation, zoom, viewer background, Listen, and an AI chat entry. Account PDFs also support page-note create/edit/delete and reopen, verified locally against real article handlers and an isolated database. Notes are saved to the account; they are page references, not embedded PDF edits. No placeholder note tab or ineffective typography controls are shown.
-- **Rich Annotations**: Add contextual notes with optional DOM anchoring
-- **Selection Actions**: After selecting text (mouse up) or selection + right-click, quickly choose `Add note` or `Ask AI`
-- **Reading Time Estimates**: Auto-calculated reading time displayed for every article
-
-### Organization & Discovery
-
-- **Tags System**: Multi-tag articles with color-coded badges, autocomplete, and filtering
-- **Full-Text Search**: Search across article content, notes, and AI chat history with Cmd/Ctrl+K shortcut
-- **Project Organization**: Group related articles into projects
-- **Reading Progress**: Track which articles you're reading or have completed
-
-### AI-Powered Features
-
-- **AI Chat**: Ask questions about your articles and notes using BYOK providers (OpenAI, Anthropic, Gemini, Gateway) or local AI mode
-- **Auto-Summaries**: Generate intelligent summaries with one click (short/medium/long options)
-- **Key Points Extraction**: Automatically extract 3-5 key takeaways from any article
-- **Chat History**: Persistent per-article conversations rendered as markdown
-
-### Customization
-
-- **Customizable Reader**: Adjust theme (light/dark/sepia), font family (sans/serif/mono), and text size
-- **Secure & Private**: Google Sign-In authentication with per-user data isolation
-
-## Architecture
-
-```mermaid
-graph TB
-    subgraph "Client Layer"
-        UI[React 19 + Vite SPA Frontend]
-        UI --> |Tailwind CSS| Styling[UI Components]
-        UI --> |React Query| State[State Management]
-    end
-
-    subgraph "API Layer"
-        API["Hono API Routes (/api/*)"]
-        API --> Articles["articles"]
-        API --> Projects["projects"]
-        API --> Auth["auth"]
-        API --> AI["ai"]
-        API --> Search["search"]
-        API --> Tags["tags"]
-        API --> PDF["pdf"]
-        API --> Snapshot["snapshot"]
-    end
-
-    subgraph "Backend Services"
-        D1[Cloudflare D1]
-        D1 --> Drizzle[Drizzle ORM]
-        D1 --> BetterAuth[better-auth - Google OAuth]
-
-        R2[Cloudflare R2 - PDFS_BUCKET]
-
-        External[External Services]
-        External --> Readability[Mozilla Readability]
-        External --> AIProviders[AI Providers]
-        AIProviders --> OpenAI[OpenAI]
-        AIProviders --> Anthropic[Anthropic]
-        AIProviders --> Gemini[Google Gemini]
-        AIProviders --> Gateway[Custom Gateway]
-        AIProviders --> LocalAI[Local AI]
-    end
-
-    UI --> API
-    API --> D1
-    API --> R2
-    API --> External
-
-    classDef frontend fill:#3b82f6,stroke:#1e40af,color:#fff
-    classDef backend fill:#10b981,stroke:#047857,color:#fff
-    classDef external fill:#f59e0b,stroke:#d97706,color:#fff
-
-    class UI,Styling,State frontend
-    class API,Articles,Projects,Auth,AI,Search,Tags,PDF,Snapshot,D1,Drizzle,BetterAuth,R2 backend
-    class External,Readability,AIProviders,OpenAI,Anthropic,Gemini,Gateway,LocalAI external
-```
-
-### Tech Stack
-
-- **Frontend**: Vite + React 19 SPA (single `app.html` entry, client-side routing via `react-router-dom`), TypeScript, Tailwind CSS v4
-- **Database**: Cloudflare D1 via Drizzle ORM
-- **Auth**: better-auth (Google OAuth, Drizzle adapter)
-- **Storage**: Cloudflare R2 (PDFs) via Workers binding
-- **AI Integration**: Vercel AI SDK + AI Gateway (preferred), BYOK chat providers, local AI support
-- **PDF Processing**: react-pdf, pdfjs-dist, pdf-parse for viewing and text extraction
-- **Deployment**: Cloudflare Workers via `wrangler deploy` (Hono worker `src/worker.ts`; built SPA served via `ASSETS` binding)
-
-## Getting Started
-
-### Prerequisites
-
-- Node.js 22+
-- Wrangler-managed local D1 (configured in `wrangler.local.toml`)
-- A Cloudflare account with an R2 bucket bound as `PDFS_BUCKET`
-- A Google OAuth client (Cloud Console > APIs & Services > Credentials)
-
-### Installation
-
-1. Clone the repository and install dependencies:
-
-   ```bash
-   git clone <repository-url>
-   cd web-annotator
-   pnpm install
-   ```
-
-2. Configure environment variables:
-
-   ```bash
-   cp .env.example .env.local
-   ```
-
-   Edit `.env.local`:
-
-   ```env
-   # better-auth
-   BETTER_AUTH_SECRET=$(openssl rand -base64 32)
-   BETTER_AUTH_URL=http://localhost:8787
-   GOOGLE_CLIENT_ID=...
-   GOOGLE_CLIENT_SECRET=...
-
-   # Cloudflare R2 (used by `pnpm deploy`; local dev uses the wrangler binding)
-   CLOUDFLARE_ACCOUNT_ID=...
-   R2_ACCESS_KEY_ID=...
-   R2_SECRET_ACCESS_KEY=...
-   R2_BUCKET_NAME=reader-pdfs
-
-   # Optional
-   LOCAL_AI_URL=http://127.0.0.1:3456
-   ```
-
-3. Apply the schema to local D1:
-
-   ```bash
-   pnpm db:migrate:local
-   ```
-
-4. Run the development server:
-
-   ```bash
-   pnpm dev
-   ```
-
-   `pnpm dev` starts the Hono Worker (port 8787), the Vite SPA dev server (port 5173, proxies `/api` → 8787), and the local AI server concurrently.
-   Local AI providers are shown only in development mode.
-   If you only want the SPA:
-
-   ```bash
-   pnpm dev:spa
-   ```
-
-5. Open [http://localhost:8787](http://localhost:8787) (Worker-served app) or [http://localhost:5173](http://localhost:5173) (Vite SPA only)
-
-### Development Commands
-
-```bash
-pnpm dev          # Start Worker + Vite SPA + local AI server (concurrently)
-pnpm dev:worker   # wrangler dev only (Worker, port 8787)
-pnpm dev:spa      # Vite SPA only (port 5173, proxies /api → 8787)
-pnpm local-ai     # Start only the local AI server
-pnpm build        # Validate env + Vite build → dist/
-pnpm cf:build     # Build SPA + Astro landing + overlay into dist/
-pnpm deploy       # validate env + cf:build + wrangler deploy
-pnpm lint         # Run ESLint
-pnpm format       # Format code with Biome
-pnpm typecheck    # tsc --noEmit (app + worker tsconfigs)
-pnpm db:generate       # Generate a tracked D1 migration
-pnpm db:migrate:local  # Apply migrations to local D1 only
-```
-
-## Deployment
-
-### Cloudflare Workers (Hono Worker)
-
-```bash
-pnpm deploy
-```
-
-This runs `cf:build` (Vite SPA build + Astro landing overlay into `dist/`) and `wrangler deploy`.
-Configure secrets via `wrangler secret put` for `BETTER_AUTH_SECRET`,
-`GOOGLE_CLIENT_SECRET`, etc., and bind D1 as `DB` plus R2 as `PDFS_BUCKET` in
-`wrangler.toml`.
-
-## Project Structure
-
-```
-web-annotator/
-├── app.html              # Single SPA HTML entry (Vite input)
-├── vite.config.ts        # Vite SPA build (React, Tailwind v4, Lightning CSS)
-├── wrangler.toml         # Worker config: main=src/worker.ts, ASSETS + PDFS_BUCKET
-├── src/
-│   ├── worker.ts         # Hono Worker entry — /api/* routing, asset serving
-│   ├── worker/
-│   │   └── routes/       # Hono API route modules (articles, ai, pdf, auth, etc.)
-│   ├── pages/            # Route page components (LibraryPage, ReaderPage, etc.)
-│   ├── components/       # React components (ReaderView, PDFReaderClient, etc.)
-│   ├── hooks/            # Shared React hooks
-│   ├── lib/
-│   │   ├── auth.ts       # better-auth server config
-│   │   ├── auth-client.ts# better-auth browser client
-│   │   ├── db/           # Drizzle schema + D1 client
-│   │   └── storage.ts    # R2 helpers
-│   └── types.ts          # TypeScript definitions
-├── packages/
-│   └── chrome-extension/ # Chrome MV3 extension (separate Vite build)
-├── landing-astro/        # Astro landing page (built into deploy via cf:build)
-└── agents.md             # Development guide
-```
+Vite + React, a Hono Cloudflare Worker, D1, and Google sign-in. No built-in AI, article reader, PDF uploads, boards, annotations, memories, or RSS.
 
 ## Development
 
-This project uses automated pre-commit hooks for code quality:
-
-- Prettier (formatting)
-- ESLint (linting)
-- TypeScript (type checking)
-
-Commit convention follows [Conventional Commits](https://www.conventionalcommits.org/):
-
-```
-feat(reader): add PDF export
-fix(auth): resolve token refresh issue
-chore: update dependencies
+```sh
+pnpm install
+pnpm dev
+pnpm quality
+pnpm cf:build
+pnpm test:e2e
 ```
 
-For comprehensive development documentation, see [AGENTS.md](./AGENTS.md).
+The extension is built with `pnpm --filter web-annotator-extension build` and loaded from `packages/chrome-extension/dist` as an unpacked Chrome extension. Create a key in Reader’s Connections page, paste it into the popup once, then click Save link.
 
-## Security
+## MCP
 
-- All HTML content is sanitized before storage
-- User authentication required for all operations
-- Per-user data isolation enforced at the database level
-- Ownership verification on all operations
-- BYOK model for AI providers (API keys stored in browser only)
+The stateless Streamable HTTP endpoint is `/api/mcp`. Its three tools are `search`, `fetch`, and `set_read`. Fetching never marks an item read. Unavailable source text is reported explicitly.
 
-## License
+Google-backed Auth0 OAuth maps the connection to the same Reader account. Reads require `reader.read`; read-state changes require `reader.write`. Existing extension keys remain valid. See [the architecture and connection setup](docs/architecture/overview.md).
 
-This project is private and not licensed for public use.
+## Existing data and rollout
 
-<!-- ACTIVE-AI-TASK-LOG:START -->
+The database schema and saved data remain unchanged. Legacy web articles appear as links and their captured content remains available through MCP. Local browser data and stored PDFs are not deleted.
 
-## Task reconciliation (2026-09-07)
+This simplification requires a manual deployment and OAuth configuration before it can be used in ChatGPT. Source verification is separate from deployment and an authenticated ChatGPT end-to-end check.
 
-The initial audit found no prior open GitHub Issues or PRs.
-Remaining work is [#55: actual import/read/annotate/reopen qualification](https://github.com/Significant-Hobbies/reader/issues/55).
-Account article selection notes now have a real-handler browser receipt for create/retry/edit/reanchor/reload/delete and account isolation. Cached reopen refreshes clean notes; pending writes preserve newer drafts. Note saves merge independent changes against the editor's original snapshot; overlapping edits preserve the server version and the draft for explicit comparison. See [the save contract and qualification limits](docs/development/testing.md#concurrent-note-saves).
-[#56: guest PDF page notes](https://github.com/Significant-Hobbies/reader/issues/56) is implemented with a built-browser synthetic import/render/note/reload/edit/delete journey.
-These preserve the full product journey; local persistence tests are not a
-hosted shareability receipt. See [testing evidence and limits](docs/development/testing.md#local-library-persistence).
-
-### Historical Active AI task log
-
-This section is maintained by the SaaS Maker Active-AI product/design loop so future agents do not reopen duplicate UI tasks.
-
-- Business lane: P0 Can make money
-- Rule: do not create another broad "improve the UI" task unless the acceptance criteria differ materially from the tasks listed here.
-- Source of truth for current task status: this repository's GitHub Issues. The historical rows below retain earlier reports, not fresh runtime qualification.
-
-| Task                                                                    | Status | Priority | Last known note     |
-| ----------------------------------------------------------------------- | ------ | -------- | ------------------- |
-| `cad24fee` reader: add empty-source import checklist                    | done   | medium   | 2026-05-26          |
-| `c346ed01` reader: add annotation export preview before signup          | done   | high     | 2026-05-26          |
-| `87ef7ce1` reader: add sample reading loop proof above the fold         | done   | high     | 2026-05-26          |
-| `907a1c6e` reader: review and ship local first-run UI change            | done   | high     | 2026-05-25 18:52:12 |
-| `07045aff` reader: library empty state should explain value + focus CTA | done   | high     | 2026-05-25 17:07:15 |
-| `0babffde` reader: make mobile import CTA impossible to miss            | done   | medium   | 2026-05-27          |
-
-<!-- ACTIVE-AI-TASK-LOG:END -->
+[Documentation](docs/index.md) · [Current status](PROJECT_STATUS.md)

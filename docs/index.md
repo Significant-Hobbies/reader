@@ -5,6 +5,8 @@ operations, and durable knowledge. Markdown here is authoritative.
 
 For a fast agent briefing, read [AGENTS.md](../AGENTS.md) first, then this index.
 
+The active product is the [saved-link inbox](product/overview.md). Use [current architecture and MCP setup](architecture/overview.md), [commands](development/commands.md), and [testing](development/testing.md). Research-library walkthroughs and prior decisions are historical context.
+
 ## Where to start
 
 - **New to the codebase?** → [product/overview.md](product/overview.md) → [product/features.md](product/features.md) → [architecture/how-it-works.md](architecture/how-it-works.md) → [architecture/overview.md](architecture/overview.md) → [development/setup.md](development/setup.md)

@@ -1,6 +1,6 @@
 {
   "name": "Reader",
-  "version": "2",
+  "version": "3",
   "url": "https://read.significanthobbies.com",
   "llms": "https://read.significanthobbies.com/llms.txt",
   "llmsFull": "https://read.significanthobbies.com/llms-full.txt",
@@ -14,28 +14,21 @@
   "aiCatalog": "https://read.significanthobbies.com/.well-known/ai-catalog.json",
   "instructions": "https://read.significanthobbies.com/agents.md",
   "pricing": "https://read.significanthobbies.com/pricing.md",
-  "skillIndex": "https://read.significanthobbies.com/.well-known/agent-skills/index.json",
-  "skills": [
-    {
-      "name": "reader-source-workflow",
-      "url": "https://read.significanthobbies.com/.well-known/agent-skills/reader-source-workflow/SKILL.md",
-      "digest": "sha256:f3dfccbb52edb447545f94b837e478693e0f0b94d148eb6f8e6a5fd855f4d926"
-    }
-  ],
+  "skills": [],
   "surfaces": [
     {
       "id": "home",
       "url": "https://read.significanthobbies.com/",
       "md": "https://read.significanthobbies.com/index.md",
       "kind": "static",
-      "description": "Product purpose, reading loop, current state, and access boundaries"
+      "description": "Saved-link inbox, Chrome capture, and ChatGPT connection"
     },
     {
       "id": "faq",
       "url": "https://read.significanthobbies.com/faq",
       "md": "https://read.significanthobbies.com/faq.md",
       "kind": "static",
-      "description": "Practical access, privacy, AI, export, and extension answers"
+      "description": "Saved-link access and connection questions"
     },
     {
       "id": "changelog",
@@ -48,5 +41,14 @@
   "auth": {
     "public": true,
     "notes": "The catalog is public. Personal libraries and authenticated APIs are private and are not agent-indexed."
+  },
+  "mcp": {
+    "url": "https://read.significanthobbies.com/api/mcp",
+    "authentication": "OAuth",
+    "tools": [
+      "search",
+      "fetch",
+      "set_read"
+    ]
   }
 }

@@ -29,7 +29,8 @@ export async function getApiKeyUserId(headers: Headers): Promise<string | null> 
 /** Resolve a Reader PAT or a short-lived, user-specific Auth0 MCP token. */
 export async function authenticateMcpReader(
   headers: Headers,
-  env: ReaderAuth0Env
+  env: ReaderAuth0Env,
+  requiredScope = 'reader.read'
 ): Promise<McpAuthResult> {
   const authHeader = headers.get('authorization') ?? headers.get('Authorization');
   if (!authHeader) return { status: 'invalid' };
@@ -44,7 +45,7 @@ export async function authenticateMcpReader(
   if (!/^[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+$/u.test(value)) {
     return { status: 'invalid' };
   }
-  const googleId = await verifyReaderAuth0Subject(value, env);
+  const googleId = await verifyReaderAuth0Subject(value, env, undefined, requiredScope);
   if (!googleId) return { status: 'invalid' };
   const userId = await findReaderUserByGoogleId(googleId);
   return userId ? { status: 'authorized', userId } : { status: 'account_not_found' };

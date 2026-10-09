@@ -1,3 +1,5 @@
+> Historical context from before the saved-link simplification. For the active product and setup, see [architecture](overview.md).
+
 ---
 title: "How Reader Works, End to End"
 description: "A code-grounded walkthrough of Reader's components and the primary flow: capture an article, read and annotate it, then chat with it."

@@ -1,3 +1,5 @@
+> Historical context from before the saved-link simplification. For the active product and setup, see [architecture](../architecture/overview.md).
+
 # Failed Approaches — Reader
 
 Approaches tried and abandoned, with reasons. Each entry links to the

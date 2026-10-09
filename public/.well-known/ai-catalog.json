@@ -7,13 +7,6 @@
   },
   "entries": [
     {
-      "identifier": "urn:air:read.significanthobbies.com:skill:source-workflow",
-      "displayName": "Reader source workflow",
-      "type": "text/markdown",
-      "url": "https://read.significanthobbies.com/.well-known/agent-skills/reader-source-workflow/SKILL.md",
-      "description": "Bounded guidance for deciding whether a web article or PDF belongs in Reader and keeping source evidence close to a person's notes."
-    },
-    {
       "identifier": "urn:air:read.significanthobbies.com:api:public-agent-surfaces",
       "displayName": "Reader public discovery surfaces",
       "type": "application/vnd.oai.openapi+json",

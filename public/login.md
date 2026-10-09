@@ -1,11 +1,5 @@
 # Sign in to Reader
 
-Reader uses Google sign-in to open a private research library.
+Sign in with Google to save links in your account inbox. The Chrome extension uses a revocable Reader key; ChatGPT uses a separate OAuth connection tied to the same Google identity.
 
-## Privacy boundary
-
-- Saved articles, PDFs, highlights, notes, lists, boards, and AI conversations are private.
-- This public page explains the sign-in boundary; it does not expose account data.
-- Personal library routes are intentionally excluded from the public sitemap and agent catalog.
-
-Sign in: https://read.significanthobbies.com/login
+[Sign in](https://read.significanthobbies.com/login) · [Connections](https://read.significanthobbies.com/extension)

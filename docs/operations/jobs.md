@@ -1,3 +1,5 @@
+> Historical context from before the saved-link simplification. For the active product and setup, see [architecture](../architecture/overview.md).
+
 # Scheduled Jobs
 
 The only scheduled job is the GitHub Actions weekly quality check.

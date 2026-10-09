@@ -1,3 +1,5 @@
+> Historical decision from the previous research-library product. See [current architecture](../overview.md).
+
 # ADR-0002: Turso (libSQL) via Drizzle ORM
 
 **Date:** 2026-04-25 (Firebase → Turso migration); carried forward post-Vite migration

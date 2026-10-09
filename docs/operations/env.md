@@ -1,3 +1,5 @@
+> Historical context from before the saved-link simplification. For the active product and setup, see [architecture](../architecture/overview.md).
+
 # Environment Variables
 
 Validated by `scripts/validate-env.mjs`. The script takes a mode argument

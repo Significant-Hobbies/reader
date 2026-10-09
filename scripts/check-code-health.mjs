@@ -21,9 +21,9 @@ const productionPaths = [
 const sourceExtensions = new Set(['.astro', '.js', '.jsx', '.mjs', '.mts', '.ts', '.tsx']);
 
 const baselines = {
-  lintWarnings: 38,
+  lintWarnings: 0,
   complexity: { violations: 0, maxCcn: 15, maxLength: 100, maxParams: 7 },
-  duplication: { clones: 33, duplicatedLines: 415 },
+  duplication: { clones: 2, duplicatedLines: 17 },
   unused: {
     files: 0,
     exports: 0,
@@ -33,7 +33,7 @@ const baselines = {
     unlisted: 0,
     unresolved: 0,
   },
-  suppressions: 5,
+  suppressions: 1,
 };
 
 function checkLint() {

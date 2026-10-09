@@ -1,5 +1,4 @@
 import { readFileSync } from 'node:fs';
-import { createHash } from 'node:crypto';
 import { resolve } from 'node:path';
 import { describe, expect, it } from 'vitest';
 import { AGENT_SURFACE, handleAgentEdge } from './agent-edge.mjs';
@@ -95,8 +94,7 @@ describe('public agent surface parity', () => {
     expect(llms).toContain(catalog.llmsFull);
     expect(llms).toContain('/api/ai');
     expect(llms).toContain('/pricing.md');
-    expect(llms).toContain('/skill.md');
-    expect(readPublic('llms-full.txt')).toContain('maintenance-first');
+    expect(readPublic('llms-full.txt')).toContain('saved-link');
     expect(AGENT_SURFACE.catalog).toEqual(JSON.parse(readPublic('api-ai.json')));
   });
 
@@ -109,23 +107,14 @@ describe('public agent surface parity', () => {
       expect(document).toContain('Chrome');
       expect(document).toContain('distribution is deferred');
     }
-    expect(home).toContain('maintenance-first');
+    expect(home).toContain('saved-link');
     expect(home).toContain('no public plan or checkout');
     expect(pricing).toContain('no public plan, checkout, paid tier, or purchase flow');
   });
 
-  it('publishes a digest-verified source-workflow skill', () => {
-    const skill = readPublic('.well-known/agent-skills/reader-source-workflow/SKILL.md');
-    const index = JSON.parse(readPublic('.well-known/agent-skills/index.json'));
-    const digest = `sha256:${createHash('sha256').update(skill).digest('hex')}`;
-
-    expect(index.skills).toHaveLength(1);
-    expect(index.skills[0]).toMatchObject({
-      name: 'reader-source-workflow',
-      type: 'skill-md',
-      digest,
-    });
-    expect(readPublic('skill.md')).toBe(skill);
+  it('does not advertise the retired research-library agent skill', () => {
+    expect(AGENT_SURFACE.catalog.skills).toEqual([]);
+    expect(JSON.parse(readPublic('.well-known/agent-skills/index.json')).skills).toEqual([]);
   });
 
   it('serves route Markdown and rebinds catalogs for preview origins', async () => {

@@ -1,3 +1,5 @@
+> Historical context from before the saved-link simplification. For the active product and setup, see [architecture](overview.md).
+
 # Data Flow
 
 How a request moves through the system. Read alongside

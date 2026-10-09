@@ -1,3 +1,5 @@
+> Historical decision from the previous research-library product. See [current architecture](../overview.md).
+
 # ADR-0005: AI SDK + free-ai-gateway + BYOK (no server-side key storage)
 
 **Date:** 2026-02-13 (AI SDK integrated); gateway pattern formalised ~2026-04-27

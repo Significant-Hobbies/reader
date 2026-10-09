@@ -4,7 +4,6 @@ import { verifyWithJwks } from 'hono/jwt';
 import { db } from './db/client';
 import { accounts, baAccounts } from './db/schema';
 
-const REQUIRED_SCOPE = 'reader.read';
 const MAX_TOKEN_LIFETIME_SECONDS = 3_600;
 const GOOGLE_SUBJECT = /^google-oauth2\|([A-Za-z0-9._-]{3,256})$/u;
 
@@ -45,7 +44,7 @@ function exactAudience(value: string | undefined): string | null {
       url.port ||
       url.search ||
       url.hash ||
-      url.pathname !== '/reader/mcp'
+      !['/reader/mcp', '/api/mcp'].includes(url.pathname)
     ) {
       return null;
     }
@@ -64,7 +63,8 @@ function stringClaims(value: unknown): string[] {
 export async function verifyReaderAuth0Subject(
   token: string,
   env: ReaderAuth0Env,
-  keys?: JwksOptions['keys']
+  keys?: JwksOptions['keys'],
+  requiredScope = 'reader.read'
 ): Promise<string | null> {
   const issuer = auth0Issuer(env.AUTH0_ISSUER);
   const audience = exactAudience(env.AUTH0_MCP_AUDIENCE);
@@ -91,7 +91,7 @@ export async function verifyReaderAuth0Subject(
       typeof payload.exp !== 'number' ||
       payload.exp <= payload.iat ||
       payload.exp - payload.iat > MAX_TOKEN_LIFETIME_SECONDS ||
-      !permissions.has(REQUIRED_SCOPE)
+      !permissions.has(requiredScope)
     ) {
       return null;
     }

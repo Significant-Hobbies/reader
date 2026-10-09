@@ -1,56 +1,19 @@
----
-title: Reader FAQ
-description: Practical product, privacy, AI, extension, access, and commercial-state answers for Reader.
-canonical: https://read.significanthobbies.com/faq
-updated: 2026-08-28
----
-
 # Reader FAQ
 
-## What is Reader for?
+## What does Reader do?
 
-Reader turns a saved article or PDF into a focused place to read, annotate,
-revisit, and discuss it. It is designed for material that deserves more than a
-bookmark.
+It stores links you save and tracks read/unread state. Add a URL in the app or save a tab with the Chrome extension.
 
-## What can I save?
+## How does ChatGPT use it?
 
-Paste a web article URL or upload a PDF. Mozilla Readability prepares web
-articles for a cleaner reading view, and PDF text is extracted for search and
-source-grounded discussion.
+Through an authenticated MCP connection with three tools: search, fetch, and set_read. ChatGPT can pull available text and mark links read when asked. Connecting requires OAuth setup and a deployed endpoint.
 
-## Do I need an account?
+## What happened to the research-library features?
 
-No account is required for the browser-local path. Google sign-in opens the
-account-backed library, where saved material is isolated per user and PDFs are
-stored behind an ownership-enforcing proxy.
+RSS, the built-in reader, PDFs, annotations, boards, memories, and AI chat are outside the active product. Existing saved data is retained.
 
-## Is my library public?
+## Is the extension in the Chrome store?
 
-No. Saved articles, PDFs, annotations, lists, boards, and AI conversations are
-private by default. A public article or board requires an explicit share action.
+It is source-built for unpacked use; public distribution is deferred.
 
-## How does AI work?
-
-Reader can summarize the open source and answer questions about it. The app can
-use the Fleet AI gateway or browser-held OpenAI, Anthropic, or Gemini BYOK
-credentials. BYOK credentials are not persisted server-side.
-
-## Can I install the Chrome extension?
-
-The MV3 companion exists in the source repository and can be loaded as an
-unpacked extension for local use. Public browser-store distribution is deferred.
-
-## Can I export my data?
-
-Yes. Reader includes a JSON export for account-scoped articles, boards, and
-lists.
-
-## Is Reader paid?
-
-There is no public Reader plan or checkout. The repository does not establish a
-permanent free promise or a paid offer.
-
-[Open Reader](https://read.significanthobbies.com/library) ·
-[Try the sample](https://read.significanthobbies.com/sample) ·
-[View the changelog](https://read.significanthobbies.com/changelog)
+[Reader](https://read.significanthobbies.com/) · [Connections](https://read.significanthobbies.com/extension)

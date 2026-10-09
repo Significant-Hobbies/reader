@@ -1,59 +1,19 @@
 # Product Overview
 
-## What
+Reader stores links you choose to save. Add a URL in the web app or click Save link in the Chrome extension. ChatGPT handles reading and discussion through MCP.
 
-Reader is a personal research library: capture web articles and PDFs, read them
-in a distraction-free reader, annotate with notes and highlights, organise with
-tags/lists/boards, search across everything, and AI-chat or auto-summarise the
-saved material. A companion Chrome MV3 extension captures pages from the
-browser and syncs with Chrome's native Reading List.
+The app has an inbox and a Connections page. Links have a title, URL, creation date, and read/unread state. Search matches titles and URLs. Opening or fetching a link does not silently mark it read.
 
-## Who
+The MCP tools find links, retrieve available text, and update read state when the user asks. Source text can be unavailable because a site blocks extraction or is not a web document; the original URL remains available.
 
-- **End users:** individual readers saving articles and PDFs. Sign-in is Google
-  OAuth via better-auth; data is per-user isolated at the database level.
-- **Operators:** the maintainer running D1 schema migrations and Cloudflare
-  Workers deploys. Currently single-user in production.
+## Boundaries
 
-## Where
+No RSS, built-in AI, annotations, reader view, PDF capture, boards, lists, or memories. The Chrome extension is a URL/title capture popup, with no background page scanning or native Reading List sync.
 
-- Production app: `https://read.significanthobbies.com` (Cloudflare Worker
-  `reader`, custom domain). See [surfaces.md](surfaces.md) for the full list.
-- Source: this repository.
-- Landing page: built from `landing-astro/` and overlaid onto `dist/index.html`
-  during `cf:build`; the SPA lives at `dist/app.html` and is served at `/app`.
+Existing account data remains in D1 and R2. Legacy web articles appear as links; their stored text remains retrievable. Local browser data is not deleted. No schema migration is required for the simplification.
 
-## Scope
+## Access
 
-**In scope:** article/PDF capture, rich annotations, tags/lists/boards,
-full-text search, AI chat and summaries, RSS/Atom inbox with OPML import,
-memory capture, D1 persistence, R2 PDF storage, free-ai gateway + BYOK +
-local-ai dev bridge.
+Google sign-in identifies the app account. Extension keys are created in Connections and stored hashed on the server. MCP uses Google-backed Auth0 OAuth and maps to the existing account’s Google subject.
 
-**Out of scope (deliberate):**
-
-- Browser-extension distribution (deferred until web import/capture is
-  reliable).
-- Full personal knowledge-base automation behind strong capture, retrieval, and
-  trust primitives.
-- Paid team/library workflows.
-- `landing-astro` as a separate deployable product — it is an overlay only.
-- RSS background refresh / scheduled triggers / notifications / feed discovery
-  (current RSS refresh is manual).
-- Rate limiting on AI/snapshot/proxy endpoints (deferred until endpoint-specific
-  evidence; see [operations/env.md](../operations/env.md) and the residual
-  audit notes in [archive/security-audit-2026-03-29.md](../archive/security-audit-2026-03-29.md)).
-
-## Operating posture
-
-Personal-use support (closure decision 2026-07-10): keep Reader available for
-direct use. No roadmap expansion; accept only maintenance, reliability, or
-personally requested workflow fixes. See [STATUS.md](../../STATUS.md) for the
-current objective and active work.
-
-## Branding note
-
-The product is named **Reader** and served at
-`read.significanthobbies.com`. The package name and Chrome extension still use
-the legacy `web-annotator` / "Web Annotator" string in places; the canonical
-product name in new docs is **Reader**.
+See [architecture](../architecture/overview.md) for connection setup and [project status](../../PROJECT_STATUS.md) for the deployment boundary.

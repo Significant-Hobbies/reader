@@ -1,63 +1,13 @@
-# Web Annotator — Chrome Extension
+# Reader Chrome extension
 
-Companion extension for [Web Annotator](https://read.significanthobbies.com). Opens the current tab in Web Annotator's reader/annotator view and exposes a side-panel for page-level chat.
+A popup that saves the current tab’s URL and title to Reader. It does not scan pages, extract article content, run AI chat, open a side panel, or sync Chrome’s Reading List.
 
-## What it does
-
-- **Toolbar button**: opens a popup that lets you send the active tab to Web Annotator (article extraction + annotation).
-- **Side panel**: a persistent reader/chat surface for the page you're on.
-- **Chrome Reading List sync**: mirrors native Chrome Reading List URLs into Web Annotator links, adds extension-saved pages to the native list, and reflects native read-state/title changes where Reader can safely apply them.
-- **Content script**: a thin script that runs on every page (read-only — no network, no DOM rewrites). It exists so the side panel can pull the page's clean reading text using `@mozilla/readability` on demand.
-
-## Permissions
-
-| Permission | Why |
-|---|---|
-| `activeTab` | Lets the popup capture the current tab's URL and title when you click "Open in Web Annotator". |
-| `scripting` | Required by the side panel to execute the Readability extraction in the page context on demand. |
-| `sidePanel` | Enables the side-panel UI. |
-| `storage` | Caches the most recent extraction + chat scratch state so you don't lose them on tab switch. |
-| `readingList` | Reads and updates Chrome's native Reading List so Reader's saved links stay in sync with it. |
-
-Host permission `https://read.significanthobbies.com/*` is the only remote endpoint the extension talks to (your Web Annotator instance).
-
-## Develop locally
-
-```bash
-cd packages/chrome-extension
-pnpm install
-pnpm dev          # vite build --watch into ./dist
-```
-
-Then in Chrome: `chrome://extensions` → enable Developer mode → **Load unpacked** → select `packages/chrome-extension/dist`.
-
-## Build a release artifact
-
-```bash
-pnpm build        # one-shot production build into ./dist
-pnpm pack:zip     # zips dist/ into web-annotator-extension-<version>.zip
-```
-
-Upload the resulting `.zip` to the [Chrome Web Store Developer Dashboard](https://chrome.google.com/webstore/devconsole). Bump `version` in `manifest.json` for each release (must increase monotonically).
-
-## Type-check + tests
-
-```bash
+```sh
+pnpm build
 pnpm type-check
 pnpm test
 ```
 
-## Files
+Load `dist/` as an unpacked extension in Chrome. In Reader, open Connections, create an extension key, and paste it into the popup. Click Save link on a web page. Existing installations keep the same `api-key` local-storage slot.
 
-```
-manifest.json              MV3 manifest
-src/background.ts          Service worker (side-panel wiring)
-src/content-script.ts      In-page Readability extraction
-popup/                     Toolbar popup UI (React + Vite)
-side-panel/                Side-panel UI (React + Vite)
-icons/                     16/48/128 px PNG icons
-```
-
-## Privacy
-
-The extension does not collect, transmit, or share any personal data on its own. It only sends a URL/title (and, on user action, extracted reading text) to your configured Web Annotator backend. See [PRIVACY.md](./PRIVACY.md).
+The extension needs only `activeTab`, `storage`, and access to the Reader origin. Public Chrome Web Store distribution is not part of this change.
