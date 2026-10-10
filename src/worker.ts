@@ -9,7 +9,11 @@ import articlesRoutes from './worker/routes/articles';
 import keysRoutes from './worker/routes/keys';
 import mcpRoutes, { protectedResourceMetadata } from './worker/routes/mcp';
 import miscRoutes from './worker/routes/misc';
-import { appHealthMiddleware } from './worker/app-health';
+import {
+  appHealthMiddleware,
+  appHealthStageTimingMiddleware,
+  trackAppHealthRequest,
+} from './worker/app-health';
 
 const SECURITY_HEADERS: Record<string, string> = {
   'X-Content-Type-Options': 'nosniff',
@@ -35,6 +39,10 @@ api.use('*', async (c, next) => {
 });
 
 api.use('*', appHealthMiddleware);
+// Hono's /prefix/* also matches /prefix, so register links only once.
+for (const path of ['/api/links/*', '/api/articles/*', '/api/mcp/*', '/api/keys/*']) {
+  api.use(path, appHealthStageTimingMiddleware);
+}
 
 api.on(['GET', 'HEAD'], '*', async (c, next) => {
   const path = c.req.path.replace(/\/{2,}/g, '/').replace(/\/+$/, '');
@@ -115,6 +123,7 @@ function withSecurityHeaders(response: Response, pathname: string): Response {
 
 export default {
   async fetch(request: Request, env: WorkerEnv, ctx: ExecutionContext): Promise<Response> {
+    trackAppHealthRequest(request);
     const url = new URL(request.url);
 
     // Discovery outside /api/* remains separate from product API routes.
