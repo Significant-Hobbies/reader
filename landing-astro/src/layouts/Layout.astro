@@ -1,93 +1,19 @@
 ---
-import '@/styles/landing.css';
+import Base from '@saas-maker/templates/Base.astro';
+import { baseProps } from '@saas-maker/templates/page';
+import type { WorkbenchContent } from '@saas-maker/templates/schema';
+import Head from '@/components/Head.astro';
 
 interface Props {
-  title: string;
-  description: string;
-  canonicalPath?: string;
-  showStandaloneProjectStrip?: boolean;
-  useAuthoredFooterHost?: boolean;
+  content: WorkbenchContent;
 }
-
-const { title, canonicalPath = '/' } = Astro.props;
-
-const SITE_URL = 'https://read.significanthobbies.com';
+const { content } = Astro.props;
 ---
 
-<!doctype html>
-<html lang="en">
-  <head>
-    <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <meta name="theme-color" content="#f0eee6" />
-
-    <title>{title}</title>
-    <meta name="description" content={Astro.props.description} />
-    <meta name="application-name" content="Reader" />
-
-    <link rel="canonical" href={new URL(canonicalPath, SITE_URL)} />
-    <link rel="alternate" type="text/markdown" href={new URL(canonicalPath === '/' ? '/index.md' : `${canonicalPath}.md`, SITE_URL)} />
-    <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
-    <link rel="icon" href="/favicon.ico" sizes="any" />
-
-    <meta property="og:type" content="website" />
-    <meta property="og:url" content={new URL(canonicalPath, SITE_URL)} />
-    <meta property="og:site_name" content="Reader" />
-    <meta property="og:title" content={title} />
-    <meta property="og:description" content={Astro.props.description} />
-    <meta property="og:image" content={`${SITE_URL}/reader-opengraph.png`} />
-    <meta property="og:image:width" content="1200" />
-    <meta property="og:image:height" content="630" />
-
-    <meta name="twitter:card" content="summary_large_image" />
-    <meta name="twitter:title" content={title} />
-    <meta name="twitter:description" content={Astro.props.description} />
-    <meta name="twitter:image" content={`${SITE_URL}/reader-opengraph.png`} />
-    <script
-      is:inline
-      type="application/ld+json"
-      set:html={JSON.stringify({
-        '@context': 'https://schema.org',
-        '@graph': [
-          {
-            '@type': 'Organization',
-            '@id': `${SITE_URL}/#publisher`,
-            name: 'Significant Hobbies',
-            url: 'https://significanthobbies.com/',
-            description: 'A family of maintained personal applications built around focused, private workflows.',
-            logo: `${SITE_URL}/icon.svg`,
-            founder: {
-              '@type': 'Person',
-              name: 'Sarthak Agrawal',
-              url: 'https://sarthakagrawal.dev/',
-            },
-            sameAs: [
-              'https://github.com/Significant-Hobbies',
-              'https://github.com/Significant-Hobbies/reader',
-            ],
-          },
-          {
-            '@type': 'WebSite',
-            '@id': `${SITE_URL}/#website`,
-            name: 'Reader',
-            url: SITE_URL,
-            description: Astro.props.description,
-            inLanguage: 'en',
-            publisher: { '@id': `${SITE_URL}/#publisher` },
-          },
-        ],
-      })}
-    />
-  </head>
-  <body class="antialiased">
-    <script
-      is:inline
-      defer
-      src="https://health.sassmaker.com/tracker.js"
-      data-key="ahk_pub_37a5218b0597ba297485ebf3da9494a7d60eebacbe5ed73de0160de77489ea5d"
-      data-project="app-import-126da40da98ff062b1a644b460fe99614c95a45c614569ff8e76257f5610068d"
-      data-identity="persistent"
-    ></script>
-    <slot />
-  </body>
-</html>
+<Base {...baseProps(content)} icon={undefined}>
+  <Fragment slot="head">
+    <!-- Shared head renders Microsoft Clarity (y6budslpbi) and App Health. -->
+    <Head title={content.page.title} description={content.page.description ?? ''} templateHead />
+  </Fragment>
+  <slot />
+</Base>

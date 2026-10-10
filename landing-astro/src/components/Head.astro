@@ -1,0 +1,80 @@
+---
+interface Props {
+  title: string;
+  description: string;
+  canonicalPath?: string;
+  templateHead?: boolean;
+}
+const { title, description, canonicalPath = '/', templateHead = false } = Astro.props;
+const SITE_URL = 'https://read.significanthobbies.com';
+---
+
+{!templateHead && <>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>{title}</title>
+  <meta name="description" content={description} />
+  <link rel="canonical" href={new URL(canonicalPath, SITE_URL)} />
+  <meta property="og:type" content="website" />
+  <meta property="og:url" content={new URL(canonicalPath, SITE_URL)} />
+  <meta property="og:site_name" content="Reader" />
+  <meta property="og:title" content={title} />
+  <meta property="og:description" content={description} />
+  <meta property="og:image" content={`${SITE_URL}/reader-opengraph.png`} />
+  <meta property="og:image:width" content="1200" />
+  <meta property="og:image:height" content="630" />
+  <meta name="twitter:card" content="summary_large_image" />
+  <meta name="twitter:title" content={title} />
+  <meta name="twitter:description" content={description} />
+  <meta name="twitter:image" content={`${SITE_URL}/reader-opengraph.png`} />
+</>}
+<meta name="theme-color" content="#f0eee6" />
+<meta name="application-name" content="Reader" />
+<link rel="alternate" type="text/markdown" href={new URL(canonicalPath === '/' ? '/index.md' : `${canonicalPath}.md`, SITE_URL)} />
+<link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+<link rel="icon" href="/favicon.ico" sizes="any" />
+    <script
+      is:inline
+      type="application/ld+json"
+      set:html={JSON.stringify({
+        '@context': 'https://schema.org',
+        '@graph': [
+          {
+            '@type': 'Organization',
+            '@id': `${SITE_URL}/#publisher`,
+            name: 'Significant Hobbies',
+            url: 'https://significanthobbies.com/',
+            description: 'A family of maintained personal applications built around focused, private workflows.',
+            logo: `${SITE_URL}/icon.svg`,
+            founder: {
+              '@type': 'Person',
+              name: 'Sarthak Agrawal',
+              url: 'https://sarthakagrawal.dev/',
+            },
+            sameAs: [
+              'https://github.com/Significant-Hobbies',
+              'https://github.com/Significant-Hobbies/reader',
+            ],
+          },
+          {
+            '@type': 'WebSite',
+            '@id': `${SITE_URL}/#website`,
+            name: 'Reader',
+            url: SITE_URL,
+            description: description,
+            inLanguage: 'en',
+            publisher: { '@id': `${SITE_URL}/#publisher` },
+          },
+        ],
+      })}
+    />
+<!-- Microsoft Clarity — session replay + heatmaps (additive; PostHog stays) -->
+<script is:inline>(function(c,l,a,r,i,t,y){c[a]=c[a]||function(){(c[a].q=c[a].q||[]).push(arguments)};t=l.createElement(r);t.async=1;t.src="https://www.clarity.ms/tag/y6budslpbi";y=l.getElementsByTagName(r)[0];y.parentNode.insertBefore(t,y);})(window,document,"clarity","script","y6budslpbi");window.clarity("set","project_id","reader");</script>
+    <script
+      is:inline
+      defer
+      src="https://health.sassmaker.com/tracker.js"
+      data-key="ahk_pub_37a5218b0597ba297485ebf3da9494a7d60eebacbe5ed73de0160de77489ea5d"
+      data-project="app-import-126da40da98ff062b1a644b460fe99614c95a45c614569ff8e76257f5610068d"
+      data-identity="persistent"
+    ></script>

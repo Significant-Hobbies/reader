@@ -1,0 +1,255 @@
+{
+  "template": "workbench",
+  "page": {
+    "title": "Reader — your saved-link inbox",
+    "description": "Save links from the web. Find them, pull their content, and mark them read through ChatGPT.",
+    "theme": "paper",
+    "icon": "icon.svg",
+    "assetBase": "/",
+    "canonical": "https://read.significanthobbies.com/",
+    "og": {
+      "image": "reader-opengraph.png",
+      "imageWidth": 1200,
+      "imageHeight": 630,
+      "siteName": "Reader",
+      "twitterCard": "summary_large_image"
+    }
+  },
+  "product": "Reader",
+  "url": "https://read.significanthobbies.com",
+  "mark": "icon.svg",
+  "nav": [
+    {
+      "label": "How it works",
+      "href": "#loop"
+    },
+    {
+      "label": "ChatGPT",
+      "href": "#chatgpt"
+    },
+    {
+      "label": "Boundaries",
+      "href": "#state"
+    },
+    {
+      "label": "FAQ",
+      "href": "#faq"
+    }
+  ],
+  "header": {
+    "secondary": {
+      "label": "Sign in",
+      "href": "/login"
+    },
+    "primary": {
+      "label": "Open your inbox",
+      "href": "/library",
+      "icon": "ArrowUpRight"
+    }
+  },
+  "hero": {
+    "eyebrow": "Your saved-link inbox",
+    "title": "Save a link. *Pick it up in ChatGPT.*",
+    "lede": "Keep the pages you want to come back to in one place. Add a URL, or save the current tab with the Chrome extension. ChatGPT can find your links, pull their content, and mark them read when you ask.",
+    "primary": {
+      "label": "Open your inbox",
+      "href": "/library",
+      "icon": "ArrowUpRight"
+    },
+    "secondary": {
+      "label": "Connections",
+      "href": "/extension"
+    },
+    "note": "Google sign-in · no checkout",
+    "window": {
+      "title": "reader / inbox",
+      "src": "images/inbox.png",
+      "alt": "Reader's inbox with six saved links, read-state controls and an add-link button",
+      "width": 1600,
+      "height": 900,
+      "chrome": "browser"
+    },
+    "backdrop": "footer-art/reader-precise-original-v1.webp",
+    "caption": "Illustrative interface · example links, not a customer's inbox"
+  },
+  "sections": [
+    {
+      "id": "loop",
+      "blocks": [
+        {
+          "type": "statement",
+          "eyebrow": "How it works",
+          "title": "A saved tab is *only an intention.*",
+          "lede": "Reader keeps the list small: what you saved, whether you have read it, and a way back to it.",
+          "points": [
+            {
+              "title": "Save it",
+              "body": "Paste a URL in the inbox, or click Save link in the Chrome extension. Reader stores the title, the address and the date."
+            },
+            {
+              "title": "Find it",
+              "body": "Switch between unread, read and all. Search matches titles and addresses."
+            },
+            {
+              "title": "Mark it",
+              "body": "Links stay unread until you say otherwise. Opening or fetching a link never marks it read on its own."
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "chatgpt",
+      "surface": "muted",
+      "blocks": [
+        {
+          "type": "statement",
+          "eyebrow": "With ChatGPT",
+          "title": "Ask about what you saved, *in the conversation you are already in.*",
+          "lede": "Reader connects to ChatGPT through MCP with OAuth. Reading and discussion happen there; Reader holds the list.",
+          "points": [
+            {
+              "title": "Search",
+              "body": "“What have I saved about databases?” finds matching links in your inbox."
+            },
+            {
+              "title": "Fetch",
+              "body": "Pulls the available text of a link. If a site blocks extraction, the original address is still there."
+            },
+            {
+              "title": "Mark read",
+              "body": "Marks a link read, or unread again, only when you ask. Read and write are separate permissions."
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "state",
+      "blocks": [
+        {
+          "type": "statement",
+          "eyebrow": "Boundaries",
+          "title": "Small on purpose, *and private to your account.*",
+          "lede": "Reader is a maintained personal tool. It does one job and does not grow past it.",
+          "points": [
+            {
+              "title": "Google sign-in",
+              "body": "Your inbox belongs to your account and is isolated from every other."
+            },
+            {
+              "title": "Chrome extension",
+              "body": "Saves the active tab's address and title. Built from source for a local unpacked install."
+            },
+            {
+              "title": "Not in Reader",
+              "body": "No RSS, annotations, boards, PDF capture or built-in AI. Earlier saves are kept and appear as links."
+            },
+            {
+              "title": "No checkout",
+              "body": "There is no public plan or payment."
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "faq",
+      "surface": "muted",
+      "blocks": [
+        {
+          "type": "faq",
+          "title": "Before you *save a link.*",
+          "items": [
+            {
+              "q": "How do I add a link?",
+              "a": "Paste a URL in the inbox, or click Save link in the Chrome extension."
+            },
+            {
+              "q": "What does ChatGPT see?",
+              "a": "Only what its tools ask for: a search over your saved titles and addresses, the text of a link you point it at, and the read state of a link you ask it to change."
+            },
+            {
+              "q": "Where did the other features go?",
+              "a": "RSS, the reader view, annotations, boards, memories, PDFs and built-in AI are outside the active product. Existing saved data is retained."
+            },
+            {
+              "q": "Can I install the Chrome extension?",
+              "a": "It is built from the repository and loaded unpacked in Chrome. Public store distribution is deferred."
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "compact": true,
+      "blocks": [
+        {
+          "type": "cta",
+          "title": "Bring one link you mean *to come back to.*",
+          "lede": "Sign in with Google, paste the address, and it is waiting in your inbox.",
+          "primary": {
+            "label": "Open your inbox",
+            "href": "/library",
+            "icon": "ArrowUpRight"
+          },
+          "secondary": {
+            "label": "How it connects",
+            "href": "/faq"
+          }
+        }
+      ]
+    }
+  ],
+  "footer": {
+    "summary": "A maintained saved-link inbox with a Chrome capture extension and ChatGPT access. Personal use, no public checkout.",
+    "catalogId": "reader",
+    "capture": "newsletter",
+    "legal": "© 2026 Significant Hobbies",
+    "groups": [
+      {
+        "title": "Product",
+        "links": [
+          {
+            "label": "Open your inbox",
+            "href": "/library"
+          },
+          {
+            "label": "Connections",
+            "href": "/extension"
+          },
+          {
+            "label": "Changelog",
+            "href": "/changelog"
+          }
+        ]
+      },
+      {
+        "title": "Resources",
+        "links": [
+          {
+            "label": "FAQ",
+            "href": "/faq"
+          },
+          {
+            "label": "Source",
+            "href": "https://github.com/Significant-Hobbies/reader"
+          }
+        ]
+      },
+      {
+        "title": "Company",
+        "links": [
+          {
+            "label": "Privacy",
+            "href": "/privacy"
+          },
+          {
+            "label": "Significant Hobbies",
+            "href": "https://significanthobbies.com"
+          }
+        ]
+      }
+    ]
+  }
+}
