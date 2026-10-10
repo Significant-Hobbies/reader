@@ -23,7 +23,11 @@
       "project": ["src/**/*.{astro,ts,tsx}", "astro.config.mjs"],
       "ignoreDependencies": [
         // Astro consumes Lightning CSS from its build configuration.
-        "lightningcss"
+        "lightningcss",
+        // Peer dependencies of @saas-maker/templates, loaded by its components.
+        "lucide-react",
+        "motion",
+        "radix-ui"
       ]
     },
     "packages/chrome-extension": {
