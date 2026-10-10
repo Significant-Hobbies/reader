@@ -11,6 +11,50 @@ const TARGET = resolve('dist');
 
 const PROTECTED_PREFIXES = ['assets/', 'app.html'];
 
+// The shared template only accepts a single image URL. Add delivery attributes
+// to its static output without forking the template or changing its layout.
+function optimizeLandingImages(source) {
+  let html = source;
+  const images = [
+    {
+      src: '/images/inbox.png',
+      base: '/images/inbox',
+      widths: [480, 960, 1600],
+      width: 1600,
+      height: 900,
+      sizes: '(min-width: 1024px) 896px, calc(100vw - 80px)',
+    },
+    {
+      src: '/footer-art/reader-precise-original-v1.webp',
+      base: '/footer-art/reader-precise',
+      widths: [480, 768, 1536, 2172],
+      width: 2172,
+      height: 724,
+      sizes: '(min-width: 1200px) 1152px, calc(100vw - 44px)',
+    },
+  ];
+  for (const image of images) {
+    html = html.replace(/<link\b[^>]*>/g, (tag) =>
+      tag.includes('rel="preload"') && tag.includes(`href="${image.src}"`) ? '' : tag
+    );
+    html = html.replace(/<img\b[^>]*>/g, (tag) => {
+      if (!tag.includes(`src="${image.src}"`)) return tag;
+      const attributes = tag.replace(
+        /\s(?:src|srcset|sizes|width|height|loading|fetchpriority)="[^"]*"/gi,
+        ''
+      );
+      const srcset = image.widths
+        .map((width) => `${image.base}-${width}.webp ${width}w`)
+        .join(', ');
+      return attributes.replace(
+        '<img',
+        `<img src="${image.base}-${image.width}.webp" srcset="${srcset}" sizes="${image.sizes}" width="${image.width}" height="${image.height}" loading="lazy"`
+      );
+    });
+  }
+  return html;
+}
+
 async function walk(dir, rel = '') {
   const entries = await readdir(dir, { withFileTypes: true });
   const out = [];
@@ -62,7 +106,11 @@ async function main() {
     }
     const dest = join(TARGET, rel);
     await mkdir(dirname(dest), { recursive: true });
-    await copyFile(src, dest);
+    if (rel === 'index.html') {
+      await writeFile(dest, optimizeLandingImages(await readFile(src, 'utf8')));
+    } else {
+      await copyFile(src, dest);
+    }
     copied += 1;
   }
 
