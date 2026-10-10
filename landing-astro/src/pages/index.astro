@@ -1,27 +1,12 @@
 ---
+import { WorkbenchPage } from '@saas-maker/templates/workbench-page';
+import { workbenchContent } from '@saas-maker/templates/schema';
 import Layout from '@/layouts/Layout.astro';
+import json from '../content/reader.json';
+
+const content = workbenchContent.parse(json);
 ---
-<Layout title="Reader — your saved-link inbox" description="Save links from the web. Find them, pull their content, and mark them read through ChatGPT.">
-  <div class="page">
-    <header class="header"><div class="header-inner">
-      <a class="brand" href="/" aria-label="Reader home"><span class="brand-mark" aria-hidden="true">R</span>Reader</a>
-      <a class="btn-signin" href="/login">Sign in</a>
-    </div></header>
-    <main class="hero">
-      <div class="hero-copy">
-        <p class="eyebrow">Your saved-link inbox</p>
-        <h1>Save a link.<br />Pick it up in ChatGPT.</h1>
-        <p class="hero-lede">Keep the pages you want to come back to in one place. Add a URL or save the current tab with the Chrome extension. ChatGPT can find your links, pull their content, and mark them read when you ask.</p>
-        <div class="cta-row"><a class="btn-primary" href="/library">Open your inbox ↗</a><a class="btn-secondary" href="/extension">Connections</a></div>
-      </div>
-      <div class="inbox-preview" aria-label="Example of a saved-link inbox">
-        <div class="preview-header"><span>Reader</span><span>Unread</span></div>
-        <a href="https://www.sqlite.org/whentouse.html" target="_blank" rel="noreferrer"><strong>Appropriate uses for SQLite</strong><span>sqlite.org ↗</span></a>
-        <a href="https://paulgraham.com/makersschedule.html" target="_blank" rel="noreferrer"><strong>Maker’s schedule, manager’s schedule</strong><span>paulgraham.com ↗</span></a>
-        <p>“What have I saved about databases?”</p>
-        <div class="preview-footer">Your links, ready for your next conversation.</div>
-      </div>
-    </main>
-    <footer class="site-footer"><span>Reader · Save now, read later.</span><a href="/privacy">Privacy</a></footer>
-  </div>
+
+<Layout content={content}>
+  <WorkbenchPage content={content} />
 </Layout>
