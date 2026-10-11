@@ -56,7 +56,7 @@ export default function LoginClient() {
 
   if (redirecting) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-[#15130f]">
+      <div className="flex min-h-screen items-center justify-center bg-[#09090B]">
         <div className="text-center">
           <div className="mx-auto mb-4 h-8 w-8 animate-spin rounded-full border-b-2 border-[var(--accent-10)]" />
           <p className="text-[var(--gray-11)]">Loading your library...</p>
@@ -66,7 +66,7 @@ export default function LoginClient() {
   }
 
   return (
-    <div className="flex min-h-screen flex-col items-center justify-center gap-10 bg-[#15130f] bg-[radial-gradient(circle_at_top,rgba(180,140,92,0.16),transparent_30rem)] p-8 lg:flex-row lg:items-center lg:gap-16">
+    <div className="flex min-h-screen flex-col items-center justify-center gap-10 bg-[#09090B] p-8 lg:flex-row lg:items-center lg:gap-16">
       <div className="w-full max-w-md rounded-xl border border-[var(--gray-5)] bg-[var(--gray-2)]/85 p-8 text-center shadow-[0_24px_90px_rgba(0,0,0,0.35)]">
         <div className="mb-8">
           <p className="mb-2 text-sm font-medium tracking-wide text-[var(--gray-11)] uppercase">
