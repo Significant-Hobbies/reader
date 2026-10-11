@@ -12,6 +12,25 @@ import type { WorkerEnv } from '../lib/worker-env';
 type ReaderEnv = Env & { Bindings: WorkerEnv };
 type ClientFactory = (options: AppHealthClientOptions) => AppHealthClient;
 
+function stageSampleRate(raw: string | undefined): number {
+  const parsed = raw?.trim() ? Number(raw.trim()) : Number.NaN;
+  return Number.isFinite(parsed) && parsed >= 0 && parsed <= 1 ? parsed : 0.1;
+}
+
+function isSafeStageRoute(route: string): boolean {
+  return (
+    route.startsWith('/') &&
+    route.length <= 120 &&
+    !route
+      .split('/')
+      .some((segment) =>
+        /^(?:\d+|[a-f0-9]{16,}|[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12})$/i.test(
+          segment
+        )
+      )
+  );
+}
+
 export function createReaderAppHealthMiddlewares(
   createClient: ClientFactory = createAppHealthClient
 ) {
@@ -51,24 +70,10 @@ export function createReaderAppHealthMiddlewares(
     await next();
     // Telemetry must never change the response or expose request data.
     try {
-      const rawRate = c.env.APP_HEALTH_STAGE_SAMPLE_RATE?.trim();
-      const parsedRate = rawRate ? Number(rawRate) : Number.NaN;
-      const rate =
-        Number.isFinite(parsedRate) && parsedRate >= 0 && parsedRate <= 1 ? parsedRate : 0.1;
+      const rate = stageSampleRate(c.env.APP_HEALTH_STAGE_SAMPLE_RATE);
       if (!c.env.APP_HEALTH_INGEST_KEY?.trim() || rate === 0 || Math.random() >= rate) return;
       const route = routePath(c, -1);
-      if (
-        !route.startsWith('/') ||
-        route.length > 120 ||
-        route
-          .split('/')
-          .some((segment) =>
-            /^(?:\d+|[a-f0-9]{16,}|[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12})$/i.test(
-              segment
-            )
-          )
-      )
-        return;
+      if (!isSafeStageRoute(route)) return;
       const client = resolveClient(c);
       if (!client) return;
       const colo = c.req.raw.cf?.colo;
