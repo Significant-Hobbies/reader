@@ -14,6 +14,7 @@
         // Loaded through Tailwind CSS directives rather than JavaScript imports.
         // Optional documentation presentation layer; Markdown remains authoritative.
         // Spawned by the code-health checker rather than imported.
+        "@fontsource-variable/geist",
         "jscpd",
         "tailwindcss"
       ],
