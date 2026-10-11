@@ -58,7 +58,7 @@ export default function LoginClient() {
     return (
       <div className="flex min-h-screen items-center justify-center bg-[#09090B]">
         <div className="text-center">
-          <div className="mx-auto mb-4 h-8 w-8 animate-spin rounded-full border-b-2 border-[var(--accent-10)]" />
+          <div className="mx-auto mb-4 h-8 w-8 animate-spin rounded-full border-b-2 border-[var(--accent-8)]" />
           <p className="text-[var(--gray-11)]">Loading your library...</p>
         </div>
       </div>
@@ -69,7 +69,7 @@ export default function LoginClient() {
     <div className="flex min-h-screen flex-col items-center justify-center gap-10 bg-[#09090B] p-8 lg:flex-row lg:items-center lg:gap-16">
       <div className="w-full max-w-md rounded-xl border border-[var(--gray-5)] bg-[var(--gray-2)]/85 p-8 text-center shadow-[0_24px_90px_rgba(0,0,0,0.35)]">
         <div className="mb-8">
-          <p className="mb-2 text-sm font-medium tracking-wide text-[var(--gray-11)] uppercase">
+          <p className="mb-2 text-sm font-medium tracking-wide text-[var(--accent-8)] uppercase">
             Saved-link inbox
           </p>
           <h1 className="text-4xl font-bold text-[var(--gray-12)]">Reader</h1>
@@ -82,11 +82,11 @@ export default function LoginClient() {
           size="lg"
           onClick={handleSignIn}
           disabled={signingIn}
-          className="w-full justify-center"
+          className="w-full justify-center bg-[var(--accent-8)]! text-[#09090B]! hover:bg-[var(--accent-11)]! focus-visible:ring-[var(--accent-8)]"
         >
           {signingIn ? (
             <span className="flex items-center justify-center gap-2">
-              <span className="h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent" />
+              <span className="h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent" />
               Signing in...
             </span>
           ) : (
