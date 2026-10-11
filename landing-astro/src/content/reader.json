@@ -3,7 +3,21 @@
   "page": {
     "title": "Reader — your saved-link inbox",
     "description": "Save links from the web. Find them, pull their content, and mark them read through ChatGPT.",
-    "theme": "paper",
+    "mode": "dark",
+    "fromApp": {
+      "background": "#09090B",
+      "foreground": "#FAFAFA",
+      "card": "#18181B",
+      "surface": "#18181B",
+      "muted": "#27272A",
+      "mutedForeground": "#A1A1AA",
+      "border": "#3F3F46",
+      "brand": "#E27A5C",
+      "brandForeground": "#09090B",
+      "destructive": "#F87171",
+      "radius": "12px",
+      "fonts": { "sans": "geist", "display": "geist", "mono": "geist-mono" }
+    },
     "icon": "icon.svg",
     "assetBase": "/",
     "canonical": "https://read.significanthobbies.com/",
@@ -69,7 +83,6 @@
       "height": 900,
       "chrome": "browser"
     },
-    "backdrop": "footer-art/reader-precise-original-v1.webp",
     "caption": "Illustrative interface · example links, not a customer's inbox"
   },
   "sections": [

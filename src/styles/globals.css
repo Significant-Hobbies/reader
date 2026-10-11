@@ -1,3 +1,4 @@
+@import "@fontsource-variable/geist";
 @import "tailwindcss";
 @import "./app-tokens.css";
 
@@ -5,7 +6,7 @@ body {
   margin: 0;
   background: var(--gray-1);
   color: var(--gray-12);
-  font-family: Inter, ui-sans-serif, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  font-family: "Geist Variable", Inter, ui-sans-serif, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
   -webkit-font-smoothing: antialiased;
 }
 button, a, input { -webkit-tap-highlight-color: transparent; }
