@@ -11,6 +11,8 @@ vi.mock('./lib/auth', () => ({ createAuth: () => ({ handler: mocks.auth }) }));
 vi.mock('./lib/auth-api', () => ({ getAuthenticatedUserId: mocks.user }));
 vi.mock('./worker/bind-env', () => ({ bindWorkerEnv: vi.fn() }));
 vi.mock('./worker/app-health', () => ({
+  trackAppHealthRequest: vi.fn(),
+  appHealthStageTimingMiddleware: async (_context: unknown, next: () => Promise<void>) => next(),
   appHealthMiddleware: async (_context: unknown, next: () => Promise<void>) => {
     mocks.appHealth();
     await next();
