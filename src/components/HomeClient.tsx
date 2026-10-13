@@ -1,12 +1,12 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { ArrowUpRight, Check, Loader2, Plus, Search, Undo2 } from 'lucide-react';
 import { useState } from 'react';
-import { Navigate } from 'react-router-dom';
 
 import type { SavedLink } from '@/lib/links-db';
 import { trackActivatedOnce, trackCoreAction } from '@/lib/analytics';
 import { useAuth } from './AuthProvider';
 import { Navbar } from './Navbar';
+import { ReaderEntry } from './ReaderEntry';
 import { Button } from './ui/button';
 import { Input } from './ui/input';
 
@@ -73,13 +73,7 @@ export default function HomeClient() {
     },
   });
 
-  if (loading)
-    return (
-      <main className="grid min-h-screen place-items-center bg-[var(--gray-1)] text-[var(--gray-11)]">
-        <p role="status">Loading Reader…</p>
-      </main>
-    );
-  if (!user) return <Navigate to="/login" replace />;
+  if (loading || !user) return <ReaderEntry pending={loading} />;
 
   return (
     <div className="min-h-screen bg-[var(--gray-1)] text-[var(--gray-12)]">

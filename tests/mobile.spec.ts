@@ -1,4 +1,4 @@
-import { expect, test } from '@playwright/test';
+import { expect, syntheticSession, test } from './fixtures';
 import { mkdir } from 'node:fs/promises';
 
 test('the saved-link workflow works at every viewport', async ({ page }, testInfo) => {
@@ -19,30 +19,7 @@ test('the saved-link workflow works at every viewport', async ({ page }, testInf
       createdAt: date,
     },
   ];
-  await page.route('https://**', (route) => route.abort());
-  await page.route('**/api/auth/get-session', (route) =>
-    route.fulfill({
-      json: {
-        user: {
-          id: 'alice',
-          name: 'Alice',
-          email: 'alice@example.com',
-          emailVerified: true,
-          image: null,
-          createdAt: date,
-          updatedAt: date,
-        },
-        session: {
-          id: 'session',
-          userId: 'alice',
-          token: 'synthetic',
-          expiresAt: '2099-01-01T00:00:00.000Z',
-          createdAt: date,
-          updatedAt: date,
-        },
-      },
-    })
-  );
+  await page.route('**/api/auth/get-session', (route) => route.fulfill({ json: syntheticSession }));
   await page.route('**/api/links**', async (route) => {
     const request = route.request();
     if (request.method() === 'POST') {
@@ -90,7 +67,6 @@ test('the saved-link workflow works at every viewport', async ({ page }, testInf
 });
 
 test('landing states the narrow product and fits the viewport', async ({ page }, testInfo) => {
-  await page.route('https://**', (route) => route.abort());
   await page.goto('/');
   await expect(
     page.getByRole('heading', { name: 'Save a link. Pick it up in ChatGPT.' })
@@ -98,6 +74,9 @@ test('landing states the narrow product and fits the viewport', async ({ page },
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(
     true
   );
+  const signInLinks = page.getByRole('link', { name: 'Sign in to your inbox' });
+  expect(await signInLinks.count()).toBeGreaterThan(0);
+  for (const link of await signInLinks.all()) await expect(link).toHaveAttribute('href', '/login');
   await mkdir('.fleet-local/screenshots', { recursive: true });
   await page.screenshot({
     path: `.fleet-local/screenshots/landing-${testInfo.project.name}.png`,

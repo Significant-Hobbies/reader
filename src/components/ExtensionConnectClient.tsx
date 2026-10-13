@@ -165,6 +165,36 @@ export function ExtensionConnectClient() {
           </div>
         </section>
 
+        {!user && (
+          <section className="rounded-xl border border-gray-800 bg-gray-900/70 p-5">
+            <h2 className="text-base font-semibold text-white">Install the Chrome extension</h2>
+            <ol className="mt-3 list-decimal space-y-2 pl-5 text-sm text-gray-400">
+              <li>
+                Download the extension ZIP from the{' '}
+                <a
+                  href="https://github.com/Significant-Hobbies/reader/releases/tag/chrome-extension-v0.2.0"
+                  className="text-blue-300 underline underline-offset-4 hover:text-blue-200"
+                >
+                  Reader extension release
+                </a>{' '}
+                and unzip it.
+              </li>
+              <li>
+                In Chrome, open chrome://extensions, enable Developer mode, and choose Load
+                unpacked. Select the unzipped extension folder containing manifest.json.
+              </li>
+              <li>
+                Sign in to Reader, create an extension key here, then paste it into the extension
+                popup and click Connect. Use Save link to save the current page’s URL and title.
+              </li>
+            </ol>
+            <p className="mt-3 text-xs text-gray-500">
+              This is a local unpacked install. Extension keys connect to your Reader account;
+              ChatGPT uses a separate OAuth connection.
+            </p>
+          </section>
+        )}
+
         {!user ? (
           <section className="rounded-xl border border-gray-800 bg-gray-900/70 p-5">
             <h2 className="text-base font-semibold text-white">Sign in first</h2>
