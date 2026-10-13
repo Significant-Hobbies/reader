@@ -56,8 +56,8 @@
       "href": "/login"
     },
     "primary": {
-      "label": "Open your inbox",
-      "href": "/library",
+      "label": "Sign in to your inbox",
+      "href": "/login",
       "icon": "ArrowUpRight"
     }
   },
@@ -66,8 +66,8 @@
     "title": "Save a link. *Pick it up in ChatGPT.*",
     "lede": "Keep the pages you want to come back to in one place. Add a URL, or save the current tab with the Chrome extension. ChatGPT can find your links, pull their content, and mark them read when you ask.",
     "primary": {
-      "label": "Open your inbox",
-      "href": "/library",
+      "label": "Sign in to your inbox",
+      "href": "/login",
       "icon": "ArrowUpRight"
     },
     "secondary": {
@@ -202,8 +202,8 @@
           "title": "Bring one link you mean *to come back to.*",
           "lede": "Sign in with Google, paste the address, and it is waiting in your inbox.",
           "primary": {
-            "label": "Open your inbox",
-            "href": "/library",
+            "label": "Sign in to your inbox",
+            "href": "/login",
             "icon": "ArrowUpRight"
           },
           "secondary": {
@@ -224,8 +224,8 @@
         "title": "Product",
         "links": [
           {
-            "label": "Open your inbox",
-            "href": "/library"
+            "label": "Sign in to your inbox",
+            "href": "/login"
           },
           {
             "label": "Connections",
