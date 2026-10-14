@@ -13,7 +13,11 @@ export default function LoginClient() {
   const [redirecting, setRedirecting] = useState(false);
 
   useEffect(() => {
+    let active = true;
     void startGoogleOneTap('/library').catch((error) => {
+      if (active) {
+        setError('One-tap sign-in is unavailable. Sign in with Google to continue.');
+      }
       captureAuthFailure({
         provider: 'google',
         stage: 'one-tap',
@@ -21,6 +25,9 @@ export default function LoginClient() {
         source: 'login-client',
       });
     });
+    return () => {
+      active = false;
+    };
   }, []);
 
   const handleSignIn = async () => {
@@ -94,7 +101,11 @@ export default function LoginClient() {
           )}
         </Button>
 
-        {error && <p className="mt-4 text-sm text-red-400">{error}</p>}
+        {error && (
+          <p role="alert" className="mt-4 text-sm text-red-400">
+            {error}
+          </p>
+        )}
       </div>
     </div>
   );
