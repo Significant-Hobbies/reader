@@ -2,17 +2,20 @@ import { expect, test } from './fixtures';
 
 test('one synthetic initialization across auth loading; errors retain standard sign-in', async ({
   page,
+  browserName,
 }) => {
   test.setTimeout(60000);
-  const cdp = await page.context().newCDPSession(page);
-  await cdp.send('Network.enable');
-  await cdp.send('Network.emulateNetworkConditions', {
-    offline: false,
-    latency: 150,
-    downloadThroughput: 1_600_000 / 8,
-    uploadThroughput: 750_000 / 8,
-  });
-  await cdp.send('Emulation.setCPUThrottlingRate', { rate: 4 });
+  if (browserName === 'chromium') {
+    const cdp = await page.context().newCDPSession(page);
+    await cdp.send('Network.enable');
+    await cdp.send('Network.emulateNetworkConditions', {
+      offline: false,
+      latency: 150,
+      downloadThroughput: 1_600_000 / 8,
+      uploadThroughput: 750_000 / 8,
+    });
+    await cdp.send('Emulation.setCPUThrottlingRate', { rate: 4 });
+  }
   let configRequests = 0;
   await page.addInitScript(() => {
     Object.assign(window, {
