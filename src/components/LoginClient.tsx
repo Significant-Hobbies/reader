@@ -16,9 +16,7 @@ export default function LoginClient() {
     let active = true;
     void startGoogleOneTap('/library').catch((error) => {
       if (active) {
-        setError(
-          error instanceof Error ? `${error.name}: ${error.message}` : 'Google One Tap failed'
-        );
+        setError('One-tap sign-in is unavailable. Sign in with Google to continue.');
       }
       captureAuthFailure({
         provider: 'google',

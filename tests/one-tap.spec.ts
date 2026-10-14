@@ -50,7 +50,9 @@ test('one synthetic initialization across auth loading; errors retain standard s
     response.url().includes('/api/auth/get-session')
   );
   await page.goto('/login');
-  await expect(page.getByRole('alert')).toHaveText('NetworkError: Synthetic FedCM network failure');
+  await expect(page.getByRole('alert')).toHaveText(
+    'One-tap sign-in is unavailable. Sign in with Google to continue.'
+  );
   await sessionResponse;
   expect(configRequests).toBe(1);
   expect(
