@@ -15,7 +15,18 @@ type AuthClientConfig = {
   googleClientId: string | null;
 };
 
-export async function startGoogleOneTap(callbackPath = '/library'): Promise<void> {
+let oneTapInFlight: Promise<void> | null = null;
+
+export function startGoogleOneTap(callbackPath = '/library'): Promise<void> {
+  if (oneTapInFlight) return oneTapInFlight;
+  const pending = initializeGoogleOneTap(callbackPath).finally(() => {
+    if (oneTapInFlight === pending) oneTapInFlight = null;
+  });
+  oneTapInFlight = pending;
+  return pending;
+}
+
+async function initializeGoogleOneTap(callbackPath: string): Promise<void> {
   const response = await fetch('/api/auth/client-config', {
     credentials: 'same-origin',
     cache: 'no-store',

@@ -34,7 +34,13 @@ function AnalyticsTracker({ useSession }: { useSession: AuthClientModule['useSes
   return null;
 }
 
-function AuthProviderReady({ auth, children }: { auth: AuthClientModule; children: ReactNode }) {
+function AuthProviderReady({
+  auth,
+  onValue,
+}: {
+  auth: AuthClientModule;
+  onValue: (value: AuthContextValue) => void;
+}) {
   const { data: session, isPending } = auth.useSession();
   const sessionUser = session?.user;
 
@@ -63,12 +69,9 @@ function AuthProviderReady({ auth, children }: { auth: AuthClientModule; childre
     [auth, isPending, sessionUser]
   );
 
-  return (
-    <AuthContext.Provider value={value}>
-      <AnalyticsTracker useSession={auth.useSession} />
-      {children}
-    </AuthContext.Provider>
-  );
+  useEffect(() => onValue(value), [onValue, value]);
+
+  return <AnalyticsTracker useSession={auth.useSession} />;
 }
 
 export function AuthProvider({ children }: { children: ReactNode }) {
@@ -101,11 +104,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     []
   );
 
-  if (!auth) {
-    return <AuthContext.Provider value={bootValue}>{children}</AuthContext.Provider>;
-  }
+  const [value, setValue] = useState<AuthContextValue>(bootValue);
 
-  return <AuthProviderReady auth={auth}>{children}</AuthProviderReady>;
+  return (
+    <AuthContext.Provider value={value}>
+      {auth && <AuthProviderReady auth={auth} onValue={setValue} />}
+      {children}
+    </AuthContext.Provider>
+  );
 }
 
 export function useAuth(): AuthContextValue {
