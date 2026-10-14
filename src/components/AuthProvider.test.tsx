@@ -76,7 +76,7 @@ describe('auth loading preserves its subtree', () => {
     expect(mocks.oneTap).toHaveBeenCalledTimes(1);
     expect(mocks.oneTap).toHaveBeenCalledWith('/library');
     expect(host.querySelector('[role=alert]')?.textContent).toBe(
-      'NetworkError: Synthetic FedCM network failure'
+      'One-tap sign-in is unavailable. Sign in with Google to continue.'
     );
     const button = host.querySelector('button')!;
     expect(button.disabled).toBe(false);
