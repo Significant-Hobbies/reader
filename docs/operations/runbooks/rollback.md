@@ -1,8 +1,10 @@
 # Runbook: Rollback a Deploy
 
 Cloudflare Workers does not keep old Worker versions indefinitely, so rollback
-is "redeploy a known-good commit." The deploy is manual
-(`workflow_dispatch`), so rollback is also manual.
+can use a retained known-good version or redeploy a known-good commit. Capture
+the active version before a release. Rollback is deliberate and manual through
+the explicit publisher (`workflow_dispatch`); automatic publication of the next
+`main` merge can supersede it. See [deploy.md](../deploy.md).
 
 ## Fast rollback (code)
 

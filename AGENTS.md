@@ -22,7 +22,7 @@ pnpm dev:worker       # wrangler dev only
 pnpm dev:spa          # vite only (proxies /api → 8787)
 pnpm build            # validate env + vite build → dist/
 pnpm cf:build         # build + landing-astro + overlay into dist/
-pnpm deploy           # validate env + cf:build + wrangler deploy (manual; CI does not auto-deploy)
+pnpm deploy           # explicit local publisher; main also publishes through Cloudflare Workers Builds
 pnpm typecheck        # tsc --noEmit (app + worker tsconfigs)
 pnpm test             # vitest run
 pnpm quality          # complete local/CI code-health gate
@@ -44,10 +44,13 @@ Full command map: [docs/development/commands.md](docs/development/commands.md).
 - **Do not commit secrets.** `.env`, `.env.local`, `.dev.vars`,
   `firebase-service-account.json`, and any auth credential are gitignored.
   Verify `.gitignore` before any push.
-- **Do not deploy or run migrations without explicit user approval.**
-  Commit and push safe changes.
-- **Production deploy is manual** (`workflow_dispatch` on
-  `.github/workflows/deploy.yml`). CI runs on push but does not deploy.
+- Follow the owner's release authorization policy before publishing. Commit
+  and push safe changes; standing authorization applies within its scope.
+- **Merging `main` publishes production through Cloudflare Workers Builds.**
+  PR builds upload preview versions. GitHub's `deploy.yml` is a separate manual
+  publisher (`workflow_dispatch`) that attaches the full commit SHA tag.
+  Check release authorization before merging; a green PR preview is not proof
+  of the active production version. See [deploy.md](docs/operations/deploy.md).
 - **The Worker name `reader` is load-bearing** — the custom domain
   (`read.significanthobbies.com`) and all Cloudflare secrets are bound to it.
   Do not rename without re-provisioning.
