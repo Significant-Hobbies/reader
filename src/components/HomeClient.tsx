@@ -6,6 +6,7 @@ import type { SavedLink } from '@/lib/links-db';
 import { trackActivatedOnce, trackCoreAction } from '@/lib/analytics';
 import { useAuth } from './AuthProvider';
 import { Navbar } from './Navbar';
+import { InboxLoading } from './InboxLoading';
 import { ReaderEntry } from './ReaderEntry';
 import { Button } from './ui/button';
 import { Input } from './ui/input';
@@ -195,9 +196,7 @@ export default function HomeClient() {
           </p>
         )}
         {inbox.isPending ? (
-          <p role="status" className="py-12 text-center text-[var(--gray-9)]">
-            Loading links…
-          </p>
+          <InboxLoading />
         ) : inbox.error ? (
           <div role="alert" className="py-8">
             <p>{inbox.error.message}</p>
