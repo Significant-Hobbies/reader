@@ -1,9 +1,15 @@
 # Deploy
 
 Reader deploys to Cloudflare Workers as the `reader` Worker with a custom
-domain `read.significanthobbies.com`. Production deploys are **manual**
-(`workflow_dispatch` on `.github/workflows/deploy.yml`) — there is no
-auto-deploy on push to `main` (CI runs on push, deploy does not).
+domain `read.significanthobbies.com`. Cloudflare Workers Builds publishes
+`main` automatically; a merge is a production release. Follow the owner's
+release authorization policy before merging. PR builds upload preview
+versions without changing the active production deployment.
+
+The GitHub `deploy.yml` workflow is a separate explicit publisher
+(`workflow_dispatch`). It tags the uploaded version with the full commit SHA.
+After either path, verify the active Worker version and traffic allocation,
+then exercise the live flow. A successful build alone does not verify release.
 
 ## Pipeline
 
@@ -68,9 +74,9 @@ A non-200 aborts the workflow.
 
 ## Preview deploys
 
-`.github/workflows/deploy.yml` has a `deploy-preview` job that runs on PRs
-(`pnpm cf:build` only, no deploy). It validates the build is green without
-pushing to production.
+Cloudflare Workers Builds uploads PR preview versions. The GitHub deploy
+workflow also defines a build-only `deploy-preview` job, but its manual-only
+trigger means that job does not currently run on PRs. See [ci-cd.md](ci-cd.md).
 
 ## Rollback
 

@@ -13,8 +13,9 @@ for triggers and steps; this page documents intent.
 unused code, complexity, duplication, cycles, dependency risk, suppressions,
 docs, production builds, and repository hygiene).
 
-No deploy. No secrets beyond what `validate:env:build` needs (none for
-`build` mode).
+This GitHub workflow does not deploy. The separate Cloudflare Workers Builds
+integration publishes `main` and uploads PR previews; see [deploy.md](deploy.md).
+No secrets beyond what `validate:env:build` needs (none for `build` mode).
 
 ## Deploy — `.github/workflows/deploy.yml`
 
