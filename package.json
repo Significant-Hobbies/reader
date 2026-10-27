@@ -82,7 +82,7 @@
     "@vitest/coverage-v8": "4.1.10",
     "concurrently": "9.2.1",
     "drizzle-kit": "0.31.10",
-    "happy-dom": "20.11.1",
+    "happy-dom": "21.0.4",
     "husky": "9.1.7",
     "jscpd": "5.0.14",
     "knip": "^6.29.0",
@@ -113,12 +113,14 @@
       "brace-expansion@>=1.0.0 <1.1.21": "1.1.21",
       "brace-expansion@>=2.0.0 <2.1.7": "2.1.7",
       "brace-expansion@>=5.0.0 <5.0.12": "5.0.12",
-      "undici@>=7.0.0 <7.29.1": "7.29.1",
       "devalue@<=5.9.2": "5.9.3",
       "http-cache-semantics": "4.3.0",
       "sharp@<0.35.5": "0.35.5",
       "source-map-js@<1.2.2": "1.2.2",
-      "dompurify@<3.4.17": "3.4.17"
+      "dompurify@<3.4.17": "3.4.17",
+      "undici@>=7.0.0 <7.30.1": "7.30.1",
+      "undici@>=8.0.0 <8.12.2": "8.12.2",
+      "zod@>=4.0.0 <4.6.6": "4.6.6"
     },
     "patchedDependencies": {
       "http-cache-semantics@4.3.0": "patches/http-cache-semantics@4.3.0.patch",
