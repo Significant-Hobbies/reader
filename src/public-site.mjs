@@ -167,7 +167,7 @@ export const publicRobots = [
   ].flatMap((bot) => [
     `User-agent: ${bot}`,
     'Allow: /',
-    ...excludedPaths.map((path) => `Disallow: ${path}`),
+    ...excludedPaths.flatMap((path) => [`Disallow: ${path}$`, `Disallow: ${path}/`]),
     'Allow: /api/ai$',
     'Allow: /api/md/',
     'Allow: /llms.txt',

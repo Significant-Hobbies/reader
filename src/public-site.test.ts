@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { handleAgentEdge } from './agent-edge.mjs';
-import { publicPages, publicRoutes } from './public-site.mjs';
+import { publicPages, publicRoutes, publicRobots } from './public-site.mjs';
 import copy from './public-copy.json';
 import worker from './worker';
 import type { WorkerEnv } from './lib/worker-env';
@@ -99,4 +99,28 @@ it('keeps unknown canonical origins local and declares public machine endpoint e
   }
   const response = await handleAgentEdge(new Request(`${origin}/ai.txt`));
   expect(await response?.text()).toContain('public-machine-endpoints: /api/ai, /api/md/*');
+});
+
+it('keeps private robots exclusions segment-bounded and privacy aliases canonical', async () => {
+  expect(publicRobots).toContain('Disallow: /app$');
+  expect(publicRobots).toContain('Disallow: /app/');
+  expect(publicRobots).not.toMatch(/^Disallow: \/(?:app|api)$/m);
+  const shell =
+    '<html><head><title>Reader</title><meta name="description" content="Home"></head><body>Privacy</body></html>';
+  const assets = {
+    ASSETS: {
+      fetch: async () => new Response(shell, { headers: { 'Content-Type': 'text/html' } }),
+    },
+  };
+  for (const path of ['/privacy', '/privacy/']) {
+    const response = await worker.fetch(
+      new Request(origin + path),
+      assets as unknown as WorkerEnv,
+      { waitUntil() {}, passThroughOnException() {} } as ExecutionContext
+    );
+    const body = await response.text();
+    expect(response.headers.get('Link')).toContain('/privacy.md');
+    expect(body).toContain(`name="description" content="${copy.privacy.description}"`);
+    expect(body).toContain(`rel="canonical" href="${origin}/privacy"`);
+  }
 });

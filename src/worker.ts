@@ -94,7 +94,8 @@ function hasAuthCookie(request: Request): boolean {
   return AUTH_COOKIE_FRAGMENTS.some((fragment) => cookie.includes(fragment));
 }
 
-async function withSecurityHeaders(response: Response, pathname: string): Promise<Response> {
+async function withSecurityHeaders(response: Response, requestedPath: string): Promise<Response> {
+  const pathname = requestedPath.replace(/\/$/, '') || '/';
   const headers = new Headers(response.headers);
   for (const [key, value] of Object.entries(SECURITY_HEADERS)) {
     headers.set(key, value);
@@ -129,6 +130,10 @@ async function withSecurityHeaders(response: Response, pathname: string): Promis
       value.replaceAll('&', '&amp;').replaceAll('"', '&quot;').replaceAll('<', '&lt;');
     body = (await response.text())
       .replace(/<title>[^<]*<\/title>/, `<title>${escapeAttribute(route.title)}</title>`)
+      .replace(
+        /<meta\s+name="description"\s+content="[^"]*"\s*\/?\s*>/,
+        `<meta name="description" content="${escapeAttribute(route.description)}">`
+      )
       .replace(
         '</head>',
         `<meta name="ai-summary" content="${escapeAttribute(route.description)}"><link rel="canonical" href="${route.url}"><link rel="alternate" type="text/markdown" href="${route.md}"><script type="application/ld+json">${JSON.stringify(publicIdentityGraph).replaceAll('<', '\\u003c')}</script></head>`

@@ -20,7 +20,10 @@ for (const route of publicRoutes) {
 await writeFile(resolve(output, 'llms.txt'), buildMarkdownIndex(publicManifest, publicRoutes));
 await writeFile(
   resolve(output, 'llms-full.txt'),
-  await buildFullMarkdown(publicManifest, publicRoutes, (path) => publicPages[path])
+  (await buildFullMarkdown(publicManifest, publicRoutes, (path) => publicPages[path])).replace(
+    /^Generated: \d{4}-\d{2}-\d{2}$/m,
+    `Source updated: ${publicManifest.updatedAt}`
+  )
 );
 await writeFile(resolve(output, 'ai.txt'), buildAiTxt(publicManifest, publicRoutes));
 await writeFile(resolve(output, 'robots.txt'), publicRobots);
@@ -29,7 +32,7 @@ const catalogPath = resolve(output, 'api-ai.json');
 const catalog = JSON.parse(await readFile(catalogPath, 'utf8'));
 catalog.surfaces = publicRoutes.map((route) => ({
   id: route.path === '/' ? 'home' : route.path.slice(1),
-  kind: 'product',
+  kind: 'static',
   url: route.url,
   md: route.md,
   description: route.description,

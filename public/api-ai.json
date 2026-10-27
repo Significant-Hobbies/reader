@@ -18,28 +18,28 @@
   "surfaces": [
     {
       "id": "home",
-      "kind": "product",
+      "kind": "static",
       "url": "https://read.significanthobbies.com/",
       "md": "https://read.significanthobbies.com/index.md",
       "description": "Save links from the web. Find them, pull their content, and mark them read through ChatGPT."
     },
     {
       "id": "faq",
-      "kind": "product",
+      "kind": "static",
       "url": "https://read.significanthobbies.com/faq",
       "md": "https://read.significanthobbies.com/faq.md",
       "description": "Reader saves links for use with ChatGPT."
     },
     {
       "id": "changelog",
-      "kind": "product",
+      "kind": "static",
       "url": "https://read.significanthobbies.com/changelog",
       "md": "https://read.significanthobbies.com/changelog.md",
       "description": "Reader’s saved-link simplification."
     },
     {
       "id": "privacy",
-      "kind": "product",
+      "kind": "static",
       "url": "https://read.significanthobbies.com/privacy",
       "md": "https://read.significanthobbies.com/privacy.md",
       "description": "How Reader handles sign-in, saved links, extension keys, ChatGPT access, and analytics."
