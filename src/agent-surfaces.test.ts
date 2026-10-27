@@ -2,6 +2,7 @@ import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { describe, expect, it } from 'vitest';
 import { AGENT_SURFACE, handleAgentEdge } from './agent-edge.mjs';
+import { privacyHtmlDocument } from './public-site.mjs';
 
 const readPublic = (path: string) => readFileSync(resolve(process.cwd(), 'public', path), 'utf8');
 const readRepo = (path: string) => readFileSync(resolve(process.cwd(), path), 'utf8');
@@ -194,7 +195,8 @@ describe('public agent surface parity', () => {
     for (const url of urls) {
       const pathname = new URL(url).pathname;
       if (pathname === '/privacy') {
-        expect(readRepo('src/worker.ts')).toContain('rel="canonical"');
+        const html = privacyHtmlDocument('<html><head></head><body></body></html>');
+        expect(html).toContain(`<link rel="canonical" href="${url}">`);
         continue;
       }
       const sourcePath = landingSourceForPath(pathname);
