@@ -104,6 +104,7 @@ it('keeps unknown canonical origins local and declares public machine endpoint e
 it('keeps private robots exclusions segment-bounded and privacy aliases canonical', async () => {
   expect(publicRobots).toContain('Disallow: /app$');
   expect(publicRobots).toContain('Disallow: /app/');
+  expect(publicRobots).toContain('Disallow: /library?');
   expect(publicRobots).not.toMatch(/^Disallow: \/(?:app|api)$/m);
   const shell =
     '<html><head><title>Reader</title><meta name="description" content="Home"></head><body>Privacy</body></html>';

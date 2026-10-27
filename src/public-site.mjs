@@ -39,7 +39,7 @@ export const publicIdentityGraph = {
   ],
 };
 
-export const excludedPaths = [
+const excludedPaths = [
   '/api',
   '/admin',
   '/auth',
@@ -167,7 +167,11 @@ export const publicRobots = [
   ].flatMap((bot) => [
     `User-agent: ${bot}`,
     'Allow: /',
-    ...excludedPaths.flatMap((path) => [`Disallow: ${path}$`, `Disallow: ${path}/`]),
+    ...excludedPaths.flatMap((path) => [
+      `Disallow: ${path}$`,
+      `Disallow: ${path}/`,
+      `Disallow: ${path}?`,
+    ]),
     'Allow: /api/ai$',
     'Allow: /api/md/',
     'Allow: /llms.txt',
@@ -179,3 +183,19 @@ export const publicRobots = [
   '',
 ].join('\n');
 export const publicSitemap = `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">${publicRoutes.map((route) => `<url><loc>${route.url}</loc></url>`).join('')}</urlset>\n`;
+
+export function privacyHtmlDocument(html) {
+  const route = publicRoutes.find((item) => item.path === '/privacy');
+  const escapeAttribute = (value) =>
+    value.replaceAll('&', '&amp;').replaceAll('"', '&quot;').replaceAll('<', '&lt;');
+  return html
+    .replace(/<title>[^<]*<\/title>/, `<title>${escapeAttribute(route.title)}</title>`)
+    .replace(
+      /<meta\s+name="description"\s+content="[^"]*"\s*\/?\s*>/,
+      `<meta name="description" content="${escapeAttribute(route.description)}">`
+    )
+    .replace(
+      '</head>',
+      `<meta name="ai-summary" content="${escapeAttribute(route.description)}"><link rel="canonical" href="${route.url}"><link rel="alternate" type="text/markdown" href="${route.md}"><script type="application/ld+json">${JSON.stringify(publicIdentityGraph).replaceAll('<', '\\u003c')}</script></head>`
+    );
+}

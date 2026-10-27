@@ -1,4 +1,4 @@
-import { publicIdentityGraph, publicRoutes, SITE_ORIGIN } from './public-site.mjs';
+import { privacyHtmlDocument, publicRoutes, SITE_ORIGIN } from './public-site.mjs';
 import { discoveryLinkHeader } from './agent-surfaces/handler.mjs';
 import { Hono } from 'hono';
 
@@ -125,19 +125,7 @@ async function withSecurityHeaders(response: Response, requestedPath: string): P
   // Privacy is a public React route; supply its discovery metadata in the HTML
   // response without exposing or rendering any account state.
   if (pathname === '/privacy' && contentType.includes('text/html') && response.body) {
-    const route = publicRoutes.find((item: { path: string }) => item.path === '/privacy');
-    const escapeAttribute = (value: string) =>
-      value.replaceAll('&', '&amp;').replaceAll('"', '&quot;').replaceAll('<', '&lt;');
-    body = (await response.text())
-      .replace(/<title>[^<]*<\/title>/, `<title>${escapeAttribute(route.title)}</title>`)
-      .replace(
-        /<meta\s+name="description"\s+content="[^"]*"\s*\/?\s*>/,
-        `<meta name="description" content="${escapeAttribute(route.description)}">`
-      )
-      .replace(
-        '</head>',
-        `<meta name="ai-summary" content="${escapeAttribute(route.description)}"><link rel="canonical" href="${route.url}"><link rel="alternate" type="text/markdown" href="${route.md}"><script type="application/ld+json">${JSON.stringify(publicIdentityGraph).replaceAll('<', '\\u003c')}</script></head>`
-      );
+    body = privacyHtmlDocument(await response.text());
     headers.delete('Content-Length');
   }
   return new Response(body, {
