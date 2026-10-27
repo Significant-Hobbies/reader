@@ -1,3 +1,5 @@
+import { publicIdentityGraph, publicRoutes, SITE_ORIGIN } from './public-site.mjs';
+import { discoveryLinkHeader } from './agent-surfaces/handler.mjs';
 import { Hono } from 'hono';
 
 import { handleAgentEdge } from './agent-edge.mjs';
@@ -24,12 +26,9 @@ const SECURITY_HEADERS: Record<string, string> = {
 };
 
 const AUTH_COOKIE_FRAGMENTS = ['session_token', 'session-token'];
-const MARKDOWN_ALTERNATES: Record<string, string> = {
-  '/': '/index.md',
-  '/faq': '/faq.md',
-  '/changelog': '/changelog.md',
-  '/login': '/login.md',
-};
+const MARKDOWN_ALTERNATES: Record<string, string> = Object.fromEntries(
+  publicRoutes.map((route: { path: string; md: string }) => [route.path, route.md])
+);
 
 const api = new Hono<{ Bindings: WorkerEnv }>();
 
@@ -95,7 +94,7 @@ function hasAuthCookie(request: Request): boolean {
   return AUTH_COOKIE_FRAGMENTS.some((fragment) => cookie.includes(fragment));
 }
 
-function withSecurityHeaders(response: Response, pathname: string): Response {
+async function withSecurityHeaders(response: Response, pathname: string): Promise<Response> {
   const headers = new Headers(response.headers);
   for (const [key, value] of Object.entries(SECURITY_HEADERS)) {
     headers.set(key, value);
@@ -108,13 +107,35 @@ function withSecurityHeaders(response: Response, pathname: string): Response {
     if (pathname === '/login') headers.set('X-Robots-Tag', 'noindex, follow');
     const markdownAlternate = MARKDOWN_ALTERNATES[pathname];
     if (markdownAlternate) {
-      headers.set('Link', `<${markdownAlternate}>; rel="alternate"; type="text/markdown"`);
+      headers.set(
+        'Link',
+        `<${markdownAlternate}>; rel="alternate"; type="text/markdown", ${discoveryLinkHeader(SITE_ORIGIN)}`
+      );
     }
     // Add Vary: Accept for pages that have markdown alternates.
-    const existingVary = headers.get('Vary');
-    headers.set('Vary', existingVary ? `${existingVary}, Accept` : 'Accept, Accept-Encoding');
+    const vary = new Set(
+      (headers.get('Vary') || 'Accept-Encoding').split(',').map((value) => value.trim())
+    );
+    if (!vary.has('*') && ![...vary].some((value) => value.toLowerCase() === 'accept'))
+      vary.add('Accept');
+    headers.set('Vary', [...vary].join(', '));
   }
-  return new Response(response.body, {
+  let body: BodyInit | ReadableStream | null = response.body;
+  // Privacy is a public React route; supply its discovery metadata in the HTML
+  // response without exposing or rendering any account state.
+  if (pathname === '/privacy' && contentType.includes('text/html') && response.body) {
+    const route = publicRoutes.find((item: { path: string }) => item.path === '/privacy');
+    const escapeAttribute = (value: string) =>
+      value.replaceAll('&', '&amp;').replaceAll('"', '&quot;').replaceAll('<', '&lt;');
+    body = (await response.text())
+      .replace(/<title>[^<]*<\/title>/, `<title>${escapeAttribute(route.title)}</title>`)
+      .replace(
+        '</head>',
+        `<meta name="ai-summary" content="${escapeAttribute(route.description)}"><link rel="canonical" href="${route.url}"><link rel="alternate" type="text/markdown" href="${route.md}"><script type="application/ld+json">${JSON.stringify(publicIdentityGraph).replaceAll('<', '\\u003c')}</script></head>`
+      );
+    headers.delete('Content-Length');
+  }
+  return new Response(body, {
     status: response.status,
     statusText: response.statusText,
     headers,
@@ -132,7 +153,7 @@ export default {
       return protectedResourceMetadata(request, env);
     }
 
-    if (!url.pathname.startsWith('/api/')) {
+    if (!url.pathname.startsWith('/api/') || url.pathname.startsWith('/api/md/')) {
       const agent = await handleAgentEdge(request, env);
       if (agent) return agent;
     }

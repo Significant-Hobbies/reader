@@ -1,0 +1,91 @@
+import { describe, expect, it } from 'vitest';
+import { handleAgentEdge } from './agent-edge.mjs';
+import { publicPages, publicRoutes } from './public-site.mjs';
+import copy from './public-copy.json';
+import worker from './worker';
+import type { WorkerEnv } from './lib/worker-env';
+
+const origin = 'https://read.significanthobbies.com';
+const env = {
+  ASSETS: {
+    fetch: async () => {
+      throw new Error('Public source renderer must not fetch user or asset data');
+    },
+  },
+};
+describe('public Reader representations', () => {
+  it('dispatches discovery through the actual Worker before private API routes', async () => {
+    const response = await worker.fetch(
+      new Request(`${origin}/api/md/_catalog`),
+      env as unknown as WorkerEnv,
+      { waitUntil() {}, passThroughOnException() {} } as ExecutionContext
+    );
+    expect(response.status).toBe(200);
+    expect((await response.json()).map((route: { path: string }) => route.path)).toEqual([
+      '/',
+      '/faq',
+      '/changelog',
+      '/privacy',
+    ]);
+  });
+  it('serves source-identical pages in all forms without account inputs', async () => {
+    for (const route of publicRoutes) {
+      for (const [path, accept] of [
+        [new URL(route.md).pathname, '*/*'],
+        [`/api/md${route.path}`, '*/*'],
+        [route.path, 'text/markdown'],
+      ]) {
+        const response = await handleAgentEdge(
+          new Request(`${origin}${path}?private=do-not-export`, {
+            headers: {
+              accept,
+              cookie: 'session_token=do-not-export',
+              authorization: 'Bearer do-not-export',
+            },
+          }),
+          env
+        );
+        expect(response?.status).toBe(200);
+        expect(await response?.text()).toBe(publicPages[route.path]);
+        expect(response?.headers.get('Content-Location')).toBe(route.url);
+        expect(response?.headers.get('X-Markdown-Tokens')).toBe(
+          String(Math.ceil(publicPages[route.path].length / 4))
+        );
+        expect(response?.headers.get('X-Robots-Tag')).toBe('noindex, follow');
+      }
+    }
+    for (const paragraph of copy.privacy.paragraphs)
+      expect(publicPages['/privacy']).toContain(paragraph);
+  });
+  it('preserves HTML preferences and excludes private and unknown paths', async () => {
+    for (const accept of [
+      '*/*',
+      'text/markdown;q=0',
+      'text/markdown,text/html',
+      'text/markdown;q=0.1,text/html;q=1',
+    ]) {
+      expect(await handleAgentEdge(new Request(origin, { headers: { accept } }), env)).toBeNull();
+    }
+    for (const path of [
+      '/library.md',
+      '/login.md',
+      '/api/md/library',
+      '/api/md/login',
+      '/api/md/api/links',
+      '/missing.md',
+    ]) {
+      expect((await handleAgentEdge(new Request(origin + path), env))?.status).toBe(404);
+    }
+  });
+  it('returns bodyless HEAD and CORS preflight', async () => {
+    for (const route of publicRoutes) {
+      const get = await handleAgentEdge(new Request(route.md), env);
+      const head = await handleAgentEdge(new Request(route.md, { method: 'HEAD' }), env);
+      expect(await head?.text()).toBe('');
+      expect(head?.headers.get('X-Markdown-Tokens')).toBe(get?.headers.get('X-Markdown-Tokens'));
+      const options = await handleAgentEdge(new Request(route.md, { method: 'OPTIONS' }), env);
+      expect(options?.status).toBe(204);
+      expect(options?.headers.get('Access-Control-Allow-Origin')).toBe('*');
+    }
+  });
+});

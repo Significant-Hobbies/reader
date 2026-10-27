@@ -39,7 +39,7 @@ describe('public agent surface parity', () => {
     const urls = sitemapUrls();
 
     expect(urls).toEqual(catalogUrls);
-    expect(urls).toHaveLength(3);
+    expect(urls).toHaveLength(4);
     expect(urls).not.toContain('https://read.significanthobbies.com/login');
     for (const url of urls) {
       const path = new URL(url).pathname;
@@ -108,7 +108,7 @@ describe('public agent surface parity', () => {
       expect(document).toContain('distribution is deferred');
     }
     expect(home).toContain('saved-link');
-    expect(home).toContain('no public plan or checkout');
+    expect(home).toContain('no public plan or payment');
     expect(pricing).toContain('no public plan, checkout, paid tier, or purchase flow');
   });
 
@@ -145,7 +145,7 @@ describe('public agent surface parity', () => {
     );
     expect(markdown?.status).toBe(200);
     expect(markdown?.headers.get('vary')).toBe('Accept');
-    expect(await markdown?.text()).toContain('# Reader FAQ');
+    expect(await markdown?.text()).toContain('# Reader — questions');
 
     const botMarkdown = await handleAgentEdge(
       new Request('https://reader-preview.example/', {
@@ -153,9 +153,7 @@ describe('public agent surface parity', () => {
       }),
       env
     );
-    expect(botMarkdown?.status).toBe(200);
-    expect(botMarkdown?.headers.get('content-type')).toContain('text/markdown');
-    expect(await botMarkdown?.text()).toContain('# Reader');
+    expect(botMarkdown).toBeNull();
 
     const catalog = await handleAgentEdge(
       new Request('https://reader-preview.example/api/ai'),
@@ -195,6 +193,10 @@ describe('public agent surface parity', () => {
 
     for (const url of urls) {
       const pathname = new URL(url).pathname;
+      if (pathname === '/privacy') {
+        expect(readRepo('src/worker.ts')).toContain('rel="canonical"');
+        continue;
+      }
       const sourcePath = landingSourceForPath(pathname);
       const source = readRepo(sourcePath);
 

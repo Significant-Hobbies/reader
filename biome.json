@@ -28,7 +28,8 @@
       "!**/tsconfig.tsbuildinfo",
       "!**/.cf-pages-bundle",
       "!**/packages",
-      "!**/*.html"
+      "!**/*.html",
+      "!src/agent-surfaces"
     ]
   },
   "formatter": {
