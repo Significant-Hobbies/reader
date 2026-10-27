@@ -21,6 +21,7 @@ cite: Reader and the canonical HTML URL
 included: public routes listed at https://read.significanthobbies.com/api/md/_catalog
 public-route-count: 4
 excluded: /api, /admin, /auth, /dashboard, /library, /login, /extension, /app
+public-machine-endpoints: /api/ai, /api/md/*
 
 [contact]
 contact: https://github.com/Significant-Hobbies/reader/issues
