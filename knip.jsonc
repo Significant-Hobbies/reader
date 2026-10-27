@@ -1,5 +1,9 @@
 {
   "$schema": "https://unpkg.com/knip@6/schema.json",
+  "ignoreIssues": {
+    "src/agent-surfaces/http.mjs": ["exports"],
+    "src/agent-surfaces/adapters/static-assets.mjs": ["files", "exports"]
+  },
   "workspaces": {
     ".": {
       "entry": [

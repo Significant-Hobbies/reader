@@ -1,15 +1,208 @@
-# Reader
+# Reader - full content
 
-> A saved-link inbox for use with ChatGPT.
+> Save links from the web. Find them, pull their content, and mark them read through ChatGPT.
 
-Save URLs in the web app or Chrome extension. Authenticated MCP tools search links, retrieve available text, and set read/unread state. Private links are never exposed through the public catalog.
+Source updated: 2026-10-26
 
-- [Product](https://read.significanthobbies.com/index.md)
-- [FAQ](https://read.significanthobbies.com/faq.md)
-- [Agent guidance](https://read.significanthobbies.com/agents.md)
-- [Access](https://read.significanthobbies.com/pricing.md)
-- [Full brief](https://read.significanthobbies.com/llms-full.txt)
-- [Catalog](https://read.significanthobbies.com/api/ai)
-- [Sitemap](https://read.significanthobbies.com/sitemap.xml)
+---
+<!-- source: https://read.significanthobbies.com/ -->
+# Reader — your saved-link inbox
 
-The product is maintained for personal saved-link use. No RSS, article reader, boards, annotations, PDFs, memories, or built-in AI. MCP setup and live acceptance are separate from source readiness.
+> Save links from the web. Find them, pull their content, and mark them read through ChatGPT.
+
+Canonical: https://read.significanthobbies.com/
+
+Your saved-link inbox
+
+## Save a link. *Pick it up in ChatGPT.*
+
+Keep the pages you want to come back to in one place. Add a URL, or save the current tab with the Chrome extension. ChatGPT can find your links, pull their content, and mark them read when you ask.
+
+[Sign in to your inbox](https://read.significanthobbies.com/login)
+
+[Connections](https://read.significanthobbies.com/extension)
+
+Google sign-in · no checkout
+
+![Reader's inbox with six saved links, read-state controls and an add-link button](https://read.significanthobbies.com/images/inbox.png)
+
+Illustrative interface · example links, not a customer's inbox
+
+## A saved tab is *only an intention.*
+
+How it works
+
+Reader keeps the list small: what you saved, whether you have read it, and a way back to it.
+
+### Save it
+
+Paste a URL in the inbox, or click Save link in the Chrome extension. Reader stores the title, the address and the date.
+
+### Find it
+
+Switch between unread, read and all. Search matches titles and addresses.
+
+### Mark it
+
+Links stay unread until you say otherwise. Opening or fetching a link never marks it read on its own.
+
+## Ask about what you saved, *in the conversation you are already in.*
+
+With ChatGPT
+
+Reader connects to ChatGPT through MCP with OAuth. Reading and discussion happen there; Reader holds the list.
+
+### Search
+
+“What have I saved about databases?” finds matching links in your inbox.
+
+### Fetch
+
+Pulls the available text of a link. If a site blocks extraction, the original address is still there.
+
+### Mark read
+
+Marks a link read, or unread again, only when you ask. Read and write are separate permissions.
+
+## Small on purpose, *and private to your account.*
+
+Boundaries
+
+Reader is a maintained personal tool. It does one job and does not grow past it.
+
+### Google sign-in
+
+Your inbox belongs to your account and is isolated from every other.
+
+### Chrome extension
+
+Saves the active tab's address and title. Built from source for a local unpacked install.
+
+### Not in Reader
+
+No RSS, annotations, boards, PDF capture or built-in AI. Earlier saves are kept and appear as links.
+
+### No checkout
+
+There is no public plan or payment.
+
+## Before you *save a link.*
+
+
+
+
+
+### How do I add a link?
+
+Paste a URL in the inbox, or click Save link in the Chrome extension.
+
+### What does ChatGPT see?
+
+Only what its tools ask for: a search over your saved titles and addresses, the text of a link you point it at, and the read state of a link you ask it to change.
+
+### Where did the other features go?
+
+RSS, the reader view, annotations, boards, memories, PDFs and built-in AI are outside the active product. Existing saved data is retained.
+
+### Can I install the Chrome extension?
+
+It is built from the repository and loaded unpacked in Chrome. Public store distribution is deferred.
+
+## Bring one link you mean *to come back to.*
+
+
+
+Sign in with Google, paste the address, and it is waiting in your inbox.
+
+[Sign in to your inbox](https://read.significanthobbies.com/login)
+
+[How it connects](https://read.significanthobbies.com/faq)
+
+
+## Related
+
+[Reader](https://read.significanthobbies.com/) · [Questions](https://read.significanthobbies.com/faq) · [Changes](https://read.significanthobbies.com/changelog) · [Privacy](https://read.significanthobbies.com/privacy)
+
+
+---
+<!-- source: https://read.significanthobbies.com/faq -->
+# Reader — questions
+
+> Reader saves links for use with ChatGPT.
+
+Canonical: https://read.significanthobbies.com/faq
+
+## Just your saved links.
+
+### How do I add one?
+
+Paste a URL in the inbox or click Save link in the Chrome extension.
+
+### How does ChatGPT use it?
+
+Connect Reader through MCP with OAuth. ChatGPT can search links, retrieve available text, and mark links read when you ask. The connection requires a deployed endpoint and OAuth setup.
+
+### Where are the other features?
+
+RSS, the reader view, annotations, boards, memories, PDFs, and built-in AI are outside the active product. Existing saved data is retained.
+
+### Where is the extension?
+
+It is built from this repository and loaded unpacked in Chrome. Public distribution is deferred.
+
+
+## Related
+
+[Reader](https://read.significanthobbies.com/) · [Questions](https://read.significanthobbies.com/faq) · [Changes](https://read.significanthobbies.com/changelog) · [Privacy](https://read.significanthobbies.com/privacy)
+
+
+---
+<!-- source: https://read.significanthobbies.com/changelog -->
+# Reader — changes
+
+> Reader’s saved-link simplification.
+
+Canonical: https://read.significanthobbies.com/changelog
+
+Product direction
+
+## A smaller Reader.
+
+The active product is a saved-link inbox, a one-click capture extension, and MCP tools for ChatGPT to retrieve links and update read state.
+
+Existing saved data remains intact. Deployment and an authenticated ChatGPT connection are verified separately from source changes.
+
+[Source history](https://github.com/Significant-Hobbies/reader/commits/main)
+
+## Related
+
+[Reader](https://read.significanthobbies.com/) · [Questions](https://read.significanthobbies.com/faq) · [Changes](https://read.significanthobbies.com/changelog) · [Privacy](https://read.significanthobbies.com/privacy)
+
+
+---
+<!-- source: https://read.significanthobbies.com/privacy -->
+# Privacy
+
+> How Reader handles sign-in, saved links, extension keys, ChatGPT access, and analytics.
+
+Canonical: https://read.significanthobbies.com/privacy
+
+Reader stores your Google sign-in identity and the links you save, including their titles and read states. Older saved material remains stored in your account.
+
+The extension sends the current page’s URL and title only when you click Save link. Its connection key stays in Chrome’s local extension storage. Reader stores a hash of that key.
+
+When you connect ChatGPT through MCP, it can retrieve your links and available source text, and update read states when you ask. Reader may fetch a saved URL to extract text. OpenAI’s privacy terms apply to information shared with ChatGPT.
+
+Reader uses analytics and error monitoring to understand usage and failures. We do not sell your saved links.
+
+Contact the maintainer to request removal of your account data.
+
+
+## Related
+
+[Reader](https://read.significanthobbies.com/) · [Questions](https://read.significanthobbies.com/faq) · [Changes](https://read.significanthobbies.com/changelog) · [Privacy](https://read.significanthobbies.com/privacy)
+
+
+Included 4 of 4 registered public pages (limit 50 pages / 500000 characters).
+
+Full catalog: https://read.significanthobbies.com/api/md/_catalog

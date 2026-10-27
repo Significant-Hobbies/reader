@@ -137,6 +137,9 @@ function checkComplexity() {
     'scripts/check-code-health.mjs',
     '-x',
     '**/*.d.ts',
+    // Shared vendored helpers are independently qualified upstream.
+    '-x',
+    'src/agent-surfaces/**',
     '--csv',
   ]);
   const rows = result.stdout
@@ -174,7 +177,7 @@ function checkDuplication() {
     '--mode',
     'strict',
     '--ignore',
-    '**/*.test.*,**/__tests__/**,**/*.d.ts,**/node_modules/**,**/dist/**,**/coverage/**,src/agent-edge.mjs,scripts/check-code-health.mjs',
+    '**/*.test.*,**/__tests__/**,**/*.d.ts,**/node_modules/**,**/dist/**,**/coverage/**,src/agent-edge.mjs,src/agent-surfaces/**,scripts/check-code-health.mjs',
     '--reporters',
     'json',
     '--output',

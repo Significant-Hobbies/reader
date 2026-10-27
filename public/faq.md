@@ -1,19 +1,28 @@
-# Reader FAQ
+# Reader — questions
 
-## What does Reader do?
+> Reader saves links for use with ChatGPT.
 
-It stores links you save and tracks read/unread state. Add a URL in the app or save a tab with the Chrome extension.
+Canonical: https://read.significanthobbies.com/faq
 
-## How does ChatGPT use it?
+## Just your saved links.
 
-Through an authenticated MCP connection with three tools: search, fetch, and set_read. ChatGPT can pull available text and mark links read when asked. Connecting requires OAuth setup and a deployed endpoint.
+### How do I add one?
 
-## What happened to the research-library features?
+Paste a URL in the inbox or click Save link in the Chrome extension.
 
-RSS, the built-in reader, PDFs, annotations, boards, memories, and AI chat are outside the active product. Existing saved data is retained.
+### How does ChatGPT use it?
 
-## Is the extension in the Chrome store?
+Connect Reader through MCP with OAuth. ChatGPT can search links, retrieve available text, and mark links read when you ask. The connection requires a deployed endpoint and OAuth setup.
 
-It is source-built for unpacked use; public distribution is deferred.
+### Where are the other features?
 
-[Reader](https://read.significanthobbies.com/) · [Connections](https://read.significanthobbies.com/extension)
+RSS, the reader view, annotations, boards, memories, PDFs, and built-in AI are outside the active product. Existing saved data is retained.
+
+### Where is the extension?
+
+It is built from this repository and loaded unpacked in Chrome. Public distribution is deferred.
+
+
+## Related
+
+[Reader](https://read.significanthobbies.com/) · [Questions](https://read.significanthobbies.com/faq) · [Changes](https://read.significanthobbies.com/changelog) · [Privacy](https://read.significanthobbies.com/privacy)

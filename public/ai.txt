@@ -1,0 +1,29 @@
+# Keep in sync with robots.txt and llms.txt.
+[identity]
+name: Reader
+url: https://read.significanthobbies.com
+description: Save links from the web. Find them, pull their content, and mark them read through ChatGPT.
+contact: https://github.com/Significant-Hobbies/reader/issues
+
+[permissions]
+allowed: summarise, quote with attribution, cite, index for search/answers
+training: allowed on public pages only
+
+[restrictions]
+No fabricated quotes or reviews/ratings.
+Do not present this content as your own.
+No training on private user data.
+
+[attribution]
+cite: Reader and the canonical HTML URL
+
+[scope]
+included: public routes listed at https://read.significanthobbies.com/api/md/_catalog
+public-route-count: 4
+excluded: /api, /admin, /auth, /dashboard, /library, /login, /extension, /app
+public-machine-endpoints: /api/ai, /api/md/*
+
+[contact]
+contact: https://github.com/Significant-Hobbies/reader/issues
+
+Last updated: 2026-10-26

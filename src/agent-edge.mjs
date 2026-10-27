@@ -1,3 +1,4 @@
+import { handlePublicDocument } from './public-site.mjs';
 import staticCatalog from '../public/api-ai.json' with { type: 'json' };
 
 const PRODUCT_ORIGIN = 'https://read.significanthobbies.com';
@@ -7,13 +8,6 @@ export const AGENT_SURFACE = {
   url: PRODUCT_ORIGIN,
   catalog: staticCatalog,
 };
-
-const ROUTE_MARKDOWN = new Map([
-  ['/', '/index.md'],
-  ['/faq', '/faq.md'],
-  ['/changelog', '/changelog.md'],
-  ['/login', '/login.md'],
-]);
 
 const OPENAPI_SPEC = {
   openapi: '3.1.0',
@@ -126,6 +120,10 @@ function discoveryOperation(operationId, summary, contentType) {
  * @returns {Promise<Response | null>}
  */
 export async function handleAgentEdge(request, env) {
+  if (new URL(request.url).pathname !== '/api/ai') {
+    const document = await handlePublicDocument(request);
+    if (document) return document;
+  }
   if (request.method !== 'GET' && request.method !== 'HEAD') return null;
 
   const url = new URL(request.url);
@@ -155,19 +153,6 @@ export async function handleAgentEdge(request, env) {
 
   if (path === '/api' || path.startsWith('/api/')) {
     return jsonError(path, request.method);
-  }
-
-  const markdownPath = ROUTE_MARKDOWN.get(path);
-  if (markdownPath && (wantsMarkdown(request) || url.searchParams.get('mode') === 'agent')) {
-    return serveAsset(env, request, markdownPath, {
-      'Content-Type': 'text/markdown; charset=utf-8',
-      Link: `<${markdownPath}>; rel="alternate"; type="text/markdown"`,
-      Vary: 'Accept',
-    });
-  }
-
-  if (wantsMarkdown(request) && !path.includes('.') && !path.startsWith('/api/')) {
-    return markdown404(path, request.method, origin);
   }
 
   return null;
@@ -205,27 +190,6 @@ function isTrustedPreviewHost(hostWithPort) {
     hostname.endsWith('.workers.dev') ||
     hostname.endsWith('.example')
   );
-}
-
-function wantsMarkdown(request) {
-  const accept = (request.headers.get('accept') || '').toLowerCase();
-  if (!accept.includes('text/markdown')) return isAgentUserAgent(request);
-  if (!accept.includes('text/html')) return true;
-  return accept.indexOf('text/markdown') < accept.indexOf('text/html');
-}
-
-function isAgentUserAgent(request) {
-  const userAgent = (request.headers.get('user-agent') || '').toLowerCase();
-  return [
-    'gptbot',
-    'chatgpt-user',
-    'claudebot',
-    'perplexitybot',
-    'google-extended',
-    'applebot-extended',
-    'ora-agent',
-    'deepseekbot',
-  ].some((agent) => userAgent.includes(agent));
 }
 
 async function serveAsset(env, request, pathname, extraHeaders = {}) {
@@ -287,31 +251,6 @@ function rebindUrls(value, origin) {
     );
   }
   return value;
-}
-
-function markdown404(path, method, origin) {
-  const body = `# 404 — Not Found
-
-\`${path}\` is not a public Reader route.
-
-## Where to look next
-
-- [Reader product truth](${origin}/index.md)
-- [Agent index](${origin}/llms.txt)
-- [Agent catalog](${origin}/api/ai)
-- [Sitemap](${origin}/sitemap.xml)
-- [OpenAPI](${origin}/openapi.json)
-`;
-
-  return new Response(method === 'HEAD' ? null : body, {
-    status: 404,
-    headers: {
-      'Content-Type': 'text/markdown; charset=utf-8',
-      'Cache-Control': 'no-store',
-      'X-Content-Type-Options': 'nosniff',
-      Vary: 'Accept',
-    },
-  });
 }
 
 function jsonError(path, method) {
