@@ -4,14 +4,13 @@ import { RouterProvider } from 'react-router-dom';
 
 import '@/styles/globals.css';
 import { ErrorBoundary } from './components/ErrorBoundary';
+import { router } from './router';
 
-async function mount() {
+function mount() {
   const rootEl = document.getElementById('root');
   if (!rootEl) {
     throw new Error('Root element #root not found');
   }
-
-  const { router } = await import('./router');
 
   const app = (
     <StrictMode>
@@ -24,4 +23,4 @@ async function mount() {
   createRoot(rootEl).render(app);
 }
 
-void mount();
+mount();
