@@ -132,3 +132,37 @@ test('signed-in connections retain key management without creating a key on entr
   await expect(page.getByRole('heading', { name: 'Sign in first' })).toHaveCount(0);
   expect(methods).toEqual(['GET']);
 });
+
+test('a failed extension key read has its own retry and shows empty only after success', async ({
+  page,
+}) => {
+  await page.route('**/api/auth/get-session', (route) => route.fulfill({ json: syntheticSession }));
+  let releaseRetry!: () => void;
+  const retryResponse = new Promise<void>((resolve) => {
+    releaseRetry = resolve;
+  });
+  let reads = 0;
+  await page.route('**/api/keys', async (route) => {
+    expect(route.request().method()).toBe('GET');
+    reads++;
+    if (reads === 1) {
+      await route.fulfill({ status: 503, json: { error: 'Synthetic key read failed' } });
+      return;
+    }
+    await retryResponse;
+    await route.fulfill({ json: [] });
+  });
+
+  await page.goto('/extension');
+  await expect(page.getByRole('alert')).toHaveText('Synthetic key read failed');
+  await expect(page.getByText('No active extension keys.')).toHaveCount(0);
+  await render(page, 'failed-extension-keys');
+  await page.getByRole('button', { name: 'Try again' }).click();
+  await expect(page.getByRole('status')).toHaveText('Loading keys...');
+  await expect(page.getByRole('status').locator('..')).toBeFocused();
+  await expect(page.getByRole('alert')).toHaveCount(0);
+  releaseRetry();
+  await expect(page.getByText('No active extension keys.')).toBeVisible();
+  expect(reads).toBe(2);
+  await render(page, 'recovered-extension-keys');
+});
