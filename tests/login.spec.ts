@@ -136,11 +136,8 @@ test('signed-in connections retain key management without creating a key on entr
 test('a failed extension key read has its own retry and shows empty only after success', async ({
   page,
 }) => {
+  await page.clock.install();
   await page.route('**/api/auth/get-session', (route) => route.fulfill({ json: syntheticSession }));
-  let releaseRetry!: () => void;
-  const retryResponse = new Promise<void>((resolve) => {
-    releaseRetry = resolve;
-  });
   let reads = 0;
   await page.route('**/api/keys', async (route) => {
     expect(route.request().method()).toBe('GET');
@@ -149,7 +146,7 @@ test('a failed extension key read has its own retry and shows empty only after s
       await route.fulfill({ status: 503, json: { error: 'Synthetic key read failed' } });
       return;
     }
-    await retryResponse;
+    if (reads === 2) return;
     await route.fulfill({ json: [] });
   });
 
@@ -161,8 +158,40 @@ test('a failed extension key read has its own retry and shows empty only after s
   await expect(page.getByRole('status')).toHaveText('Loading keys...');
   await expect(page.getByRole('status').locator('..')).toBeFocused();
   await expect(page.getByRole('alert')).toHaveCount(0);
-  releaseRetry();
+  await expect.poll(() => reads).toBe(2);
+  await page.clock.fastForward(13_000);
+  await expect(page.getByRole('alert')).toHaveText('Loading extension keys timed out.');
+  await expect(page.getByText('No active extension keys.')).toHaveCount(0);
+  await page.getByRole('button', { name: 'Try again' }).click();
   await expect(page.getByText('No active extension keys.')).toBeVisible();
-  expect(reads).toBe(2);
+  expect(reads).toBe(3);
   await render(page, 'recovered-extension-keys');
+});
+
+test('a newly created fixture key remains visible while the list read is unavailable', async ({
+  page,
+}) => {
+  await page.route('**/api/auth/get-session', (route) => route.fulfill({ json: syntheticSession }));
+  await page.route('**/api/keys', (route) => {
+    if (route.request().method() === 'GET') {
+      return route.fulfill({ status: 503, json: { error: 'Synthetic key read failed' } });
+    }
+    expect(route.request().method()).toBe('POST');
+    return route.fulfill({
+      status: 201,
+      json: {
+        id: 'fixture-key-id',
+        name: 'Fixture extension',
+        prefix: 'fixture',
+        token: 'fixture-value',
+        createdAt: 1763942400,
+      },
+    });
+  });
+  await page.goto('/extension');
+  await expect(page.getByRole('alert')).toHaveText('Synthetic key read failed');
+  await page.getByRole('button', { name: 'Create extension key' }).click();
+  await expect(page.getByLabel('New extension key')).toHaveValue('fixture-value');
+  await expect(page.getByText('Fixture extension', { exact: true })).toBeVisible();
+  await expect(page.getByText('No active extension keys.')).toHaveCount(0);
 });

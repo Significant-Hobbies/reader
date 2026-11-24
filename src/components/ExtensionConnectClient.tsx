@@ -68,6 +68,7 @@ function ExtensionConnections({
   const [revokingId, setRevokingId] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const activeKeys = keys.filter((key) => !key.revokedAt);
 
   const loadKeys = useCallback(() => {
     keyRead.current?.abort();
@@ -75,6 +76,12 @@ function ExtensionConnections({
     keyRead.current = controller;
     setIsLoadingKeys(true);
     setLoadError(null);
+    const deadline = window.setTimeout(() => {
+      if (controller.signal.aborted) return;
+      controller.abort();
+      setLoadError('Loading extension keys timed out.');
+      setIsLoadingKeys(false);
+    }, 12_000);
     fetch('/api/keys', { cache: 'no-store', signal: controller.signal })
       .then(async (response) => {
         if (!response.ok) {
@@ -92,6 +99,7 @@ function ExtensionConnections({
         }
       })
       .finally(() => {
+        window.clearTimeout(deadline);
         if (!controller.signal.aborted) setIsLoadingKeys(false);
       });
   }, []);
@@ -337,7 +345,7 @@ function ExtensionConnections({
                       type="button"
                       variant="secondary"
                       size="sm"
-                      disabled={isCreating}
+                      disabled={isCreating || revokingId !== null}
                       onClick={() => {
                         keyList.current?.focus();
                         loadKeys();
@@ -346,36 +354,33 @@ function ExtensionConnections({
                       Try again
                     </Button>
                   </div>
-                ) : keys.filter((key) => !key.revokedAt).length === 0 ? (
+                ) : activeKeys.length === 0 ? (
                   <div className="py-4 text-sm text-gray-500">No active extension keys.</div>
-                ) : (
-                  keys
-                    .filter((key) => !key.revokedAt)
-                    .map((key) => (
-                      <div key={key.id} className="flex items-center justify-between gap-3 py-3">
-                        <div className="min-w-0">
-                          <p className="truncate text-sm font-medium text-gray-100">{key.name}</p>
-                          <p className="text-xs text-gray-500">
-                            {key.prefix}... created {formatDate(key.createdAt)}
-                          </p>
-                        </div>
-                        <Button
-                          type="button"
-                          variant="ghost"
-                          size="icon"
-                          disabled={revokingId === key.id}
-                          onClick={() => void revokeKey(key.id)}
-                          title="Revoke key"
-                        >
-                          {revokingId === key.id ? (
-                            <Loader2 className="h-4 w-4 animate-spin" />
-                          ) : (
-                            <Trash2 className="h-4 w-4 text-red-300" />
-                          )}
-                        </Button>
-                      </div>
-                    ))
-                )}
+                ) : null}
+                {activeKeys.map((key) => (
+                  <div key={key.id} className="flex items-center justify-between gap-3 py-3">
+                    <div className="min-w-0">
+                      <p className="truncate text-sm font-medium text-gray-100">{key.name}</p>
+                      <p className="text-xs text-gray-500">
+                        {key.prefix}... created {formatDate(key.createdAt)}
+                      </p>
+                    </div>
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="icon"
+                      disabled={revokingId === key.id || isLoadingKeys}
+                      onClick={() => void revokeKey(key.id)}
+                      title="Revoke key"
+                    >
+                      {revokingId === key.id ? (
+                        <Loader2 className="h-4 w-4 animate-spin" />
+                      ) : (
+                        <Trash2 className="h-4 w-4 text-red-300" />
+                      )}
+                    </Button>
+                  </div>
+                ))}
               </div>
             </section>
           </>
