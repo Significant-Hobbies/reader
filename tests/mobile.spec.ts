@@ -93,7 +93,13 @@ test('landing sign-in reports one fixed event and keeps the ordinary navigation'
       sessionStorage.setItem('qa-cta-events', JSON.stringify([...value, [source, ...args]]));
     };
     Object.assign(window, {
-      appHealth: { track: (...args: unknown[]) => record('app-health', ...args) },
+      appHealth: {
+        track: (...args: unknown[]) => record('app-health', ...args),
+        flushForNavigation: () => {
+          record('navigation-flush');
+          return new Promise(() => {});
+        },
+      },
       clarity: (command: string, ...args: unknown[]) => {
         if (command === 'event') record('clarity', ...args);
       },
@@ -107,5 +113,6 @@ test('landing sign-in reports one fixed event and keeps the ordinary navigation'
   ).toEqual([
     ['app-health', 'sign_in_opened'],
     ['clarity', 'sign_in_opened'],
+    ['navigation-flush'],
   ]);
 });

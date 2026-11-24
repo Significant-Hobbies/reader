@@ -13,15 +13,46 @@ const content = workbenchContent.parse(json);
 
 <script>
   const analytics = window as Window & {
-    appHealth?: { track(name: string): void };
+    appHealth?: {
+      track(name: string): void;
+      flushForNavigation?: () => Promise<boolean>;
+    };
     clarity?: (command: 'event', name: string) => void;
   };
 
   document.addEventListener('click', (event) => {
     if (event.defaultPrevented || !(event.target instanceof Element)) return;
-    if (!event.target.closest('a[href="/login"]')) return;
+    const link = event.target.closest<HTMLAnchorElement>('a[href="/login"]');
+    if (!link) return;
 
-    analytics.appHealth?.track('sign_in_opened');
+    const tracker = analytics.appHealth;
+    tracker?.track('sign_in_opened');
     analytics.clarity?.('event', 'sign_in_opened');
+    const flushForNavigation = tracker?.flushForNavigation;
+    if (
+      !flushForNavigation ||
+      event.button !== 0 ||
+      event.altKey ||
+      event.ctrlKey ||
+      event.metaKey ||
+      event.shiftKey ||
+      (link.target && link.target !== '_self') ||
+      link.hasAttribute('download')
+    ) return;
+
+    event.preventDefault();
+    const destination = link.href;
+    let navigated = false;
+    const navigate = () => {
+      if (navigated) return;
+      navigated = true;
+      window.clearTimeout(deadline);
+      location.assign(destination);
+    };
+    const deadline = window.setTimeout(navigate, 150);
+    void Promise.resolve()
+      .then(() => flushForNavigation.call(tracker))
+      .catch(() => {})
+      .finally(navigate);
   });
 </script>
