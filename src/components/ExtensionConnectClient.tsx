@@ -2,7 +2,7 @@
 
 import { Check, Copy, ExternalLink, KeyRound, Loader2, Trash2 } from 'lucide-react';
 import { Link } from 'react-router-dom';
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 
 import { signIn } from '@/lib/auth-client';
 
@@ -39,24 +39,50 @@ function formatDate(value: ApiKeySummary['createdAt']): string {
 
 export function ExtensionConnectClient() {
   const { user, loading } = useAuth();
-  const userId = user?.id;
+  return (
+    <ExtensionConnections
+      key={user?.id ?? 'guest'}
+      userId={user?.id ?? null}
+      signedIn={Boolean(user)}
+      loading={loading}
+    />
+  );
+}
+
+function ExtensionConnections({
+  userId,
+  signedIn,
+  loading,
+}: {
+  userId: string | null;
+  signedIn: boolean;
+  loading: boolean;
+}) {
   const [keys, setKeys] = useState<ApiKeySummary[]>([]);
   const [createdKey, setCreatedKey] = useState<CreatedKey | null>(null);
-  const [isLoadingKeys, setIsLoadingKeys] = useState(false);
+  const [isLoadingKeys, setIsLoadingKeys] = useState(Boolean(userId));
+  const [loadError, setLoadError] = useState<string | null>(null);
+  const keyList = useRef<HTMLDivElement>(null);
+  const keyRead = useRef<AbortController | null>(null);
   const [isCreating, setIsCreating] = useState(false);
   const [revokingId, setRevokingId] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const activeKeys = keys.filter((key) => !key.revokedAt);
 
-  useEffect(() => {
-    if (!userId) return;
-
-    let cancelled = false;
-    // eslint-disable-next-line react-hooks/set-state-in-effect -- fetch-on-mount
+  const loadKeys = useCallback(() => {
+    keyRead.current?.abort();
+    const controller = new AbortController();
+    keyRead.current = controller;
     setIsLoadingKeys(true);
-
-    setError(null);
-    fetch('/api/keys', { cache: 'no-store' })
+    setLoadError(null);
+    const deadline = window.setTimeout(() => {
+      if (controller.signal.aborted) return;
+      controller.abort();
+      setLoadError('Loading extension keys timed out.');
+      setIsLoadingKeys(false);
+    }, 12_000);
+    fetch('/api/keys', { cache: 'no-store', signal: controller.signal })
       .then(async (response) => {
         if (!response.ok) {
           const payload = (await response.json().catch(() => ({}))) as { error?: string };
@@ -65,19 +91,26 @@ export function ExtensionConnectClient() {
         return response.json() as Promise<ApiKeySummary[]>;
       })
       .then((rows) => {
-        if (!cancelled) setKeys(rows);
+        if (!controller.signal.aborted) setKeys(rows);
       })
       .catch((err) => {
-        if (!cancelled) setError(err instanceof Error ? err.message : 'Failed to load keys');
+        if (!controller.signal.aborted) {
+          setLoadError(err instanceof Error ? err.message : 'Failed to load keys');
+        }
       })
       .finally(() => {
-        if (!cancelled) setIsLoadingKeys(false);
+        window.clearTimeout(deadline);
+        if (!controller.signal.aborted) setIsLoadingKeys(false);
       });
+  }, []);
 
+  useEffect(() => {
+    if (!userId) return;
+    loadKeys();
     return () => {
-      cancelled = true;
+      keyRead.current?.abort();
     };
-  }, [userId]);
+  }, [loadKeys, userId]);
 
   const createKey = async () => {
     setError(null);
@@ -165,7 +198,7 @@ export function ExtensionConnectClient() {
           </div>
         </section>
 
-        {!user && (
+        {!signedIn && (
           <section className="rounded-xl border border-gray-800 bg-gray-900/70 p-5">
             <h2 className="text-base font-semibold text-white">Install the Chrome extension</h2>
             <ol className="mt-3 list-decimal space-y-2 pl-5 text-sm text-gray-400">
@@ -195,7 +228,7 @@ export function ExtensionConnectClient() {
           </section>
         )}
 
-        {!user ? (
+        {!signedIn ? (
           <section className="rounded-xl border border-gray-800 bg-gray-900/70 p-5">
             <h2 className="text-base font-semibold text-white">Sign in first</h2>
             <p className="mt-2 text-sm text-gray-400">
@@ -218,7 +251,7 @@ export function ExtensionConnectClient() {
                     The token is shown once. If you lose it, revoke it and create another.
                   </p>
                 </div>
-                <Button onClick={() => void createKey()} disabled={isCreating}>
+                <Button onClick={() => void createKey()} disabled={isCreating || isLoadingKeys}>
                   {isCreating ? (
                     <span className="inline-flex items-center gap-2">
                       <Loader2 className="h-4 w-4 animate-spin" />
@@ -298,39 +331,56 @@ export function ExtensionConnectClient() {
                 </Link>
               </div>
 
-              <div className="mt-4 divide-y divide-gray-800">
+              <div ref={keyList} tabIndex={-1} className="mt-4 divide-y divide-gray-800">
                 {isLoadingKeys ? (
-                  <div className="py-4 text-sm text-gray-400">Loading keys...</div>
-                ) : keys.filter((key) => !key.revokedAt).length === 0 ? (
+                  <div className="py-4 text-sm text-gray-400" role="status">
+                    Loading keys...
+                  </div>
+                ) : loadError ? (
+                  <div className="space-y-3 py-4">
+                    <p className="text-sm text-red-300" role="alert">
+                      {loadError}
+                    </p>
+                    <Button
+                      type="button"
+                      variant="secondary"
+                      size="sm"
+                      disabled={isCreating || revokingId !== null}
+                      onClick={() => {
+                        keyList.current?.focus();
+                        loadKeys();
+                      }}
+                    >
+                      Try again
+                    </Button>
+                  </div>
+                ) : activeKeys.length === 0 ? (
                   <div className="py-4 text-sm text-gray-500">No active extension keys.</div>
-                ) : (
-                  keys
-                    .filter((key) => !key.revokedAt)
-                    .map((key) => (
-                      <div key={key.id} className="flex items-center justify-between gap-3 py-3">
-                        <div className="min-w-0">
-                          <p className="truncate text-sm font-medium text-gray-100">{key.name}</p>
-                          <p className="text-xs text-gray-500">
-                            {key.prefix}... created {formatDate(key.createdAt)}
-                          </p>
-                        </div>
-                        <Button
-                          type="button"
-                          variant="ghost"
-                          size="icon"
-                          disabled={revokingId === key.id}
-                          onClick={() => void revokeKey(key.id)}
-                          title="Revoke key"
-                        >
-                          {revokingId === key.id ? (
-                            <Loader2 className="h-4 w-4 animate-spin" />
-                          ) : (
-                            <Trash2 className="h-4 w-4 text-red-300" />
-                          )}
-                        </Button>
-                      </div>
-                    ))
-                )}
+                ) : null}
+                {activeKeys.map((key) => (
+                  <div key={key.id} className="flex items-center justify-between gap-3 py-3">
+                    <div className="min-w-0">
+                      <p className="truncate text-sm font-medium text-gray-100">{key.name}</p>
+                      <p className="text-xs text-gray-500">
+                        {key.prefix}... created {formatDate(key.createdAt)}
+                      </p>
+                    </div>
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="icon"
+                      disabled={revokingId === key.id || isLoadingKeys}
+                      onClick={() => void revokeKey(key.id)}
+                      title="Revoke key"
+                    >
+                      {revokingId === key.id ? (
+                        <Loader2 className="h-4 w-4 animate-spin" />
+                      ) : (
+                        <Trash2 className="h-4 w-4 text-red-300" />
+                      )}
+                    </Button>
+                  </div>
+                ))}
               </div>
             </section>
           </>
