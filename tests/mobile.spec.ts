@@ -110,7 +110,13 @@ test('landing sign-in reports one fixed event and keeps the ordinary navigation'
     route.fulfill({ json: { googleClientId: null } })
   );
   await page.goto('/');
-  await page.locator('main a[href="/login"]').first().click();
+  await page
+    .locator('main a[href="/login"]')
+    .first()
+    .evaluate((link: HTMLAnchorElement) => {
+      link.click();
+      link.click();
+    });
   await expect(page).toHaveURL(/\/login$/);
   await expect(page.getByRole('button', { name: 'Sign in with Google' })).toBeVisible();
   expect(
