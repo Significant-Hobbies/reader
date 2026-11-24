@@ -105,9 +105,14 @@ test('landing sign-in reports one fixed event and keeps the ordinary navigation'
       },
     });
   });
+  await page.route('**/api/auth/get-session', (route) => route.fulfill({ json: null }));
+  await page.route('**/api/auth/client-config', (route) =>
+    route.fulfill({ json: { googleClientId: null } })
+  );
   await page.goto('/');
   await page.locator('main a[href="/login"]').first().click();
   await expect(page).toHaveURL(/\/login$/);
+  await expect(page.getByRole('button', { name: 'Sign in with Google' })).toBeVisible();
   expect(
     await page.evaluate(() => JSON.parse(sessionStorage.getItem('qa-cta-events') ?? '[]'))
   ).toEqual([
