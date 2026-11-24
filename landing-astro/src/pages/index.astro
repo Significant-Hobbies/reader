@@ -10,3 +10,57 @@ const content = workbenchContent.parse(json);
 <Layout content={content}>
   <WorkbenchPage content={content} />
 </Layout>
+
+<script>
+  const analytics = window as Window & {
+    appHealth?: {
+      track(name: string): void;
+      flushForNavigation?: () => Promise<boolean>;
+    };
+    clarity?: (command: 'event', name: string) => void;
+  };
+
+  let signInNavigationPending = false;
+
+  document.addEventListener('click', (event) => {
+    if (event.defaultPrevented || !(event.target instanceof Element)) return;
+    const link = event.target.closest<HTMLAnchorElement>('a[href="/login"]');
+    if (!link) return;
+
+    const sameTab =
+      event.button === 0 &&
+      !event.altKey &&
+      !event.ctrlKey &&
+      !event.metaKey &&
+      !event.shiftKey &&
+      (!link.target || link.target === '_self') &&
+      !link.hasAttribute('download');
+    if (sameTab && signInNavigationPending) {
+      event.preventDefault();
+      return;
+    }
+
+    const tracker = analytics.appHealth;
+    tracker?.track('sign_in_opened');
+    analytics.clarity?.('event', 'sign_in_opened');
+    const flushForNavigation = tracker?.flushForNavigation;
+    if (!sameTab || !flushForNavigation) return;
+
+    event.preventDefault();
+    signInNavigationPending = true;
+    const destination = link.href;
+    let navigated = false;
+    const navigate = () => {
+      if (navigated) return;
+      navigated = true;
+      window.clearTimeout(deadline);
+      signInNavigationPending = false;
+      location.assign(destination);
+    };
+    const deadline = window.setTimeout(navigate, 150);
+    void Promise.resolve()
+      .then(() => flushForNavigation.call(tracker))
+      .catch(() => {})
+      .finally(navigate);
+  });
+</script>

@@ -4,7 +4,7 @@ import {
   type AppHealthClientOptions,
 } from '@saas-maker/app-health';
 import { honoMiddleware } from '@saas-maker/app-health/hono';
-import type { Context, Env, MiddlewareHandler } from 'hono';
+import type { Env, MiddlewareHandler } from 'hono';
 import { routePath } from 'hono/route';
 
 import type { WorkerEnv } from '../lib/worker-env';
@@ -38,11 +38,11 @@ export function createReaderAppHealthMiddlewares(
   let cachedEnvironment = '';
   let cachedClient: AppHealthClient | null = null;
 
-  const resolveClient = (context: Context<ReaderEnv>) => {
-    const key = context.env.APP_HEALTH_INGEST_KEY?.trim();
+  const resolveClient = (env: WorkerEnv) => {
+    const key = env.APP_HEALTH_INGEST_KEY?.trim();
     if (!key) return null;
 
-    const environment = context.env.APP_HEALTH_ENVIRONMENT?.trim() || 'production';
+    const environment = env.APP_HEALTH_ENVIRONMENT?.trim() || 'production';
     if (cachedClient && cachedKey === key && cachedEnvironment === environment) {
       return cachedClient;
     }
@@ -58,6 +58,15 @@ export function createReaderAppHealthMiddlewares(
     });
     return cachedClient;
   };
+  const recordSavedLink = (env: WorkerEnv) => {
+    try {
+      // The request middleware flushes this event with the endpoint summary.
+      resolveClient(env)?.log('link.saved', { level: 'debug' });
+    } catch {
+      // A telemetry failure must never change the outcome of a saved link.
+    }
+  };
+
   let firstRequest = true;
   const coldRequests = new WeakSet<Request>();
   const trackRequest = (request: Request) => {
@@ -74,7 +83,7 @@ export function createReaderAppHealthMiddlewares(
       if (!c.env.APP_HEALTH_INGEST_KEY?.trim() || rate === 0 || Math.random() >= rate) return;
       const route = routePath(c, -1);
       if (!isSafeStageRoute(route)) return;
-      const client = resolveClient(c);
+      const client = resolveClient(c.env);
       if (!client) return;
       const colo = c.req.raw.cf?.colo;
       client.log('api.stage_timing', {
@@ -101,8 +110,9 @@ export function createReaderAppHealthMiddlewares(
   };
 
   return {
-    appHealthMiddleware: honoMiddleware<ReaderEnv>({ client: resolveClient }),
+    appHealthMiddleware: honoMiddleware<ReaderEnv>({ client: (c) => resolveClient(c.env) }),
     stageTimingMiddleware,
+    recordSavedLink,
     trackRequest,
   };
 }
@@ -110,5 +120,6 @@ export function createReaderAppHealthMiddlewares(
 export const {
   appHealthMiddleware,
   stageTimingMiddleware: appHealthStageTimingMiddleware,
+  recordSavedLink,
   trackRequest: trackAppHealthRequest,
 } = createReaderAppHealthMiddlewares();

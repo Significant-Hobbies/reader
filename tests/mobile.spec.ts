@@ -83,3 +83,47 @@ test('landing states the narrow product and fits the viewport', async ({ page },
     fullPage: true,
   });
 });
+
+test('landing sign-in reports one fixed event and keeps the ordinary navigation', async ({
+  page,
+}) => {
+  await page.addInitScript(() => {
+    const record = (source: string, ...args: unknown[]) => {
+      const value = JSON.parse(sessionStorage.getItem('qa-cta-events') ?? '[]');
+      sessionStorage.setItem('qa-cta-events', JSON.stringify([...value, [source, ...args]]));
+    };
+    Object.assign(window, {
+      appHealth: {
+        track: (...args: unknown[]) => record('app-health', ...args),
+        flushForNavigation: () => {
+          record('navigation-flush');
+          return new Promise(() => {});
+        },
+      },
+      clarity: (command: string, ...args: unknown[]) => {
+        if (command === 'event') record('clarity', ...args);
+      },
+    });
+  });
+  await page.route('**/api/auth/get-session', (route) => route.fulfill({ json: null }));
+  await page.route('**/api/auth/client-config', (route) =>
+    route.fulfill({ json: { googleClientId: null } })
+  );
+  await page.goto('/');
+  await page
+    .locator('main a[href="/login"]')
+    .first()
+    .evaluate((link: HTMLAnchorElement) => {
+      link.click();
+      link.click();
+    });
+  await expect(page).toHaveURL(/\/login$/);
+  await expect(page.getByRole('button', { name: 'Sign in with Google' })).toBeVisible();
+  expect(
+    await page.evaluate(() => JSON.parse(sessionStorage.getItem('qa-cta-events') ?? '[]'))
+  ).toEqual([
+    ['app-health', 'sign_in_opened'],
+    ['clarity', 'sign_in_opened'],
+    ['navigation-flush'],
+  ]);
+});
