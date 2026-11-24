@@ -83,3 +83,29 @@ test('landing states the narrow product and fits the viewport', async ({ page },
     fullPage: true,
   });
 });
+
+test('landing sign-in reports one fixed event and keeps the ordinary navigation', async ({
+  page,
+}) => {
+  await page.addInitScript(() => {
+    const record = (source: string, ...args: unknown[]) => {
+      const value = JSON.parse(sessionStorage.getItem('qa-cta-events') ?? '[]');
+      sessionStorage.setItem('qa-cta-events', JSON.stringify([...value, [source, ...args]]));
+    };
+    Object.assign(window, {
+      appHealth: { track: (...args: unknown[]) => record('app-health', ...args) },
+      clarity: (command: string, ...args: unknown[]) => {
+        if (command === 'event') record('clarity', ...args);
+      },
+    });
+  });
+  await page.goto('/');
+  await page.locator('main a[href="/login"]').first().click();
+  await expect(page).toHaveURL(/\/login$/);
+  expect(
+    await page.evaluate(() => JSON.parse(sessionStorage.getItem('qa-cta-events') ?? '[]'))
+  ).toEqual([
+    ['app-health', 'sign_in_opened'],
+    ['clarity', 'sign_in_opened'],
+  ]);
+});

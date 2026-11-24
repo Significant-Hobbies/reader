@@ -10,3 +10,18 @@ const content = workbenchContent.parse(json);
 <Layout content={content}>
   <WorkbenchPage content={content} />
 </Layout>
+
+<script>
+  const analytics = window as Window & {
+    appHealth?: { track(name: string): void };
+    clarity?: (command: 'event', name: string) => void;
+  };
+
+  document.addEventListener('click', (event) => {
+    if (event.defaultPrevented || !(event.target instanceof Element)) return;
+    if (!event.target.closest('a[href="/login"]')) return;
+
+    analytics.appHealth?.track('sign_in_opened');
+    analytics.clarity?.('event', 'sign_in_opened');
+  });
+</script>

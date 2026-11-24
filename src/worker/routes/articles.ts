@@ -4,6 +4,7 @@ import { bodyLimit } from 'hono/body-limit';
 import { getAuthenticatedUserId } from '../../lib/auth-api';
 import { addLink, getLink, listLinks, setLinkRead } from '../../lib/links-db';
 import type { WorkerEnv } from '../../lib/worker-env';
+import { recordSavedLink } from '../app-health';
 
 const links = new Hono<{ Bindings: WorkerEnv; Variables: { userId: string } }>();
 
@@ -39,7 +40,9 @@ links.post('/', async (c) => {
   }
   try {
     // URL-only capture, including older extension payloads. No imports or AI calls.
-    return c.json(await addLink(c.get('userId'), body), 200);
+    const result = await addLink(c.get('userId'), body);
+    if (result.existing === false) recordSavedLink(c.env);
+    return c.json(result, 200);
   } catch (error) {
     if (error instanceof TypeError || (error instanceof Error && /URL/u.test(error.message))) {
       return c.json({ error: error.message }, 400);
